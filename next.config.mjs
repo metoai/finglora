@@ -1,0 +1,29 @@
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  reactStrictMode: true,
+  devIndicators: false,
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+    ],
+  },
+  async rewrites() {
+    return [
+      { source: '/home', destination: '/' },
+      { source: '/explore', destination: '/' },
+      { source: '/tryon', destination: '/' },
+      { source: '/try-on', destination: '/' },
+      { source: '/upload', destination: '/' },
+      { source: '/ai-create', destination: '/' },
+      { source: '/create', destination: '/' },
+      { source: '/favorites', destination: '/' },
+      { source: '/profile', destination: '/' },
+      { source: '/onboarding', destination: '/' },
+    ];
+  },
+};
+
+export default nextConfig;
