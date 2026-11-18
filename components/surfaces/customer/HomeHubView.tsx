@@ -263,93 +263,104 @@ export function HomeHubView({
           )}
         </div>
 
-        {/* Mobile: Horizontal Carousel (Slidable) */}
-        <div className="flex lg:hidden items-center gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1 snap-x snap-mandatory scroll-smooth">
-          {designs.map((design) => {
-            const isActive = design.id === activeSample.id;
-            return (
-              <div
-                key={design.id}
-                onClick={() => {
-                  onSelectExploreDesign?.(design.id);
-                }}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 text-left shrink-0 cursor-pointer snap-start hover:-translate-y-1 active:scale-[0.98] ${
-                  isActive
-                    ? 'border-[#E0246A] ring-2 ring-[#E0246A]/30 shadow-md'
-                    : 'border-black/[0.08] hover:border-black/25 bg-white shadow-2xs'
-                }`}
-              >
-                <div className="w-44 sm:w-52 h-56 sm:h-64 relative overflow-hidden bg-black/5">
-                  <img
-                    src={design.photoUrl}
-                    alt={design.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+        {designs.length === 0 ? (
+          <div className="py-12 text-center bg-white rounded-3xl border border-stone-200/80 p-6 space-y-2">
+            <p className="font-serif text-base text-stone-800">No Curated Designs</p>
+            <p className="text-xs text-stone-500 max-w-sm mx-auto">
+              Drop any manicure inspiration photo above to extract your custom 5-finger look with Free.ai.
+            </p>
+          </div>
+        ) : (
+          <>
+            {/* Mobile: Horizontal Carousel (Slidable) */}
+            <div className="flex lg:hidden items-center gap-3 overflow-x-auto pb-2 scrollbar-none -mx-1 px-1 snap-x snap-mandatory scroll-smooth">
+              {designs.map((design) => {
+                const isActive = design.id === activeSample?.id;
+                return (
+                  <div
+                    key={design.id}
+                    onClick={() => {
+                      onSelectExploreDesign?.(design.id);
+                    }}
+                    className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 text-left shrink-0 cursor-pointer snap-start hover:-translate-y-1 active:scale-[0.98] ${
+                      isActive
+                        ? 'border-[#E0246A] ring-2 ring-[#E0246A]/30 shadow-md'
+                        : 'border-black/[0.08] hover:border-black/25 bg-white shadow-2xs'
+                    }`}
+                  >
+                    <div className="w-44 sm:w-52 h-56 sm:h-64 relative overflow-hidden bg-black/5">
+                      <img
+                        src={design.photoUrl}
+                        alt={design.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
 
-                  {/* Try On button matching Favorite page */}
-                  <div className="absolute inset-x-2.5 bottom-2.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectExploreDesign?.(design.id);
-                      }}
-                      className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                    >
-                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
-                      <span>Try On</span>
-                    </button>
+                      {/* Try On button matching Favorite page */}
+                      <div className="absolute inset-x-2.5 bottom-2.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectExploreDesign?.(design.id);
+                          }}
+                          className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                        >
+                          <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
+                          <span>Try On</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
 
-        {/* Desktop: 2-Row Grid (Not Slidable, Same Exact Card Design) */}
-        <div className="hidden lg:grid lg:grid-cols-3 gap-3.5 sm:gap-4">
-          {designs.slice(0, 6).map((design) => {
-            const isActive = design.id === activeSample.id;
-            return (
-              <div
-                key={design.id}
-                onClick={() => {
-                  onSelectExploreDesign?.(design.id);
-                }}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer hover:-translate-y-1 active:scale-[0.98] ${
-                  isActive
-                    ? 'border-[#E0246A] ring-2 ring-[#E0246A]/30 shadow-md'
-                    : 'border-black/[0.08] hover:border-black/25 bg-white shadow-2xs'
-                }`}
-              >
-                <div className="w-full h-56 sm:h-64 relative overflow-hidden bg-black/5">
-                  <img
-                    src={design.photoUrl}
-                    alt={design.title}
-                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
+            {/* Desktop: 2-Row Grid (Not Slidable, Same Exact Card Design) */}
+            <div className="hidden lg:grid lg:grid-cols-3 gap-3.5 sm:gap-4">
+              {designs.slice(0, 6).map((design) => {
+                const isActive = design.id === activeSample?.id;
+                return (
+                  <div
+                    key={design.id}
+                    onClick={() => {
+                      onSelectExploreDesign?.(design.id);
+                    }}
+                    className={`group relative rounded-2xl overflow-hidden border transition-all duration-300 text-left cursor-pointer hover:-translate-y-1 active:scale-[0.98] ${
+                      isActive
+                        ? 'border-[#E0246A] ring-2 ring-[#E0246A]/30 shadow-md'
+                        : 'border-black/[0.08] hover:border-black/25 bg-white shadow-2xs'
+                    }`}
+                  >
+                    <div className="w-full h-56 sm:h-64 relative overflow-hidden bg-black/5">
+                      <img
+                        src={design.photoUrl}
+                        alt={design.title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
 
-                  {/* Try On button matching Favorite page */}
-                  <div className="absolute inset-x-2.5 bottom-2.5">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onSelectExploreDesign?.(design.id);
-                      }}
-                      className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                    >
-                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
-                      <span>Try On</span>
-                    </button>
+                      {/* Try On button matching Favorite page */}
+                      <div className="absolute inset-x-2.5 bottom-2.5">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectExploreDesign?.(design.id);
+                          }}
+                          className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                        >
+                          <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
+                          <span>Try On</span>
+                        </button>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
+                );
+              })}
+            </div>
+          </>
+        )}
       </div>
 
       {/* ---------------------------------------------------------------------

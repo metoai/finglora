@@ -27,6 +27,7 @@ import {
   FINGER_LABELS,
   HAND_SKIN_TONES,
   INITIAL_EXPLORE_DESIGNS,
+  DEFAULT_EMPTY_NAILS,
   NAIL_FINISHES,
   NAIL_PATTERNS,
   COLOR_PALETTE,
@@ -70,21 +71,23 @@ export default function FingloraApp() {
   const [exploreSearch, setExploreSearch] = useState('');
 
   // Active Five-Finger Set State (Persisted to localStorage)
-  const [activeSetId, setActiveSetId] = useState(INITIAL_EXPLORE_DESIGNS[0].id);
-  const [activePassportCode, setActivePassportCode] = useState(INITIAL_EXPLORE_DESIGNS[0].passportCode);
-  const [activeSetName, setActiveSetName] = useState(INITIAL_EXPLORE_DESIGNS[0].title);
-  const [activePhotoUrl, setActivePhotoUrl] = useState(INITIAL_EXPLORE_DESIGNS[0].photoUrl);
+  const [activeSetId, setActiveSetId] = useState(INITIAL_EXPLORE_DESIGNS[0]?.id || 'custom-set');
+  const [activePassportCode, setActivePassportCode] = useState(INITIAL_EXPLORE_DESIGNS[0]?.passportCode || 'FGL-0001');
+  const [activeSetName, setActiveSetName] = useState(INITIAL_EXPLORE_DESIGNS[0]?.title || 'Natural Manicure');
+  const [activePhotoUrl, setActivePhotoUrl] = useState(INITIAL_EXPLORE_DESIGNS[0]?.photoUrl || '');
   const [handOrientation, setHandOrientation] = useState<'left' | 'right'>('right');
   const [selectedFinger, setSelectedFinger] = useState<Finger>('ring');
   const [swapMode, setSwapMode] = useState(false);
   const [swapFirstFinger, setSwapFirstFinger] = useState<Finger | null>(null);
   const [nails, setNails] = useState<Record<Finger, NailDesign>>(() =>
-    JSON.parse(JSON.stringify(INITIAL_EXPLORE_DESIGNS[0].nails))
+    INITIAL_EXPLORE_DESIGNS[0]?.nails
+      ? JSON.parse(JSON.stringify(INITIAL_EXPLORE_DESIGNS[0].nails))
+      : JSON.parse(JSON.stringify(DEFAULT_EMPTY_NAILS))
   );
   const [fingerHistory, setFingerHistory] = useState<Partial<Record<Finger, NailDesign[]>>>({});
   const [showApplyAllModal, setShowApplyAllModal] = useState(false);
 
-  // Inspiration Extraction Cache (pre-seeded with all explore lookbook designs)
+  // Inspiration Extraction Cache
   const [inspoCache, setInspoCache] = useState<
     Record<
       string,
@@ -96,30 +99,7 @@ export default function FingloraApp() {
         nails: Record<Finger, NailDesign>;
       }
     >
-  >(() => {
-    const initial: Record<
-      string,
-      {
-        id: string;
-        title: string;
-        photoUrl: string;
-        passportCode: string;
-        nails: Record<Finger, NailDesign>;
-      }
-    > = {};
-    INITIAL_EXPLORE_DESIGNS.forEach((d) => {
-      const entry = {
-        id: d.id,
-        title: d.title,
-        photoUrl: d.photoUrl,
-        passportCode: d.passportCode,
-        nails: JSON.parse(JSON.stringify(d.nails)),
-      };
-      initial[d.id] = entry;
-      initial[d.photoUrl] = entry;
-    });
-    return initial;
-  });
+  >({});
 
   // Extraction Animation State
   const [isAnalyzing, setIsAnalyzing] = useState(false);
@@ -499,21 +479,24 @@ export default function FingloraApp() {
     // New Image Upload / Extraction Flow: runs 5-step detection and saves to cache
     const baseSample = exploreDesigns.find((d) => d.id === designId) || exploreDesigns[0];
     const newPassport = `FGL-${Math.floor(1000 + Math.random() * 9000)}`;
-    let newTitle = customUploadedUrl ? 'AI Extracted Manicure' : baseSample.title;
-    const newPhotoUrl = customUploadedUrl || baseSample.photoUrl;
+    let newTitle = customUploadedUrl ? 'AI Extracted Manicure' : (baseSample?.title || 'Natural Manicure');
+    const newPhotoUrl = customUploadedUrl || baseSample?.photoUrl || '';
+    const initialNails = baseSample?.nails
+      ? JSON.parse(JSON.stringify(baseSample.nails))
+      : JSON.parse(JSON.stringify(DEFAULT_EMPTY_NAILS));
 
-    setActiveSetId(customUploadedUrl ? `custom-${Date.now()}` : baseSample.id);
+    setActiveSetId(customUploadedUrl ? `custom-${Date.now()}` : (baseSample?.id || `set-${Date.now()}`));
     setActivePassportCode(newPassport);
     setActiveSetName(newTitle);
     setActivePhotoUrl(newPhotoUrl);
-    setNails(JSON.parse(JSON.stringify(baseSample.nails)));
+    setNails(initialNails);
 
     setIsAnalyzingCached(false);
     setIsAnalyzing(true);
     setAnalysisStep(1);
     navigateCustomer('upload');
 
-    let detectedNails = JSON.parse(JSON.stringify(baseSample.nails));
+    let detectedNails = JSON.parse(JSON.stringify(initialNails));
 
     if (customUploadedUrl && typeof window !== 'undefined') {
       try {

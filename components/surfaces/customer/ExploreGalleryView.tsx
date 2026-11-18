@@ -90,9 +90,29 @@ export function ExploreGalleryView({
         </div>
       </div>
 
-      {/* Pinterest-Style Lookbook Grid: 2 columns on mobile, 3 on tablet, 4 on desktop */}
-      <div className={`grid grid-cols-2 ${mobilePreview ? '' : 'sm:grid-cols-3 lg:grid-cols-4'} gap-3 sm:gap-4.5`}>
-        {filteredDesigns.map((item) => (
+      {/* Pinterest-Style Lookbook Grid or Clean Empty State */}
+      {filteredDesigns.length === 0 ? (
+        <div className="py-16 text-center space-y-4 bg-white/70 rounded-3xl border border-stone-200/80 p-8 max-w-lg mx-auto">
+          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] mx-auto flex items-center justify-center">
+            <Upload className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg font-medium text-stone-900">No Nail Designs Yet</h3>
+            <p className="text-xs text-stone-500">
+              Upload your own inspiration photo to let our Free.ai model extract your custom 5-finger manicure.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onUploadClick}
+            className="px-5 py-2.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+          >
+            Upload Inspo Photo
+          </button>
+        </div>
+      ) : (
+        <div className={`grid grid-cols-2 ${mobilePreview ? '' : 'sm:grid-cols-3 lg:grid-cols-4'} gap-3 sm:gap-4.5`}>
+          {filteredDesigns.map((item) => (
           <div
             key={item.id}
             onClick={() => {
@@ -174,6 +194,7 @@ export function ExploreGalleryView({
           </div>
         ))}
       </div>
+      )}
     </div>
   );
 }

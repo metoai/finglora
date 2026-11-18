@@ -3,13 +3,12 @@
 import React, { useState, useRef } from 'react';
 import {
   ArrowRight,
-  Check,
   Upload,
   Sparkles,
   Layers,
 } from 'lucide-react';
-import { ExploreDesignSet, Finger, NailDesign, NailShape, NailLength } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
+import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
+import { FINGER_KEYS, FINGER_LABELS, DEFAULT_EMPTY_NAILS } from '@/constants/nail-data';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 import { ShimmerButton } from '@/components/magicui/shimmer-button';
@@ -35,30 +34,26 @@ export function OnboardingSurface({
   onContinueToStudio?: () => void;
   onBrandClick?: () => void;
 }) {
-  const [selectedSetId, setSelectedSetId] = useState<string>(exploreDesigns[0]?.id || 'set-rose-water');
+  const [selectedSetId, setSelectedSetId] = useState<string>(exploreDesigns[0]?.id || 'custom-set');
   const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const activeSet =
-    exploreDesigns.find((d) => d.id === selectedSetId) || exploreDesigns[0];
+  const activeSet = exploreDesigns.find((d) => d.id === selectedSetId);
 
   const previewNails = React.useMemo(() => {
-    return JSON.parse(JSON.stringify(activeSet.nails)) as Record<Finger, NailDesign>;
+    if (activeSet?.nails) {
+      return JSON.parse(JSON.stringify(activeSet.nails)) as Record<Finger, NailDesign>;
+    }
+    return JSON.parse(JSON.stringify(DEFAULT_EMPTY_NAILS)) as Record<Finger, NailDesign>;
   }, [activeSet]);
-
-  const handlePickSet = (id: string) => {
-    setSelectedSetId(id);
-    setUploadedPhotoUrl(null);
-    onSelectInspoSet(id);
-  };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       const url = URL.createObjectURL(file);
       setUploadedPhotoUrl(url);
-      setSelectedSetId(exploreDesigns[0]?.id || 'set-rose-water');
-      onSelectInspoSet(exploreDesigns[0]?.id || 'set-rose-water', url);
+      setSelectedSetId('custom-upload');
+      onSelectInspoSet('custom-upload', url);
       handleFinish();
     }
   };
@@ -108,84 +103,52 @@ export function OnboardingSurface({
               Finglora AI Manicure Atelier
             </span>
             <h1 className="font-serif text-3xl sm:text-4xl font-normal text-stone-900 tracking-tight">
-              Select or Upload Your Look
+              Upload Your Inspiration Photo
             </h1>
             <p className="text-xs sm:text-sm text-stone-500 mt-1">
-              Upload any Pinterest or Instagram nail inspiration photo — our AI extracts each finger design directly.
+              Upload any Pinterest or Instagram nail inspiration photo — our Free.ai vision model extracts each finger design directly.
             </p>
           </div>
 
-          {/* Section: Pick Aesthetic or Upload Inspiration */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
-              {/* Upload Dropzone Card */}
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={handleFileChange}
-              />
-              <div
-                onClick={() => fileInputRef.current?.click()}
-                className="col-span-2 sm:col-span-1 p-4 rounded-2xl bg-white border-2 border-dashed border-[#FCE7F3] hover:border-[#E0246A] hover:bg-[#FDF2F8]/30 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group shadow-2xs"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
-                  <Upload className="w-5 h-5" />
-                </div>
-                <span className="font-serif text-xs font-semibold text-stone-900">
-                  Upload Inspo
+          {/* Section: Upload Dropzone Card */}
+          <div className="max-w-xl mx-auto w-full">
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleFileChange}
+            />
+            <div
+              onClick={() => fileInputRef.current?.click()}
+              className="w-full p-8 sm:p-12 rounded-3xl bg-white border-2 border-dashed border-[#FCE7F3] hover:border-[#E0246A] hover:bg-[#FDF2F8]/40 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group shadow-xs"
+            >
+              <div className="w-14 h-14 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center group-hover:bg-[#E0246A] group-hover:text-white transition-colors shadow-2xs">
+                <Upload className="w-7 h-7" />
+              </div>
+              <div className="space-y-1">
+                <span className="font-serif text-base sm:text-lg font-semibold text-stone-900 block">
+                  Click or drag your inspiration photo here
                 </span>
-                <span className="text-[10px] text-stone-500">
-                  AI extracts 5 nails
+                <span className="text-xs text-stone-500 block">
+                  Free.ai will extract all 5 nail designs and formulas
                 </span>
               </div>
-
-              {/* 4 Curated Looks */}
-              {exploreDesigns.slice(0, 4).map((d) => {
-                const isSelected = selectedSetId === d.id && !uploadedPhotoUrl;
-                return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => handlePickSet(d.id)}
-                    className={`relative rounded-2xl overflow-hidden border transition-all text-left cursor-pointer active:scale-[0.98] h-32 sm:h-36 group ${
-                      isSelected
-                        ? 'border-[#E0246A] ring-2 ring-[#E0246A]/20 shadow-xs'
-                        : 'border-stone-200/80 hover:border-[#FCE7F3]'
-                    }`}
-                  >
-                    <img
-                      src={d.photoUrl}
-                      alt={d.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                    <div className="absolute bottom-2 left-2 right-2">
-                      <span className="text-white text-xs font-serif font-medium leading-tight block truncate">
-                        {d.title}
-                      </span>
-                    </div>
-                    {isSelected && (
-                      <div className="absolute top-2 right-2 w-4 h-4 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-xs">
-                        <Check className="w-2.5 h-2.5 stroke-[2.5]" />
-                      </div>
-                    )}
-                  </button>
-                );
-              })}
+              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#FAF7F2] border border-stone-200 text-xs font-medium text-stone-700">
+                Supports JPG, PNG, WEBP
+              </span>
             </div>
           </div>
 
           {/* Section: 5-Finger Live Preview */}
-          <div className="bg-white/90 backdrop-blur-xs rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-3">
+          <div className="bg-white/90 backdrop-blur-xs rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-3 max-w-xl mx-auto w-full">
             <div className="flex items-center justify-between">
               <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
                 <Layers className="w-3.5 h-3.5 text-[#E0246A]" />
-                Live 5-Finger Manicure Designs
+                Current Manicure Canvas
               </span>
               <span className="text-xs font-serif font-medium text-stone-800">
-                {activeSet.title}
+                {activeSet?.title || 'Blank Natural Set'}
               </span>
             </div>
 
