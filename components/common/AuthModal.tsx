@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { X, ArrowRight, Check } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { signUpWithEmail, signInWithEmail, signInWithGoogle } from '@/lib/services/auth';
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -24,45 +25,51 @@ export function AuthModal({
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   // Sync mode if initialMode changes
   React.useEffect(() => {
     setMode(initialMode);
+    setErrorMessage('');
   }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
 
-  const handleGoogleAuth = () => {
+  const handleGoogleAuth = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
+    setErrorMessage('');
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Google sign-in failed');
       setIsSubmitting(false);
-      onClose();
-      if (mode === 'signup') {
-        onSignUpSuccess({ name: name || 'Elena', email: 'elena@gmail.com' });
-      } else {
-        onSignInSuccess({ email: 'elena@gmail.com' });
-      }
-    }, 400);
+    }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setErrorMessage('');
 
-    setTimeout(() => {
-      setIsSubmitting(false);
-      onClose();
+    try {
       if (mode === 'signup') {
-        onSignUpSuccess({
-          name: name.trim() || 'Elena',
-          email: email.trim() || 'elena@example.com',
-        });
+        const cleanName = name.trim() || 'Elena';
+        const cleanEmail = email.trim();
+        await signUpWithEmail(cleanEmail, password, cleanName);
+        setIsSubmitting(false);
+        onClose();
+        onSignUpSuccess({ name: cleanName, email: cleanEmail });
       } else {
-        onSignInSuccess({
-          email: email.trim() || 'elena@example.com',
-        });
+        const cleanEmail = email.trim();
+        await signInWithEmail(cleanEmail, password);
+        setIsSubmitting(false);
+        onClose();
+        onSignInSuccess({ email: cleanEmail });
       }
-    }, 400);
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -118,6 +125,13 @@ export function AuthModal({
             Sign In
           </button>
         </div>
+
+        {/* Error Notice */}
+        {errorMessage && (
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in">
+            {errorMessage}
+          </div>
+        )}
 
         {/* Continue with Google Button */}
         <button

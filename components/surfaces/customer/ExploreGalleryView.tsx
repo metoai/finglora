@@ -4,6 +4,8 @@ import React from 'react';
 import { Heart, Search, Upload, ArrowRight, Hand } from 'lucide-react';
 import { ExploreDesignSet } from '@/types/nail';
 import { InspirationPhotoCard } from '@/components/visuals/InspirationPhotoCard';
+import { toggleSetFavorite } from '@/lib/services/favorites';
+import { getCurrentUser } from '@/lib/services/auth';
 
 export function ExploreGalleryView({
   exploreDesigns,
@@ -119,11 +121,20 @@ export function ExploreGalleryView({
               <button
                 type="button"
                 title="Save design"
-                onClick={(e) => {
+                onClick={async (e) => {
                   e.stopPropagation();
+                  const nextState = !item.isSaved;
                   setExploreDesigns((prev) =>
-                    prev.map((x) => (x.id === item.id ? { ...x, isSaved: !x.isSaved } : x))
+                    prev.map((x) => (x.id === item.id ? { ...x, isSaved: nextState } : x))
                   );
+                  try {
+                    const user = await getCurrentUser();
+                    if (user?.id) {
+                      await toggleSetFavorite(user.id, item.id, nextState);
+                    }
+                  } catch (err) {
+                    console.warn('Favorite sync skipped:', err);
+                  }
                 }}
                 className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-white/85 hover:bg-white backdrop-blur-md flex items-center justify-center shadow-2xs transition-all z-10 cursor-pointer ${
                   item.isSaved

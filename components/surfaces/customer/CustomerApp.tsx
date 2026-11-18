@@ -453,6 +453,7 @@ export function CustomerApp({
               initialView={customerRoute === 'favorites' ? 'favorites' : 'settings'}
               customTryOnHandUrl={customTryOnHandUrl}
               setCustomTryOnHandUrl={setCustomTryOnHandUrl}
+              onLogout={onBrandClick}
             />
           )}
         </div>

@@ -4,6 +4,8 @@ import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 
+import { signUpWithEmail, signInWithEmail, signInWithGoogle } from '@/lib/services/auth';
+
 export interface CustomerSignupViewProps {
   userName: string;
   setUserName: (name: string) => void;
@@ -24,6 +26,8 @@ export function CustomerSignupView({
   const [mode, setMode] = useState<'signup' | 'signin'>('signup');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const handleGuestContinue = () => {
     if (onContinueAsGuest) {
@@ -33,24 +37,39 @@ export function CustomerSignupView({
     }
   };
 
-  const handleGoogleAuth = () => {
-    if (mode === 'signup') {
-      onSubmit();
-    } else if (onSignInSuccess) {
-      onSignInSuccess();
-    } else {
-      onSubmit();
+  const handleGoogleAuth = async () => {
+    setIsSubmitting(true);
+    setErrorMessage('');
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Google sign-in failed');
+      setIsSubmitting(false);
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode === 'signup') {
-      onSubmit();
-    } else if (onSignInSuccess) {
-      onSignInSuccess();
-    } else {
-      onSubmit();
+    setIsSubmitting(true);
+    setErrorMessage('');
+
+    try {
+      if (mode === 'signup') {
+        const cleanName = userName.trim() || 'Elena';
+        const cleanEmail = email.trim();
+        await signUpWithEmail(cleanEmail, password, cleanName);
+        setIsSubmitting(false);
+        onSubmit();
+      } else {
+        const cleanEmail = email.trim();
+        await signInWithEmail(cleanEmail, password);
+        setIsSubmitting(false);
+        if (onSignInSuccess) onSignInSuccess();
+        else onSubmit();
+      }
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      setIsSubmitting(false);
     }
   };
 
@@ -96,6 +115,13 @@ export function CustomerSignupView({
             Sign In
           </button>
         </div>
+
+        {/* Error Notice */}
+        {errorMessage && (
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in">
+            {errorMessage}
+          </div>
+        )}
 
         {/* Continue with Google */}
         <button

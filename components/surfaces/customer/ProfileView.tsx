@@ -28,6 +28,9 @@ import {
   NailShape,
   SkinTonePreset,
 } from '@/types/nail';
+import { signOutUser, getCurrentUser } from '@/lib/services/auth';
+import { toggleSetFavorite } from '@/lib/services/favorites';
+import { updateUserProfile } from '@/lib/services/profile';
 
 interface ProfileViewProps {
   userName: string;
@@ -52,6 +55,7 @@ interface ProfileViewProps {
   initialView?: 'settings' | 'favorites';
   customTryOnHandUrl?: string | null;
   setCustomTryOnHandUrl?: (url: string | null) => void;
+  onLogout?: () => void;
 }
 
 export function ProfileView({
@@ -65,6 +69,7 @@ export function ProfileView({
   initialView = 'settings',
   customTryOnHandUrl,
   setCustomTryOnHandUrl,
+  onLogout,
 }: ProfileViewProps) {
   // Navigation inside Profile: 'settings' | 'favorites'
   const [currentView, setCurrentView] = useState<'settings' | 'favorites'>(initialView);
@@ -140,10 +145,11 @@ export function ProfileView({
     showToast('New random profile avatar generated');
   };
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (nameInput.trim()) {
-      setUserName(nameInput.trim());
+    const cleanName = nameInput.trim();
+    if (cleanName) {
+      setUserName(cleanName);
     }
     if (emailInput.trim()) {
       setUserEmail(emailInput.trim());
@@ -153,6 +159,15 @@ export function ProfileView({
     }
     setIsEditProfileOpen(false);
     showToast('Profile updated');
+
+    try {
+      const user = await getCurrentUser();
+      if (user?.id && cleanName) {
+        await updateUserProfile(user.id, { displayName: cleanName });
+      }
+    } catch (err) {
+      console.warn('Profile sync skipped:', err);
+    }
   };
 
   // Upload hand photo once
@@ -192,13 +207,21 @@ export function ProfileView({
     return d.category === favoriteCategory;
   });
 
-  const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
+  const handleToggleFavorite = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation();
     if (setExploreDesigns) {
       setExploreDesigns((prev) =>
         prev.map((item) => (item.id === id ? { ...item, isSaved: !item.isSaved } : item))
       );
       showToast('Removed from favorites');
+      try {
+        const user = await getCurrentUser();
+        if (user?.id) {
+          await toggleSetFavorite(user.id, id, false);
+        }
+      } catch (err) {
+        console.warn('Favorite sync skipped:', err);
+      }
     }
   };
 
@@ -656,8 +679,14 @@ export function ProfileView({
               {/* LOGOUT */}
               <button
                 type="button"
-                onClick={() => {
-                  showToast('Session reset');
+                onClick={async () => {
+                  try {
+                    await signOutUser();
+                  } catch (e) {
+                    console.warn('Sign out error:', e);
+                  }
+                  showToast('Signed out successfully');
+                  if (onLogout) onLogout();
                 }}
                 className="w-full px-4 py-3.5 flex items-center justify-between text-left hover:bg-[#FDE8EF]/40 transition cursor-pointer group"
               >

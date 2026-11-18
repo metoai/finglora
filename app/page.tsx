@@ -38,6 +38,11 @@ import { LandingSurface } from '@/components/surfaces/LandingSurface';
 import { OnboardingSurface } from '@/components/surfaces/OnboardingSurface';
 import { CustomerApp } from '@/components/surfaces/customer/CustomerApp';
 import { CustomerRoute } from '@/components/surfaces/customer/CustomerSidebar';
+import { subscribeToAuthChanges, getCurrentUser } from '@/lib/services/auth';
+import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
+import { toggleSetFavorite } from '@/lib/services/favorites';
+import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
+import { uploadInspoPhoto, uploadTryOnCapture } from '@/lib/services/storage';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -45,6 +50,7 @@ export default function FingloraApp() {
   const [mobilePreview, setMobilePreview] = useState(false);
   const [switcherMenuOpen, setSwitcherMenuOpen] = useState(false);
   const [customerRoute, setCustomerRoute] = useState<CustomerRoute>('home');
+  const [supabaseUser, setSupabaseUser] = useState<any>(null);
 
   // Top-level Authentication Modal State
   const [authModalOpen, setAuthModalOpen] = useState(false);
@@ -149,8 +155,9 @@ export default function FingloraApp() {
     }, 2800);
   };
 
-  // Hydrate Design Session from localStorage on Mount
+  // Hydrate Design Session from localStorage and Supabase on Mount
   useEffect(() => {
+    // Local storage hydration for immediate instant UI response
     try {
       const saved = window.localStorage.getItem('finglora_session_v1');
       if (saved) {
@@ -170,9 +177,79 @@ export default function FingloraApp() {
     } catch {
       // Ignore storage errors
     }
+
+    // 1. Fetch live curated explore sets from Supabase
+    fetchExploreSets().then((sets) => {
+      if (sets && sets.length > 0) {
+        setExploreDesigns(sets);
+      }
+    });
+
+    // 2. Subscribe to Supabase Auth Changes
+    const subscription = subscribeToAuthChanges(async (event, session) => {
+      if (session?.user) {
+        setSupabaseUser(session.user);
+        const profile = await fetchUserProfile(session.user.id);
+        if (profile) {
+          if (profile.displayName) setUserName(profile.displayName);
+          if (profile.preferredShape) setPreferredShape(profile.preferredShape);
+          if (profile.customHandUrl) setCustomTryOnHandUrl(profile.customHandUrl);
+        }
+
+        // Re-fetch explore sets with user's specific favorites
+        const userSets = await fetchExploreSets(session.user.id);
+        if (userSets && userSets.length > 0) {
+          setExploreDesigns(userSets);
+        }
+
+        // Guest to Authenticated sync: if user customized nails while guest, save them to their account
+        try {
+          const localSaved = window.localStorage.getItem('finglora_session_v1');
+          if (localSaved) {
+            const parsed = JSON.parse(localSaved);
+            if (parsed.nails && parsed.activePassportCode) {
+              await saveUserManicureSet({
+                userId: session.user.id,
+                passportCode: parsed.activePassportCode,
+                title: parsed.activeSetName || 'My Custom Set',
+                photoUrl: parsed.activePhotoUrl || '/images/ar-nail-hero.jpg',
+                nails: parsed.nails,
+              });
+            }
+          }
+        } catch {
+          // ignore auto-migration error
+        }
+      } else {
+        setSupabaseUser(null);
+      }
+    });
+
+    // 3. Check for passport code in URL query (?passport=FGL-XXXX or ?code=FGL-XXXX)
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const code = params.get('passport') || params.get('code');
+      if (code) {
+        getSetByPassportCode(code).then((foundSet) => {
+          if (foundSet) {
+            setActiveSetId(foundSet.id);
+            setActivePassportCode(foundSet.passportCode);
+            setActiveSetName(foundSet.title);
+            setActivePhotoUrl(foundSet.photoUrl);
+            setNails(foundSet.nails);
+            showToast(`Loaded Design Passport #${foundSet.passportCode}`);
+            navigateCustomer('tryon');
+          }
+        });
+      }
+    }
+
+    return () => {
+      subscription?.unsubscribe();
+    };
   }, []);
 
-  // Persist Design Session to localStorage
+  // Persist Design Session to localStorage and debounced Supabase sync
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -190,7 +267,22 @@ export default function FingloraApp() {
     } catch {
       // Ignore storage quota errors
     }
-  }, [nails, activeSetName, activeSetId, activePassportCode, activePhotoUrl, preferredShape, userName]);
+
+    // Debounced sync to Supabase if user is authenticated
+    if (supabaseUser?.id) {
+      const timer = setTimeout(() => {
+        saveUserManicureSet({
+          userId: supabaseUser.id,
+          passportCode: activePassportCode,
+          title: activeSetName,
+          photoUrl: activePhotoUrl,
+          nails,
+          skinToneId,
+        }).catch((err) => console.warn('Supabase auto-save skipped:', err.message));
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [nails, activeSetName, activeSetId, activePassportCode, activePhotoUrl, preferredShape, userName, supabaseUser, skinToneId]);
 
   // Camera Cleanup Helper
   const stopCameraStream = () => {
@@ -252,7 +344,10 @@ export default function FingloraApp() {
       const ctx = canvas.getContext('2d');
       if (ctx) {
         ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
-        setCapturedFrameUrl(canvas.toDataURL('image/jpeg', 0.92));
+        const frame = canvas.toDataURL('image/jpeg', 0.92);
+        setCapturedFrameUrl(frame);
+        // Persist frame to Supabase Storage
+        uploadTryOnCapture(frame, supabaseUser?.id).catch(() => {});
       }
     } else {
       setCapturedFrameUrl(null);
@@ -732,8 +827,13 @@ export default function FingloraApp() {
             onUndoFingerEdit={undoFingerEdit}
             onUpdateActiveFinger={updateActiveFinger}
             onOpenApplyAllModal={() => setShowApplyAllModal(true)}
-            onImageSelectedForExtraction={(file) => {
-              runHandExtractionDemo('set-berry-aura', URL.createObjectURL(file));
+            onImageSelectedForExtraction={async (file) => {
+              try {
+                const cloudUrl = await uploadInspoPhoto(file, supabaseUser?.id);
+                runHandExtractionDemo('set-berry-aura', cloudUrl);
+              } catch {
+                runHandExtractionDemo('set-berry-aura', URL.createObjectURL(file));
+              }
             }}
             onSampleExtractionDemo={() => runHandExtractionDemo('set-blush-daisy')}
             onSelectExploreDesign={(id) => extractFromInspirationHand(id, 'tryon')}
