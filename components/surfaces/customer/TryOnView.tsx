@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Camera,
   ImagePlus,
@@ -15,11 +15,13 @@ import {
   Wand2,
   X,
   SlidersHorizontal,
+  Sparkles,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailFinish, NailPattern, SkinTonePreset } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
+import { getVideoHandLandmarker, extractFingertipAnchors, FingertipAnchor } from '@/lib/vision/hand-tracker';
 
 const AI_PRESET_MODIFIERS: {
   label: string;
@@ -101,6 +103,59 @@ export function TryOnView({
   const [showAdjustSliders, setShowAdjustSliders] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [sharedToast, setSharedToast] = useState(false);
+
+  // Real-Time MediaPipe Hand Landmark Tracking
+  const [liveAnchors, setLiveAnchors] = useState<Record<Finger, FingertipAnchor> | null>(null);
+  const [isTrackingHand, setIsTrackingHand] = useState(false);
+
+  useEffect(() => {
+    if (cameraStatus !== 'live' || !videoRef.current) {
+      setLiveAnchors(null);
+      setIsTrackingHand(false);
+      return;
+    }
+
+    let isCancelled = false;
+    let animId: number;
+    let lastTime = -1;
+
+    async function runLiveDetection() {
+      const landmarker = await getVideoHandLandmarker();
+      if (isCancelled || !landmarker) return;
+      const activeLandmarker = landmarker;
+
+      function detectFrame() {
+        if (isCancelled) return;
+        const video = videoRef.current;
+        if (video && video.readyState >= 2 && video.currentTime !== lastTime) {
+          lastTime = video.currentTime;
+          try {
+            const result = activeLandmarker.detectForVideo(video, performance.now());
+            const anchors = extractFingertipAnchors(result);
+            if (anchors) {
+              setLiveAnchors(anchors);
+              setIsTrackingHand(true);
+            } else {
+              setLiveAnchors(null);
+              setIsTrackingHand(false);
+            }
+          } catch {
+            // Frame skip
+          }
+        }
+        animId = requestAnimationFrame(detectFrame);
+      }
+
+      detectFrame();
+    }
+
+    runLiveDetection();
+
+    return () => {
+      isCancelled = true;
+      if (animId) cancelAnimationFrame(animId);
+    };
+  }, [cameraStatus, videoRef]);
 
   // AI Per-Finger & All-in-all Customization State
   const [showAiCustomizer, setShowAiCustomizer] = useState(false);
@@ -553,7 +608,7 @@ export function TryOnView({
                 </div>
               ) : (
                 /* Live WebRTC Stream */
-                <div className="relative w-full h-full flex items-center justify-center">
+                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
                   <video
                     ref={videoRef}
                     autoPlay
@@ -562,18 +617,65 @@ export function TryOnView({
                     className="w-full h-full object-cover"
                   />
 
+                  {/* Real-Time MediaPipe AR Fingertip Anchors */}
+                  {liveAnchors && (
+                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                      {orderedFingers.map((fk) => {
+                        const anchor = liveAnchors[fk];
+                        if (!anchor) return null;
+                        return (
+                          <div
+                            key={fk}
+                            className="absolute transition-transform duration-75"
+                            style={{
+                              left: `${anchor.tipX * 100}%`,
+                              top: `${anchor.tipY * 100}%`,
+                              transform: `translate(-50%, -75%) rotate(${anchor.angleDeg}deg) scale(${anchor.scale * (overlayScale / 100)})`,
+                            }}
+                          >
+                            <NailCanvasPreview
+                              nail={nails[fk]}
+                              width={32}
+                              height={46}
+                              showCuticle={false}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
                   {/* Corner Registration Frame - Hand Placement Target Area */}
-                  <div className="absolute top-12 bottom-24 inset-x-6 pointer-events-none rounded-2xl border border-white/25">
+                  <div
+                    className={`absolute top-12 bottom-24 inset-x-6 pointer-events-none rounded-2xl border transition-opacity duration-300 ${
+                      isTrackingHand ? 'border-white/10 opacity-30' : 'border-white/25 opacity-100'
+                    }`}
+                  >
                     <div className="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-white rounded-tl-lg" />
                     <div className="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-white rounded-tr-lg" />
                     <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 border-white rounded-bl-lg" />
                     <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 border-white rounded-br-lg" />
                   </div>
 
-                  {/* Top Guide Text */}
-                  <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none z-10">
-                    <span className="px-3.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-medium tracking-wide">
-                      Position your hand in the frame
+                  {/* Top Guide Text / Live AR Status Indicator */}
+                  <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none z-20">
+                    <span
+                      className={`px-3.5 py-1 rounded-full backdrop-blur-md text-white text-[11px] font-medium tracking-wide flex items-center gap-1.5 transition-all ${
+                        isTrackingHand
+                          ? 'bg-[#E0246A]/90 shadow-md border border-white/20'
+                          : 'bg-black/60'
+                      }`}
+                    >
+                      <span
+                        className={`w-2 h-2 rounded-full ${
+                          isTrackingHand ? 'bg-white animate-pulse' : 'bg-amber-400'
+                        }`}
+                      />
+                      <span>
+                        {isTrackingHand
+                          ? 'Live AR: 5 Fingertips Locked'
+                          : 'Position your hand in the frame'}
+                      </span>
                     </span>
                   </div>
 

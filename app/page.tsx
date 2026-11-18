@@ -43,6 +43,7 @@ import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/l
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture } from '@/lib/services/storage';
+import { extractNailsFromPhoto } from '@/lib/vision/hand-tracker';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -513,6 +514,24 @@ export default function FingloraApp() {
     setAnalysisStep(0);
     navigateCustomer('upload');
 
+    // Run AI / MediaPipe vision extraction in the background if custom image is present
+    let detectedNails = JSON.parse(JSON.stringify(baseSample.nails));
+    if (customUploadedUrl && typeof window !== 'undefined') {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.src = customUploadedUrl;
+      img.onload = async () => {
+        try {
+          const res = await extractNailsFromPhoto(img, baseSample.nails);
+          if (res.handFound) {
+            detectedNails = res.nails;
+          }
+        } catch {
+          // Graceful fallback to styled preset
+        }
+      };
+    }
+
     let step = 0;
     const timer = setInterval(() => {
       step += 1;
@@ -520,13 +539,16 @@ export default function FingloraApp() {
       if (step >= 5) {
         clearInterval(timer);
         setTimeout(() => {
+          // Apply detected nails
+          setNails(detectedNails);
+
           // Persist extracted manicure set into cache
           const extractedEntry = {
             id: cacheKey,
             title: newTitle,
             photoUrl: newPhotoUrl,
             passportCode: newPassport,
-            nails: JSON.parse(JSON.stringify(baseSample.nails)),
+            nails: JSON.parse(JSON.stringify(detectedNails)),
           };
           setInspoCache((prev) => ({
             ...prev,
@@ -535,7 +557,7 @@ export default function FingloraApp() {
           }));
 
           setIsAnalyzing(false);
-          showToast('5 individual nail designs extracted & saved to cache!');
+          showToast('5 individual nail designs extracted & ready in studio!');
           navigateCustomer('tryon');
         }, 420);
       }
