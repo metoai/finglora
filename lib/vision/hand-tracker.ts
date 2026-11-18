@@ -159,8 +159,25 @@ export function extractFingertipAnchors(
 }
 
 /**
+ * Detects hand and extracts 5 fingertip anchors from a static image.
+ */
+export async function detectHandInImage(
+  imageElement: HTMLImageElement | HTMLCanvasElement
+): Promise<Record<Finger, FingertipAnchor> | null> {
+  const landmarker = await getImageHandLandmarker();
+  if (!landmarker) return null;
+  try {
+    const result = landmarker.detect(imageElement);
+    return extractFingertipAnchors(result);
+  } catch (err) {
+    console.warn('[Finglora Vision] detectHandInImage error:', err);
+    return null;
+  }
+}
+
+/**
  * Analyzes an image of a hand and automatically extracts color, pattern,
- * and shape for each individual finger.
+ * and shape for each individual finger using dual-point vision sampling.
  */
 export async function extractNailsFromPhoto(
   imageElement: HTMLImageElement | HTMLCanvasElement,
@@ -168,10 +185,11 @@ export async function extractNailsFromPhoto(
 ): Promise<{
   nails: Record<Finger, NailDesign>;
   handFound: boolean;
+  anchors: Record<Finger, FingertipAnchor> | null;
 }> {
   const landmarker = await getImageHandLandmarker();
   if (!landmarker) {
-    return { nails: fallbackNails, handFound: false };
+    return { nails: fallbackNails, handFound: false, anchors: null };
   }
 
   try {
@@ -179,7 +197,7 @@ export async function extractNailsFromPhoto(
     const anchors = extractFingertipAnchors(result);
 
     if (!anchors) {
-      return { nails: fallbackNails, handFound: false };
+      return { nails: fallbackNails, handFound: false, anchors: null };
     }
 
     // Sample colors from the image at each detected fingertip region
@@ -190,79 +208,110 @@ export async function extractNailsFromPhoto(
     canvas.height = height;
 
     const ctx = canvas.getContext('2d', { willReadFrequently: true });
-    if (!ctx) return { nails: fallbackNails, handFound: true };
+    if (!ctx) return { nails: fallbackNails, handFound: true, anchors };
 
     ctx.drawImage(imageElement, 0, 0, width, height);
 
     const extractedNails = { ...fallbackNails };
 
+    const samplePatch = (cx: number, cy: number, size: number) => {
+      const startX = Math.max(0, Math.min(width - 1, Math.floor(cx - size / 2)));
+      const startY = Math.max(0, Math.min(height - 1, Math.floor(cy - size / 2)));
+      const safeW = Math.max(1, Math.min(size, width - startX));
+      const safeH = Math.max(1, Math.min(size, height - startY));
+      const imgData = ctx.getImageData(startX, startY, safeW, safeH).data;
+      let r = 0, g = 0, b = 0, count = 0;
+      for (let i = 0; i < imgData.length; i += 4) {
+        r += imgData[i];
+        g += imgData[i + 1];
+        b += imgData[i + 2];
+        count++;
+      }
+      if (count === 0) return { hex: '#FDF2F8', r: 253, g: 242, b: 248, brightness: 0.9, saturation: 0.1 };
+      const avgR = Math.round(r / count);
+      const avgG = Math.round(g / count);
+      const avgB = Math.round(b / count);
+      const hex = `#${((1 << 24) + (avgR << 16) + (avgG << 8) + avgB).toString(16).slice(1).toUpperCase()}`;
+      const max = Math.max(avgR, avgG, avgB);
+      const min = Math.min(avgR, avgG, avgB);
+      const brightness = max / 255;
+      const saturation = max === 0 ? 0 : (max - min) / max;
+      return { hex, r: avgR, g: avgG, b: avgB, brightness, saturation };
+    };
+
     for (const fingerKey of ['thumb', 'index', 'middle', 'ring', 'pinky'] as Finger[]) {
       const anchor = anchors[fingerKey];
       if (!anchor) continue;
 
-      // Coordinate on canvas
-      const px = Math.floor(anchor.tipX * width);
-      const py = Math.floor(anchor.tipY * height);
-
-      // Sample a 12x12 patch around nail tip
       const patchSize = Math.max(8, Math.floor(width * 0.025));
-      const startX = Math.max(0, px - Math.floor(patchSize / 2));
-      const startY = Math.max(0, py - Math.floor(patchSize / 2));
-      const safeW = Math.min(patchSize, width - startX);
-      const safeH = Math.min(patchSize, height - startY);
 
-      if (safeW > 0 && safeH > 0) {
-        const imgData = ctx.getImageData(startX, startY, safeW, safeH).data;
-        let rTotal = 0, gTotal = 0, bTotal = 0, count = 0;
+      // Sample 1: The tip of the nail
+      const tipPx = anchor.tipX * width;
+      const tipPy = anchor.tipY * height;
+      const tipSample = samplePatch(tipPx, tipPy, patchSize);
 
-        for (let i = 0; i < imgData.length; i += 4) {
-          rTotal += imgData[i];
-          gTotal += imgData[i + 1];
-          bTotal += imgData[i + 2];
-          count++;
+      // Sample 2: The nail bed / base (offset slightly towards the DIP joint)
+      const dx = (anchor.tipX - anchor.dipX) * width;
+      const dy = (anchor.tipY - anchor.dipY) * height;
+      const bedPx = tipPx - dx * 0.35;
+      const bedPy = tipPy - dy * 0.35;
+      const bedSample = samplePatch(bedPx, bedPy, patchSize);
+
+      let detectedPattern: NailPattern = 'solid';
+      let detectedFinish: NailFinish = 'glossy';
+      let detectedShape: NailShape = fallbackNails[fingerKey].shape;
+      let baseColor = bedSample.hex;
+      let accentColor = tipSample.hex;
+
+      // Color difference between tip and bed
+      const colorDist = Math.hypot(
+        tipSample.r - bedSample.r,
+        tipSample.g - bedSample.g,
+        tipSample.b - bedSample.b
+      );
+
+      if (colorDist > 45) {
+        // Distinct tip vs bed
+        if (tipSample.brightness > 0.85 && bedSample.saturation > 0.15) {
+          detectedPattern = 'classic-french';
+          baseColor = bedSample.hex;
+          accentColor = '#FFFFFF';
+        } else if (tipSample.brightness > 0.85 && bedSample.brightness > 0.85) {
+          detectedPattern = 'chrome-swirl';
+          detectedFinish = 'chrome';
+        } else {
+          detectedPattern = 'aura';
+          baseColor = bedSample.hex;
+          accentColor = tipSample.hex;
         }
-
-        if (count > 0) {
-          const avgR = Math.round(rTotal / count);
-          const avgG = Math.round(gTotal / count);
-          const avgB = Math.round(bTotal / count);
-          const hex = `#${((1 << 24) + (avgR << 16) + (avgG << 8) + avgB).toString(16).slice(1).toUpperCase()}`;
-
-          // Detect brightness & saturation
-          const max = Math.max(avgR, avgG, avgB);
-          const min = Math.min(avgR, avgG, avgB);
-          const brightness = max / 255;
-          const saturation = max === 0 ? 0 : (max - min) / max;
-
-          let detectedPattern: NailPattern = 'solid';
-          let detectedFinish: NailFinish = 'glossy';
-          let detectedShape: NailShape = fallbackNails[fingerKey].shape;
-
-          if (brightness > 0.88 && saturation < 0.15) {
-            detectedPattern = 'chrome-swirl';
-            detectedFinish = 'chrome';
-          } else if (brightness > 0.75 && saturation < 0.25) {
-            detectedPattern = 'classic-french';
-          } else if (avgR > 110 && avgG < 60 && avgB < 80) {
-            detectedPattern = 'aura';
-          }
-
-          extractedNails[fingerKey] = {
-            ...fallbackNails[fingerKey],
-            baseColor: hex,
-            pattern: detectedPattern,
-            finish: detectedFinish,
-            shape: detectedShape,
-            status: 'detected',
-            clientNote: `AI vision extracted from photo (RGB: ${avgR}, ${avgG}, ${avgB}).`,
-          };
+      } else {
+        // Monochromatic / Solid
+        baseColor = tipSample.hex;
+        accentColor = tipSample.hex;
+        if (tipSample.brightness > 0.88 && tipSample.saturation < 0.15) {
+          detectedPattern = 'chrome-swirl';
+          detectedFinish = 'chrome';
+        } else if (tipSample.brightness < 0.3) {
+          detectedFinish = 'matte';
         }
       }
+
+      extractedNails[fingerKey] = {
+        ...fallbackNails[fingerKey],
+        title: `${fingerKey.charAt(0).toUpperCase() + fingerKey.slice(1)} ${detectedPattern === 'classic-french' ? 'French Tip' : detectedPattern === 'chrome-swirl' ? 'Glazed Chrome' : detectedPattern === 'aura' ? 'Aura Gradient' : 'Lacquer'}`,
+        baseColor,
+        accentColor,
+        pattern: detectedPattern,
+        finish: detectedFinish,
+        shape: detectedShape,
+        status: 'detected',
+        clientNote: `AI vision extracted from fingertip (Tip: ${tipSample.hex}, Base: ${bedSample.hex}, Pattern: ${detectedPattern}).`,
+      };
     }
 
-    return { nails: extractedNails, handFound: true };
+    return { nails: extractedNails, handFound: true, anchors };
   } catch (err) {
     console.warn('[Finglora Vision] Nail extraction from photo error:', err);
-    return { nails: fallbackNails, handFound: false };
+    return { nails: fallbackNails, handFound: false, anchors: null };
   }
 }

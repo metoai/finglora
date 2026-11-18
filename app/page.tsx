@@ -476,7 +476,7 @@ export default function FingloraApp() {
     navigateCustomer('upload');
   };
 
-  const runHandExtractionDemo = (
+  const runHandExtractionDemo = async (
     designId: string,
     customUploadedUrl?: string
   ) => {
@@ -500,7 +500,7 @@ export default function FingloraApp() {
     // New Image Upload / Extraction Flow: runs 5-step detection and saves to cache
     const baseSample = exploreDesigns.find((d) => d.id === designId) || exploreDesigns[0];
     const newPassport = `FGL-${Math.floor(1000 + Math.random() * 9000)}`;
-    const newTitle = customUploadedUrl ? 'Custom Hand Inspo' : baseSample.title;
+    let newTitle = customUploadedUrl ? 'AI Extracted Manicure' : baseSample.title;
     const newPhotoUrl = customUploadedUrl || baseSample.photoUrl;
 
     setActiveSetId(customUploadedUrl ? `custom-${Date.now()}` : baseSample.id);
@@ -511,57 +511,123 @@ export default function FingloraApp() {
 
     setIsAnalyzingCached(false);
     setIsAnalyzing(true);
-    setAnalysisStep(0);
+    setAnalysisStep(1);
     navigateCustomer('upload');
 
-    // Run AI / MediaPipe vision extraction in the background if custom image is present
     let detectedNails = JSON.parse(JSON.stringify(baseSample.nails));
+
     if (customUploadedUrl && typeof window !== 'undefined') {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      img.src = customUploadedUrl;
-      img.onload = async () => {
+      try {
+        // Step 1: Preprocessing & Palm Alignment
+        setAnalysisStep(1);
+
+        // Convert blob/remote URL to base64 if needed for AI endpoint
+        let imageBase64: string | undefined = undefined;
         try {
-          const res = await extractNailsFromPhoto(img, baseSample.nails);
-          if (res.handFound) {
-            detectedNails = res.nails;
+          if (customUploadedUrl.startsWith('data:')) {
+            imageBase64 = customUploadedUrl;
+          } else {
+            const blobRes = await fetch(customUploadedUrl);
+            const blob = await blobRes.blob();
+            imageBase64 = await new Promise<string>((res, rej) => {
+              const reader = new FileReader();
+              reader.onloadend = () => res(reader.result as string);
+              reader.onerror = rej;
+              reader.readAsDataURL(blob);
+            });
           }
         } catch {
-          // Graceful fallback to styled preset
+          // Continue if base64 conversion failed
         }
-      };
+
+        // Step 2: Segmenting Individual Fingertips
+        setAnalysisStep(2);
+
+        // Load image for client-side MediaPipe WASM analysis
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+        img.src = customUploadedUrl;
+        await new Promise<void>((resolve) => {
+          if (img.complete && img.naturalWidth > 0) return resolve();
+          img.onload = () => resolve();
+          img.onerror = () => resolve();
+          setTimeout(resolve, 2500);
+        });
+
+        // Step 3: Neural Nail Art & Color Sampling
+        setAnalysisStep(3);
+
+        const [clientResult, serverResult] = await Promise.allSettled([
+          extractNailsFromPhoto(img, baseSample.nails),
+          fetch('/api/extract-nails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageUrl: customUploadedUrl.startsWith('http') ? customUploadedUrl : undefined,
+              imageBase64,
+            }),
+          }).then((r) => r.json()),
+        ]);
+
+        // Merge AI / MediaPipe results
+        if (serverResult.status === 'fulfilled' && serverResult.value?.data?.nails) {
+          const apiNails = serverResult.value.data.nails;
+          FINGER_KEYS.forEach((fk) => {
+            if (apiNails[fk]) {
+              detectedNails[fk] = {
+                ...detectedNails[fk],
+                ...apiNails[fk],
+                status: 'detected',
+              };
+            }
+          });
+          if (serverResult.value.data.title) {
+            newTitle = serverResult.value.data.title;
+            setActiveSetName(newTitle);
+          }
+        } else if (clientResult.status === 'fulfilled' && clientResult.value?.handFound) {
+          detectedNails = clientResult.value.nails;
+        }
+
+        // Step 4: Recipe Specs Formulation
+        setAnalysisStep(4);
+        await new Promise((r) => setTimeout(r, 200));
+
+        // Step 5: Synthesis Complete
+        setAnalysisStep(5);
+        await new Promise((r) => setTimeout(r, 300));
+      } catch (err) {
+        console.warn('[Finglora AI] Extraction completed with graceful fallback:', err);
+        setAnalysisStep(5);
+      }
+    } else {
+      // Curated sample preset quick preview flow
+      for (let s = 1; s <= 5; s++) {
+        setAnalysisStep(s);
+        await new Promise((r) => setTimeout(r, 180));
+      }
     }
 
-    let step = 0;
-    const timer = setInterval(() => {
-      step += 1;
-      setAnalysisStep(step);
-      if (step >= 5) {
-        clearInterval(timer);
-        setTimeout(() => {
-          // Apply detected nails
-          setNails(detectedNails);
+    // Apply detected nails to active atelier state
+    setNails(detectedNails);
 
-          // Persist extracted manicure set into cache
-          const extractedEntry = {
-            id: cacheKey,
-            title: newTitle,
-            photoUrl: newPhotoUrl,
-            passportCode: newPassport,
-            nails: JSON.parse(JSON.stringify(detectedNails)),
-          };
-          setInspoCache((prev) => ({
-            ...prev,
-            [cacheKey]: extractedEntry,
-            [newPhotoUrl]: extractedEntry,
-          }));
+    // Persist extracted manicure set into cache
+    const extractedEntry = {
+      id: cacheKey,
+      title: newTitle,
+      photoUrl: newPhotoUrl,
+      passportCode: newPassport,
+      nails: JSON.parse(JSON.stringify(detectedNails)),
+    };
+    setInspoCache((prev) => ({
+      ...prev,
+      [cacheKey]: extractedEntry,
+      [newPhotoUrl]: extractedEntry,
+    }));
 
-          setIsAnalyzing(false);
-          showToast('5 individual nail designs extracted & ready in studio!');
-          navigateCustomer('tryon');
-        }, 420);
-      }
-    }, 280);
+    setIsAnalyzing(false);
+    showToast('5 individual nail designs extracted & ready in studio!');
+    navigateCustomer('tryon');
   };
 
   const handleOnboardingSelectSet = (setId: string, customUrl?: string) => {

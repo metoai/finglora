@@ -21,7 +21,7 @@ import { ExploreDesignSet, Finger, NailDesign, NailFinish, NailPattern, SkinTone
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
-import { getVideoHandLandmarker, extractFingertipAnchors, FingertipAnchor } from '@/lib/vision/hand-tracker';
+import { getVideoHandLandmarker, extractFingertipAnchors, detectHandInImage, FingertipAnchor } from '@/lib/vision/hand-tracker';
 
 const AI_PRESET_MODIFIERS: {
   label: string;
@@ -36,6 +36,14 @@ const AI_PRESET_MODIFIERS: {
   { label: 'Fine Shimmer Dust', pattern: 'glitter-ombre', finish: 'glitter', color: '#C59B27' },
   { label: 'Twilight Aura', pattern: 'aura', finish: 'glossy', color: '#E0246A' },
 ];
+
+const DEFAULT_PHOTO_ANCHORS: Record<Finger, FingertipAnchor> = {
+  thumb: { finger: 'thumb', tipX: 0.22, tipY: 0.60, dipX: 0.26, dipY: 0.70, angleDeg: -28, scale: 0.95, confidence: 0.7 },
+  index: { finger: 'index', tipX: 0.36, tipY: 0.30, dipX: 0.38, dipY: 0.44, angleDeg: -10, scale: 1.0, confidence: 0.7 },
+  middle: { finger: 'middle', tipX: 0.50, tipY: 0.23, dipX: 0.50, dipY: 0.38, angleDeg: 0, scale: 1.05, confidence: 0.7 },
+  ring: { finger: 'ring', tipX: 0.64, tipY: 0.29, dipX: 0.62, dipY: 0.43, angleDeg: 10, scale: 1.0, confidence: 0.7 },
+  pinky: { finger: 'pinky', tipX: 0.78, tipY: 0.44, dipX: 0.74, dipY: 0.56, angleDeg: 22, scale: 0.88, confidence: 0.7 },
+};
 
 export function TryOnView({
   tryOnMode,
@@ -172,6 +180,46 @@ export function TryOnView({
     capturedFrameUrl ||
     activeSample?.photoUrl ||
     '/assets/editorial_nail_hero.jpg';
+
+  // Real-Time Static Photo MediaPipe Hand Landmark Fitting
+  const [photoAnchors, setPhotoAnchors] = useState<Record<Finger, FingertipAnchor> | null>(null);
+  const [isDetectingPhotoHand, setIsDetectingPhotoHand] = useState(false);
+
+  useEffect(() => {
+    if (!resultImageUrl || resultImageUrl === '/assets/editorial_nail_hero.jpg') {
+      setPhotoAnchors(null);
+      return;
+    }
+
+    let isMounted = true;
+    setIsDetectingPhotoHand(true);
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.src = resultImageUrl;
+    img.onload = async () => {
+      try {
+        const anchors = await detectHandInImage(img);
+        if (isMounted) {
+          setPhotoAnchors(anchors);
+        }
+      } catch {
+        if (isMounted) setPhotoAnchors(null);
+      } finally {
+        if (isMounted) setIsDetectingPhotoHand(false);
+      }
+    };
+    img.onerror = () => {
+      if (isMounted) {
+        setPhotoAnchors(null);
+        setIsDetectingPhotoHand(false);
+      }
+    };
+
+    return () => {
+      isMounted = false;
+    };
+  }, [resultImageUrl]);
 
   const handleSaveLook = () => {
     setSavedToast(true);
@@ -355,30 +403,60 @@ export function TryOnView({
 
             {/* Overlaid Manicure Nails (when in Design mode) */}
             {tryOnView === 'after' && (
-              <div
-                className="absolute inset-0 pointer-events-none flex items-center justify-center transition-transform duration-75"
-                style={{
-                  transform: `scale(${overlayScale / 100}) translateY(${overlayOffsetY}px)`,
-                }}
-              >
-                <div className="flex gap-2 bg-[#FFFFFF]/92 backdrop-blur-xs px-3 py-1.5 rounded-2xl border border-[rgba(31,26,28,0.12)] shadow-lg">
-                  {orderedFingers.map((fk) => (
-                    <NailCanvasPreview
+              <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                {orderedFingers.map((fk) => {
+                  const anchor = photoAnchors?.[fk] || DEFAULT_PHOTO_ANCHORS[fk];
+                  const scaleMultiplier = (anchor.scale || 1) * (overlayScale / 100);
+                  return (
+                    <div
                       key={fk}
-                      nail={nails[fk]}
-                      width={28}
-                      height={42}
-                      showCuticle={false}
-                    />
-                  ))}
-                </div>
+                      className="absolute transition-transform duration-100"
+                      style={{
+                        left: `${anchor.tipX * 100}%`,
+                        top: `${anchor.tipY * 100}%`,
+                        transform: `translate(-50%, -75%) translateY(${overlayOffsetY}px) rotate(${anchor.angleDeg}deg) scale(${scaleMultiplier})`,
+                        transformOrigin: 'center 80%',
+                      }}
+                    >
+                      <NailCanvasPreview
+                        nail={nails[fk]}
+                        width={32}
+                        height={48}
+                        showCuticle={false}
+                      />
+                    </div>
+                  );
+                })}
               </div>
             )}
 
-            {/* Subtle before/after indicator pill */}
-            <div className="absolute top-3 left-3">
+            {/* Subtle before/after indicator pill & AI Lock Status */}
+            <div className="absolute top-3 left-3 z-20">
               <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
                 {tryOnView === 'after' ? 'Applied Design' : 'Natural Hand'}
+              </span>
+            </div>
+
+            <div className="absolute top-3 right-3 z-20">
+              <span
+                className={`px-2.5 py-0.5 rounded-full backdrop-blur-md text-[10px] font-medium tracking-wide flex items-center gap-1 shadow-sm transition-all ${
+                  photoAnchors
+                    ? 'bg-[#E0246A] text-white border border-white/20'
+                    : isDetectingPhotoHand
+                    ? 'bg-black/60 text-white'
+                    : 'bg-black/60 text-stone-300'
+                }`}
+              >
+                {photoAnchors ? (
+                  <>
+                    <Sparkles className="w-2.5 h-2.5 text-white" />
+                    <span>AI Locked (5 Fingertips)</span>
+                  </>
+                ) : isDetectingPhotoHand ? (
+                  <span>Detecting hand...</span>
+                ) : (
+                  <span>Fitted to Hand</span>
+                )}
               </span>
             </div>
           </div>
