@@ -31,6 +31,8 @@ export interface NailDesign {
   clientNote: string;
   status: 'detected' | 'edited';
   details?: string[];
+  artImageUrl?: string;
+  extractedTextureUrl?: string;
 }
 
 export interface ExploreDesignSet {

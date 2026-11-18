@@ -18,7 +18,6 @@ import {
   NAIL_FINISHES,
   NAIL_LENGTHS,
   NAIL_PATTERNS,
-  NAIL_SHAPES,
 } from '@/constants/nail-data';
 import { InspirationPhotoCard } from '@/components/visuals/InspirationPhotoCard';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
@@ -578,34 +577,8 @@ export function StudioView({
             </div>
           </div>
 
-          {/* 3. Nail Silhouette & Geometry Specs (Nested 8-10px radii) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2 border-t border-[rgba(31,26,28,0.06)]">
-            {/* Shape */}
-            <div>
-              <label className="block text-xs font-medium text-[#18181B] mb-2">
-                Silhouette Shape
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {NAIL_SHAPES.map((s) => {
-                  const isActive = activeNail.shape === s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => onUpdateActiveFinger({ shape: s.id })}
-                      className={`h-8 px-2.5 rounded-lg text-xs font-medium border transition-all ${
-                        isActive
-                          ? 'bg-[#E0246A] text-white border-[#E0246A] shadow-xs'
-                          : 'bg-[#FFFFFF] text-[#61565A] border-[rgba(31,26,28,0.08)] hover:bg-[#FAFAFA]'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
+          {/* 3. Nail Specs */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-[rgba(31,26,28,0.06)]">
             {/* Length */}
             <div>
               <label className="block text-xs font-medium text-[#18181B] mb-2">

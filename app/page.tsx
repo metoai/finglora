@@ -43,7 +43,6 @@ import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/l
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture } from '@/lib/services/storage';
-import { extractNailsFromPhoto } from '@/lib/vision/hand-tracker';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -540,53 +539,49 @@ export default function FingloraApp() {
           // Continue if base64 conversion failed
         }
 
-        // Step 2: Segmenting Individual Fingertips
+        // Step 2: Extracting exact nail art designs with Free.ai Vision
         setAnalysisStep(2);
 
-        // Load image for client-side MediaPipe WASM analysis
-        const img = new Image();
-        img.crossOrigin = 'anonymous';
-        img.src = customUploadedUrl;
-        await new Promise<void>((resolve) => {
-          if (img.complete && img.naturalWidth > 0) return resolve();
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-          setTimeout(resolve, 2500);
-        });
+        // Call Free.ai exclusively
+        const aiResponse = await fetch('/api/extract-nails', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageUrl: customUploadedUrl.startsWith('http') ? customUploadedUrl : undefined,
+            imageBase64,
+          }),
+        }).then((r) => r.json());
 
-        // Step 3: Neural Nail Art & Color Sampling
+        // Step 3: Decomposing to 5 individual finger designs
         setAnalysisStep(3);
 
-        const [clientResult, serverResult] = await Promise.allSettled([
-          extractNailsFromPhoto(img, baseSample.nails),
-          fetch('/api/extract-nails', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              imageUrl: customUploadedUrl.startsWith('http') ? customUploadedUrl : undefined,
-              imageBase64,
-            }),
-          }).then((r) => r.json()),
-        ]);
-
-        // Merge AI / MediaPipe results
-        if (serverResult.status === 'fulfilled' && serverResult.value?.data?.nails) {
-          const apiNails = serverResult.value.data.nails;
+        if (aiResponse?.data?.nails) {
+          const apiNails = aiResponse.data.nails;
           FINGER_KEYS.forEach((fk) => {
             if (apiNails[fk]) {
               detectedNails[fk] = {
                 ...detectedNails[fk],
                 ...apiNails[fk],
+                artImageUrl: customUploadedUrl,
+                extractedTextureUrl: customUploadedUrl,
                 status: 'detected',
               };
             }
           });
-          if (serverResult.value.data.title) {
-            newTitle = serverResult.value.data.title;
+          if (aiResponse.data.title) {
+            newTitle = aiResponse.data.title;
             setActiveSetName(newTitle);
           }
-        } else if (clientResult.status === 'fulfilled' && clientResult.value?.handFound) {
-          detectedNails = clientResult.value.nails;
+        } else {
+          // Attach exact photo texture directly to all fingers
+          FINGER_KEYS.forEach((fk) => {
+            detectedNails[fk] = {
+              ...detectedNails[fk],
+              artImageUrl: customUploadedUrl,
+              extractedTextureUrl: customUploadedUrl,
+              status: 'detected',
+            };
+          });
         }
 
         // Step 4: Recipe Specs Formulation
@@ -598,6 +593,15 @@ export default function FingloraApp() {
         await new Promise((r) => setTimeout(r, 300));
       } catch (err) {
         console.warn('[Finglora AI] Extraction completed with graceful fallback:', err);
+        // Ensure image texture is preserved even on connection glitch
+        FINGER_KEYS.forEach((fk) => {
+          detectedNails[fk] = {
+            ...detectedNails[fk],
+            artImageUrl: customUploadedUrl,
+            extractedTextureUrl: customUploadedUrl,
+            status: 'detected',
+          };
+        });
         setAnalysisStep(5);
       }
     } else {
