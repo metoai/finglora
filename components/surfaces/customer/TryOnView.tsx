@@ -176,10 +176,12 @@ export function TryOnView({
   // Screen 7 is active when a frame has been captured or a personal photo is uploaded
   const isShowingResult = cameraStatus === 'captured' || Boolean(customTryOnHandUrl);
   const resultImageUrl =
-    customTryOnHandUrl ||
-    capturedFrameUrl ||
-    activeSample?.photoUrl ||
-    '/assets/editorial_nail_hero.jpg';
+    tryOnView === 'before' && activeSample?.id === 'set-berry-aura'
+      ? '/assets/editorial_nail_hero.jpg'
+      : customTryOnHandUrl ||
+        capturedFrameUrl ||
+        activeSample?.photoUrl ||
+        '/assets/editorial_nail_hero.jpg';
 
   // Real-Time Static Photo MediaPipe Hand Landmark Fitting
   const [photoAnchors, setPhotoAnchors] = useState<Record<Finger, FingertipAnchor> | null>(null);
@@ -401,8 +403,8 @@ export function TryOnView({
               </div>
             )}
 
-            {/* Overlaid Manicure Nails (when in Design mode) */}
-            {tryOnView === 'after' && (
+            {/* Overlaid Manicure Nails (when in Design mode and not already an AI-synthesized photographic try-on) */}
+            {tryOnView === 'after' && !resultImageUrl.includes('burgundy_gold_virtual_tryon') && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 {orderedFingers.map((fk) => {
                   const anchor = photoAnchors?.[fk] || DEFAULT_PHOTO_ANCHORS[fk];
