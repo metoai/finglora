@@ -5,6 +5,8 @@ export type NailFinish = 'glossy' | 'matte' | 'chrome' | 'glitter';
 export type NailPattern =
   | 'solid'
   | 'classic-french'
+  | 'heart-french'
+  | 'ombre-french'
   | 'aura'
   | 'floral'
   | 'chrome-swirl'

@@ -43,6 +43,8 @@ export const NAIL_FINISHES: { id: NailFinish; label: string }[] = [
 export const NAIL_PATTERNS: { id: NailPattern; label: string }[] = [
   { id: 'solid', label: 'Solid Lacquer' },
   { id: 'classic-french', label: 'Micro-French' },
+  { id: 'heart-french', label: 'Heart French' },
+  { id: 'ombre-french', label: 'Ombré French' },
   { id: 'aura', label: 'Twilight Aura' },
   { id: 'floral', label: 'Botanical Bloom' },
   { id: 'chrome-swirl', label: 'Chrome Swirl' },

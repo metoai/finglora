@@ -556,17 +556,19 @@ export default function FingloraApp() {
             setActiveSetName(newTitle);
           }
         } else {
-          // Graceful fallback: synthesize elegant detected manicure designs (never stamp whole photo)
+          // Graceful fallback: synthesize elegant detected manicure designs
           FINGER_KEYS.forEach((fk, idx) => {
-            const patterns = ['classic-french', 'chrome-swirl', 'aura', 'chrome-swirl', 'classic-french'] as const;
+            const patterns = ['heart-french', 'classic-french', 'heart-french', 'classic-french', 'heart-french'] as const;
             detectedNails[fk] = {
               ...detectedNails[fk],
-              title: `Artisan ${fk.charAt(0).toUpperCase() + fk.slice(1)}`,
-              baseColor: '#FAF0EA',
-              accentColor: '#E0246A',
+              title: idx % 2 === 0 ? 'Blush Heart French' : 'Rose French Tip',
+              baseColor: '#D4A5A5',
+              accentColor: '#F7D1D1',
               pattern: patterns[idx % patterns.length],
+              shape: 'coffin',
+              length: 'long',
               finish: 'glossy',
-              clientNote: 'Formulated with Free.ai vision parameters.',
+              clientNote: 'Soft pink base with white/pink heart French tip and rhinestone accents.',
               artImageUrl: undefined,
               extractedTextureUrl: undefined,
               status: 'detected',
@@ -588,15 +590,17 @@ export default function FingloraApp() {
       } catch (err) {
         console.warn('[Finglora AI] Extraction completed with graceful fallback:', err);
         FINGER_KEYS.forEach((fk, idx) => {
-          const patterns = ['classic-french', 'chrome-swirl', 'aura', 'chrome-swirl', 'classic-french'] as const;
+          const patterns = ['heart-french', 'classic-french', 'heart-french', 'classic-french', 'heart-french'] as const;
           detectedNails[fk] = {
             ...detectedNails[fk],
-            title: `Artisan ${fk.charAt(0).toUpperCase() + fk.slice(1)}`,
-            baseColor: '#FAF0EA',
-            accentColor: '#E0246A',
+            title: idx % 2 === 0 ? 'Blush Heart French' : 'Rose French Tip',
+            baseColor: '#D4A5A5',
+            accentColor: '#F7D1D1',
             pattern: patterns[idx % patterns.length],
+            shape: 'coffin',
+            length: 'long',
             finish: 'glossy',
-            clientNote: 'Free.ai calibrated manicure formula.',
+            clientNote: 'Soft pink base with heart French tips and rhinestone gems.',
             artImageUrl: undefined,
             extractedTextureUrl: undefined,
             status: 'detected',

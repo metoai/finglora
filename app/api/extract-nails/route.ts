@@ -5,59 +5,38 @@ interface ExtractionRequestBody {
   imageBase64?: string;
 }
 
-const MANICURE_PROMPT = `Analyze this manicure photograph in extreme visual detail.
-Extract the EXACT nail art design, colors, finish, and technique for all 5 fingers (thumb, index, middle, ring, pinky).
-Do not simplify to plain generic colors — capture the real artistry (e.g., chrome swirls, micro French tips, 3D accents, aura gradients, velvet cat-eye, floral line work, glitter ombre).
+const MANICURE_PROMPT = `You are analyzing a manicure/nail art photograph. Study every finger CAREFULLY.
 
-Return ONLY a valid JSON object matching this exact schema — no markdown fences, no explanation, raw JSON only:
+CRITICAL RULES:
+- Extract the EXACT hex color codes you see. Do NOT default to generic colors.
+- If nails have French tips with hearts drawn on them, the pattern is "heart-french".
+- If nails have gradient/ombre French tips, the pattern is "ombre-french".
+- If nails have standard white/colored French tips, the pattern is "classic-french".
+- baseColor = the main body/bed color of the nail (the larger area).
+- accentColor = the tip color, heart color, or decorative element color.
+- Detect the actual nail shape: coffin (tapered square), almond, oval, square, stiletto.
+- Detect actual length: short, medium, long.
+- In clientNote, describe gems, rhinestones, 3D elements, heart outlines, swoopy lines, glitter placement.
+
+Return ONLY valid JSON (no markdown fences, no explanation):
 {
-  "title": "Editorial Manicure Name",
+  "title": "Creative Manicure Name",
   "nails": {
     "thumb": {
       "finger": "thumb",
-      "title": "Specific Nail Art Name",
-      "baseColor": "#HEX",
-      "accentColor": "#HEX",
-      "pattern": "solid" | "classic-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
+      "title": "Descriptive Name",
+      "baseColor": "#HEX (exact color you see)",
+      "accentColor": "#HEX (tip/accent color)",
+      "pattern": "solid" | "classic-french" | "heart-french" | "ombre-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
       "finish": "glossy" | "matte" | "chrome" | "glitter",
-      "clientNote": "Detailed technician artistry recipe and layers"
+      "shape": "coffin" | "almond" | "oval" | "square" | "stiletto",
+      "length": "short" | "medium" | "long",
+      "clientNote": "Detailed description: gems, hearts, swoopy lines, rhinestones, 3D art"
     },
-    "index": {
-      "finger": "index",
-      "title": "Specific Nail Art Name",
-      "baseColor": "#HEX",
-      "accentColor": "#HEX",
-      "pattern": "solid" | "classic-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
-      "finish": "glossy" | "matte" | "chrome" | "glitter",
-      "clientNote": "Detailed technician artistry recipe and layers"
-    },
-    "middle": {
-      "finger": "middle",
-      "title": "Specific Nail Art Name",
-      "baseColor": "#HEX",
-      "accentColor": "#HEX",
-      "pattern": "solid" | "classic-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
-      "finish": "glossy" | "matte" | "chrome" | "glitter",
-      "clientNote": "Detailed technician artistry recipe and layers"
-    },
-    "ring": {
-      "finger": "ring",
-      "title": "Specific Nail Art Name",
-      "baseColor": "#HEX",
-      "accentColor": "#HEX",
-      "pattern": "solid" | "classic-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
-      "finish": "glossy" | "matte" | "chrome" | "glitter",
-      "clientNote": "Detailed technician artistry recipe and layers"
-    },
-    "pinky": {
-      "finger": "pinky",
-      "title": "Specific Nail Art Name",
-      "baseColor": "#HEX",
-      "accentColor": "#HEX",
-      "pattern": "solid" | "classic-french" | "aura" | "floral" | "chrome-swirl" | "glitter-ombre" | "minimal-line",
-      "finish": "glossy" | "matte" | "chrome" | "glitter",
-      "clientNote": "Detailed technician artistry recipe and layers"
-    }
+    "index": { "finger": "index", "title": "...", "baseColor": "#HEX", "accentColor": "#HEX", "pattern": "...", "finish": "...", "shape": "...", "length": "...", "clientNote": "..." },
+    "middle": { "finger": "middle", "title": "...", "baseColor": "#HEX", "accentColor": "#HEX", "pattern": "...", "finish": "...", "shape": "...", "length": "...", "clientNote": "..." },
+    "ring": { "finger": "ring", "title": "...", "baseColor": "#HEX", "accentColor": "#HEX", "pattern": "...", "finish": "...", "shape": "...", "length": "...", "clientNote": "..." },
+    "pinky": { "finger": "pinky", "title": "...", "baseColor": "#HEX", "accentColor": "#HEX", "pattern": "...", "finish": "...", "shape": "...", "length": "...", "clientNote": "..." }
   }
 }`;
 

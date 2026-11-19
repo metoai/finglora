@@ -32,6 +32,16 @@ export function generateTechStepsForNail(nail: NailDesign): TechStep[] {
       tool: `Feather Fan Brush • Micro-Reflective Gel ${nail.accentColor}`,
       cure: '60s LED',
     },
+    'heart-french': {
+      step3: `Over cured base (${nail.baseColor}), paint swoopy French smile line with ${nail.accentColor}, delineate delicate heart contour with 000 liner, and anchor micro crystal rhinestones near cuticle.`,
+      tool: `000 Fine Liner Brush • Art Gel ${nail.accentColor} • Crystal Rhinestones`,
+      cure: '30s LED Flash + 60s LED Full',
+    },
+    'ombre-french': {
+      step3: `Over cured base (${nail.baseColor}), blend a gradient French ombre tip from ${nail.accentColor} to base using a soft blending sponge, diffusing seamlessly before curing.`,
+      tool: `Ombre Blending Sponge • Art Gel ${nail.accentColor}`,
+      cure: '60s LED',
+    },
     'minimal-line': {
       step3: `Over cured base (${nail.baseColor}), pull an architectural 0.4mm vertical hairline along the nail axis using ${nail.accentColor} striper gel, flash-cured immediately to freeze placement.`,
       tool: `11mm Long Architectural Liner Brush • Shade ${nail.accentColor}`,

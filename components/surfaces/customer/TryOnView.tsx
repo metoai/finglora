@@ -422,8 +422,8 @@ export function TryOnView({
                     >
                       <NailCanvasPreview
                         nail={nails[fk]}
-                        width={32}
-                        height={48}
+                        width={52}
+                        height={78}
                         showCuticle={false}
                       />
                     </div>
@@ -463,18 +463,33 @@ export function TryOnView({
             </div>
           </div>
 
-          {/* Optional Millimeter Adjustment Drawer */}
+          {/* Quick Fit & Size Adjust Bar */}
+          <div className="flex items-center justify-between px-1">
+            <span className="text-xs text-stone-500 font-medium">
+              Nails need resizing to fit your cuticles?
+            </span>
+            <button
+              type="button"
+              onClick={() => setShowAdjustSliders((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] border border-pink-200 text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
+            >
+              <SlidersHorizontal className="w-3.5 h-3.5" />
+              <span>{showAdjustSliders ? 'Hide Sizing' : 'Adjust Size & Fit'}</span>
+            </button>
+          </div>
+
+          {/* Millimeter Adjustment Drawer */}
           {showAdjustSliders && (
-            <div className="grid grid-cols-2 gap-3 bg-stone-50 p-3 rounded-2xl border border-stone-200/80 animate-in fade-in duration-150">
+            <div className="grid grid-cols-2 gap-3 bg-gradient-to-r from-pink-50/70 to-stone-50 p-3.5 rounded-2xl border border-pink-200/80 animate-in fade-in duration-150">
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-stone-700">Nail Scale</span>
-                  <span className="text-[10px] font-mono text-[#E0246A]">{overlayScale}%</span>
+                  <span className="text-[11px] font-semibold text-stone-700">Nail Size</span>
+                  <span className="text-[10px] font-mono font-bold text-[#E0246A]">{overlayScale}%</span>
                 </div>
                 <input
                   type="range"
-                  min={70}
-                  max={135}
+                  min={50}
+                  max={260}
                   value={overlayScale}
                   onChange={(e) => setOverlayScale(Number(e.target.value))}
                   className="w-full accent-[#E0246A] cursor-pointer"
@@ -482,15 +497,15 @@ export function TryOnView({
               </div>
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-[11px] font-medium text-stone-700">Vertical Offset</span>
-                  <span className="text-[10px] font-mono text-[#E0246A]">
+                  <span className="text-[11px] font-semibold text-stone-700">Position Up/Down</span>
+                  <span className="text-[10px] font-mono font-bold text-[#E0246A]">
                     {overlayOffsetY > 0 ? `+${overlayOffsetY}` : overlayOffsetY}px
                   </span>
                 </div>
                 <input
                   type="range"
-                  min={-60}
-                  max={60}
+                  min={-100}
+                  max={100}
                   value={overlayOffsetY}
                   onChange={(e) => setOverlayOffsetY(Number(e.target.value))}
                   className="w-full accent-[#E0246A] cursor-pointer"
@@ -715,8 +730,8 @@ export function TryOnView({
                           >
                             <NailCanvasPreview
                               nail={nails[fk]}
-                              width={32}
-                              height={46}
+                              width={50}
+                              height={75}
                               showCuticle={false}
                             />
                           </div>
