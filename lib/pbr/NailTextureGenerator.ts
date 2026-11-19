@@ -307,7 +307,7 @@ function renderGlitterOmbre(
 }
 
 /**
- * Minimal Architectural Line
+ * Minimal Architectural & Metallic Striping Tape Line Art
  */
 function renderMinimalLine(
   ctx: CanvasRenderingContext2D,
@@ -316,18 +316,41 @@ function renderMinimalLine(
   color: string
 ) {
   ctx.save();
+  // 1. Diagonal intersecting striping line
   ctx.beginPath();
-  ctx.moveTo(w * 0.5, h * 0.1);
-  ctx.lineTo(w * 0.5, h * 0.85);
+  ctx.moveTo(w * 0.15, h * 0.2);
+  ctx.bezierCurveTo(w * 0.45, h * 0.45, w * 0.55, h * 0.55, w * 0.85, h * 0.85);
   ctx.strokeStyle = color;
-  ctx.lineWidth = 18;
+  ctx.lineWidth = 14;
   ctx.lineCap = 'round';
   ctx.stroke();
 
+  // White chrome highlight
   ctx.beginPath();
-  ctx.arc(w * 0.5, h * 0.85, 24, 0, Math.PI * 2);
-  ctx.fillStyle = color;
-  ctx.fill();
+  ctx.moveTo(w * 0.17, h * 0.2);
+  ctx.bezierCurveTo(w * 0.46, h * 0.45, w * 0.56, h * 0.55, w * 0.86, h * 0.85);
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 4;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // 2. Transverse curved smile-band
+  ctx.beginPath();
+  ctx.moveTo(w * 0.1, h * 0.58);
+  ctx.bezierCurveTo(w * 0.4, h * 0.68, w * 0.6, h * 0.68, w * 0.9, h * 0.58);
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 12;
+  ctx.lineCap = 'round';
+  ctx.stroke();
+
+  // White chrome highlight for band
+  ctx.beginPath();
+  ctx.moveTo(w * 0.1, h * 0.57);
+  ctx.bezierCurveTo(w * 0.4, h * 0.67, w * 0.6, h * 0.67, w * 0.9, h * 0.57);
+  ctx.strokeStyle = '#FFFFFF';
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
   ctx.restore();
 }
 
