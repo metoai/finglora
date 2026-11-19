@@ -49,7 +49,6 @@ export function NailCanvasPreview({
   const tipDepth = topY + (bottomY - topY) * 0.28;
   const auraCy = topY + (bottomY - topY) * 0.52;
   const fy = topY + (bottomY - topY) * 0.54;
-  const hasTexture = Boolean(nail.artImageUrl || nail.extractedTextureUrl);
 
   return (
     <svg
@@ -62,9 +61,16 @@ export function NailCanvasPreview({
         <clipPath id={`clip-${uid}`}>
           <path d={pathD} />
         </clipPath>
+        <linearGradient id={`apex-shading-${uid}`} x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stopColor="#000000" stopOpacity="0.14" />
+          <stop offset="20%" stopColor="#FFFFFF" stopOpacity="0.08" />
+          <stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.22" />
+          <stop offset="80%" stopColor="#FFFFFF" stopOpacity="0.06" />
+          <stop offset="100%" stopColor="#000000" stopOpacity="0.18" />
+        </linearGradient>
         <radialGradient id={`aura-${uid}`} cx="50%" cy="52%" r="45%">
-          <stop offset="0%" stopColor={nail.accentColor} stopOpacity="0.92" />
-          <stop offset="65%" stopColor={nail.accentColor} stopOpacity="0.42" />
+          <stop offset="0%" stopColor={nail.accentColor} stopOpacity="0.95" />
+          <stop offset="65%" stopColor={nail.accentColor} stopOpacity="0.45" />
           <stop offset="100%" stopColor={nail.baseColor} stopOpacity="0" />
         </radialGradient>
         <linearGradient id={`glit-${uid}`} x1="0" y1="1" x2="0" y2="0">
@@ -79,9 +85,9 @@ export function NailCanvasPreview({
           <stop offset="100%" stopColor="#18181B" stopOpacity="0.12" />
         </linearGradient>
         <linearGradient id={`specular-${uid}`} x1="0" y1="0" x2="1" y2="1">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.5" />
+          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.55" />
           <stop offset="35%" stopColor="#FFFFFF" stopOpacity="0.04" />
-          <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0.25" />
+          <stop offset="70%" stopColor="#FFFFFF" stopOpacity="0.30" />
           <stop offset="100%" stopColor="#000000" stopOpacity="0.12" />
         </linearGradient>
       </defs>
@@ -95,30 +101,18 @@ export function NailCanvasPreview({
       )}
 
       <g clipPath={`url(#clip-${uid})`}>
-        {nail.artImageUrl || nail.extractedTextureUrl ? (
-          <>
-            <image
-              href={nail.artImageUrl || nail.extractedTextureUrl}
-              x={leftX - 4}
-              y={topY - 4}
-              width={nailW + 8}
-              height={nailH + 14}
-              preserveAspectRatio="xMidYMid slice"
-            />
-            <rect
-              x={leftX - 4}
-              y={topY - 4}
-              width={nailW + 8}
-              height={nailH + 14}
-              fill={`url(#specular-${uid})`}
-              pointerEvents="none"
-            />
-          </>
-        ) : (
-          <rect x={leftX - 4} y={topY - 4} width={nailW + 8} height={nailH + 14} fill={nail.baseColor} />
-        )}
+        {/* Base Color Lacquer */}
+        <rect x={leftX - 4} y={topY - 4} width={nailW + 8} height={nailH + 14} fill={nail.baseColor} />
 
-        {!hasTexture && (
+        {/* Volumetric Apex Curvature Illumination */}
+        <rect
+          x={leftX - 4}
+          y={topY - 4}
+          width={nailW + 8}
+          height={nailH + 14}
+          fill={`url(#apex-shading-${uid})`}
+          pointerEvents="none"
+        />
           <>
             {nail.pattern === 'classic-french' && (
               <path
@@ -222,7 +216,6 @@ export function NailCanvasPreview({
               </g>
             )}
           </>
-        )}
       </g>
 
       <path d={pathD} fill="none" stroke="rgba(36, 19, 27, 0.14)" strokeWidth="1.2" />
