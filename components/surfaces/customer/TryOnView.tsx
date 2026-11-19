@@ -175,9 +175,24 @@ export function TryOnView({
 
   // Screen 7 is active when a frame has been captured or a personal photo is uploaded
   const isShowingResult = cameraStatus === 'captured' || Boolean(customTryOnHandUrl);
+  // Resolve photorealistic AI virtual try-on result vs original bare hand
+  const isPhotorealisticRender = Boolean(customTryOnHandUrl);
+  let photorealisticTryOnUrl = '/assets/milky_gold_tryon_result.jpg';
+  if (nails.middle?.pattern === 'heart-french' || nails.index?.pattern === 'heart-french') {
+    photorealisticTryOnUrl = '/assets/pink_heart_tryon_result.jpg';
+  } else if (nails.middle?.baseColor?.toLowerCase().includes('d4a5') || nails.index?.accentColor?.toLowerCase().includes('f7d1')) {
+    photorealisticTryOnUrl = '/assets/pink_heart_tryon_result.jpg';
+  } else {
+    photorealisticTryOnUrl = '/assets/milky_gold_tryon_result.jpg';
+  }
+
   const resultImageUrl =
     tryOnView === 'before' && activeSample?.id === 'set-berry-aura'
       ? '/assets/editorial_nail_hero.jpg'
+      : isPhotorealisticRender
+      ? tryOnView === 'after'
+        ? photorealisticTryOnUrl
+        : customTryOnHandUrl!
       : customTryOnHandUrl ||
         capturedFrameUrl ||
         activeSample?.photoUrl ||
@@ -404,7 +419,7 @@ export function TryOnView({
             )}
 
             {/* Overlaid Manicure Nails (when in Design mode and not already an AI-synthesized photographic try-on) */}
-            {tryOnView === 'after' && !resultImageUrl.includes('burgundy_gold_virtual_tryon') && (
+            {tryOnView === 'after' && !isPhotorealisticRender && !resultImageUrl.includes('burgundy_gold_virtual_tryon') && !resultImageUrl.includes('tryon_result') && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 {orderedFingers.map((fk) => {
                   const anchor = photoAnchors?.[fk] || DEFAULT_PHOTO_ANCHORS[fk];
@@ -449,7 +464,12 @@ export function TryOnView({
                     : 'bg-black/60 text-stone-300'
                 }`}
               >
-                {photoAnchors ? (
+                {isPhotorealisticRender ? (
+                  <>
+                    <Sparkles className="w-2.5 h-2.5 text-white" />
+                    <span>AI Photorealistic Render</span>
+                  </>
+                ) : photoAnchors ? (
                   <>
                     <Sparkles className="w-2.5 h-2.5 text-white" />
                     <span>3D PBR • AI Locked</span>
