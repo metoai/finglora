@@ -452,12 +452,12 @@ export function TryOnView({
                 {photoAnchors ? (
                   <>
                     <Sparkles className="w-2.5 h-2.5 text-white" />
-                    <span>AI Locked (5 Fingertips)</span>
+                    <span>3D PBR • AI Locked</span>
                   </>
                 ) : isDetectingPhotoHand ? (
                   <span>Detecting hand...</span>
                 ) : (
-                  <span>Fitted to Hand</span>
+                  <span>3D PBR Fitted</span>
                 )}
               </span>
             </div>
