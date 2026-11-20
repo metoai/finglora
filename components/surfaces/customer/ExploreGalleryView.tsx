@@ -31,25 +31,25 @@ const CATEGORY_TAGS: FilterTag[] = [
   {
     id: 'short',
     label: 'Short',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=200&q=80',
+    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
     queryMatch: 'short',
   },
   {
     id: 'simple',
     label: 'Simple',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=200&q=80',
+    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
     queryMatch: 'simple',
   },
   {
     id: 'french',
     label: 'French',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=200&q=80',
+    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
     queryMatch: 'french',
   },
   {
     id: 'cat-eye',
     label: 'Cat Eye',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=200&q=80',
+    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     queryMatch: 'cat eye',
   },
   {
@@ -61,13 +61,13 @@ const CATEGORY_TAGS: FilterTag[] = [
   {
     id: 'red',
     label: 'Red Wine',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=200&q=80',
+    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     queryMatch: 'red',
   },
   {
     id: 'pink',
     label: 'Pink Blush',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=200&q=80',
+    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
     queryMatch: 'pink',
   },
   {
@@ -79,7 +79,7 @@ const CATEGORY_TAGS: FilterTag[] = [
   {
     id: 'black',
     label: 'Black Minimal',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1583001809873-a128495da465?w=200&q=80',
+    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
     queryMatch: 'black',
   },
   {
@@ -97,19 +97,19 @@ const CATEGORY_TAGS: FilterTag[] = [
   {
     id: 'almond',
     label: 'Almond',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=200&q=80',
+    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
     queryMatch: 'almond',
   },
   {
     id: 'coffin',
     label: 'Coffin',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
+    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     queryMatch: 'coffin',
   },
   {
     id: 'gel',
     label: 'Gel Gloss',
-    thumbnailUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=200&q=80',
+    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
     queryMatch: 'gel',
   },
 ];
@@ -151,7 +151,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-nude-clean',
     title: 'Simple Yet Beautiful Clean Girl Nude Manicure',
-    photoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=700&q=80',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
     aspectClass: 'aspect-[3/4]',
     tags: ['simple', 'short', 'gel'],
     shape: 'almond',
@@ -159,7 +159,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-burgundy-marble',
     title: 'Burgundy Marble Nails with 24K Gold Leaf Details',
-    photoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=700&q=80',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     aspectClass: 'aspect-[3/4.5]',
     tags: ['red', 'mocha', 'chrome'],
     shape: 'almond',
@@ -167,7 +167,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-pink-aura',
     title: 'Rose Quartz & Pearl Glaze with Micro Bows 🎀',
-    photoUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=700&q=80',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
     aspectClass: 'aspect-[3/4.2]',
     tags: ['pink', 'chrome', 'coquette'],
     shape: 'almond',
@@ -175,7 +175,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-classic-french',
     title: 'Classic Almond French Smile Curve on Sheer Pink',
-    photoUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=700&q=80',
+    photoUrl: '/images/ar-nail-hero-pearl.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['french', 'simple', 'gel'],
     shape: 'almond',
@@ -183,7 +183,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-short-minimal',
     title: 'Clean Minimalist Sheer Lacquer with High Gloss',
-    photoUrl: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=700&q=80',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
     aspectClass: 'aspect-[3/3.9]',
     tags: ['short', 'simple', 'square'],
     shape: 'square',
@@ -191,7 +191,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-cat-eye-shimmer',
     title: 'Velvet Cat Eye Magnetic Gel Polish with Halo Effect',
-    photoUrl: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=700&q=80',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     aspectClass: 'aspect-[3/4.6]',
     tags: ['cat eye', 'chrome', 'gel'],
     shape: 'almond',
@@ -199,7 +199,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-black-coquette',
     title: 'Black Velvet French with Chrome Butterfly Art 🖤',
-    photoUrl: 'https://images.unsplash.com/photo-1583001809873-a128495da465?w=700&q=80',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['black', 'coquette', 'french'],
     shape: 'coffin',
@@ -223,7 +223,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-french-clean',
     title: 'Clean Aesthetic French Tips on Long Almond',
-    photoUrl: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=700&q=80',
+    photoUrl: '/images/ar-nail-hero-pearl.jpg',
     aspectClass: 'aspect-[3/4.2]',
     tags: ['french', 'simple', 'gel'],
     shape: 'almond',
@@ -231,7 +231,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-mauve-nude',
     title: 'Dusty Rose Petals on Sheer Mauve Almond',
-    photoUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=80',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['pink', 'simple'],
     shape: 'almond',
@@ -239,7 +239,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-champagne-dust',
     title: 'Champagne Gold Fine Shimmer Gel Manicure ✨',
-    photoUrl: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=700&q=80',
+    photoUrl: '/assets/milky_gold_tryon_result.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['chrome', 'cat eye', 'gel'],
     shape: 'almond',
@@ -287,7 +287,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-nude-french-clean',
     title: 'Micro French Smile Line on Short Natural Nails',
-    photoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=700&q=80',
+    photoUrl: '/images/ar-nail-hero.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['short', 'french', 'simple'],
     shape: 'almond',
