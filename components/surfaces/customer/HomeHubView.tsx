@@ -359,7 +359,6 @@ export function HomeHubView({
       {/* 2. AI Creation Studio Box with Generous Height & No Word Repetitions */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 px-1">
-          <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
           <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
             Design with AI
           </h2>

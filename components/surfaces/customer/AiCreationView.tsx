@@ -8,7 +8,6 @@ import {
   X,
   Download,
   Share2,
-  Sparkles,
   ChevronDown,
   Plus,
   Hand,
@@ -341,73 +340,71 @@ export function AiCreationView({
       {exportToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
           <div className="bg-[#181416] text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <Check className="w-3.5 h-3.5 text-[#E0246A]" />
             <span>{exportToast}</span>
           </div>
         </div>
       )}
 
-      {/* 1. ChatGPT-Style Clean White Header */}
-      <header className="h-13 sm:h-14 border-b border-stone-200/80 px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white z-20">
-        {/* Left: Back button + Model dropdown badge */}
-        <div className="flex items-center gap-2 sm:gap-3">
+      {/* 1. Clean, Spacious Header (Simplified on Mobile) */}
+      <header className="h-12 sm:h-14 border-b border-stone-200/80 px-2.5 sm:px-6 flex items-center justify-between shrink-0 bg-white z-20 gap-2">
+        {/* Left: Back button + Model badge */}
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
           {onBackToTryOn && (
             <button
               type="button"
               onClick={onBackToTryOn}
-              className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-600 hover:text-stone-900 transition cursor-pointer active:scale-95"
+              className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-600 hover:text-stone-900 transition cursor-pointer active:scale-95 shrink-0"
               title="Back to Virtual Try-On"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
 
-          {/* ChatGPT Model Selector Pill */}
-          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-stone-100 transition cursor-pointer group">
-            <span className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight">
+          {/* Model Title: Single line without wrapping */}
+          <div className="flex items-center gap-1.5 py-1 select-none">
+            <span className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight whitespace-nowrap">
               Finglora AI
             </span>
-            <span className="text-[11px] font-medium text-stone-400 group-hover:text-stone-600 hidden sm:inline">
+            <span className="text-[11px] font-medium text-stone-400 hidden sm:inline">
               Vision 3.1
             </span>
-            <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600" />
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 hidden sm:inline" />
           </div>
         </div>
 
-        {/* Center on Mobile: Tab toggle between Chat and Hand Canvas */}
-        <div className="flex lg:hidden items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/70">
+        {/* Center on Mobile: Compact [Chat | Hand] Toggle */}
+        <div className="flex lg:hidden items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/60 shrink-0">
           <button
             type="button"
             onClick={() => setMobileActiveTab('chat')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
               mobileActiveTab === 'chat'
                 ? 'bg-white text-stone-900 shadow-2xs font-semibold'
                 : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            <MessageSquare className="w-3 h-3" />
-            <span>Chat</span>
+            Chat
           </button>
           <button
             type="button"
             onClick={() => setMobileActiveTab('canvas')}
-            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
               mobileActiveTab === 'canvas'
                 ? 'bg-white text-stone-900 shadow-2xs font-semibold'
                 : 'text-stone-500 hover:text-stone-800'
             }`}
           >
-            <Hand className="w-3 h-3 text-[#E0246A]" />
-            <span>Hand Canvas</span>
+            Hand
           </button>
         </div>
 
-        {/* Right: Quick Actions (+ New Look, Download HD, Share) */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right: Clean Actions (Single '+' on mobile, full actions on sm+) */}
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
           <button
             type="button"
             onClick={handleStartNewLook}
-            className="h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+            className="h-8 px-2.5 sm:px-3 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
             title="Start fresh look"
           >
             <Plus className="w-3.5 h-3.5" />
@@ -418,7 +415,7 @@ export function AiCreationView({
             type="button"
             onClick={() => handleDownloadBrandedLook(currentTryOnImage)}
             disabled={isExporting}
-            className="w-8 h-8 rounded-full hover:bg-stone-100 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 disabled:opacity-50"
+            className="hidden sm:flex w-8 h-8 rounded-full hover:bg-stone-100 text-stone-700 items-center justify-center transition cursor-pointer active:scale-95 disabled:opacity-50"
             title="Download high-resolution image"
           >
             <Download className="w-4 h-4" />
@@ -428,7 +425,7 @@ export function AiCreationView({
             type="button"
             onClick={() => handleShareToStory(currentTryOnImage)}
             disabled={isExporting}
-            className="w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
+            className="hidden sm:flex w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
             title="Share to Instagram Story"
           >
             <Share2 className="w-3.5 h-3.5" />
@@ -558,8 +555,8 @@ export function AiCreationView({
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto py-8 sm:py-12 space-y-6 animate-in fade-in duration-300">
                 {/* Brand Monogram */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shadow-2xs">
-                  <Sparkles className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={1.75} />
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-stone-900 text-white flex items-center justify-center shadow-2xs font-serif text-2xl sm:text-3xl font-bold">
+                  F
                 </div>
 
                 <div className="space-y-1.5">
@@ -615,8 +612,8 @@ export function AiCreationView({
                   return (
                     <div key={msg.id} className="flex gap-3 sm:gap-4 items-start animate-in fade-in duration-200">
                       {/* Avatar */}
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
-                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-stone-900 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs text-[10px] sm:text-[11px] font-bold">
+                        AI
                       </div>
 
                       {/* Content */}
@@ -734,8 +731,8 @@ export function AiCreationView({
                 {/* Loading / Generating State in thread */}
                 {isIterating && (
                   <div className="flex gap-3 sm:gap-4 items-start animate-in fade-in duration-200">
-                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
-                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-stone-100 border border-stone-200 text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
+                      <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-[#E0246A]" />
                     </div>
                     <div className="space-y-1 py-1">
                       <div className="flex items-center gap-2">
