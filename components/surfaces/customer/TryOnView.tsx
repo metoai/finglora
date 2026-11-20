@@ -241,7 +241,7 @@ export function TryOnView({
   }, [synthesizedHandUrl, isSynthesizingHand]);
 
   return (
-    <div className="max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto w-full px-3 sm:px-6 py-4 lg:py-8">
+    <div className="max-w-4xl lg:max-w-5xl mx-auto w-full px-4 sm:px-6 py-3 sm:py-6">
       {/* Toast Notification */}
       {customizedToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -253,10 +253,10 @@ export function TryOnView({
       )}
 
       {/* ============================================================== */}
-      {/* SCREEN 7: YOUR TRY-ON RESULT (BIG ON DESKTOP)                  */}
+      {/* SCREEN 7: YOUR TRY-ON RESULT                                   */}
       {/* ============================================================== */}
       {isShowingResult ? (
-        <div className="space-y-6">
+        <div className="space-y-5">
           {/* Top Bar */}
           <div className="flex items-center justify-between pb-2 border-b border-stone-200/60">
             <button
@@ -270,7 +270,7 @@ export function TryOnView({
             </button>
 
             <div className="text-center">
-              <h1 className="font-serif text-xl sm:text-2xl lg:text-3xl font-normal text-[#18181B] tracking-tight">
+              <h1 className="font-serif text-xl sm:text-2xl font-normal text-[#18181B] tracking-tight">
                 Try-On Result
               </h1>
             </div>
@@ -288,17 +288,17 @@ export function TryOnView({
             </div>
           </div>
 
-          {/* Desktop 2-Column Grid: Left BIG Hand Viewport + Right Actions */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-            {/* Left Column: BIG Hand Photo Viewport */}
-            <div className="lg:col-span-7 xl:col-span-8 space-y-4">
+          {/* Desktop 2-Column Grid: Balanced 6/6 Split with Proportioned Hand Viewport */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* Left Column: Proportioned Hand Photo Viewport */}
+            <div className="lg:col-span-6 space-y-3 flex flex-col items-center">
               {/* Pill Toggle: [Natural Hand] [Manicure] */}
-              <div className="flex items-center justify-between">
+              <div className="w-full max-w-[380px] sm:max-w-[420px] flex items-center justify-between">
                 <div className="inline-flex rounded-full bg-stone-100 p-1 border border-stone-200/80 shadow-2xs">
                   <button
                     type="button"
                     onClick={() => setTryOnView('before')}
-                    className={`px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm transition cursor-pointer ${
+                    className={`px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs transition cursor-pointer ${
                       tryOnView === 'before'
                         ? 'bg-[#E0246A] text-white shadow-xs font-semibold'
                         : 'text-stone-600 hover:text-stone-900 font-medium'
@@ -309,7 +309,7 @@ export function TryOnView({
                   <button
                     type="button"
                     onClick={() => setTryOnView('after')}
-                    className={`px-4 py-1.5 sm:px-5 sm:py-2 rounded-full text-xs sm:text-sm transition cursor-pointer ${
+                    className={`px-3.5 py-1.5 sm:px-4 sm:py-1.5 rounded-full text-xs transition cursor-pointer ${
                       tryOnView === 'after'
                         ? 'bg-[#E0246A] text-white shadow-xs font-semibold'
                         : 'text-stone-600 hover:text-stone-900 font-medium'
@@ -323,8 +323,8 @@ export function TryOnView({
                 </span>
               </div>
 
-              {/* Hand Result Photo Viewport - BIG on Desktop */}
-              <div className="relative aspect-[3/4] max-h-[540px] sm:max-h-[620px] lg:max-h-[700px] xl:max-h-[760px] w-full rounded-3xl overflow-hidden bg-stone-100 shadow-xl border border-stone-200/90 flex items-center justify-center mx-auto transition-all duration-300">
+              {/* Hand Result Photo Viewport - Tastefully Sized */}
+              <div className="relative aspect-[3/4] max-h-[440px] sm:max-h-[480px] lg:max-h-[500px] w-full max-w-[380px] sm:max-w-[420px] rounded-3xl overflow-hidden bg-stone-100 shadow-md border border-stone-200/90 flex items-center justify-center mx-auto transition-all duration-300">
                 <img
                   src={
                     (tryOnView === 'after' && synthesizedHandUrl)
@@ -337,15 +337,15 @@ export function TryOnView({
 
                 {/* Spinner Overlay */}
                 {isSynthesizingHand && (
-                  <div className="absolute inset-0 z-30 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center">
-                    <div className="w-10 h-10 rounded-full border-3 border-white/20 border-t-white animate-spin" />
-                    <span className="text-sm font-medium tracking-wide">Applying manicure to your hand...</span>
+                  <div className="absolute inset-0 z-30 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center gap-2.5 text-white p-6 text-center">
+                    <div className="w-8 h-8 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                    <span className="text-xs font-medium tracking-wide">Applying manicure to your hand...</span>
                   </div>
                 )}
 
                 {/* Subtle before/after indicator */}
-                <div className="absolute top-4 left-4 z-20">
-                  <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium tracking-wide">
+                <div className="absolute top-3.5 left-3.5 z-20">
+                  <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[11px] font-medium tracking-wide">
                     {synthesizedHandUrl && tryOnView === 'after' ? 'Manicure' : 'Natural Hand'}
                   </span>
                 </div>
@@ -353,7 +353,7 @@ export function TryOnView({
             </div>
 
             {/* Right Column: Actions & Details */}
-            <div className="lg:col-span-5 xl:col-span-4 space-y-5 lg:sticky lg:top-8">
+            <div className="lg:col-span-6 space-y-4">
               {/* Reference Inspo Look Preview Card */}
               {activePhotoUrl && (
                 <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-2xs space-y-3">
@@ -361,8 +361,8 @@ export function TryOnView({
                     <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold">
                       Reference Design
                     </span>
-                    <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-stone-100 text-stone-600">
-                      Active Inspo
+                    <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[#E0246A] border border-rose-100/80 capitalize">
+                      {activeSample?.category || 'Manicure'}
                     </span>
                   </div>
                   <div className="flex items-center gap-3.5">
@@ -627,12 +627,12 @@ export function TryOnView({
             </button>
           </div>
 
-          {/* Desktop 2-Column Studio Grid: Left Viewfinder (7-8 cols) + Right Quick Reference Inspo (4-5 cols) */}
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+          {/* Desktop 2-Column Studio Grid: Balanced 6/6 Split */}
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* Left Column: Hand Photo Viewfinder Box */}
-            <div className="lg:col-span-7 xl:col-span-8">
-              <div className="relative aspect-[3/4] max-h-[540px] sm:max-h-[620px] lg:max-h-[700px] w-full rounded-3xl overflow-hidden bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center p-8 sm:p-12 text-center space-y-6 mx-auto hover:border-[#E0246A]/50 transition-colors shadow-2xs">
-                <div className="w-20 h-20 rounded-3xl bg-[#FDF2F8] border border-[#E0246A]/20 text-[#E0246A] flex items-center justify-center shadow-xs">
+            <div className="lg:col-span-6 flex justify-center">
+              <div className="relative aspect-[3/4] max-h-[440px] sm:max-h-[480px] lg:max-h-[500px] w-full max-w-[380px] sm:max-w-[420px] rounded-3xl overflow-hidden bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center p-6 sm:p-8 text-center space-y-5 mx-auto hover:border-[#E0246A]/50 transition-colors shadow-2xs">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-3xl bg-[#FDF2F8] border border-[#E0246A]/20 text-[#E0246A] flex items-center justify-center shadow-xs">
                   <Hand className="w-10 h-10" strokeWidth={1.5} />
                 </div>
 
@@ -706,7 +706,7 @@ export function TryOnView({
             </div>
 
             {/* Right Column: Quick Reference Inspo */}
-            <div className="lg:col-span-5 xl:col-span-4 space-y-4">
+            <div className="lg:col-span-6 space-y-4">
               <div className="bg-white rounded-3xl p-5 border border-stone-200/90 shadow-2xs space-y-4">
                 <div className="flex items-center justify-between pb-3 border-b border-stone-100">
                   <div>
