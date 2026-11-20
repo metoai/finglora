@@ -76,31 +76,4 @@ export async function slice5NailSetImage(
   });
 }
 
-/**
- * Calls Vertex AI gemini-3.1-flash-image to generate an authentic AI nail art image for an individual finger.
- */
-export async function generateSingleFingerAiImage(
-  finger: Finger,
-  shape: string,
-  designPrompt: string
-): Promise<string | null> {
-  try {
-    const res = await fetch('/api/generate-nail-art', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        mode: 'single-nail',
-        finger,
-        nailShape: shape,
-        prompt: designPrompt,
-      }),
-    });
-    if (res.ok) {
-      const data = await res.json();
-      return data.imageUrl || null;
-    }
-  } catch (err) {
-    console.warn('[Finglora AI] Single finger AI generation error:', err);
-  }
-  return null;
-}
+

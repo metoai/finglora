@@ -45,7 +45,7 @@ import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
-import { slice5NailSetImage, generateSingleFingerAiImage } from '@/lib/services/nail-image-processor';
+import { slice5NailSetImage } from '@/lib/services/nail-image-processor';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -797,57 +797,7 @@ export default function FingloraApp() {
     showToast(`Undid last edit on ${FINGER_LABELS[selectedFinger]}`);
   };
 
-  const regenerateSingleFinger = async (fk: Finger) => {
-    setFingerHistory((prev) => ({
-      ...prev,
-      [fk]: [...(prev[fk] || []), JSON.parse(JSON.stringify(nails[fk]))],
-    }));
-    const current = nails[fk];
-    const patternIds = NAIL_PATTERNS.map((p) => p.id);
-    const hexes = COLOR_PALETTE.map((c) => c.hex);
-    const finishIds = NAIL_FINISHES.map((f) => f.id);
-    const newPattern = patternIds[(patternIds.indexOf(current.pattern) + 1) % patternIds.length];
-    const newAccent = hexes[(hexes.indexOf(current.accentColor) + 2) % hexes.length];
-    const newFinish = finishIds[(finishIds.indexOf(current.finish) + 1) % finishIds.length];
 
-    setNails((prev) => ({
-      ...prev,
-      [fk]: {
-        ...current,
-        title: `${FINGER_LABELS[fk]} Variation`,
-        pattern: newPattern,
-        accentColor: newAccent,
-        finish: newFinish,
-        status: 'edited',
-      },
-    }));
-    showToast(`Synthesizing new AI design for ${FINGER_LABELS[fk]}...`);
-
-    try {
-      const res = await fetch('/api/generate-nail-art', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          mode: 'single-nail',
-          finger: fk,
-          nailShape: current.shape,
-          prompt: `${newPattern} nail art in ${current.baseColor} and ${newAccent} lacquer with ${newFinish} finish`,
-        }),
-      });
-      if (res.ok) {
-        const json = await res.json();
-        if (json.imageUrl) {
-          setNails((prev) => ({
-            ...prev,
-            [fk]: { ...prev[fk], artImageUrl: json.imageUrl, status: 'edited' },
-          }));
-          showToast(`Generated new AI art for ${FINGER_LABELS[fk]}!`);
-        }
-      }
-    } catch {
-      // Fallback already in state
-    }
-  };
 
   const applySelectedToAllFive = () => {
     const source = nails[selectedFinger];
@@ -990,7 +940,6 @@ export default function FingloraApp() {
             onBrandClick={() => navigateSurface('landing')}
             onTuneVibeClick={() => navigateSurface('onboarding')}
             onSelectFinger={handleSelectFinger}
-            onRegenerateFinger={regenerateSingleFinger}
             onUndoFingerEdit={undoFingerEdit}
             onUpdateActiveFinger={updateActiveFinger}
             onOpenApplyAllModal={() => setShowApplyAllModal(true)}

@@ -76,7 +76,6 @@ export function CustomerApp({
   onBrandClick,
   onTuneVibeClick,
   onSelectFinger,
-  onRegenerateFinger,
   onUndoFingerEdit,
   onUpdateActiveFinger,
   onOpenApplyAllModal,
@@ -146,7 +145,6 @@ export function CustomerApp({
   onBrandClick: () => void;
   onTuneVibeClick: () => void;
   onSelectFinger: (fk: Finger) => void;
-  onRegenerateFinger: (fk: Finger) => void;
   onUndoFingerEdit: () => void;
   onUpdateActiveFinger: (patch: Partial<NailDesign>) => void;
   onOpenApplyAllModal: () => void;

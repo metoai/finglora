@@ -3,15 +3,14 @@ import { NextResponse } from 'next/server';
 interface GenerateRequestBody {
   prompt: string;
   handImageBase64?: string;
-  mode?: '5-nail-set' | 'single-nail' | 'hand-tryon';
+  mode?: '5-nail-set' | 'hand-tryon';
   nailShape?: string;
-  finger?: string;
 }
 
 export async function POST(request: Request) {
   try {
     const body: GenerateRequestBody = await request.json();
-    const { prompt, handImageBase64, mode = 'hand-tryon', nailShape = 'almond', finger = 'middle' } = body;
+    const { prompt, handImageBase64, mode = 'hand-tryon', nailShape = 'almond' } = body;
 
     if (!prompt) {
       return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
@@ -31,8 +30,6 @@ export async function POST(request: Request) {
     let promptText = '';
     if (mode === '5-nail-set') {
       promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish.`;
-    } else if (mode === 'single-nail') {
-      promptText = `Macro studio close-up of a single isolated manicured fingernail for ${finger} finger, ${nailShape} shape, design: ${prompt}. Isolated on clean neutral white background, salon product photography, top-down view, high-gloss gel finish.`;
     } else {
       promptText = `You are an expert nail artist AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Natural lighting, high-gloss gel clearcoat, perfect cuticle margin, realistic skin texture.`;
     }

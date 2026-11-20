@@ -3,7 +3,6 @@
 import React, { useState } from 'react';
 import {
   ArrowLeftRight,
-  RefreshCw,
   Undo2,
   Pipette,
   Check,
@@ -50,7 +49,6 @@ export function StudioView({
   nails,
   mobilePreview,
   onSelectFinger,
-  onRegenerateFinger,
   onUndoFingerEdit,
   onUpdateActiveFinger,
   onOpenApplyAllModal,
@@ -73,7 +71,6 @@ export function StudioView({
   nails: Record<Finger, NailDesign>;
   mobilePreview: boolean;
   onSelectFinger: (fk: Finger) => void;
-  onRegenerateFinger: (fk: Finger) => void;
   onUndoFingerEdit: () => void;
   onUpdateActiveFinger: (patch: Partial<NailDesign>) => void;
   onOpenApplyAllModal: () => void;
@@ -300,17 +297,6 @@ export function StudioView({
                     ? 'Active Focus'
                     : 'Select'}
                 </span>
-                <button
-                  type="button"
-                  title="Regenerate this finger"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onRegenerateFinger(fk);
-                  }}
-                  className="p-1 rounded-lg text-[#8C8085] hover:text-[#E0246A] hover:bg-[#FAFAFA] transition-colors"
-                >
-                  <RefreshCw className="w-3.5 h-3.5" strokeWidth={1.5} />
-                </button>
               </div>
             </div>
           );
@@ -348,14 +334,6 @@ export function StudioView({
                 className="h-8 w-8 rounded-lg bg-[#FAFAFA] hover:bg-[#F4F4F5] text-[#18181B] border border-[rgba(31,26,28,0.08)] flex items-center justify-center transition-all"
               >
                 <Undo2 className="w-3.5 h-3.5" strokeWidth={1.5} />
-              </button>
-              <button
-                type="button"
-                onClick={() => onRegenerateFinger(selectedFinger)}
-                className="h-8 px-2.5 rounded-lg bg-[#FAFAFA] hover:bg-[#F4F4F5] text-[#E0246A] border border-[rgba(31,26,28,0.08)] text-xs font-medium inline-flex items-center gap-1.5 transition-all"
-              >
-                <RefreshCw className="w-3 h-3" strokeWidth={1.5} />
-                <span>Re-roll</span>
               </button>
             </div>
           </div>
