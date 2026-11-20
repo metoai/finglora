@@ -49,40 +49,41 @@ export function NailCanvasPreview({
   const isFinger = showFinger;
   const lengthScale = nail.length === 'short' ? 0.82 : nail.length === 'long' ? 1.15 : 0.98;
   const nailWidth = Math.round(width * (isFinger ? 0.58 : 0.64));
-  const nailHeight = Math.round(height * (isFinger ? 0.68 : 0.76) * lengthScale);
-  const fingerWidth = Math.round(nailWidth * 1.34);
-  const fingerHeight = Math.round(height * 0.94);
+  const nailHeight = Math.round(height * (isFinger ? 0.70 : 0.76) * lengthScale);
+  const fingerWidth = Math.round(nailWidth * 1.18);
+  const fingerHeight = Math.round(height * 0.56);
+  const cuticleOffset = Math.round(fingerHeight * 0.40);
 
   // Anatomically accurate shape silhouettes with smooth cuticle bases
   let nailRadiusStyle: React.CSSProperties = {
-    borderRadius: '45% 45% 22px 22px / 52% 52% 20px 20px', // Default oval
+    borderRadius: '45% 45% 18px 18px / 52% 52% 18px 18px', // Default oval
   };
 
   if (isCoffin) {
-    // Coffin (Ballerina): Tapered sidewalls with flat squared free edge
+    // Coffin (Ballerina): Continuous graceful taper with crisp flat tip
     nailRadiusStyle = {
-      borderRadius: '0 0 20px 20px',
-      clipPath: 'polygon(16% 0%, 84% 0%, 100% 74%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 74%)',
+      borderRadius: '0 0 18px 18px',
+      clipPath: 'polygon(18% 0%, 82% 0%, 94% 75%, 88% 100%, 12% 100%, 6% 75%)',
     };
   } else if (isStiletto) {
-    // Stiletto: Razor point tip converging symmetrically at apex
+    // Stiletto: Sleek, continuous editorial taper converging at sharp apex
     nailRadiusStyle = {
-      borderRadius: '0 0 20px 20px',
-      clipPath: 'polygon(50% 0%, 100% 74%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 74%)',
+      borderRadius: '0 0 18px 18px',
+      clipPath: 'polygon(50% 0%, 90% 72%, 86% 100%, 14% 100%, 10% 72%)',
     };
   } else if (isSquare) {
-    // Square: Parallel sidewalls with softened 90° corners
+    // Square: Parallel sidewalls with softened 2px corners
     nailRadiusStyle = {
-      borderRadius: '3px 3px 20px 20px',
+      borderRadius: '3px 3px 18px 18px',
     };
   } else if (isAlmond) {
     // Almond: Softly tapered lateral walls with slender parabolic apex dome
     nailRadiusStyle = {
-      borderRadius: '48% 48% 22px 22px / 64% 64% 20px 20px',
+      borderRadius: '48% 48% 18px 18px / 62% 62% 18px 18px',
     };
   } else if (isOval) {
     nailRadiusStyle = {
-      borderRadius: '45% 45% 22px 22px / 52% 52% 20px 20px',
+      borderRadius: '45% 45% 18px 18px / 52% 52% 18px 18px',
     };
   }
 
@@ -90,13 +91,12 @@ export function NailCanvasPreview({
   const isMatte = nail.finish === 'matte';
   const isGlitter = nail.finish === 'glitter';
 
-  // Derived realistic skin tones for cylindrical finger lighting
+  // Derived realistic skin tones for soft cylindrical finger lighting
   const skinHighlight = '#FAF0EB';
   const skinMid = skinColor || '#F5DDD2';
-  const skinShadow = '#CE9E8E';
-  const skinDeepShadow = '#B07E6E';
+  const skinShadow = '#E0BDB0';
 
-  // Volumetric color glow shadow based on polish tint
+  // Volumetric color glow based on polish tint
   const ambientGlow = glowColor || (gradient ? gradient.tip : (nail.accentColor || nail.baseColor || '#E0246A'));
 
   // Background styling: multi-stop linear gradient or base color
@@ -111,51 +111,37 @@ export function NailCanvasPreview({
         interactive ? 'hover:scale-105 transition-transform duration-200 cursor-pointer' : ''
       } ${className}`}
     >
-      {/* 3D Anatomical Finger Body */}
+      {/* 3D Anatomical Finger Body (Digit and Cuticle Bed supporting the nail from below) */}
       {isFinger && (
         <div
           className="absolute bottom-0 left-1/2 -translate-x-1/2 pointer-events-none transition-all duration-300"
           style={{
             width: `${fingerWidth}px`,
             height: `${fingerHeight}px`,
-            borderRadius: '50% 50% 28px 28px / 40% 40% 28px 28px',
-            background: `linear-gradient(90deg, ${skinDeepShadow} 0%, ${skinShadow} 12%, ${skinMid} 36%, ${skinHighlight} 52%, ${skinMid} 78%, ${skinShadow} 92%, ${skinDeepShadow} 100%)`,
+            borderRadius: '42% 42% 24px 24px / 32% 32% 24px 24px',
+            background: `linear-gradient(90deg, ${skinShadow} 0%, #ECCEC2 18%, ${skinHighlight} 50%, #ECCEC2 82%, ${skinShadow} 100%)`,
             boxShadow:
-              '0 18px 40px -8px rgba(70, 25, 35, 0.22), inset 0 2px 4px rgba(255, 255, 255, 0.6), inset 0 -6px 14px rgba(90, 35, 45, 0.25)',
+              '0 10px 24px -4px rgba(80, 30, 40, 0.12), inset 0 2px 4px rgba(255, 255, 255, 0.65), inset 0 -4px 8px rgba(90, 35, 45, 0.12)',
           }}
         >
-          {/* Lateral Nail Fold Shadows (Sulcus Grooves along sides of nail) */}
-          <div
-            className="absolute inset-y-0 left-0 w-3 pointer-events-none"
-            style={{
-              background: 'linear-gradient(90deg, rgba(90, 30, 40, 0.25) 0%, transparent 100%)',
-            }}
-          />
-          <div
-            className="absolute inset-y-0 right-0 w-3 pointer-events-none"
-            style={{
-              background: 'linear-gradient(270deg, rgba(90, 30, 40, 0.25) 0%, transparent 100%)',
-            }}
-          />
-
           {/* Distal Interphalangeal Joint Creases (Knuckle Lines on lower finger digit) */}
-          <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-55 pointer-events-none">
+          <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex flex-col items-center gap-1 opacity-45 pointer-events-none">
             <div
               className="h-[1.5px] rounded-full"
               style={{
-                width: `${Math.round(fingerWidth * 0.46)}px`,
+                width: `${Math.round(fingerWidth * 0.44)}px`,
                 background:
-                  'linear-gradient(90deg, transparent 0%, rgba(130, 65, 55, 0.6) 25%, rgba(130, 65, 55, 0.7) 75%, transparent 100%)',
-                boxShadow: '0 1px 0 rgba(255, 255, 255, 0.65)',
+                  'linear-gradient(90deg, transparent 0%, rgba(140, 75, 65, 0.4) 25%, rgba(140, 75, 65, 0.5) 75%, transparent 100%)',
+                boxShadow: '0 1px 0 rgba(255, 255, 255, 0.7)',
               }}
             />
             <div
               className="h-[1px] rounded-full"
               style={{
-                width: `${Math.round(fingerWidth * 0.32)}px`,
+                width: `${Math.round(fingerWidth * 0.30)}px`,
                 background:
-                  'linear-gradient(90deg, transparent 0%, rgba(130, 65, 55, 0.4) 25%, rgba(130, 65, 55, 0.5) 75%, transparent 100%)',
-                boxShadow: '0 1px 0 rgba(255, 255, 255, 0.5)',
+                  'linear-gradient(90deg, transparent 0%, rgba(140, 75, 65, 0.3) 25%, rgba(140, 75, 65, 0.4) 75%, transparent 100%)',
+                boxShadow: '0 1px 0 rgba(255, 255, 255, 0.55)',
               }}
             />
           </div>
@@ -164,13 +150,13 @@ export function NailCanvasPreview({
           <div
             className="absolute left-1/2 -translate-x-1/2 pointer-events-none z-20"
             style={{
-              bottom: `${Math.round(fingerHeight * 0.22) - 2}px`,
-              width: `${nailWidth + 10}px`,
-              height: '16px',
-              borderRadius: '0 0 22px 22px',
+              bottom: `${cuticleOffset - 2}px`,
+              width: `${nailWidth + 8}px`,
+              height: '14px',
+              borderRadius: '0 0 20px 20px',
               background:
-                'linear-gradient(180deg, rgba(235, 195, 185, 0) 0%, rgba(210, 155, 140, 0.55) 50%, rgba(250, 228, 222, 0.95) 100%)',
-              boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.85), 0 -1px 3px rgba(90, 30, 40, 0.25)',
+                'linear-gradient(180deg, rgba(235, 195, 185, 0) 0%, rgba(215, 165, 150, 0.4) 50%, rgba(252, 235, 230, 0.95) 100%)',
+              boxShadow: 'inset 0 1px 2px rgba(255, 255, 255, 0.85), 0 -1px 2px rgba(90, 30, 40, 0.12)',
             }}
           />
         </div>
@@ -193,11 +179,14 @@ export function NailCanvasPreview({
         style={{
           width: `${nailWidth}px`,
           height: `${nailHeight}px`,
-          marginBottom: isFinger ? `${Math.round(fingerHeight * 0.22)}px` : '0px',
+          marginBottom: isFinger ? `${cuticleOffset}px` : '0px',
           background: backgroundStyle,
           boxShadow: isMatte
-            ? 'inset 0 1px 3px rgba(0,0,0,0.15), 0 6px 18px rgba(0,0,0,0.12)'
-            : `0 20px 48px -10px ${ambientGlow}45, 0 8px 20px -4px rgba(0,0,0,0.16), inset 0 2px 4px rgba(255,255,255,0.75), inset 0 -3px 6px rgba(0,0,0,0.22)`,
+            ? 'inset 0 1px 3px rgba(0,0,0,0.12)'
+            : 'inset 0 2px 4px rgba(255,255,255,0.7), inset 0 -3px 6px rgba(0,0,0,0.12)',
+          filter: isMatte
+            ? 'drop-shadow(0 6px 14px rgba(0,0,0,0.1))'
+            : `drop-shadow(0 12px 20px ${ambientGlow}32) drop-shadow(0 2px 6px rgba(0,0,0,0.06))`,
           ...nailRadiusStyle,
         }}
         className="relative overflow-hidden transition-all duration-300 z-10"
@@ -207,8 +196,8 @@ export function NailCanvasPreview({
           className="absolute inset-0 pointer-events-none"
           style={{
             background: isMatte
-              ? 'linear-gradient(90deg, rgba(0,0,0,0.12) 0%, rgba(255,255,255,0.06) 45%, rgba(0,0,0,0.12) 100%)'
-              : 'linear-gradient(90deg, rgba(0,0,0,0.15) 0%, rgba(255,255,255,0.38) 36%, rgba(255,255,255,0.1) 52%, rgba(0,0,0,0.14) 100%)',
+              ? 'linear-gradient(90deg, rgba(0,0,0,0.1) 0%, rgba(255,255,255,0.06) 45%, rgba(0,0,0,0.1) 100%)'
+              : 'linear-gradient(90deg, rgba(0,0,0,0.12) 0%, rgba(255,255,255,0.36) 36%, rgba(255,255,255,0.1) 52%, rgba(0,0,0,0.12) 100%)',
           }}
         />
 
@@ -216,8 +205,8 @@ export function NailCanvasPreview({
         <div
           className="absolute inset-x-0 bottom-0 pointer-events-none"
           style={{
-            height: '22%',
-            background: 'linear-gradient(0deg, rgba(25,10,18,0.3) 0%, transparent 100%)',
+            height: '20%',
+            background: 'linear-gradient(0deg, rgba(25,10,18,0.25) 0%, transparent 100%)',
           }}
         />
 
