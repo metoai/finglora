@@ -404,10 +404,10 @@ export function TryOnView({
                     type="button"
                     disabled={isSynthesizingHand}
                     onClick={handleSynthesizeHand}
-                    className="h-12 px-4 rounded-2xl bg-white border border-stone-200 hover:border-stone-400 text-stone-900 text-xs sm:text-sm font-medium transition shadow-2xs hover:shadow-xs inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-60"
+                    className="h-12 px-3 sm:px-4 rounded-2xl bg-white border border-stone-200 hover:border-stone-400 text-stone-900 text-xs sm:text-sm font-medium transition shadow-2xs hover:shadow-xs inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-60 whitespace-nowrap min-w-0"
                   >
-                    <RefreshCw className={`w-4 h-4 text-stone-600 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
-                    <span>{isSynthesizingHand ? 'Updating...' : 'Regenerate'}</span>
+                    <RefreshCw className={`w-4 h-4 text-stone-600 shrink-0 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
+                    <span className="truncate">{isSynthesizingHand ? 'Updating...' : 'Regenerate'}</span>
                   </button>
 
                   <button
@@ -418,10 +418,10 @@ export function TryOnView({
                         : (customTryOnHandUrl || resultImageUrl || '/assets/editorial_nail_hero.jpg');
                       onCustomizeWithAi?.(handImg);
                     }}
-                    className="h-12 px-4 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-medium transition shadow-md shadow-[#E0246A]/20 inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    className="h-12 px-3 sm:px-4 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-medium transition shadow-md shadow-[#E0246A]/20 inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
                   >
-                    <Sliders className="w-4 h-4 text-white" />
-                    <span>Customize</span>
+                    <Sliders className="w-4 h-4 text-white shrink-0" />
+                    <span className="truncate">Customize</span>
                   </button>
                 </div>
 
@@ -430,17 +430,17 @@ export function TryOnView({
                   <button
                     type="button"
                     onClick={handleSaveLook}
-                    className="h-11 px-4 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    className="h-11 px-3 sm:px-4 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
                   >
                     {savedToast ? (
                       <>
-                        <Check className="w-4 h-4 text-emerald-600" />
-                        <span className="text-emerald-700 font-medium">Saved</span>
+                        <Check className="w-4 h-4 text-emerald-600 shrink-0" />
+                        <span className="text-emerald-700 font-medium truncate">Saved</span>
                       </>
                     ) : (
                       <>
-                        <Bookmark className="w-4 h-4 text-stone-600" />
-                        <span>Save Look</span>
+                        <Bookmark className="w-4 h-4 text-stone-600 shrink-0" />
+                        <span className="truncate">Save Look</span>
                       </>
                     )}
                   </button>
@@ -454,17 +454,17 @@ export function TryOnView({
                       setSharedToast(true);
                       setTimeout(() => setSharedToast(false), 2200);
                     }}
-                    className="h-11 px-4 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                    className="h-11 px-3 sm:px-4 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 whitespace-nowrap min-w-0"
                   >
                     {sharedToast ? (
                       <>
-                        <Check className="w-4 h-4 text-stone-900" strokeWidth={2} />
-                        <span>Copied</span>
+                        <Check className="w-4 h-4 text-stone-900 shrink-0" strokeWidth={2} />
+                        <span className="truncate">Copied</span>
                       </>
                     ) : (
                       <>
-                        <Share2 className="w-4 h-4 text-stone-600" />
-                        <span>Share</span>
+                        <Share2 className="w-4 h-4 text-stone-600 shrink-0" />
+                        <span className="truncate">Share</span>
                       </>
                     )}
                   </button>

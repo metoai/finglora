@@ -290,8 +290,6 @@ export function CustomerApp({
             ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
             : mobilePreview
             ? 'pb-24 px-4 pt-4'
-            : customerRoute === 'tryon'
-            ? 'min-h-screen flex flex-col justify-center items-center px-3 sm:px-6 py-6 pb-20 lg:py-8'
             : 'min-h-screen pb-24 lg:pb-12 px-4 sm:px-8 lg:px-10 pt-4 sm:pt-8'
         }`}
       >
@@ -299,9 +297,7 @@ export function CustomerApp({
           className={`w-full ${
             customerRoute === 'ai-create'
               ? 'h-full flex-1 flex flex-col min-h-0'
-              : customerRoute === 'tryon'
-              ? 'max-w-md mx-auto my-auto flex flex-col justify-center'
-              : 'max-w-[1400px]'
+              : 'max-w-[1400px] mx-auto'
           }`}
         >
           {customerRoute === 'signup' && (
