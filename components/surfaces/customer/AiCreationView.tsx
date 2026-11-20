@@ -361,15 +361,11 @@ export function AiCreationView({
             </button>
           )}
 
-          {/* Model Title: Single line without wrapping */}
+          {/* Title: Single line without wrapping */}
           <div className="flex items-center gap-1.5 py-1 select-none">
             <span className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight whitespace-nowrap">
               Finglora AI
             </span>
-            <span className="text-[11px] font-medium text-stone-400 hidden sm:inline">
-              Vision 3.1
-            </span>
-            <ChevronDown className="w-3.5 h-3.5 text-stone-400 hidden sm:inline" />
           </div>
         </div>
 
@@ -813,10 +809,6 @@ export function AiCreationView({
                 )}
               </button>
             </form>
-
-            <div className="text-center text-[10px] text-stone-400">
-              Finglora AI uses Google Gemini Vision to photorealistically adapt manicures to human hands.
-            </div>
           </div>
         </div>
       </div>
