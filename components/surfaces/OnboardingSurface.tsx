@@ -14,6 +14,7 @@ import {
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
+import { downscaleImageForVision } from '@/lib/services/storage';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
 const ONBOARDING_FINGERTIP_ANCHORS: Record<Finger, { tipX: number; tipY: number; angleDeg: number; scale: number }> = {
@@ -108,20 +109,36 @@ export function OnboardingSurface({
   const handInputRef = useRef<HTMLInputElement>(null);
   const inspoInputRef = useRef<HTMLInputElement>(null);
 
-  const handleHandUpload = (file: File) => {
-    const url = URL.createObjectURL(file);
-    setHandPhotoUrl(url);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('finglora_user_hand_photo', url);
+  const handleHandUpload = async (file: File) => {
+    let dataUrl = '';
+    try {
+      dataUrl = await downscaleImageForVision(file, 1000, 0.85);
+    } catch {
+      // fallback to object URL
     }
-    onSaveHandPhoto?.(url);
+    const finalUrl = dataUrl || URL.createObjectURL(file);
+    setHandPhotoUrl(finalUrl);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('finglora_user_hand_photo', finalUrl);
+        localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+      } catch {
+        // storage quota fallback
+      }
+    }
+    onSaveHandPhoto?.(finalUrl);
     setStep(2);
   };
 
   const handleSelectSampleHand = (url: string) => {
     setHandPhotoUrl(url);
     if (typeof window !== 'undefined') {
-      localStorage.setItem('finglora_user_hand_photo', url);
+      try {
+        localStorage.setItem('finglora_user_hand_photo', url);
+        localStorage.setItem('finglora_custom_hand_photo', url);
+      } catch {
+        // ignore
+      }
     }
     onSaveHandPhoto?.(url);
     setStep(2);
@@ -353,49 +370,10 @@ export function OnboardingSurface({
                 {/* Photorealistic Viewport */}
                 <div className="relative aspect-[3/4] max-h-[380px] w-full max-w-sm mx-auto rounded-3xl overflow-hidden bg-stone-900 shadow-xl border border-stone-200">
                   <img
-                    src={handPhotoUrl || '/assets/editorial_nail_hero.jpg'}
+                    src={revealMode === 'after' ? revealTryOnUrl : (handPhotoUrl || '/assets/editorial_nail_hero.jpg')}
                     alt="Virtual Manicure Try-On"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-all duration-300"
                   />
-
-                  {/* Overlaid Manicure Nails directly on user hand */}
-                  {revealMode === 'after' && (
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                      {(['thumb', 'index', 'middle', 'ring', 'pinky'] as const).map((fk) => {
-                        const anchor = ONBOARDING_FINGERTIP_ANCHORS[fk];
-                        return (
-                          <div
-                            key={fk}
-                            className="absolute"
-                            style={{
-                              left: `${anchor.tipX * 100}%`,
-                              top: `${anchor.tipY * 100}%`,
-                              transform: `translate(-50%, -75%) rotate(${anchor.angleDeg}deg) scale(${anchor.scale})`,
-                              transformOrigin: 'center 80%',
-                            }}
-                          >
-                            <NailCanvasPreview
-                              nail={{
-                                finger: fk,
-                                title: selectedInspo.title,
-                                baseColor: selectedInspo.id.includes('pink-heart') ? '#D4A5A5' : selectedInspo.id.includes('bordeaux') ? '#801A35' : '#ECE0E1',
-                                accentColor: selectedInspo.id.includes('pink-heart') ? '#F7D1D1' : selectedInspo.id.includes('bordeaux') ? '#C59B27' : '#C8A182',
-                                pattern: selectedInspo.id.includes('pink-heart') ? 'heart-french' : selectedInspo.id.includes('bordeaux') ? 'solid' : 'minimal-line',
-                                shape: (selectedInspo.shape as NailShape) || 'coffin',
-                                length: 'medium',
-                                finish: 'glossy',
-                                clientNote: 'Personalized salon gel manicure',
-                                status: 'detected',
-                              }}
-                              width={48}
-                              height={72}
-                              showCuticle={false}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
 
                   {/* Toggle Pill */}
                   <div className="absolute top-3 left-3 z-10">

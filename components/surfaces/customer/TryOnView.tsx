@@ -22,6 +22,7 @@ import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
 import { getVideoHandLandmarker, extractFingertipAnchors, detectHandInImage, FingertipAnchor } from '@/lib/vision/hand-tracker';
+import { downscaleImageForVision } from '@/lib/services/storage';
 
 const AI_PRESET_MODIFIERS: {
   label: string;
@@ -403,8 +404,8 @@ export function TryOnView({
               </div>
             )}
 
-            {/* Overlaid Manicure Nails (when in Design mode / tryOnView === 'after') */}
-            {tryOnView === 'after' && (
+            {/* Overlaid Manicure Nails (Only on authentic user hand when calibrated or in manual alignment mode) */}
+            {tryOnView === 'after' && (capturedFrameUrl || customTryOnHandUrl) && (photoAnchors || showAdjustSliders) && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 {orderedFingers.map((fk) => {
                   const anchor = photoAnchors?.[fk] || DEFAULT_PHOTO_ANCHORS[fk];
@@ -446,6 +447,8 @@ export function TryOnView({
                     ? 'bg-[#E0246A] text-white border border-white/20'
                     : isDetectingPhotoHand
                     ? 'bg-black/60 text-white'
+                    : showAdjustSliders
+                    ? 'bg-stone-800 text-stone-200 border border-stone-600'
                     : 'bg-black/60 text-stone-300'
                 }`}
               >
@@ -456,8 +459,10 @@ export function TryOnView({
                   </>
                 ) : isDetectingPhotoHand ? (
                   <span>Detecting hand...</span>
+                ) : showAdjustSliders ? (
+                  <span>Manual Alignment</span>
                 ) : (
-                  <span>Fitted to Hand</span>
+                  <span>Position Hand</span>
                 )}
               </span>
             </div>
@@ -834,9 +839,12 @@ export function TryOnView({
                   type="file"
                   accept="image/*"
                   className="hidden"
-                  onChange={(e) => {
+                  onChange={async (e) => {
                     const f = e.target.files?.[0];
-                    if (f) setCustomTryOnHandUrl(URL.createObjectURL(f));
+                    if (f) {
+                      const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
+                      setCustomTryOnHandUrl(dataUrl || URL.createObjectURL(f));
+                    }
                   }}
                 />
               </label>

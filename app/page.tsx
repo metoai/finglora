@@ -174,7 +174,9 @@ export default function FingloraApp() {
         if (parsed.preferredShape) setPreferredShape(parsed.preferredShape);
         if (parsed.userName) setUserName(parsed.userName);
       }
-      const savedHand = window.localStorage.getItem('finglora_custom_hand_photo');
+      const savedHand =
+        window.localStorage.getItem('finglora_user_hand_photo') ||
+        window.localStorage.getItem('finglora_custom_hand_photo');
       if (savedHand) {
         setCustomTryOnHandUrl(savedHand);
       }

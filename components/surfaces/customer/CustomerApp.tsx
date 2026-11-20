@@ -370,9 +370,7 @@ export function CustomerApp({
                 useTryOnCredit();
                 if (designId) {
                   onSelectExploreDesign(designId);
-                  onSampleExtractionDemo?.();
                 }
-                setCustomerRoute('tryon');
               }}
             />
           )}

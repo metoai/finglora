@@ -12,7 +12,7 @@ import {
   Paintbrush,
   Loader2,
 } from 'lucide-react';
-import { Finger, NailDesign, NailShape } from '@/types/nail';
+import { Finger, NailDesign, NailShape, NailPattern, NailFinish } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
@@ -109,17 +109,71 @@ export function AiCreationView({
     setIsIterating(true);
 
     try {
-      // Simulate / call Gemini refinement
+      // Mutate nail design according to user's text iteration while keeping constant hand
       setTimeout(() => {
         let nextImage = '/assets/milky_gold_tryon_result.jpg';
         const lower = text.toLowerCase();
 
-        if (lower.includes('pink') || lower.includes('heart') || lower.includes('french')) {
+        let newColor = '#FAF0EA';
+        let newAccent = '#FFFFFF';
+        let newPattern: NailPattern = 'solid';
+        let newFinish: NailFinish = 'glossy';
+
+        if (lower.includes('pink') || lower.includes('rose') || lower.includes('blush')) {
+          newColor = '#D4A5A5';
+          newAccent = '#F7D1D1';
           nextImage = '/assets/pink_heart_tryon_result.jpg';
-        } else if (lower.includes('bordeaux') || lower.includes('burgundy') || lower.includes('velvet') || lower.includes('dark')) {
+        } else if (lower.includes('bordeaux') || lower.includes('burgundy') || lower.includes('velvet') || lower.includes('wine')) {
+          newColor = '#801A35';
+          newAccent = '#C59B27';
           nextImage = '/assets/burgundy_gold_virtual_tryon.jpg';
-        } else {
-          nextImage = '/assets/milky_gold_tryon_result.jpg';
+        } else if (lower.includes('emerald') || lower.includes('green') || lower.includes('sage')) {
+          newColor = '#2D5A43';
+          newAccent = '#D4AF37';
+        } else if (lower.includes('espresso') || lower.includes('brown') || lower.includes('coffee')) {
+          newColor = '#3D2817';
+          newAccent = '#C8A182';
+        } else if (lower.includes('chrome') || lower.includes('glazed') || lower.includes('silver')) {
+          newColor = '#FDFCF7';
+          newAccent = '#E5E7EB';
+          newFinish = 'chrome';
+        } else if (lower.includes('gold') || lower.includes('shimmer') || lower.includes('glitter')) {
+          newColor = '#C59B27';
+          newAccent = '#FAF0EA';
+          newFinish = 'glitter';
+        }
+
+        if (lower.includes('heart')) {
+          newPattern = 'heart-french';
+        } else if (lower.includes('french') || lower.includes('tip')) {
+          newPattern = 'classic-french';
+        } else if (lower.includes('aura')) {
+          newPattern = 'aura';
+        } else if (lower.includes('floral') || lower.includes('flower')) {
+          newPattern = 'floral';
+        } else if (lower.includes('swirl') || lower.includes('marble')) {
+          newPattern = 'chrome-swirl';
+        }
+
+        if (lower.includes('matte') || lower.includes('velvet')) {
+          newFinish = 'matte';
+        }
+
+        if (setNails) {
+          setNails((prev) => {
+            const next = { ...prev };
+            FINGER_KEYS.forEach((fk) => {
+              next[fk] = {
+                ...next[fk],
+                baseColor: newColor,
+                accentColor: newAccent,
+                pattern: newPattern,
+                finish: newFinish,
+                title: text,
+              };
+            });
+            return next;
+          });
         }
 
         setCurrentTryOnImage(nextImage);
@@ -134,7 +188,7 @@ export function AiCreationView({
 
         setMessages((prev) => [...prev, geminiMsg]);
         setIsIterating(false);
-      }, 1400);
+      }, 1200);
     } catch {
       setIsIterating(false);
     }

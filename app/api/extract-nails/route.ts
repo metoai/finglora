@@ -81,13 +81,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const rawBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '');
-    const mimeType = imageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+    let finalBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '');
+    let finalMimeType = imageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
-    // Google Gemini Vision API (Primary: gemini-3.8-flash with resilient fallback to gemini-3.5-flash)
-    const candidateModels = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+    if (!finalBase64 && imageUrl) {
+      try {
+        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(6000) });
+        if (imgRes.ok) {
+          const buffer = await imgRes.arrayBuffer();
+          finalBase64 = Buffer.from(buffer).toString('base64');
+          finalMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
+        }
+      } catch {
+        // Continue if fetch failed
+      }
+    }
+
+    // Google Gemini Vision API (Primary: gemini-3.5-flash-lite for instant <1s analysis, fallback to 3.8-flash)
+    const candidateModels = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'];
     let geminiData: Record<string, any> | null = null;
-    let activeModel = 'gemini-3.8-flash';
+    let activeModel = 'gemini-3.5-flash-lite';
     let lastErrorMsg = 'Google Gemini analysis request failed';
 
     for (const model of candidateModels) {
@@ -102,8 +115,8 @@ export async function POST(request: Request) {
                 {
                   parts: [
                     { text: MANICURE_PROMPT },
-                    rawBase64
-                      ? { inlineData: { mimeType, data: rawBase64 } }
+                    finalBase64
+                      ? { inlineData: { mimeType: finalMimeType, data: finalBase64 } }
                       : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
                   ],
                 },
@@ -113,6 +126,7 @@ export async function POST(request: Request) {
                 responseMimeType: 'application/json',
               },
             }),
+            signal: AbortSignal.timeout(8000),
           }
         );
 
