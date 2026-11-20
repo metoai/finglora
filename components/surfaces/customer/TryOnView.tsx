@@ -58,6 +58,8 @@ export function TryOnView({
   onCancelCamera,
   tryOnView,
   setTryOnView,
+  synthesizedHandUrl: propSynthesizedHandUrl,
+  setSynthesizedHandUrl: propSetSynthesizedHandUrl,
   handOrientation,
   setHandOrientation,
   customTryOnHandUrl,
@@ -85,6 +87,8 @@ export function TryOnView({
   onCancelCamera: () => void;
   tryOnView: 'after' | 'before';
   setTryOnView: (view: 'after' | 'before') => void;
+  synthesizedHandUrl?: string | null;
+  setSynthesizedHandUrl?: (url: string | null) => void;
   handOrientation: 'left' | 'right';
   setHandOrientation: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
   customTryOnHandUrl: string | null;
@@ -174,8 +178,13 @@ export function TryOnView({
   const [isApplyingAi, setIsApplyingAi] = useState(false);
   const [customizedToast, setCustomizedToast] = useState(false);
 
-  // Generative AI Synthesis of User's Hand with the 5 Nail Designs
-  const [synthesizedHandUrl, setSynthesizedHandUrl] = useState<string | null>(null);
+  // Generative AI Synthesis of User's Hand with the Reference Nail Design
+  const [internalSynthesizedHandUrl, setInternalSynthesizedHandUrl] = useState<string | null>(null);
+  const synthesizedHandUrl = propSynthesizedHandUrl !== undefined ? propSynthesizedHandUrl : internalSynthesizedHandUrl;
+  const setSynthesizedHandUrl = (url: string | null) => {
+    setInternalSynthesizedHandUrl(url);
+    propSetSynthesizedHandUrl?.(url);
+  };
   const [isSynthesizingHand, setIsSynthesizingHand] = useState(false);
 
   const handleSynthesizeHand = async () => {

@@ -10,6 +10,7 @@ import {
   ImagePlus,
   RefreshCw,
   Camera,
+  Loader2,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 
@@ -34,10 +35,12 @@ export function UploadInspirationView({
   onUploadHandPhoto?: (file: File) => void;
   onSampleDemoClick: () => void;
   onCancel?: () => void;
-  onComplete?: () => void;
+  onComplete?: (synthesizedUrl?: string) => void;
 }) {
   const inspoFileInputRef = useRef<HTMLInputElement>(null);
   const handFileInputRef = useRef<HTMLInputElement>(null);
+
+  const [isGeneratingTryOn, setIsGeneratingTryOn] = useState(false);
 
   // Retrieve user hand from storage if not provided in props
   const [localHandPhoto, setLocalHandPhoto] = useState<string | null>(() => {
@@ -88,8 +91,48 @@ export function UploadInspirationView({
     }
   };
 
-  // State A: Applying Reference Design to Hand (Zero Fake Pills, Pure Photographic Visuals)
-  if (isAnalyzing) {
+  // Generate Manicure on Hand in Image-to-Image Diffusion Model
+  const handleSeeOnMyHand = async () => {
+    if (!activePhotoUrl) {
+      inspoFileInputRef.current?.click();
+      return;
+    }
+
+    const targetHand = localHandPhoto || '/assets/editorial_nail_hero.jpg';
+    setIsGeneratingTryOn(true);
+
+    try {
+      const res = await fetch('/api/generate-nail-art', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hand-tryon',
+          referenceImageUrl: activePhotoUrl.startsWith('http') ? activePhotoUrl : undefined,
+          referenceImageBase64: activePhotoUrl.startsWith('data:') ? activePhotoUrl : undefined,
+          handImageBase64: targetHand.startsWith('data:') ? targetHand : undefined,
+          handImageUrl: targetHand.startsWith('http') || targetHand.startsWith('/') ? targetHand : undefined,
+          prompt: 'Apply the reference manicure design from Image 1 onto the fingers and fingernails of the human hand in Image 2.',
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.imageUrl) {
+          onComplete?.(data.imageUrl);
+          return;
+        }
+      }
+      onComplete?.();
+    } catch (err) {
+      console.warn('Image-to-image synthesis error:', err);
+      onComplete?.();
+    } finally {
+      setIsGeneratingTryOn(false);
+    }
+  };
+
+  // State A: Generating / Analyzing State (Zero Fake Pills, Pure Photographic Visuals)
+  if (isAnalyzing || isGeneratingTryOn) {
     return (
       <div className="w-full max-w-xl mx-auto py-12 px-4 text-center space-y-8 animate-in fade-in duration-300">
         {/* Dynamic Reference + Hand Composition Preview */}
@@ -114,11 +157,11 @@ export function UploadInspirationView({
 
           {/* Animated Connecting Pulse */}
           <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="w-9 h-9 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-md animate-pulse">
-              <ArrowRight className="w-4 h-4" />
+            <div className="w-10 h-10 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-md animate-pulse">
+              <Sparkles className="w-5 h-5 animate-spin [animation-duration:6s]" />
             </div>
             <span className="text-[10px] font-mono text-[#E0246A] uppercase tracking-wider font-semibold">
-              Applying
+              Image-to-Image
             </span>
           </div>
 
@@ -145,31 +188,17 @@ export function UploadInspirationView({
 
         {/* Minimal Editorial Copy */}
         <div className="space-y-2">
-          <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-            Vertex AI Atelier
+          <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase flex items-center justify-center gap-1.5">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E0246A]" />
+            <span>Vertex AI Image-to-Image Model</span>
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-            Applying Reference Design to Your Hand
+            Generating Reference Design On Your Hand
           </h2>
           <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-            Aligning manicure architecture, nail shape curvature, and finish directly onto your hand geometry.
+            Synthesizing the reference manicure colors, patterns, and shape seamlessly onto your hand in a photorealistic studio finish.
           </p>
         </div>
-
-        {/* Instant Open Try-On CTA */}
-        {onComplete && (
-          <div className="pt-2 max-w-xs mx-auto">
-            <button
-              type="button"
-              onClick={onComplete}
-              className="w-full h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-white" />
-              <span>Open Virtual Try-On</span>
-              <ArrowRight className="w-3.5 h-3.5 text-white" />
-            </button>
-          </div>
-        )}
 
         {onCancel && (
           <div className="pt-1">
@@ -331,22 +360,26 @@ export function UploadInspirationView({
         </div>
       </div>
 
-      {/* Primary Action Button: "Apply Reference to My Hand" */}
+      {/* Primary Action Button: "See Reference Design on My Hand" */}
       <div className="pt-2 text-center space-y-2">
         <button
           type="button"
-          onClick={() => {
-            if (activePhotoUrl) {
-              onComplete?.();
-            } else {
-              inspoFileInputRef.current?.click();
-            }
-          }}
-          className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+          disabled={isGeneratingTryOn}
+          onClick={handleSeeOnMyHand}
+          className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75"
         >
-          <Sparkles className="w-4 h-4 text-white" />
-          <span>{activePhotoUrl ? 'See Reference Design on My Hand' : 'Choose Reference Photo & Try On'}</span>
-          <ArrowRight className="w-4 h-4 text-white" />
+          {isGeneratingTryOn ? (
+            <>
+              <Loader2 className="w-4 h-4 animate-spin text-white" />
+              <span>Generating with Vertex AI Image-to-Image...</span>
+            </>
+          ) : (
+            <>
+              <Sparkles className="w-4 h-4 text-white" />
+              <span>{activePhotoUrl ? 'See Reference Design on My Hand' : 'Choose Reference Photo & Try On'}</span>
+              <ArrowRight className="w-4 h-4 text-white" />
+            </>
+          )}
         </button>
 
         {/* Quick Sample Demo Link */}

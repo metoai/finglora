@@ -124,6 +124,7 @@ export default function FingloraApp() {
     }
     return null;
   });
+  const [synthesizedHandUrl, setSynthesizedHandUrl] = useState<string | null>(null);
 
   const handleUpdateCustomHandPhoto = (url: string | null) => {
     setCustomTryOnHandUrl(url);
@@ -923,6 +924,8 @@ export default function FingloraApp() {
             }}
             tryOnView={tryOnView}
             setTryOnView={setTryOnView}
+            synthesizedHandUrl={synthesizedHandUrl}
+            setSynthesizedHandUrl={setSynthesizedHandUrl}
             customTryOnHandUrl={customTryOnHandUrl}
             setCustomTryOnHandUrl={handleUpdateCustomHandPhoto}
             overlayScale={overlayScale}

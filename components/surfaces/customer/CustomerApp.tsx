@@ -62,6 +62,8 @@ export function CustomerApp({
   onCancelCamera,
   tryOnView,
   setTryOnView,
+  synthesizedHandUrl,
+  setSynthesizedHandUrl,
   customTryOnHandUrl,
   setCustomTryOnHandUrl,
   overlayScale,
@@ -131,6 +133,8 @@ export function CustomerApp({
   onCancelCamera: () => void;
   tryOnView: 'after' | 'before';
   setTryOnView: (view: 'after' | 'before') => void;
+  synthesizedHandUrl?: string | null;
+  setSynthesizedHandUrl?: (url: string | null) => void;
   customTryOnHandUrl: string | null;
   setCustomTryOnHandUrl: (url: string | null) => void;
   overlayScale: number;
@@ -399,7 +403,10 @@ export function CustomerApp({
                 setIsAnalyzing?.(false);
                 setCustomerRoute('home');
               }}
-              onComplete={() => {
+              onComplete={(synthesizedUrl?: string) => {
+                if (synthesizedUrl && setSynthesizedHandUrl) {
+                  setSynthesizedHandUrl(synthesizedUrl);
+                }
                 setIsAnalyzing?.(false);
                 setCustomerRoute('tryon');
               }}
@@ -419,6 +426,8 @@ export function CustomerApp({
               onCancelCamera={onCancelCamera}
               tryOnView={tryOnView}
               setTryOnView={setTryOnView}
+              synthesizedHandUrl={synthesizedHandUrl}
+              setSynthesizedHandUrl={setSynthesizedHandUrl}
               handOrientation={handOrientation}
               setHandOrientation={setHandOrientation}
               customTryOnHandUrl={customTryOnHandUrl}
