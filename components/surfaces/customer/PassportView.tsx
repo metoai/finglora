@@ -58,11 +58,14 @@ export function PassportView({
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-[rgba(31,26,28,0.06)]">
         <div>
           <span className="text-[11px] font-mono tracking-wider uppercase text-[#E0246A] block mb-1">
-            Design Passport • {formattedPassportCode}
+            Salon Recipe • {formattedPassportCode}
           </span>
           <h1 className="font-serif text-3xl sm:text-4xl font-normal text-[#18181B] tracking-tight">
-            Design Passport
+            Salon Recipe
           </h1>
+          <p className="text-xs text-stone-500 mt-1">
+            Show this to your nail tech at your appointment for zero guessing.
+          </p>
         </div>
 
         {/* Primary & Secondary Action Buttons */}
@@ -117,16 +120,16 @@ export function PassportView({
               </span>
 
               <span className="text-[11px] font-mono text-white/70 uppercase tracking-wider">
-                5-Finger Technical Blueprint
+                5-Finger Recipe
               </span>
             </div>
 
             <h2 className="font-serif text-2xl sm:text-3xl font-normal tracking-tight text-white drop-shadow-xs">
-              {activeSetName || 'Atelier Bespoke Look'}
+              {activeSetName || 'Your Bespoke Set'}
             </h2>
 
             <p className="text-xs text-white/80 font-normal max-w-lg leading-relaxed">
-              Curated manicure formula with 5 standalone nail bed geometry specifications, precision color hex values, and topcoat finishes.
+              Show this recipe card to your nail tech so they know your exact colors, shapes, and finishes without any guessing.
             </p>
           </div>
 
@@ -213,14 +216,14 @@ export function PassportView({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#18181B] block">
-                  5-Finger Technical Specifications
+                  5-Finger Recipe Details
                 </span>
                 <span className="text-[11px] text-[#8C8085]">
-                  Thumb to Pinky exact color recipe, geometry, and topcoat
+                  Show this to your nail tech to match every finger exactly
                 </span>
               </div>
               <span className="text-[11px] font-mono px-2.5 py-0.5 rounded-full bg-[#FAFAFA] border border-[rgba(31,26,28,0.08)] text-[#8C8085]">
-                5 Beds Configured
+                5 Fingers Mapped
               </span>
             </div>
 
@@ -290,7 +293,7 @@ export function PassportView({
           <div className="pt-5 border-t border-[rgba(31,26,28,0.08)] flex flex-col sm:flex-row items-center justify-between gap-4">
             <div className="flex items-center gap-2 text-xs text-[#8C8085]">
               <ShieldCheck className="w-4 h-4 text-[#E0246A]" />
-              <span>Certified Finglora 5-Finger Formula • Ready for Virtual Try-On</span>
+              <span>Finglora Salon Recipe • Show to your nail tech for zero regrets</span>
             </div>
 
             <div className="flex items-center gap-3 w-full sm:w-auto">

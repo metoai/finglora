@@ -70,22 +70,22 @@ const SHAPES: { id: NailShape; name: string; desc: string }[] = [
   {
     id: 'almond',
     name: 'Almond',
-    desc: 'Softly tapered lateral walls with an elegant curved apex',
+    desc: 'Soft, chic, and elongates your fingers effortlessly',
   },
   {
     id: 'coffin',
     name: 'Coffin',
-    desc: 'Tapered edges squaring off into a crisp flat free edge',
+    desc: 'Glam, trendy, and gives instant statement baddie energy',
   },
   {
     id: 'oval',
     name: 'Oval',
-    desc: 'Classic rounded contours mirroring the cuticle curvature',
+    desc: 'Clean-girl aesthetic, soft natural curves, effortless',
   },
   {
     id: 'square',
     name: 'Square',
-    desc: 'Parallel straight side walls with a precise horizontal tip',
+    desc: 'Crisp, bold edges — the ultimate French tip silhouette',
   },
 ];
 
@@ -215,7 +215,7 @@ export function LandingSurface({
               title="Start live nail try-on"
             >
               <Camera className="w-3.5 h-3.5 text-[#E0246A] group-hover:scale-110 transition-transform" />
-              <span>Live preview</span>
+              <span>Try on live</span>
             </button>
 
             {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
@@ -305,7 +305,7 @@ export function LandingSurface({
             title="Start live nail try-on"
           >
             <Camera className="w-3 h-3 text-[#E0246A] group-hover:scale-110 transition-transform" />
-            <span>Live preview</span>
+            <span>Try on live</span>
           </button>
 
           {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
@@ -366,7 +366,7 @@ export function LandingSurface({
           {/* Left: Explanatory Copy */}
           <div className="text-left">
             <p className="text-stone-600 text-sm leading-relaxed max-w-[320px]">
-              Customize each finger, design with AI, and try on real polish colors and shapes on your own hand live.
+              See any nail inspo on your actual hand before your appointment. Zero salon regrets.
             </p>
           </div>
 
@@ -429,7 +429,7 @@ export function LandingSurface({
               className="h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/20 flex items-center gap-2 transition active:scale-95 cursor-pointer"
             >
               <Camera className="w-4 h-4" />
-              <span>Try it on</span>
+              <span>Try On My Hand</span>
             </button>
           </div>
         </div>
@@ -439,7 +439,7 @@ export function LandingSurface({
       <footer className="lg:hidden w-full px-5 pb-8 pt-2 space-y-3.5 z-20">
         {/* Copy */}
         <p className="text-stone-700 text-xs sm:text-sm leading-relaxed text-center max-w-xs mx-auto">
-          Customize each finger, design with AI, and try on real polish colors and shapes on your own hand live.
+          See any nail inspo on your actual hand before your appointment. Zero salon regrets.
         </p>
 
         {/* Swatch Pill with Shade Name & French Tip Toggle on Mobile */}
@@ -494,7 +494,7 @@ export function LandingSurface({
           className="w-full max-w-sm mx-auto h-12 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
         >
           <Camera className="w-4 h-4" />
-          <span>Try it on</span>
+          <span>Try On My Hand</span>
         </button>
 
         {/* How It Works Link */}
@@ -546,10 +546,10 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    Inspiration & AI
+                    Drop Inspo
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Upload any photo from Instagram or Pinterest, or describe your aesthetic with AI.
+                    Pick any screenshot from Pinterest, TikTok, or Instagram — or describe your dream aesthetic.
                   </p>
                 </div>
               </div>
@@ -560,10 +560,10 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    5-Finger Customizer
+                    Mix & Match
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Customize each finger individually — change shape, length, polish colors, and finishes.
+                    Customize shape, length, chrome glaze, or French tips on every single finger.
                   </p>
                 </div>
               </div>
@@ -574,10 +574,10 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    Live Hand Try-On
+                    See It On You
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Point your camera or upload a hand photo to see real colors live on your own nails.
+                    Snap your hand once to see the manicure live on your real fingers before booking.
                   </p>
                 </div>
               </div>
@@ -593,7 +593,7 @@ export function LandingSurface({
               className="w-full h-11 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
             >
               <Camera className="w-4 h-4" />
-              <span>Try it on</span>
+              <span>Try On My Hand</span>
             </button>
           </div>
         </div>

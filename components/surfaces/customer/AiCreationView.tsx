@@ -37,23 +37,23 @@ interface ChatMessage {
 const CHATGPT_SUGGESTION_PROMPTS = [
   {
     title: 'Glazed Donut Chrome',
-    subtitle: 'Pearlescent glazed chrome on soft almond silhouette',
-    prompt: 'Glazed donut chrome with soft pearlescent shimmer on almond nails',
+    subtitle: 'Hailey Bieber pearlescent chrome on soft almond',
+    prompt: 'Hailey Bieber glazed chrome on soft almond nails with pearlescent shine',
   },
   {
     title: 'Micro French Tips',
-    subtitle: 'Clean milky rubber base with crisp ultra-thin white tips',
-    prompt: 'Micro French tips with sheer pink rubber base and crisp white smile line',
+    subtitle: 'Clean-girl milky base with ultra-thin white tips',
+    prompt: 'Clean girl micro French tips with milky base and ultra-thin white tips',
   },
   {
     title: 'Cherry Mocha Velvet',
-    subtitle: 'Deep burgundy aura with high-gloss mirror gel shine',
-    prompt: 'Cherry mocha velvet burgundy nails with deep mirror gloss finish',
+    subtitle: 'Deep burgundy cat-eye with liquid glass shine',
+    prompt: 'Cherry mocha velvet burgundy nails with deep cat-eye liquid glass shine',
   },
   {
     title: 'Blush Ribbon Coquette',
-    subtitle: 'Sheer strawberry milk base with delicate hand-drawn ribbon art',
-    prompt: 'Blush pink coquette nails with delicate white ribbon bow accents',
+    subtitle: 'Sheer strawberry jelly base with hand-drawn bows',
+    prompt: 'Sheer strawberry jelly blush nails with delicate white ribbon bow accents',
   },
 ];
 
@@ -560,10 +560,10 @@ export function AiCreationView({
 
                 <div className="space-y-1.5">
                   <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
-                    What look are we creating today?
+                    What look are we doing today?
                   </h2>
                   <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-                    Describe any manicure, shape, color, or finish. Finglora AI applies it directly onto your hand in photorealistic detail.
+                    Describe any vibe, color, or aesthetic. We&apos;ll fit it directly to your hand in seconds.
                   </p>
                 </div>
 
@@ -734,11 +734,11 @@ export function AiCreationView({
                     <div className="space-y-1 py-1">
                       <div className="flex items-center gap-2">
                         <span className="text-xs sm:text-sm font-semibold text-stone-900">
-                          Finglora AI is crafting your manicure...
+                          Styling your manicure...
                         </span>
                       </div>
                       <p className="text-xs text-stone-500">
-                        Applying custom gel layer, blending cuticle edges, and rendering specular light reflections.
+                        Fitting cuticle lines, mixing lacquer & adding mirror gel gloss.
                       </p>
                     </div>
                   </div>
@@ -789,7 +789,7 @@ export function AiCreationView({
                     handleSendPrompt();
                   }
                 }}
-                placeholder="Message Finglora AI to customize shape, color, pattern, finish..."
+                placeholder="Tell Finglora: milkier, shorter, chrome glaze, add french tip..."
                 className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none resize-none px-2 py-1 max-h-28 leading-relaxed"
               />
 

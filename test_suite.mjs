@@ -261,9 +261,21 @@ const onboardingFile = fs.readFileSync(
   path.join(process.cwd(), 'components/surfaces/OnboardingSurface.tsx'),
   'utf-8'
 );
-assert(onboardingFile.includes('step === 1') && onboardingFile.includes('Add Your Hand Photo Once'), 'Onboarding Step 1 is one-time hand photo upload');
-assert(onboardingFile.includes('step === 2') && onboardingFile.includes('Select Your First Inspo'), 'Onboarding Step 2 is inspiration style selection');
-assert(onboardingFile.includes('step === 3') && onboardingFile.includes('See It On My Hand (1 Free Try-On)'), 'Onboarding Step 3 delivers instant real-hand preview');
+assert(
+  onboardingFile.includes('step === 1') &&
+  (onboardingFile.includes('Snap Your Hand Once') || onboardingFile.includes('Add Your Hand Photo Once')),
+  'Onboarding Step 1 is one-time hand photo upload'
+);
+assert(
+  onboardingFile.includes('step === 2') &&
+  (onboardingFile.includes('Pick Your First Look') || onboardingFile.includes('Select Your First Inspo')),
+  'Onboarding Step 2 is inspiration style selection'
+);
+assert(
+  onboardingFile.includes('step === 3') &&
+  (onboardingFile.includes('See It On My Hand') || onboardingFile.includes('See It On My Hand (1 Free Try-On)')),
+  'Onboarding Step 3 delivers instant real-hand preview'
+);
 assert(onboardingFile.includes('onSaveHandPhoto'), 'Onboarding persists hand photo through onSaveHandPhoto');
 
 const pageFile = fs.readFileSync(path.join(process.cwd(), 'app/page.tsx'), 'utf-8');

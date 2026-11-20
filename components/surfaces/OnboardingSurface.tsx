@@ -204,10 +204,10 @@ export function OnboardingSurface({
                 Step 1 of 3 • One-Time Setup
               </span>
               <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
-                Add Your Hand Photo Once
+                Snap Your Hand Once
               </h1>
               <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
-                Take a quick photo of your hand in natural light. Finglora saves it so every manicure try-on snaps directly to your real fingers.
+                One quick photo so every nail set snaps right onto your actual fingers. No more guessing.
               </p>
             </div>
 
@@ -229,23 +229,23 @@ export function OnboardingSurface({
               </div>
               <div>
                 <div className="text-sm font-semibold text-stone-900">
-                  Snap or Upload Your Hand
+                  Take or Upload Hand Photo
                 </div>
                 <div className="text-xs text-stone-400 mt-0.5">
-                  Fingers relaxed, palm down in normal room light
+                  Palm down in natural room light
                 </div>
               </div>
               <button
                 type="button"
                 className="h-9 px-4 rounded-xl bg-[#E0246A] text-white text-xs font-semibold shadow-xs"
               >
-                Choose Photo
+                Add Hand Photo
               </button>
             </div>
 
             {/* Or choose sample hand */}
             <div className="space-y-2.5 pt-2">
-              <div className="text-xs text-stone-400">Or test with a sample skin tone hand:</div>
+              <div className="text-xs text-stone-400">Or test on a model hand:</div>
               <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-md mx-auto">
                 {SAMPLE_HANDS.map((h) => (
                   <button
@@ -270,13 +270,13 @@ export function OnboardingSurface({
           <div className="space-y-6 text-center animate-in fade-in duration-300">
             <div className="space-y-2">
               <span className="text-[11px] font-semibold tracking-wider text-[#E0246A] uppercase">
-                Step 2 of 3 • Choose Your Style
+                Step 2 of 3 • Choose Your Look
               </span>
               <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
-                Select Your First Inspo
+                Pick Your First Look
               </h1>
               <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
-                Choose a trending manicure or upload any screenshot from Pinterest. Gemini will analyze and apply it to your hand right now.
+                Pick a trending manicure or drop in any Pinterest screenshot to try on right now.
               </p>
             </div>
 
@@ -322,7 +322,7 @@ export function OnboardingSurface({
               onClick={() => inspoInputRef.current?.click()}
               className="text-xs text-stone-500 hover:text-[#E0246A] transition-colors underline underline-offset-4 cursor-pointer"
             >
-              Or upload custom screenshot from Pinterest / Instagram
+              Or upload a screenshot from Pinterest / Instagram
             </button>
 
             {/* Continue to Instant Reveal */}
@@ -333,7 +333,7 @@ export function OnboardingSurface({
                 className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
               >
                 <Hand className="w-4 h-4 text-white" />
-                <span>See It On My Hand (1 Free Try-On)</span>
+                <span>See It On My Hand ✨</span>
               </button>
             </div>
           </div>
@@ -349,20 +349,20 @@ export function OnboardingSurface({
                   Fitting {selectedInspo.title} to your hand...
                 </div>
                 <div className="text-xs text-stone-500">
-                  Google Gemini decomposing 5 fingertips & applying photorealistic clearcoat...
+                  Blending cuticle contours & high-gloss gel shine...
                 </div>
               </div>
             ) : (
               <div className="space-y-6">
                 <div className="space-y-1.5">
                   <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold tracking-wide">
-                    1st Try-On Complete • Ready to Style
+                    Your Hand • Custom Fitted ✨
                   </span>
                   <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-                    Your Personalized Virtual Manicure
+                    Look at that set on you.
                   </h1>
                   <p className="text-xs text-stone-500 max-w-sm mx-auto">
-                    Conformed directly to your fingers with authentic salon gel gloss. No cartoon stickers.
+                    Real salon gel shine on your actual fingers. Zero guessing, zero regrets.
                   </p>
                 </div>
 
@@ -377,7 +377,7 @@ export function OnboardingSurface({
                   {/* Toggle Pill */}
                   <div className="absolute top-3 left-3 z-10">
                     <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
-                      {revealMode === 'after' ? 'Applied Design' : 'Natural Hand'}
+                      {revealMode === 'after' ? 'Applied Manicure' : 'Bare Hand'}
                     </span>
                   </div>
 
@@ -388,7 +388,7 @@ export function OnboardingSurface({
                       className="px-2.5 py-0.5 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-sm flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
                     >
                       <RotateCcw className="w-2.5 h-2.5" />
-                      <span>{revealMode === 'after' ? 'Hold for Bare Hand' : 'View Manicure'}</span>
+                      <span>{revealMode === 'after' ? 'See Bare Hand' : 'View Manicure'}</span>
                     </button>
                   </div>
                 </div>
@@ -403,12 +403,12 @@ export function OnboardingSurface({
                     }}
                     className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
                   >
-                    <span>Enter Studio & Customize</span>
+                    <span>Customize & Save Look</span>
                     <ArrowRight className="w-4 h-4 text-white" />
                   </button>
 
                   <div className="text-[11px] text-stone-500">
-                    Your hand photo is saved for all upcoming try-ons.
+                    Your hand is saved — ready to try on any look in 1 tap.
                   </div>
                 </div>
               </div>
@@ -419,7 +419,7 @@ export function OnboardingSurface({
 
       {/* Footer Info */}
       <footer className="w-full max-w-4xl mx-auto text-center py-2 text-[11px] text-stone-400">
-        Powered by Google Gemini 3.8 Flash • Zero Cartoon SVGs • 100% Photographic Try-On
+        Finglora Nail Atelier · Zero salon regrets
       </footer>
     </div>
   );

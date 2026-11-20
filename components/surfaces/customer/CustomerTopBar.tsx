@@ -109,8 +109,8 @@ export function CustomerTopBar({
   const defaultNotifications: TopBarNotification[] = [
     {
       id: 'notif-1',
-      title: 'Atelier Studio Calibrated',
-      description: `Your ${preferredShape} silhouette is active with photorealistic AR lighting.`,
+      title: 'Studio Ready ✨',
+      description: `Your ${preferredShape} shape is set and ready to try on any look.`,
       time: 'Just now',
       read: false,
       type: 'silhouette',
@@ -118,8 +118,8 @@ export function CustomerTopBar({
     },
     {
       id: 'notif-2',
-      title: 'New Editorial Drops',
-      description: 'Glazed Chrome & Micro French sets added to Curated Inspiration.',
+      title: 'Trending Looks Added',
+      description: 'Glazed Chrome & Micro French sets added to explore.',
       time: '1h ago',
       read: false,
       type: 'trend',
@@ -127,8 +127,8 @@ export function CustomerTopBar({
     },
     {
       id: 'notif-3',
-      title: 'Hand Photo Calibrated',
-      description: 'Your saved hand is ready for instant 1-tap try-on across all designs.',
+      title: 'Hand Photo Saved',
+      description: 'Your hand is saved for 1-tap virtual try-on anytime.',
       time: 'Today',
       read: true,
       type: 'hand',

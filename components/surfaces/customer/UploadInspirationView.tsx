@@ -21,28 +21,28 @@ const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
 const ANALYSIS_STEPS = [
   {
     step: 1,
-    title: 'Ingesting Reference Photo',
-    detail: 'Calibrating lighting, perspective, and optical clarity',
+    title: 'Reading your inspo...',
+    detail: 'Finding the aesthetic, colors & vibe',
   },
   {
     step: 2,
-    title: 'Detecting Hand Geometry',
-    detail: 'Locating nail beds and natural cuticle contours',
+    title: 'Scanning nail shapes...',
+    detail: 'Detecting almond, coffin, or natural tips',
   },
   {
     step: 3,
-    title: 'Isolating Five-Finger Architecture',
-    detail: 'Mapping distinct shapes and length across all five digits',
+    title: 'Matching every finger...',
+    detail: 'Extracting thumb to pinky designs',
   },
   {
     step: 4,
-    title: 'Formulating Pigments & Finish',
-    detail: 'Extracting lacquer shade, chrome sheen, and motif details',
+    title: 'Mixing glaze & gloss...',
+    detail: 'Recreating that exact salon gel sheen',
   },
   {
     step: 5,
-    title: 'Manicure Calibration Complete',
-    detail: 'Five bespoke finger designs ready for virtual try-on',
+    title: 'Your set is ready! ✨',
+    detail: 'Ready to try on your hand live',
   },
 ];
 
@@ -161,7 +161,7 @@ export function UploadInspirationView({
 
           <div className="space-y-1.5">
             <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-              Extraction Step {analysisStep} of 5
+              Step {analysisStep} of 5
             </span>
             <h2 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
               {currentStep.title}
@@ -208,7 +208,7 @@ export function UploadInspirationView({
         <div className="space-y-3 pt-2">
           <div className="text-center">
             <h3 className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-              Decomposed 5-Finger Architecture
+              Five-Finger Match
             </h3>
           </div>
 
@@ -318,13 +318,13 @@ export function UploadInspirationView({
       {/* Editorial Header */}
       <div className="text-center space-y-2">
         <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-          Inspiration Atelier
+          Inspo Match
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-stone-900 tracking-tight">
-          Upload Inspiration
+          Upload Inspo
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-          Upload any reference manicure to analyze its colors, finish, and architecture for your virtual try-on.
+          Drop any Pinterest screenshot, Instagram post, or camera roll photo to see it on your hand.
         </p>
       </div>
 
@@ -350,10 +350,10 @@ export function UploadInspirationView({
 
         <div className="space-y-1">
           <p className="text-sm sm:text-base font-medium text-stone-900">
-            Drop your reference manicure photo here
+            Drop your inspo screenshot here
           </p>
           <p className="text-xs text-stone-400">
-            Supports PNG, JPG, HEIC, or WEBP up to 20MB
+            Pinterest, Instagram, TikTok, or camera roll
           </p>
         </div>
 
@@ -382,7 +382,7 @@ export function UploadInspirationView({
             className="h-11 px-4 rounded-xl border border-stone-300 hover:border-stone-400 bg-white hover:bg-stone-50 text-stone-800 text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-2xs"
           >
             <Camera className="w-4 h-4 text-stone-700" />
-            <span>Camera</span>
+            <span>Take Photo</span>
           </button>
         </div>
 
@@ -393,7 +393,7 @@ export function UploadInspirationView({
             onClick={onSampleDemoClick}
             className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-700 cursor-pointer"
           >
-            <span>Or test with a sample manicure design</span>
+            <span>Or try a trending sample set</span>
           </button>
         </div>
       </div>
@@ -403,10 +403,10 @@ export function UploadInspirationView({
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div>
             <h3 className="font-serif text-xl sm:text-2xl font-medium text-stone-900">
-              Popular Inspiration
+              Trending Looks
             </h3>
             <p className="text-xs text-stone-500">
-              Or pick from curated salon designs ready to try on instantly
+              Tap any look to try it on your hand instantly
             </p>
           </div>
 

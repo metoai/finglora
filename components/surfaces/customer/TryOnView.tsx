@@ -402,7 +402,7 @@ export function TryOnView({
                       : 'text-stone-600 hover:text-stone-900 font-medium'
                   }`}
                 >
-                  Natural Hand
+                  Bare Hand
                 </button>
                 <button
                   type="button"
@@ -413,7 +413,7 @@ export function TryOnView({
                       : 'text-stone-600 hover:text-stone-900 font-medium'
                   }`}
                 >
-                  Manicure Look
+                  With Manicure
                 </button>
               </div>
 
@@ -456,10 +456,10 @@ export function TryOnView({
                   <Loader2 className="w-9 h-9 animate-spin text-[#E0246A]" />
                   <div className="space-y-1">
                     <span className="text-sm font-semibold tracking-wide block">
-                      Synthesizing Bespoke Manicure...
+                      Applying your set...
                     </span>
                     <span className="text-xs text-stone-300 block max-w-xs leading-relaxed">
-                      Fitting custom gel art, blending cuticles, and rendering specular sheen
+                      Matching skin tone, cuticle lines & mirror gel shine
                     </span>
                   </div>
                 </div>
@@ -478,7 +478,7 @@ export function TryOnView({
               <div className="absolute top-3.5 left-3.5 z-20">
                 <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{tryOnView === 'after' ? (activeSample?.title || 'Active Look') : 'Natural Hand'}</span>
+                  <span>{tryOnView === 'after' ? (activeSample?.title || 'Applied Look') : 'Bare Hand'}</span>
                 </span>
               </div>
 
@@ -490,7 +490,7 @@ export function TryOnView({
                   className="pointer-events-auto px-4 py-1.5 rounded-full bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-stone-200/60"
                 >
                   <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
-                  <span>{tryOnView === 'after' ? 'View Natural Hand' : 'View Manicure'}</span>
+                  <span>{tryOnView === 'after' ? 'See Bare Hand' : 'View Manicure'}</span>
                 </button>
               </div>
             </div>
@@ -540,7 +540,7 @@ export function TryOnView({
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
             <div className="flex items-center justify-between">
               <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
-                Active Reference Design
+                Current Inspo
               </span>
               <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[#E0246A] border border-rose-100 capitalize">
                 {activeSample?.category || 'Couture Gel'}
@@ -590,7 +590,7 @@ export function TryOnView({
                 }}
                 className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
               >
-                <span>Customize in AI Studio →</span>
+                <span>Customize Look →</span>
               </button>
 
               <button
@@ -600,7 +600,7 @@ export function TryOnView({
                 className="w-full h-9 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50"
               >
                 <RefreshCw className={`w-3.5 h-3.5 text-stone-500 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
-                <span>Re-apply to Hand</span>
+                <span>Re-apply Set</span>
               </button>
             </div>
           </div>
@@ -610,10 +610,10 @@ export function TryOnView({
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
-                  Studio Inspiration
+                  Trending Looks
                 </span>
                 <h3 className="text-xs sm:text-sm font-semibold text-stone-900">
-                  Switch Reference Inspo
+                  Switch Inspo Look
                 </h3>
               </div>
               <span className="text-[10px] text-stone-400 font-mono">1-Tap Apply</span>
@@ -679,7 +679,7 @@ export function TryOnView({
                 className="w-full h-10 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200/80 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 shadow-2xs"
               >
                 <ImagePlus className="w-4 h-4 text-stone-600" />
-                <span>Upload Inspo Photo</span>
+                <span>Try Another Inspo</span>
               </button>
             </div>
           </div>
