@@ -22,6 +22,7 @@ import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/na
 import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { downscaleImageForVision } from '@/lib/services/storage';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
+import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 
 export function TryOnView({
@@ -106,6 +107,7 @@ export function TryOnView({
   const changeHandInputRef = useRef<HTMLInputElement>(null);
   const changeRefInspoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [internalSynthesizedHandUrl, setInternalSynthesizedHandUrl] = useState<string | null>(null);
   const synthesizedHandUrl = propSynthesizedHandUrl !== undefined ? propSynthesizedHandUrl : internalSynthesizedHandUrl;
@@ -271,14 +273,14 @@ export function TryOnView({
         storyAspect: true,
       });
       if (res.mode === 'shared') {
-        setExportToast('Opening story share sheet...');
-      } else {
-        setExportToast('Story photo downloaded with Finglora branding');
+        setExportToast('Opening share options...');
+        setTimeout(() => setExportToast(null), 2500);
+      } else if (res.mode === 'dialog') {
+        setIsShareModalOpen(true);
       }
-      setTimeout(() => setExportToast(null), 3000);
     } catch {
-      setExportToast('Could not share story. Please try again.');
-      setTimeout(() => setExportToast(null), 3000);
+      setExportToast('Could not open share options.');
+      setTimeout(() => setExportToast(null), 2500);
     } finally {
       setIsExporting(false);
     }
@@ -787,6 +789,15 @@ export function TryOnView({
           </div>
         </div>
       )}
+
+      {/* Social Share Options Modal */}
+      <SocialShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        imageUrl={displayedHandImage}
+        designTitle={activeSample?.title || 'Finglora Manicure'}
+        onDownloadFallback={handleDownloadBrandedLook}
+      />
     </div>
   );
 }

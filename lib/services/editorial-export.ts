@@ -85,9 +85,24 @@ export async function generateBrandedEditorialImage(
   const w = canvas.width;
   const h = canvas.height;
 
-  // Pure Finglora Logo Watermark (ONLY the logo badge, zero extra text, no dark scrim)
-  const badgeHeight = Math.max(44, Math.round(w * 0.048));
-  const badgeWidth = Math.max(160, Math.round(badgeHeight * 3.4));
+  // Luxury Editorial Finglora Watermark (Larger brand presence + website name)
+  const badgeHeight = Math.max(58, Math.round(w * 0.062));
+  const flowerSize = Math.round(badgeHeight * 0.54);
+  const titleSize = Math.round(badgeHeight * 0.44);
+  const domainSize = Math.round(badgeHeight * 0.32);
+
+  // Pre-measure dimensions for pixel-perfect pill container
+  ctx.font = `600 ${titleSize}px "Playfair Display", Georgia, serif`;
+  const titleWidth = ctx.measureText('Finglora').width;
+
+  ctx.font = `500 ${domainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  const domainWidth = ctx.measureText('finglora.com').width;
+  const dotWidth = ctx.measureText('·').width;
+
+  const gap = Math.round(badgeHeight * 0.18);
+  const padX = Math.round(badgeHeight * 0.45);
+  const totalContentWidth = flowerSize + gap + titleWidth + gap + dotWidth + gap + domainWidth;
+  const badgeWidth = Math.round(totalContentWidth + padX * 2);
 
   // Position: centered at bottom with comfortable margin (above story safe zone when in 9:16)
   const badgeX = Math.round((w - badgeWidth) / 2);
@@ -98,11 +113,11 @@ export async function generateBrandedEditorialImage(
   ctx.save();
 
   // Clean luxury frosted pill background
-  ctx.fillStyle = 'rgba(20, 16, 18, 0.72)';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
+  ctx.fillStyle = 'rgba(20, 16, 18, 0.78)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
   ctx.lineWidth = 1.5;
   ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-  ctx.shadowBlur = 12;
+  ctx.shadowBlur = 14;
   ctx.shadowOffsetY = 4;
 
   ctx.beginPath();
@@ -110,29 +125,40 @@ export async function generateBrandedEditorialImage(
   ctx.fill();
   ctx.stroke();
 
-  // Reset shadow for razor-sharp logo rendering
+  // Reset shadow for razor-sharp typography rendering
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
 
+  const centerY = badgeY + badgeHeight / 2;
+  let curX = badgeX + padX;
+
   // 1. Draw Brand Flower Mark (✿)
-  const flowerSize = Math.round(badgeHeight * 0.52);
   ctx.fillStyle = '#E0246A';
   ctx.font = `600 ${flowerSize}px serif`;
-  ctx.textAlign = 'center';
-  ctx.textBaseline = 'middle';
-  const flowerX = badgeX + Math.round(badgeHeight * 0.6);
-  const centerY = badgeY + badgeHeight / 2;
-  ctx.fillText('✿', flowerX, centerY);
-
-  // 2. Draw 'Finglora' Wordmark
-  const textSize = Math.round(badgeHeight * 0.42);
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = `600 ${textSize}px "Playfair Display", Georgia, serif`;
   ctx.textAlign = 'left';
   ctx.textBaseline = 'middle';
-  const textX = flowerX + Math.round(flowerSize * 0.7);
-  ctx.fillText('Finglora', textX, centerY);
+  ctx.fillText('✿', curX, centerY);
+  curX += flowerSize + gap;
+
+  // 2. Draw 'Finglora' Wordmark
+  ctx.fillStyle = '#FFFFFF';
+  ctx.font = `600 ${titleSize}px "Playfair Display", Georgia, serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('Finglora', curX, centerY);
+  curX += titleWidth + gap;
+
+  // 3. Draw Divider Dot '·'
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
+  ctx.font = `500 ${domainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText('·', curX, centerY);
+  curX += dotWidth + gap;
+
+  // 4. Draw Website Domain 'finglora.com'
+  ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
+  ctx.font = `500 ${domainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
+  ctx.fillText('finglora.com', curX, centerY);
 
   ctx.restore();
 
@@ -171,50 +197,108 @@ export async function downloadEditorialImage(
   setTimeout(() => URL.revokeObjectURL(link.href), 1000);
 }
 
+export interface ShareToSocialResult {
+  success: boolean;
+  mode: 'shared' | 'dialog' | 'cancelled';
+  file?: File;
+  dataUrl?: string;
+  shareUrl: string;
+  shareText: string;
+}
+
 /**
- * Shares to native social media stories (Instagram, TikTok, WhatsApp, etc.)
- * via the Web Share API. Falls back to direct download if sharing files is not supported.
- * Returns true if shared, or false if downloaded as fallback.
+ * Shares to native social media stories/posts (Instagram, Telegram, X, WhatsApp, etc.)
+ * via the Web Share API.
+ * Never silently downloads file upon share click; if Web Share is unavailable,
+ * returns mode 'dialog' so UI can render the direct social share options modal.
  */
 export async function shareToStoryOrSocial(
   imageUrl: string,
   options: EditorialExportOptions & { shareText?: string } = {}
-): Promise<{ success: boolean; mode: 'shared' | 'downloaded' }> {
+): Promise<ShareToSocialResult> {
   // Use storyAspect true for optimal 9:16 format if intended for stories
   const result = await generateBrandedEditorialImage(imageUrl, {
     storyAspect: options.storyAspect ?? true,
     ...options,
   });
 
-  if (
-    typeof navigator !== 'undefined' &&
-    typeof navigator.share === 'function' &&
-    typeof navigator.canShare === 'function' &&
-    navigator.canShare({ files: [result.file] })
-  ) {
+  const shareUrl =
+    typeof window !== 'undefined' && window.location.origin
+      ? window.location.origin
+      : 'https://finglora.com';
+  const shareTitle = options.designTitle ? `${options.designTitle} · Finglora` : 'Finglora Manicure Look';
+  const shareText = options.shareText || `Bespoke manicure created with Finglora Atelier (finglora.com)`;
+
+  // Check if native Web Share is supported
+  if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+    // 1. Attempt sharing with image file (supported on mobile iOS Safari, Android Chrome)
+    if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [result.file] })) {
+      try {
+        await navigator.share({
+          files: [result.file],
+          title: shareTitle,
+          text: shareText,
+        });
+        return {
+          success: true,
+          mode: 'shared',
+          file: result.file,
+          dataUrl: result.dataUrl,
+          shareUrl,
+          shareText,
+        };
+      } catch (err: unknown) {
+        if ((err as Error)?.name === 'AbortError') {
+          return {
+            success: false,
+            mode: 'cancelled',
+            file: result.file,
+            dataUrl: result.dataUrl,
+            shareUrl,
+            shareText,
+          };
+        }
+        // If file sharing was blocked or unsupported, fallback to sharing text + URL
+      }
+    }
+
+    // 2. Attempt sharing URL & text directly to OS share dialog
     try {
       await navigator.share({
-        files: [result.file],
-        title: options.designTitle || 'My Finglora Look',
-        text: options.shareText || 'Tailored manicure created with Finglora Atelier (finglora.com)',
+        title: shareTitle,
+        text: shareText,
+        url: shareUrl,
       });
-      return { success: true, mode: 'shared' };
+      return {
+        success: true,
+        mode: 'shared',
+        file: result.file,
+        dataUrl: result.dataUrl,
+        shareUrl,
+        shareText,
+      };
     } catch (err: unknown) {
       if ((err as Error)?.name === 'AbortError') {
-        // User cancelled the share dialog
-        return { success: false, mode: 'shared' };
+        return {
+          success: false,
+          mode: 'cancelled',
+          file: result.file,
+          dataUrl: result.dataUrl,
+          shareUrl,
+          shareText,
+        };
       }
     }
   }
 
-  // Fallback: Trigger direct download so user still gets the branded file to post manually
-  const link = document.createElement('a');
-  link.download = options.filename || 'finglora-story-look.jpg';
-  link.href = URL.createObjectURL(result.blob);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  setTimeout(() => URL.revokeObjectURL(link.href), 1000);
-
-  return { success: true, mode: 'downloaded' };
+  // 3. Fallback: Return dialog mode (so UI presents the native social share modal)
+  // NEVER silently trigger a file download when user requested to share!
+  return {
+    success: true,
+    mode: 'dialog',
+    file: result.file,
+    dataUrl: result.dataUrl,
+    shareUrl,
+    shareText,
+  };
 }

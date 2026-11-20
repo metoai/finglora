@@ -3,6 +3,8 @@ import React from 'react';
 export interface BrandLogoProps {
   badgeText?: string;
   subtitle?: string;
+  showWebsite?: boolean;
+  websiteName?: string;
   size?: 'sm' | 'md' | 'lg';
   variant?: 'dark' | 'light';
   className?: string;
@@ -22,11 +24,11 @@ export function BrandLogoIcon({
 }) {
   const isLight = variant === 'light';
 
-  // Reframed, well-proportioned dimensions
+  // Generous, luxury proportions
   const dimMap = {
-    sm: { box: 'w-7.5 h-7.5 sm:w-8 sm:h-8', flower: 'text-base sm:text-lg' },
-    md: { box: 'w-9 h-9 sm:w-9.5 sm:h-9.5', flower: 'text-xl sm:text-[22px]' },
-    lg: { box: 'w-11 h-11 sm:w-12 sm:h-12', flower: 'text-2xl sm:text-3xl' },
+    sm: { box: 'w-8.5 h-8.5 sm:w-9.5 sm:h-9.5', flower: 'text-lg sm:text-xl' },
+    md: { box: 'w-10 h-10 sm:w-11 sm:h-11', flower: 'text-2xl sm:text-[24px]' },
+    lg: { box: 'w-12 h-12 sm:w-14 sm:h-14', flower: 'text-3xl sm:text-4xl' },
   }[size];
 
   return (
@@ -53,6 +55,8 @@ export function BrandLogo({
   showText = true,
   badgeText,
   subtitle,
+  showWebsite = true,
+  websiteName = 'finglora.com',
   onClick,
 }: BrandLogoProps) {
   if (!showIcon && !showText) return null;
@@ -60,15 +64,18 @@ export function BrandLogo({
   const isLight = variant === 'light';
 
   const textSizes = {
-    sm: 'text-base sm:text-lg',
-    md: 'text-lg sm:text-xl',
+    sm: 'text-lg sm:text-xl',
+    md: 'text-xl sm:text-2xl',
     lg: 'text-2xl sm:text-3xl',
   }[size];
+
+  const displayedSubtitle =
+    subtitle || (showWebsite ? websiteName : undefined);
 
   return (
     <div
       onClick={onClick}
-      className={`inline-flex items-center gap-2.5 select-none group cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-98 ${className}`}
+      className={`inline-flex items-center gap-2.5 sm:gap-3 select-none group cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-98 ${className}`}
       aria-label="Finglora"
     >
       {showIcon && <BrandLogoIcon size={size} variant={variant} />}
@@ -88,13 +95,13 @@ export function BrandLogo({
               </span>
             )}
           </div>
-          {subtitle && (
+          {displayedSubtitle && (
             <span
-              className={`text-[9px] font-mono tracking-widest uppercase mt-0.5 ${
-                isLight ? 'text-white/60' : 'text-[#8C8085]'
+              className={`text-[9.5px] sm:text-[10px] font-mono tracking-wider mt-0.5 transition-colors ${
+                isLight ? 'text-white/60' : 'text-[#8C8085] group-hover:text-[#E0246A]'
               }`}
             >
-              {subtitle}
+              {displayedSubtitle}
             </span>
           )}
         </div>

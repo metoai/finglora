@@ -21,6 +21,7 @@ import { Finger, NailDesign } from '@/types/nail';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 import { downscaleImageForVision } from '@/lib/services/storage';
+import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 
 interface ChatMessage {
@@ -94,6 +95,8 @@ export function AiCreationView({
   const [isExporting, setIsExporting] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'canvas'>('chat');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [shareModalImg, setShareModalImg] = useState<string | null>(null);
 
   // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
   const originalBareHandPhoto =
@@ -321,14 +324,15 @@ export function AiCreationView({
         storyAspect: true,
       });
       if (res.mode === 'shared') {
-        setExportToast('Story sheet opened');
-      } else {
-        setExportToast('Story photo downloaded with Finglora branding');
+        setExportToast('Opening share options...');
+        setTimeout(() => setExportToast(null), 2500);
+      } else if (res.mode === 'dialog') {
+        setShareModalImg(imgUrl);
+        setIsShareModalOpen(true);
       }
-      setTimeout(() => setExportToast(null), 3000);
     } catch {
-      setExportToast('Could not share story. Please try again.');
-      setTimeout(() => setExportToast(null), 3000);
+      setExportToast('Could not open share options.');
+      setTimeout(() => setExportToast(null), 2500);
     } finally {
       setIsExporting(false);
     }
@@ -895,6 +899,15 @@ export function AiCreationView({
         onSuccess={() => setPaywallOpen(false)}
         isGuestFirstTry={isGuestFirstTry}
         onSignUpClick={onSignUpClick}
+      />
+
+      {/* Social Share Options Modal */}
+      <SocialShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        imageUrl={shareModalImg || currentTryOnImage}
+        designTitle="Custom AI Manicure"
+        onDownloadFallback={() => handleDownloadBrandedLook(shareModalImg || currentTryOnImage)}
       />
     </div>
   );
