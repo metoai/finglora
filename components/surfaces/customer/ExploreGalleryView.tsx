@@ -362,7 +362,7 @@ export function ExploreGalleryView({
   };
 
   return (
-    <div className="w-full space-y-3 pb-16">
+    <div className="w-full space-y-3 pb-20 md:pb-8">
       {/* 1. Pure Pinterest Header: Full-Width Search Input (No camera button, no All Pins, no clutter) */}
       <div className="sticky top-0 z-30 bg-white pt-2.5 pb-2 px-3 sm:px-6 w-full border-b border-stone-200/50 shadow-2xs">
         {/* Full-width Search Bar */}

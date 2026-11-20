@@ -212,10 +212,10 @@ export function CustomerApp({
             customerRoute === 'ai-create'
               ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
               : customerRoute === 'explore' || customerRoute === 'home'
-              ? 'min-h-screen pb-24 md:pb-12 w-full p-0'
+              ? 'w-full p-0'
               : mobilePreview
-              ? 'pb-24 px-4 pt-4'
-              : 'min-h-[calc(100vh-4rem)] pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-6'
+              ? 'pb-20 px-4 pt-4'
+              : 'min-h-[calc(100vh-4rem)] pb-20 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-6'
           }`}
         >
         <div

@@ -303,7 +303,7 @@ export function HomeHubView({
   });
 
   return (
-    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-5 sm:space-y-6 lg:space-y-7 pb-24 md:pb-16">
+    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-4 sm:space-y-6 pb-20 md:pb-8">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
