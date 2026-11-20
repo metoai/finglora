@@ -123,12 +123,7 @@ export default function FingloraApp() {
     }
     return null;
   });
-  const [synthesizedHandUrl, setSynthesizedHandUrlState] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('finglora_synthesized_hand_url') || null;
-    }
-    return null;
-  });
+  const [synthesizedHandUrl, setSynthesizedHandUrlState] = useState<string | null>(null);
 
   const setSynthesizedHandUrl = (url: string | null) => {
     setSynthesizedHandUrlState(url);
@@ -503,7 +498,18 @@ export default function FingloraApp() {
 
   // Action Helpers
   const navigateCustomer = (route: CustomerRoute, updateUrl = true) => {
-    if (customerRoute === 'tryon' && route !== 'tryon') stopCameraStream();
+    if (customerRoute === 'tryon' && route !== 'tryon') {
+      stopCameraStream();
+      setSynthesizedHandUrl(null);
+      setCapturedFrameUrl(null);
+      setActivePhotoUrl('');
+      setTryOnView('after');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+    }
     setCustomerRoute(route);
     setSwapMode(false);
     setSwapFirstFinger(null);
@@ -517,7 +523,18 @@ export default function FingloraApp() {
   };
 
   const navigateSurface = (nextSurface: 'landing' | 'onboarding' | 'customer', nextRoute?: CustomerRoute, updateUrl = true) => {
-    if (nextSurface !== 'customer') stopCameraStream();
+    if (nextSurface !== 'customer' || (customerRoute === 'tryon' && nextRoute && nextRoute !== 'tryon')) {
+      stopCameraStream();
+      setSynthesizedHandUrl(null);
+      setCapturedFrameUrl(null);
+      setActivePhotoUrl('');
+      setTryOnView('after');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+    }
     setSurface(nextSurface);
     if (nextRoute) setCustomerRoute(nextRoute);
     if (updateUrl && typeof window !== 'undefined') {

@@ -217,12 +217,30 @@ export function TryOnView({
     }
   };
 
-  // Auto-generate if arriving on Try-On screen without a synthesized hand
+  // Whenever exiting Try-On, reset all generated state so user always starts fresh next time
   useEffect(() => {
-    if (!synthesizedHandUrl && !isSynthesizingHand && (customTryOnHandUrl || capturedFrameUrl || activePhotoUrl)) {
+    return () => {
+      setInternalSynthesizedHandUrl(null);
+      propSetSynthesizedHandUrl?.(null);
+      setIsSynthesizingHand(false);
+      setSynthesisError(null);
+      setIsZoomOpen(false);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+    };
+  }, []);
+
+  // Only auto-generate when arriving with an explicit target inspiration design
+  useEffect(() => {
+    const hasTargetDesign = Boolean(activePhotoUrl);
+    const hasHand = Boolean(customTryOnHandUrl || capturedFrameUrl);
+    if (!synthesizedHandUrl && !isSynthesizingHand && hasHand && hasTargetDesign) {
       handleSynthesizeHand();
     }
-  }, [synthesizedHandUrl, isSynthesizingHand]);
+  }, [synthesizedHandUrl, isSynthesizingHand, activePhotoUrl, customTryOnHandUrl, capturedFrameUrl]);
 
   // Base image fallback
   const resultImageUrl =

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Home, Compass, Hand } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 
@@ -166,6 +166,21 @@ export function CustomerApp({
   const [aiCreationBaseImage, setAiCreationBaseImage] = useState<string | null>(null);
 
   const favoritesCount = exploreDesigns.filter((d) => d.isSaved).length;
+
+  // Whenever navigating away from Try-On, reset try-on state so it always starts fresh
+  const prevCustomerRouteRef = useRef(customerRoute);
+  useEffect(() => {
+    if (prevCustomerRouteRef.current === 'tryon' && customerRoute !== 'tryon') {
+      setSynthesizedHandUrl?.(null);
+      setTryOnView?.('after');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+    }
+    prevCustomerRouteRef.current = customerRoute;
+  }, [customerRoute, setSynthesizedHandUrl, setTryOnView]);
 
   return (
     <div
