@@ -222,6 +222,20 @@ assert(!canvasPreviewFile.includes('<defs'), 'components/visuals/NailCanvasPrevi
 assert(canvasPreviewFile.includes('clipPath'), 'Uses CSS clipPath micro-geometry for Coffin and Stiletto tips');
 assert(canvasPreviewFile.includes('linear-gradient'), 'Uses realistic specular lighting and gel sheen gradients');
 
+const editorialHandFile = fs.readFileSync(
+  path.join(process.cwd(), 'components/visuals/EditorialHandVisual.tsx'),
+  'utf-8'
+);
+assert(!editorialHandFile.includes('<svg'), 'components/visuals/EditorialHandVisual.tsx contains 0 <svg> tags');
+assert(!editorialHandFile.includes('<path'), 'components/visuals/EditorialHandVisual.tsx contains 0 <path> tags');
+
+const landingSurfaceFile = fs.readFileSync(
+  path.join(process.cwd(), 'components/surfaces/LandingSurface.tsx'),
+  'utf-8'
+);
+assert(!landingSurfaceFile.includes('<svg'), 'components/surfaces/LandingSurface.tsx contains 0 <svg> tags');
+assert(!landingSurfaceFile.includes('activeShape.path'), 'components/surfaces/LandingSurface.tsx uses NailCanvasPreview instead of SVG paths');
+
 // ----------------------------------------------------------------------
 // SUITE 5: API Purge & Clean Environment
 // ----------------------------------------------------------------------

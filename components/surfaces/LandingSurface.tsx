@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import { Camera, X, Check, ArrowRight, Sparkles, SlidersHorizontal, Info, Scan, Palette, CheckCircle2, UploadCloud, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import { ExploreDesignSet, NailShape, Finger } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
 interface ShadeOption {
   id: string;
@@ -45,36 +46,31 @@ const SHADES: ShadeOption[] = [
   },
 ];
 
-const SHAPES: { id: NailShape; name: string; desc: string; path: string }[] = [
+const SHAPES: { id: NailShape; name: string; desc: string }[] = [
   {
     id: 'almond',
     name: 'Almond',
     desc: 'Softly tapered lateral walls with an elegant curved apex',
-    path: 'M 50,260 C 24,260 16,220 16,170 C 16,90 28,16 50,16 C 72,16 84,90 84,170 C 84,220 76,260 50,260 Z',
   },
   {
     id: 'coffin',
     name: 'Coffin',
     desc: 'Tapered edges squaring off into a crisp flat free edge',
-    path: 'M 50,260 C 24,260 18,220 20,170 L 32,25 C 33,20 40,20 50,20 C 60,20 67,20 68,25 L 80,170 C 82,220 76,260 50,260 Z',
   },
   {
     id: 'oval',
     name: 'Oval',
     desc: 'Classic rounded contours mirroring the cuticle curvature',
-    path: 'M 50,260 C 24,260 16,220 16,170 C 16,100 24,20 50,20 C 76,20 84,100 84,170 C 84,220 76,260 50,260 Z',
   },
   {
     id: 'square',
     name: 'Square',
     desc: 'Parallel straight side walls with a precise horizontal tip',
-    path: 'M 50,260 C 24,260 18,220 18,170 L 18,30 C 18,22 24,22 50,22 C 76,22 82,22 82,30 L 82,170 C 82,220 76,260 50,260 Z',
   },
   {
     id: 'stiletto',
     name: 'Stiletto',
     desc: 'Dramatic architectural silhouette tapering to a razor point',
-    path: 'M 50,260 C 24,260 16,220 18,170 L 50,10 L 82,170 C 84,220 76,260 50,260 Z',
   },
 ];
 
@@ -213,67 +209,29 @@ export function LandingSurface({
               </div>
             </div>
 
-            {/* Translucent 3D Glass Nail Silhouette */}
+            {/* 3D Glass Nail Silhouette (Pure CSS Micro-Geometry, ZERO SVG) */}
             <div
               onClick={handleToggleShape}
               className="relative w-[150px] h-[270px] xl:w-[170px] xl:h-[300px] flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
               title="Click to cycle nail shape"
             >
-              <svg
-                viewBox="0 0 100 270"
-                className="w-full h-full filter drop-shadow-[0_12px_24px_rgba(224,36,106,0.18)]"
-              >
-                <defs>
-                  {/* Linear Nail Shade Gradient */}
-                  <linearGradient id="landingNailGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                    <stop offset="0%" stopColor={activeShade.gradient.tip} />
-                    <stop offset="55%" stopColor={activeShade.gradient.mid} />
-                    <stop offset="100%" stopColor={activeShade.gradient.base} />
-                  </linearGradient>
-
-                  {/* Inner Apex Depth Highlight */}
-                  <radialGradient id="apexGlow" cx="50%" cy="40%" r="50%">
-                    <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.4" />
-                    <stop offset="100%" stopColor="#FFFFFF" stopOpacity="0" />
-                  </radialGradient>
-                </defs>
-
-                {/* Base Nail Silhouette Body */}
-                <path
-                  d={activeShape.path}
-                  fill="url(#landingNailGrad)"
-                  stroke="rgba(255,255,255,0.4)"
-                  strokeWidth="0.75"
-                />
-
-                {/* Inner Apex Radial Soft Glow */}
-                <path
-                  d={activeShape.path}
-                  fill="url(#apexGlow)"
-                  className="pointer-events-none"
-                />
-
-                {/* Elegant Curved Specular Reflection Streak (Left Wall) */}
-                <path
-                  d="M 34,26 C 24,70 23,120 28,190 C 25,190 20,120 30,26 Z"
-                  fill="white"
-                  fillOpacity="0.75"
-                />
-
-                {/* Secondary Soft Specular Reflection (Apex Ridge) */}
-                <path
-                  d="M 42,40 C 37,70 37,110 40,150 C 38,150 35,110 39,40 Z"
-                  fill="white"
-                  fillOpacity="0.35"
-                />
-
-                {/* Bottom Cuticle Crescent (Lunula Translucency) */}
-                <path
-                  d="M 30,235 C 40,220 60,220 70,235 C 60,242 40,242 30,235 Z"
-                  fill="white"
-                  fillOpacity="0.22"
-                />
-              </svg>
+              <NailCanvasPreview
+                nail={{
+                  finger: 'middle',
+                  title: 'Editorial Hero Nail',
+                  shape: activeShape.id,
+                  length: 'long',
+                  finish: 'glossy',
+                  baseColor: activeShade.hex,
+                  accentColor: activeShade.gradient.tip,
+                  pattern: 'solid',
+                  clientNote: 'Pure CSS Micro-Geometry',
+                  status: 'detected',
+                }}
+                width={170}
+                height={280}
+                showCuticle={false}
+              />
             </div>
 
             {/* Label Below Viewfinder: Shape · Length · Shade */}
@@ -335,41 +293,29 @@ export function LandingSurface({
             </div>
           </div>
 
-          {/* Translucent 3D Glass Nail */}
+          {/* 3D Glass Nail Silhouette (Pure CSS Micro-Geometry, ZERO SVG) */}
           <div
             onClick={handleToggleShape}
             className="relative w-[125px] h-[225px] sm:w-[145px] sm:h-[260px] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+            title="Click to cycle nail shape"
           >
-            <svg
-              viewBox="0 0 100 270"
-              className="w-full h-full filter drop-shadow-[0_8px_20px_rgba(224,36,106,0.18)]"
-            >
-              <defs>
-                <linearGradient id="mobileNailGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor={activeShade.gradient.tip} />
-                  <stop offset="55%" stopColor={activeShade.gradient.mid} />
-                  <stop offset="100%" stopColor={activeShade.gradient.base} />
-                </linearGradient>
-              </defs>
-              <path
-                d={activeShape.path}
-                fill="url(#mobileNailGrad)"
-                stroke="rgba(255,255,255,0.4)"
-                strokeWidth="0.75"
-              />
-              {/* Left Sheen Streak */}
-              <path
-                d="M 34,26 C 24,70 23,120 28,190 C 25,190 20,120 30,26 Z"
-                fill="white"
-                fillOpacity="0.75"
-              />
-              {/* Lunula */}
-              <path
-                d="M 30,235 C 40,220 60,220 70,235 C 60,242 40,242 30,235 Z"
-                fill="white"
-                fillOpacity="0.22"
-              />
-            </svg>
+            <NailCanvasPreview
+              nail={{
+                finger: 'middle',
+                title: 'Editorial Hero Nail',
+                shape: activeShape.id,
+                length: 'long',
+                finish: 'glossy',
+                baseColor: activeShade.hex,
+                accentColor: activeShade.gradient.tip,
+                pattern: 'solid',
+                clientNote: 'Pure CSS Micro-Geometry',
+                status: 'detected',
+              }}
+              width={140}
+              height={240}
+              showCuticle={false}
+            />
           </div>
 
           {/* Bottom Label: Almond · Medium */}

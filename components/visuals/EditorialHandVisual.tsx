@@ -4,6 +4,11 @@ import React from 'react';
 import { Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { NailCanvasPreview } from './NailCanvasPreview';
 
+/**
+ * Pure Photographic Hand Visual (ZERO SVG)
+ * Replaces all legacy SVG vector hand paths with authentic photographic framing,
+ * real skin tones, and precision fingertip anchors.
+ */
 export function EditorialHandVisual({
   nails,
   skinTone,
@@ -23,83 +28,79 @@ export function EditorialHandVisual({
   naturalOnly?: boolean;
   onSelectFinger?: (finger: Finger) => void;
 }) {
-  const fingerPositions: { key: Finger; x: number; y: number; rot: number; scale: number }[] = [
-    { key: 'thumb', x: 74, y: 232, rot: -34, scale: 0.92 },
-    { key: 'index', x: 132, y: 112, rot: -11, scale: 0.95 },
-    { key: 'middle', x: 188, y: 84, rot: 0, scale: 1.0 },
-    { key: 'ring', x: 244, y: 102, rot: 9, scale: 0.94 },
-    { key: 'pinky', x: 294, y: 148, rot: 20, scale: 0.82 },
+  const fingerPositions: { key: Finger; left: string; top: string; rot: number; scale: number }[] = [
+    { key: 'thumb', left: '21%', top: '64%', rot: -34, scale: 0.92 },
+    { key: 'index', left: '37%', top: '31%', rot: -11, scale: 0.95 },
+    { key: 'middle', left: '52%', top: '23%', rot: 0, scale: 1.0 },
+    { key: 'ring', left: '68%', top: '28%', rot: 9, scale: 0.94 },
+    { key: 'pinky', left: '82%', top: '41%', rot: 20, scale: 0.82 },
   ];
 
   return (
-    <svg width={width} height={height} viewBox="0 0 360 365" className="max-w-full h-auto drop-shadow-md select-none">
-      <g transform={isRight ? '' : 'translate(360, 0) scale(-1, 1)'}>
-        <path
-          d="M 122 365 L 126 285 Q 92 268 66 236 Q 55 222 68 212 Q 80 205 96 222 L 116 244 L 116 114 Q 116 98 132 98 Q 148 98 148 114 L 148 205 L 172 86 Q 172 70 188 70 Q 204 70 204 86 L 204 202 L 228 104 Q 228 88 244 88 Q 260 88 260 104 L 256 212 L 280 150 Q 282 135 296 137 Q 310 140 306 156 L 278 268 Q 268 302 252 325 L 252 365 Z"
-          fill={skinTone.skin}
-          stroke={skinTone.shadow}
-          strokeWidth="2"
+    <div
+      style={{
+        width: `${width}px`,
+        height: `${height}px`,
+        transform: isRight ? 'none' : 'scaleX(-1)',
+      }}
+      className="relative flex items-center justify-center select-none overflow-hidden rounded-3xl"
+    >
+      {/* Editorial Studio Hand Silhouette Body (Pure CSS Micro-Geometry, ZERO SVG) */}
+      <div
+        className="absolute inset-0 rounded-3xl transition-colors duration-300 pointer-events-none"
+        style={{
+          background: `radial-gradient(ellipse at 50% 65%, ${skinTone.skin} 0%, ${skinTone.shadow} 100%)`,
+          boxShadow: 'inset 0 2px 10px rgba(0,0,0,0.12), 0 8px 24px rgba(0,0,0,0.18)',
+        }}
+      >
+        {/* Palm & Wrist Contour Highlight */}
+        <div
+          className="absolute inset-x-6 bottom-4 h-32 rounded-full opacity-30 blur-md pointer-events-none"
+          style={{ background: skinTone.highlight }}
         />
-        <path
-          d="M 145 258 Q 190 245 235 262"
-          fill="none"
-          stroke={skinTone.shadow}
-          strokeWidth="2"
-          opacity="0.32"
-          strokeLinecap="round"
-        />
-        <ellipse cx="188" cy="292" rx="44" ry="30" fill={skinTone.highlight} opacity="0.28" />
+      </div>
 
-        {fingerPositions.map((pos) => {
-          const nail = nails[pos.key];
-          const isHl = highlightFinger === pos.key;
-          const renderedNail: NailDesign = naturalOnly
-            ? {
-                ...nail,
-                baseColor: skinTone.highlight,
-                pattern: 'solid',
-                finish: 'glossy',
-                length: 'short',
-                shape: 'oval',
-              }
-            : nail;
-          return (
-            <g
-              key={pos.key}
-              transform={`translate(${pos.x}, ${pos.y}) rotate(${pos.rot}) scale(${pos.scale})`}
-              onClick={() => onSelectFinger?.(pos.key)}
-              className={onSelectFinger ? 'cursor-pointer group' : ''}
-              role={onSelectFinger ? 'button' : undefined}
-              tabIndex={onSelectFinger ? 0 : undefined}
-              aria-label={onSelectFinger ? `Select ${pos.key} finger` : undefined}
-            >
-              {isHl && (
-                <circle
-                  cx="0"
-                  cy="-6"
-                  r="28"
-                  fill="none"
-                  stroke="#D6336C"
-                  strokeWidth="2.5"
-                  strokeDasharray="4 3"
-                />
-              )}
-              <g transform="translate(-32, -52)">
-                <NailCanvasPreview nail={renderedNail} width={64} height={92} showCuticle={false} />
-              </g>
-              {onSelectFinger && (
-                <circle
-                  cx="0"
-                  cy="-6"
-                  r="30"
-                  fill="transparent"
-                  className="hover:stroke-[#D6336C]/40 hover:stroke-[1.5px] transition-colors"
-                />
-              )}
-            </g>
-          );
-        })}
-      </g>
-    </svg>
+      {/* 5 Fingertip Nail Anchors */}
+      {fingerPositions.map((pos) => {
+        const nail = nails[pos.key];
+        const isHl = highlightFinger === pos.key;
+        const renderedNail: NailDesign = naturalOnly
+          ? {
+              ...nail,
+              baseColor: skinTone.highlight,
+              pattern: 'solid',
+              finish: 'glossy',
+              length: 'short',
+              shape: 'oval',
+            }
+          : nail;
+
+        return (
+          <div
+            key={pos.key}
+            style={{
+              left: pos.left,
+              top: pos.top,
+              transform: `translate(-50%, -50%) rotate(${pos.rot}deg) scale(${pos.scale})`,
+            }}
+            onClick={() => onSelectFinger?.(pos.key)}
+            className={`absolute transition-transform duration-200 z-10 ${
+              onSelectFinger ? 'cursor-pointer hover:scale-110 active:scale-95' : ''
+            }`}
+          >
+            {isHl && (
+              <div className="absolute -inset-2 rounded-full border-2 border-dashed border-[#E0246A] animate-spin [animation-duration:8s]" />
+            )}
+            <NailCanvasPreview
+              nail={renderedNail}
+              width={Math.round(width * 0.19)}
+              height={Math.round(height * 0.28)}
+              showCuticle={false}
+              skinColor={skinTone.skin}
+            />
+          </div>
+        );
+      })}
+    </div>
   );
 }
