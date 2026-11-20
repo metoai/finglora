@@ -460,61 +460,61 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 3. Four Tactile Action Tiles with a Real Good Height & Micro-Animations */}
+      {/* 3. Four Tactile Action Tiles with Brand Colors & Whole Card Fill on Hero Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
-        {/* Station 1: Virtual Try-On */}
+        {/* Station 1: Virtual Try-On - WHOLE CARD SIGNATURE BRAND PINK */}
         <div
           onClick={onTryOnClick}
-          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-rose-50/80 via-white to-pink-50/30 border border-pink-200/70 hover:border-[#E0246A]/50 transition-all duration-300 shadow-[0_2px_8px_rgba(224,36,106,0.04)] hover:shadow-[0_8px_24px_rgba(224,36,106,0.12)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[108px] sm:min-h-[120px]"
+          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-[#E0246A] hover:bg-[#CE1B5D] text-white transition-all duration-300 shadow-[0_4px_16px_rgba(224,36,106,0.22)] hover:shadow-[0_8px_28px_rgba(224,36,106,0.35)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
         >
-          {/* Subtle corner light diffusion */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-rose-200/0 group-hover:bg-rose-200/40 blur-xl transition-all duration-500 pointer-events-none" />
+          {/* Subtle corner light sheen */}
+          <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/10 group-hover:bg-white/20 blur-xl transition-all duration-500 pointer-events-none" />
 
           <div className="flex items-center justify-between relative z-10">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#E0246A] to-[#BE185D] text-white flex items-center justify-center shadow-[0_3px_10px_rgba(224,36,106,0.25)] transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-[0_4px_14px_rgba(224,36,106,0.35)]">
-              <Hand className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-300 ease-out group-hover:rotate-12 group-hover:scale-110 origin-bottom-left" strokeWidth={1.8} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/20 backdrop-blur-xs text-white border border-white/25 flex items-center justify-center shadow-xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-white/25">
+              <Hand className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-300 ease-out group-hover:rotate-12 group-hover:scale-110 origin-bottom-left" strokeWidth={2} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-white/90 border border-pink-100 flex items-center justify-center text-stone-400 group-hover:text-white group-hover:bg-[#E0246A] group-hover:border-[#E0246A] transition-all duration-200 shadow-2xs">
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
+            <div className="w-7 h-7 rounded-full bg-white/20 hover:bg-white text-white hover:text-[#E0246A] border border-white/20 flex items-center justify-center transition-all duration-200 shadow-2xs">
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.25} />
             </div>
           </div>
           <div className="relative z-10 mt-3">
-            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
+            <h3 className="font-semibold text-xs sm:text-sm text-white leading-tight truncate">
               Virtual Try-On
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate">
+            <p className="text-[10px] sm:text-[11px] text-pink-100/90 mt-0.5 truncate font-normal">
               Live AR on your hand
             </p>
           </div>
         </div>
 
-        {/* Station 2: Extract Inspo */}
+        {/* Station 2: Extract Inspo - WHOLE CARD DEEP BRAND NOIR */}
         <div
           onClick={onUploadClick}
-          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FFFDF7] via-white to-[#FDF8EE] border border-amber-200/60 hover:border-amber-400/60 transition-all duration-300 shadow-[0_2px_8px_rgba(217,119,6,0.04)] hover:shadow-[0_8px_24px_rgba(217,119,6,0.12)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[108px] sm:min-h-[120px]"
+          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-[#181416] hover:bg-[#231E21] text-white transition-all duration-300 shadow-[0_4px_16px_rgba(0,0,0,0.12)] hover:shadow-[0_8px_28px_rgba(0,0,0,0.22)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
         >
-          {/* Subtle corner light diffusion */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-amber-200/0 group-hover:bg-amber-200/40 blur-xl transition-all duration-500 pointer-events-none" />
+          {/* Subtle corner light sheen */}
+          <div className="absolute -top-8 -right-8 w-24 h-24 rounded-full bg-white/5 group-hover:bg-white/10 blur-xl transition-all duration-500 pointer-events-none" />
 
           <div className="flex items-center justify-between relative z-10">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FEF3C7] text-[#92400E] border border-amber-200/80 flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-[#FDE68A]">
-              <ImagePlus className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-300 ease-out group-hover:-translate-y-1 group-hover:scale-110" strokeWidth={1.8} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white/10 backdrop-blur-xs text-[#FCE7F3] border border-white/15 flex items-center justify-center shadow-xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-white/15">
+              <ImagePlus className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-300 ease-out group-hover:-translate-y-0.5 group-hover:scale-110" strokeWidth={1.8} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-white/90 border border-amber-100 flex items-center justify-center text-stone-400 group-hover:text-white group-hover:bg-[#92400E] group-hover:border-[#92400E] transition-all duration-200 shadow-2xs">
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
+            <div className="w-7 h-7 rounded-full bg-white/10 hover:bg-white text-white hover:text-[#181416] border border-white/10 flex items-center justify-center transition-all duration-200 shadow-2xs">
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.25} />
             </div>
           </div>
           <div className="relative z-10 mt-3">
-            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-amber-900 transition-colors leading-tight truncate">
+            <h3 className="font-semibold text-xs sm:text-sm text-white leading-tight truncate">
               Extract Inspo
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate">
-              From photo or Instagram
+            <p className="text-[10px] sm:text-[11px] text-stone-300 mt-0.5 truncate font-normal">
+              From Pinterest or photos
             </p>
           </div>
         </div>
 
-        {/* Station 3: Saved Looks */}
+        {/* Station 3: Saved Looks - WHOLE CARD SOFT BRAND ROSE BLUSH */}
         <div
           onClick={() => {
             if (onFavoritesClick) {
@@ -523,42 +523,36 @@ export function HomeHubView({
               onExploreClick();
             }
           }}
-          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-[#FDF6FB] via-white to-[#F9EBF4]/50 border border-pink-200/60 hover:border-pink-300/80 transition-all duration-300 shadow-[0_2px_8px_rgba(224,36,106,0.04)] hover:shadow-[0_8px_24px_rgba(224,36,106,0.12)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[108px] sm:min-h-[120px]"
+          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-[#FDF2F8] hover:bg-[#FCE7F3] border border-[#FCE7F3] hover:border-[#E0246A]/40 transition-all duration-300 shadow-[0_2px_8px_rgba(224,36,106,0.04)] hover:shadow-[0_8px_24px_rgba(224,36,106,0.12)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
         >
-          {/* Subtle corner light diffusion */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-pink-200/0 group-hover:bg-pink-200/40 blur-xl transition-all duration-500 pointer-events-none" />
-
           <div className="flex items-center justify-between relative z-10">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FCE7F3] text-[#BE185D] border border-pink-200/80 flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-[#FBCFE8]">
-              <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-all duration-300 ease-out group-hover:scale-115 group-hover:fill-[#BE185D]/30" strokeWidth={1.8} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white text-[#E0246A] border border-pink-100 flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105">
+              <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-all duration-300 ease-out group-hover:scale-115 group-hover:fill-[#E0246A]" strokeWidth={2} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-white/90 border border-pink-100 flex items-center justify-center text-stone-400 group-hover:text-white group-hover:bg-[#BE185D] group-hover:border-[#BE185D] transition-all duration-200 shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-white hover:bg-[#E0246A] text-stone-400 hover:text-white border border-pink-100 flex items-center justify-center transition-all duration-200 shadow-2xs">
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
             </div>
           </div>
           <div className="relative z-10 mt-3">
-            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#BE185D] transition-colors leading-tight truncate">
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
               Saved Looks
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate">
+            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate font-normal">
               Your saved manicures
             </p>
           </div>
         </div>
 
-        {/* Station 4: Explore Pins */}
+        {/* Station 4: Explore Pins - CRISP ATELIER WHITE CARD */}
         <div
           onClick={() => onExploreClick?.()}
-          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-stone-100/70 via-white to-stone-50/50 border border-stone-200/80 hover:border-stone-400/80 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[108px] sm:min-h-[120px]"
+          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-[#FAF7F2] border border-stone-200/90 hover:border-stone-400/80 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
         >
-          {/* Subtle corner light diffusion */}
-          <div className="absolute -top-6 -right-6 w-20 h-20 rounded-full bg-stone-300/0 group-hover:bg-stone-300/40 blur-xl transition-all duration-500 pointer-events-none" />
-
           <div className="flex items-center justify-between relative z-10">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-stone-900 text-white flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-black">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#181416] text-white flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-black">
               <Compass className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-500 ease-out group-hover:rotate-45 group-hover:scale-110" strokeWidth={1.8} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-white/90 border border-stone-200 flex items-center justify-center text-stone-400 group-hover:text-white group-hover:bg-stone-900 group-hover:border-stone-900 transition-all duration-200 shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-stone-100 hover:bg-[#181416] text-stone-400 hover:text-white border border-stone-200 flex items-center justify-center transition-all duration-200 shadow-2xs">
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
             </div>
           </div>
@@ -566,7 +560,7 @@ export function HomeHubView({
             <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-stone-900 transition-colors leading-tight truncate">
               Explore Pins
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate">
+            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate font-normal">
               Trending discovery
             </p>
           </div>
