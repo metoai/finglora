@@ -11,6 +11,9 @@ import {
   Menu,
   X,
   ChevronRight,
+  Bell,
+  Palette,
+  Check,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { NailShape } from '@/types/nail';
@@ -91,6 +94,49 @@ export function CustomerTopBar({
     : 'FL';
 
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+  interface TopBarNotification {
+    id: string;
+    title: string;
+    description: string;
+    time: string;
+    read: boolean;
+    type: 'silhouette' | 'trend' | 'hand' | 'atelier';
+    route?: CustomerRoute;
+  }
+
+  const defaultNotifications: TopBarNotification[] = [
+    {
+      id: 'notif-1',
+      title: 'Atelier Studio Calibrated',
+      description: `Your ${preferredShape} silhouette is active with photorealistic AR lighting.`,
+      time: 'Just now',
+      read: false,
+      type: 'silhouette',
+      route: 'tryon',
+    },
+    {
+      id: 'notif-2',
+      title: 'New Editorial Drops',
+      description: 'Glazed Chrome & Micro French sets added to Curated Inspiration.',
+      time: '1h ago',
+      read: false,
+      type: 'trend',
+      route: 'explore',
+    },
+    {
+      id: 'notif-3',
+      title: 'Hand Photo Calibrated',
+      description: 'Your saved hand is ready for instant 1-tap try-on across all designs.',
+      time: 'Today',
+      read: true,
+      type: 'hand',
+      route: 'tryon',
+    },
+  ];
+
+  const [notifications, setNotifications] = useState<TopBarNotification[]>(defaultNotifications);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -101,8 +147,60 @@ export function CustomerTopBar({
           ? `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(localStorage.getItem('finglora_avatar_seed')!)}&backgroundColor=fde8ef`
           : 'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian&backgroundColor=fde8ef');
       setAvatarUrl(url);
+
+      try {
+        const savedRead = localStorage.getItem('finglora_notifications_read_ids');
+        const readIds: string[] = savedRead ? JSON.parse(savedRead) : [];
+        setNotifications(
+          defaultNotifications.map((n) => ({
+            ...n,
+            read: readIds.includes(n.id) || n.read,
+          }))
+        );
+      } catch {
+        // Fallback to default state
+      }
     }
-  }, [currentRoute]);
+  }, [currentRoute, preferredShape]);
+
+  const unreadCount = notifications.filter((n) => !n.read).length;
+
+  const markAllAsRead = () => {
+    const updated = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(updated);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(
+        'finglora_notifications_read_ids',
+        JSON.stringify(updated.map((n) => n.id))
+      );
+    }
+  };
+
+  const handleNotificationClick = (notif: TopBarNotification) => {
+    const updated = notifications.map((n) =>
+      n.id === notif.id ? { ...n, read: true } : n
+    );
+    setNotifications(updated);
+    if (typeof window !== 'undefined') {
+      try {
+        const savedRead = localStorage.getItem('finglora_notifications_read_ids');
+        const readIds: string[] = savedRead ? JSON.parse(savedRead) : [];
+        if (!readIds.includes(notif.id)) {
+          readIds.push(notif.id);
+          localStorage.setItem(
+            'finglora_notifications_read_ids',
+            JSON.stringify(readIds)
+          );
+        }
+      } catch {
+        // Safe ignore
+      }
+    }
+    setIsNotificationsOpen(false);
+    if (notif.route) {
+      onNavigate(notif.route);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[rgba(31,26,28,0.06)] shadow-2xs select-none">
@@ -199,6 +297,24 @@ export function CustomerTopBar({
             </button>
           )}
 
+          {/* Notification Button (Desktop) */}
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen((prev) => !prev)}
+            className={`hidden md:flex relative w-8.5 h-8.5 rounded-full items-center justify-center transition border active:scale-95 cursor-pointer ${
+              isNotificationsOpen
+                ? 'border-[#E0246A] bg-[#FDE8EF] text-[#E0246A]'
+                : 'border-stone-200/80 bg-white text-stone-700 hover:border-stone-300 hover:text-[#E0246A] hover:bg-stone-50'
+            }`}
+            title="Notifications"
+            aria-label="Notifications"
+          >
+            <Bell className="w-4 h-4" />
+            {unreadCount > 0 && (
+              <span className="absolute top-1 right-1 w-2 h-2 rounded-full bg-[#E0246A] ring-2 ring-white" />
+            )}
+          </button>
+
           {/* Avatar / Profile Button (Desktop) */}
           <button
             type="button"
@@ -226,21 +342,22 @@ export function CustomerTopBar({
 
           {/* Mobile Right Controls */}
           <div className="md:hidden flex items-center gap-1.5">
-            {/* Quick Saved button if favorites exist */}
-            {favoritesCount > 0 && (
-              <button
-                type="button"
-                onClick={() => onNavigate('favorites')}
-                className={`w-8.5 h-8.5 rounded-full flex items-center justify-center transition border ${
-                  currentRoute === 'favorites'
-                    ? 'border-[#E0246A] bg-[#FDE8EF] text-[#E0246A]'
-                    : 'border-stone-200 bg-white text-stone-700'
-                }`}
-                aria-label="Saved designs"
-              >
-                <Heart className="w-4 h-4 text-[#E0246A]" fill="#E0246A" />
-              </button>
-            )}
+            {/* Working Notification Button (Mobile - Replaced old fav button) */}
+            <button
+              type="button"
+              onClick={() => setIsNotificationsOpen((prev) => !prev)}
+              className={`relative w-9 h-9 rounded-full flex items-center justify-center transition border active:scale-95 cursor-pointer shadow-2xs ${
+                isNotificationsOpen
+                  ? 'border-[#E0246A] bg-[#FDE8EF] text-[#E0246A]'
+                  : 'border-[#F0DFE4] bg-white text-[#18181B] hover:text-[#E0246A] hover:border-[#E0246A]'
+              }`}
+              aria-label="Notifications"
+            >
+              <Bell className="w-4 h-4" />
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-[#E0246A] ring-2 ring-white" />
+              )}
+            </button>
 
             {/* Mobile Menu Toggle Button */}
             <button
@@ -301,6 +418,132 @@ export function CustomerTopBar({
               </button>
             );
           })}
+        </div>
+      )}
+
+      {/* Working Notifications Modal / Popover */}
+      {isNotificationsOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-start justify-center sm:justify-end sm:pr-6 sm:pt-16 p-3 sm:p-4 bg-stone-900/35 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setIsNotificationsOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200/90 overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh] mt-2 sm:mt-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header */}
+            <div className="p-3.5 sm:p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
+              <div className="flex items-center gap-2">
+                <div className="w-7 h-7 rounded-full bg-pink-100/90 text-[#E0246A] flex items-center justify-center">
+                  <Bell className="w-3.5 h-3.5" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-xs sm:text-sm text-stone-900 leading-tight">
+                    Notifications
+                  </h3>
+                  <p className="text-[10px] text-stone-400">
+                    {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                {unreadCount > 0 && (
+                  <button
+                    type="button"
+                    onClick={markAllAsRead}
+                    className="text-[11px] font-semibold text-[#E0246A] hover:underline cursor-pointer active:scale-95"
+                  >
+                    Mark read
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => setIsNotificationsOpen(false)}
+                  className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition active:scale-95"
+                  aria-label="Close notifications"
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            </div>
+
+            {/* Notification List */}
+            <div className="p-2 sm:p-2.5 overflow-y-auto space-y-1.5 divide-y divide-stone-100/80">
+              {notifications.length === 0 ? (
+                <div className="py-8 text-center text-xs text-stone-400">
+                  No notifications yet.
+                </div>
+              ) : (
+                notifications.map((item) => (
+                  <div
+                    key={item.id}
+                    onClick={() => handleNotificationClick(item)}
+                    className={`p-3 rounded-xl sm:rounded-2xl transition cursor-pointer flex items-start gap-2.5 sm:gap-3 text-left ${
+                      item.read
+                        ? 'hover:bg-stone-50/80 opacity-75'
+                        : 'bg-pink-50/40 hover:bg-pink-50/70 border border-pink-100/70'
+                    }`}
+                  >
+                    <div
+                      className={`w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5 ${
+                        item.read
+                          ? 'bg-stone-100 text-stone-500'
+                          : 'bg-[#E0246A] text-white shadow-xs'
+                      }`}
+                    >
+                      {item.type === 'silhouette' && <Hand className="w-3.5 h-3.5" />}
+                      {item.type === 'trend' && <Compass className="w-3.5 h-3.5" />}
+                      {item.type === 'hand' && <Check className="w-3.5 h-3.5" />}
+                      {item.type === 'atelier' && <Palette className="w-3.5 h-3.5" />}
+                    </div>
+
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between gap-1">
+                        <h4
+                          className={`text-xs font-semibold truncate ${
+                            item.read ? 'text-stone-800' : 'text-stone-900'
+                          }`}
+                        >
+                          {item.title}
+                        </h4>
+                        <span className="text-[10px] text-stone-400 shrink-0 font-mono">
+                          {item.time}
+                        </span>
+                      </div>
+                      <p className="text-[11px] text-stone-500 mt-0.5 leading-snug line-clamp-2">
+                        {item.description}
+                      </p>
+                      {item.route && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#E0246A] mt-1 hover:underline">
+                          <span>Open in {routeBreadcrumbs[item.route] || 'App'}</span>
+                          <ChevronRight className="w-2.5 h-2.5" />
+                        </span>
+                      )}
+                    </div>
+
+                    {!item.read && (
+                      <span className="w-2 h-2 rounded-full bg-[#E0246A] shrink-0 mt-1.5 ring-2 ring-pink-100" />
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="p-2.5 sm:p-3 border-t border-stone-100 bg-stone-50/40 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setIsNotificationsOpen(false);
+                  onNavigate('profile');
+                }}
+                className="text-[11px] font-medium text-stone-500 hover:text-[#E0246A] transition cursor-pointer"
+              >
+                Manage alert preferences in Settings →
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </header>

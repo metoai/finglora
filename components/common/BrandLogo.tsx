@@ -55,7 +55,7 @@ export function BrandLogo({
   showText = true,
   badgeText,
   subtitle,
-  showWebsite = true,
+  showWebsite = false,
   websiteName = 'finglora.com',
   onClick,
 }: BrandLogoProps) {
@@ -69,8 +69,7 @@ export function BrandLogo({
     lg: 'text-2xl sm:text-3xl',
   }[size];
 
-  const displayedSubtitle =
-    subtitle || (showWebsite ? websiteName : undefined);
+  const displayedSubtitle = subtitle || (showWebsite ? websiteName : undefined);
 
   return (
     <div
