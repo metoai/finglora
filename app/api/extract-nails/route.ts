@@ -73,16 +73,6 @@ export async function POST(request: Request) {
       );
     }
 
-    const primaryKey = process.env.GEMINI_API_KEY;
-    const fallbackKey = process.env.GEMINI_FALLBACK_KEY;
-    const candidateKeys = Array.from(new Set([primaryKey, fallbackKey].filter(Boolean))) as string[];
-
-    if (candidateKeys.length === 0) {
-      return NextResponse.json(
-        { error: 'GEMINI_API_KEY is not configured.' },
-        { status: 500 }
-      );
-    }
 
     let finalBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '');
     let finalMimeType = imageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
@@ -100,28 +90,32 @@ export async function POST(request: Request) {
       }
     }
 
-    // Dual Provider Engine: Vertex AI Express Mode (Projectless) + Google AI Studio fallback
-    const endpointProviders = [
-      ...(primaryKey ? [{
-        name: 'vertex-express',
-        url: (m: string) => `https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent?key=${primaryKey}`,
-        models: ['gemini-3-flash-preview', 'gemini-3.1-pro-preview'],
-      }] : []),
-      {
-        name: 'gemini-studio',
-        url: (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${fallbackKey || primaryKey}`,
-        models: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'],
-      },
+    const primaryKey = process.env.GEMINI_API_KEY;
+    const secondaryKey = process.env.VERTEX_API_KEY_2 || process.env.GEMINI_FALLBACK_KEY;
+    const candidateKeys = Array.from(new Set([primaryKey, secondaryKey].filter(Boolean))) as string[];
+
+    if (candidateKeys.length === 0) {
+      return NextResponse.json(
+        { error: 'GEMINI_API_KEY is not configured.' },
+        { status: 500 }
+      );
+    }
+
+    // Pure Google Vertex AI Express Mode (Projectless)
+    const candidateModels = [
+      'gemini-3.1-flash-lite',
+      'gemini-3-flash-preview',
+      'gemini-3.1-pro-preview',
     ];
 
     let geminiData: Record<string, any> | null = null;
-    let activeModel = 'gemini-3.5-flash-lite';
-    let lastErrorMsg = 'Google Gemini analysis request failed';
+    let activeModel = 'gemini-3.1-flash-lite';
+    let lastErrorMsg = 'Google Vertex AI analysis request failed';
 
-    providerLoop: for (const provider of endpointProviders) {
-      for (const model of provider.models) {
+    keyLoop: for (const key of candidateKeys) {
+      for (const model of candidateModels) {
         try {
-          const endpointUrl = provider.url(model);
+          const endpointUrl = `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${key}`;
           const geminiRes = await fetch(endpointUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -142,17 +136,17 @@ export async function POST(request: Request) {
                 responseMimeType: 'application/json',
               },
             }),
-            signal: AbortSignal.timeout(8000),
+            signal: AbortSignal.timeout(10000),
           });
 
           if (geminiRes.ok) {
             geminiData = await geminiRes.json();
-            activeModel = `${provider.name}/${model}`;
-            break providerLoop;
+            activeModel = model;
+            break keyLoop;
           } else {
             const errorData = await geminiRes.json().catch(() => ({}));
             lastErrorMsg = errorData?.error?.message || `HTTP ${geminiRes.status}`;
-            console.warn(`[Finglora Gemini Vision] ${provider.name}/${model} unavailable (${geminiRes.status}: ${lastErrorMsg}), attempting fallback...`);
+            console.warn(`[Finglora Vertex AI] ${model} unavailable (${geminiRes.status}: ${lastErrorMsg}), attempting next...`);
           }
         } catch (err: unknown) {
           lastErrorMsg = err instanceof Error ? err.message : 'Network error';
