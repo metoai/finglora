@@ -18,7 +18,6 @@ import {
   Camera,
   UploadCloud,
   Trash2,
-  Sparkles,
   Search,
   Dices,
 } from 'lucide-react';
@@ -609,7 +608,7 @@ export function ProfileView({
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
-                  <Sparkles className="w-4 h-4 text-[#E0246A]" />
+                  <Compass className="w-4 h-4 text-[#E0246A]" />
                   <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
                     Trending to Discover
                   </h2>

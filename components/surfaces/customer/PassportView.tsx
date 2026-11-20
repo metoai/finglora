@@ -6,7 +6,6 @@ import {
   Copy,
   Check,
   Hand,
-  Sparkles,
   ArrowRight,
   ShieldCheck,
 } from 'lucide-react';
@@ -113,7 +112,7 @@ export function PassportView({
             <div className="flex items-center gap-2.5">
               {/* Luxury Embossed Code Badge */}
               <span className="px-3 py-1 rounded-full bg-white/10 text-xs font-mono font-bold tracking-widest uppercase text-white border border-white/25 shadow-inner backdrop-blur-xs flex items-center gap-1.5">
-                <Sparkles className="w-3.5 h-3.5 text-[#FDE8EF]" />
+                <ShieldCheck className="w-3.5 h-3.5 text-[#FDE8EF]" />
                 <span>{formattedPassportCode}</span>
               </span>
 

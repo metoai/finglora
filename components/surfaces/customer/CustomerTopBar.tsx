@@ -11,7 +11,6 @@ import {
   Menu,
   X,
   ChevronRight,
-  Sparkles,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { NailShape } from '@/types/nail';
@@ -184,7 +183,7 @@ export function CustomerTopBar({
             className="hidden lg:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100/90 hover:bg-stone-200/70 border border-stone-200/70 text-xs font-medium text-stone-700 transition cursor-pointer"
             title="Your Preferred Silhouette"
           >
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <span className="w-2 h-2 rounded-full bg-[#E0246A] ring-2 ring-pink-100 shrink-0" />
             <span className="capitalize">{preferredShape}</span>
           </button>
 
