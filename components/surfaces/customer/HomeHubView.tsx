@@ -21,6 +21,7 @@ interface FeaturedLook {
   id: string;
   title: string;
   category: string;
+  displayCategory: string;
   photoUrl: string;
   shape: NailShape;
   finish: string;
@@ -28,11 +29,51 @@ interface FeaturedLook {
   accentColor: string;
 }
 
+interface InspirationCategory {
+  id: string;
+  label: string;
+  thumbnailUrl: string;
+}
+
+const INSPIRATION_CATEGORIES: InspirationCategory[] = [
+  {
+    id: 'all',
+    label: 'All Styles',
+    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
+  },
+  {
+    id: 'glazed',
+    label: 'Glazed & Chrome',
+    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
+  },
+  {
+    id: 'french',
+    label: 'French Tips',
+    thumbnailUrl: '/images/ar-nail-hero.jpg',
+  },
+  {
+    id: 'coquette',
+    label: 'Coquette & Ribbons',
+    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
+  },
+  {
+    id: 'velvet',
+    label: 'Velvet Wine',
+    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+  },
+  {
+    id: 'minimal',
+    label: 'Minimal Nude',
+    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
+  },
+];
+
 const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-french-bow',
     title: 'French Tip Ribbons',
-    category: 'Coquette',
+    category: 'coquette',
+    displayCategory: 'Coquette',
     photoUrl: '/assets/pink_heart_tryon_result.jpg',
     shape: 'almond',
     finish: 'Glossy Gel',
@@ -42,7 +83,8 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-cherry-mocha',
     title: 'Cherry Mocha French',
-    category: 'Velvet',
+    category: 'velvet',
+    displayCategory: 'Velvet',
     photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     shape: 'coffin',
     finish: 'Velvet Gloss',
@@ -52,7 +94,8 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-milky-gold',
     title: 'Milky Glazed Gold',
-    category: 'Chrome',
+    category: 'glazed',
+    displayCategory: 'Glazed',
     photoUrl: '/assets/milky_gold_tryon_result.jpg',
     shape: 'almond',
     finish: 'Chrome Powder',
@@ -62,7 +105,8 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-atelier-nude',
     title: 'Atelier Nude Minimal',
-    category: 'Minimal',
+    category: 'minimal',
+    displayCategory: 'Minimal',
     photoUrl: '/assets/editorial_nail_hero.jpg',
     shape: 'square',
     finish: 'High-Gloss',
@@ -72,7 +116,8 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-clean-micro-french',
     title: 'Clean Micro-French',
-    category: 'French',
+    category: 'french',
+    displayCategory: 'French',
     photoUrl: '/images/ar-nail-hero.jpg',
     shape: 'almond',
     finish: 'Sheer Glaze',
@@ -82,51 +127,57 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-luminous-pearl',
     title: 'Luminous Pearl Sheen',
-    category: 'Glazed',
+    category: 'glazed',
+    displayCategory: 'Glazed',
     photoUrl: '/images/ar-nail-hero-pearl.jpg',
     shape: 'oval',
     finish: 'Pearl Glaze',
     baseColor: '#FAF4EF',
     accentColor: '#C59B27',
   },
-];
-
-interface AestheticCollection {
-  id: string;
-  title: string;
-  badge: string;
-  photoUrl: string;
-  tag: string;
-}
-
-const AESTHETIC_COLLECTIONS: AestheticCollection[] = [
   {
-    id: 'col-glazed',
-    title: 'Glazed Chrome',
-    badge: 'Hailey Bieber',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
-    tag: 'chrome',
-  },
-  {
-    id: 'col-coquette',
-    title: 'Coquette & Ribbons',
-    badge: 'Blush & Bows',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
-    tag: 'coquette',
-  },
-  {
-    id: 'col-velvet',
-    title: 'Velvet & Burgundy',
-    badge: 'Deep Wine',
+    id: 'feat-velvet-bordeaux',
+    title: 'Deep Bordeaux Velvet',
+    category: 'velvet',
+    displayCategory: 'Velvet',
     photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    tag: 'red',
+    shape: 'almond',
+    finish: 'Cat Eye Velvet',
+    baseColor: '#3B111D',
+    accentColor: '#D4AF37',
   },
   {
-    id: 'col-minimal',
-    title: 'Clean Micro-French',
-    badge: 'Ultra-Fine Apex',
+    id: 'feat-blush-pearl-french',
+    title: 'Blush Micro French',
+    category: 'french',
+    displayCategory: 'French',
+    photoUrl: '/images/ar-nail-hero.jpg',
+    shape: 'almond',
+    finish: 'Glossy Clearcoat',
+    baseColor: '#FAF0EA',
+    accentColor: '#FFFFFF',
+  },
+  {
+    id: 'feat-pink-coquette-bow',
+    title: 'Dusty Rose Ribbon Bows',
+    category: 'coquette',
+    displayCategory: 'Coquette',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    shape: 'coffin',
+    finish: 'Glossy 3D',
+    baseColor: '#FCE7F3',
+    accentColor: '#E0246A',
+  },
+  {
+    id: 'feat-sheer-linen-minimal',
+    title: 'Sheer Linen Minimalist',
+    category: 'minimal',
+    displayCategory: 'Minimal',
     photoUrl: '/assets/editorial_nail_hero.jpg',
-    tag: 'french',
+    shape: 'oval',
+    finish: 'Natural Sheen',
+    baseColor: '#F7F3EE',
+    accentColor: '#FFFFFF',
   },
 ];
 
@@ -177,6 +228,7 @@ export function HomeHubView({
   setCustomTryOnHandUrl?: (url: string | null) => void;
 }) {
   const [promptText, setPromptText] = useState(aiStudioPrompt || '');
+  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
@@ -241,6 +293,12 @@ export function HomeHubView({
     showToast('Hand photo removed');
   };
 
+  // Filter curated looks by active category
+  const displayedLooks = FEATURED_ATELIER_LOOKS.filter((look) => {
+    if (activeCategory === 'all') return true;
+    return look.category === activeCategory;
+  });
+
   return (
     <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-5 sm:space-y-6 lg:space-y-7 pb-24 md:pb-16">
       {/* Toast Notification */}
@@ -253,7 +311,7 @@ export function HomeHubView({
         </div>
       )}
 
-      {/* 1. Header: Greeting & Status Indicators (No Verbose Subtitles) */}
+      {/* 1. Header: Greeting & Status Indicators */}
       <div className="flex items-center justify-between gap-3 pt-0.5">
         <div>
           <h1 className="font-serif text-xl sm:text-2xl lg:text-3xl font-medium text-stone-900 tracking-tight">
@@ -281,13 +339,13 @@ export function HomeHubView({
           >
             {customTryOnHandUrl ? (
               <>
-                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" strokeWidth={2.5} />
+                <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
                 <span className="hidden sm:inline">Hand Ready</span>
                 <span className="sm:hidden">Ready</span>
               </>
             ) : (
               <>
-                <Hand className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
+                <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
                 <span>+ Hand</span>
               </>
             )}
@@ -362,7 +420,7 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 3. Four Compact, Tactile Action Tiles (2x2 on Mobile, 4-col on Desktop, Zero Text Bloat) */}
+      {/* 3. Four Compact Action Tiles (2x2 on Mobile, 4-col on Desktop) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Station 1: Virtual Try-On */}
         <div
@@ -455,11 +513,11 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 4. Curated Atelier Looks (Visual-First Grid) */}
-      <div className="space-y-3">
+      {/* 4. Curated Inspiration with Normal Category Navigation Above */}
+      <div className="space-y-3.5">
         <div className="flex items-center justify-between">
           <h2 className="font-serif text-base sm:text-lg lg:text-xl font-medium text-stone-900 tracking-tight">
-            Curated Looks
+            Curated Inspiration
           </h2>
 
           {onExploreClick && (
@@ -474,9 +532,43 @@ export function HomeHubView({
           )}
         </div>
 
-        {/* 6 Featured Large Editorial Cards in a Responsive Full-Width Grid */}
+        {/* Normal Category Navigation Pills (Half-Image, Half-Text) */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none">
+          {INSPIRATION_CATEGORIES.map((cat) => {
+            const isActive = activeCategory === cat.id;
+
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setActiveCategory(cat.id)}
+                className={`h-9 sm:h-9.5 rounded-xl overflow-hidden flex items-center transition-all cursor-pointer active:scale-95 shrink-0 border ${
+                  isActive
+                    ? 'ring-2 ring-stone-900 bg-stone-900 text-white border-stone-900 shadow-xs'
+                    : 'bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-900 border-transparent'
+                }`}
+              >
+                {/* Left Half: Image */}
+                <div className="w-10 sm:w-11 h-full shrink-0 relative overflow-hidden">
+                  <img
+                    src={cat.thumbnailUrl}
+                    alt=""
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                {/* Right Half: Text Label */}
+                <div className="px-3 sm:px-3.5 flex items-center justify-center font-semibold text-xs sm:text-[13px] whitespace-nowrap">
+                  <span>{cat.label}</span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Featured Editorial Manicure Cards in a Responsive Full-Width Grid */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
-          {FEATURED_ATELIER_LOOKS.map((look) => (
+          {displayedLooks.map((look) => (
             <div
               key={look.id}
               onClick={() => {
@@ -497,7 +589,7 @@ export function HomeHubView({
               {/* Top Category Badge */}
               <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
                 <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/40 text-white text-[9px] sm:text-[10px] font-semibold backdrop-blur-xs capitalize border border-white/10">
-                  {look.category}
+                  {look.displayCategory}
                 </span>
               </div>
 
@@ -530,42 +622,7 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 5. Distinct Aesthetic Collection Moodboards (Visual-First, No Text Clutter) */}
-      <div className="space-y-3">
-        <h2 className="font-serif text-base sm:text-lg lg:text-xl font-medium text-stone-900 tracking-tight">
-          Explore by Aesthetic
-        </h2>
-
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
-          {AESTHETIC_COLLECTIONS.map((col) => (
-            <div
-              key={col.id}
-              onClick={() => onExploreClick?.(col.tag)}
-              className="p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-stone-300 transition-all shadow-2xs cursor-pointer group flex flex-col justify-between gap-2.5 active:scale-98"
-            >
-              <div className="aspect-[4/3] w-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-100 relative">
-                <img
-                  src={col.photoUrl}
-                  alt={col.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                />
-                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] sm:text-[10px] font-semibold backdrop-blur-xs border border-white/10">
-                  {col.badge}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between gap-1 px-1">
-                <h4 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                  {col.title}
-                </h4>
-                <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5" />
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* 6. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA) */}
+      {/* 5. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA) */}
       {isHandModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-xl border border-stone-200 space-y-4">
@@ -663,7 +720,7 @@ export function HomeHubView({
         </div>
       )}
 
-      {/* 7. LIVE CAMERA CAPTURE MODAL */}
+      {/* 6. LIVE CAMERA CAPTURE MODAL */}
       <HandCameraCaptureModal
         isOpen={isCameraCaptureOpen}
         onClose={() => setIsCameraCaptureOpen(false)}
