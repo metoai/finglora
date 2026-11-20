@@ -7,11 +7,15 @@ import {
   Loader2,
   Maximize2,
   X,
+  Download,
+  Share2,
+  Sparkles,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 import { downscaleImageForVision } from '@/lib/services/storage';
+import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 
 interface ChatMessage {
   id: string;
@@ -47,6 +51,8 @@ export function AiCreationView({
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [exportToast, setExportToast] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
   const originalBareHandPhoto =
@@ -227,8 +233,61 @@ export function AiCreationView({
     executePrompt(text, false);
   };
 
+  const handleDownloadBrandedLook = async (targetImg?: string | null, title?: string) => {
+    const imgUrl = targetImg || zoomImageUrl || currentTryOnImage;
+    if (!imgUrl) return;
+    setIsExporting(true);
+    try {
+      await downloadEditorialImage(imgUrl, {
+        designTitle: title || 'Custom AI Manicure',
+        filename: `finglora-${(title || 'ai-manicure').toLowerCase().replace(/\s+/g, '-')}.jpg`,
+      });
+      setExportToast('High-resolution photo saved with Finglora brand');
+      setTimeout(() => setExportToast(null), 3000);
+    } catch {
+      setExportToast('Could not download image. Please try again.');
+      setTimeout(() => setExportToast(null), 3000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleShareToStory = async (targetImg?: string | null, title?: string) => {
+    const imgUrl = targetImg || zoomImageUrl || currentTryOnImage;
+    if (!imgUrl) return;
+    setIsExporting(true);
+    try {
+      const res = await shareToStoryOrSocial(imgUrl, {
+        designTitle: title || 'Custom AI Manicure',
+        filename: `finglora-story-${(title || 'ai-look').toLowerCase().replace(/\s+/g, '-')}.jpg`,
+        storyAspect: true,
+      });
+      if (res.mode === 'shared') {
+        setExportToast('Opening story share sheet...');
+      } else {
+        setExportToast('Story photo downloaded with Finglora branding');
+      }
+      setTimeout(() => setExportToast(null), 3000);
+    } catch {
+      setExportToast('Could not share story. Please try again.');
+      setTimeout(() => setExportToast(null), 3000);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   return (
     <div className="w-full max-w-6xl xl:max-w-7xl mx-auto h-full flex flex-col min-h-0 py-2 sm:py-4 px-3 sm:px-6 gap-2 sm:gap-4">
+      {/* Toast Notification */}
+      {exportToast && (
+        <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
+          <div className="bg-[#181416] text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <span>{exportToast}</span>
+          </div>
+        </div>
+      )}
+
       {/* Editorial Header */}
       <div className="flex items-center justify-between gap-3 pb-2 sm:pb-3 border-b border-stone-200/80 shrink-0">
         <div className="flex items-center gap-2.5 sm:gap-3">
@@ -328,6 +387,24 @@ export function AiCreationView({
               </button>
               <button
                 type="button"
+                onClick={() => handleDownloadBrandedLook(currentTryOnImage)}
+                disabled={isExporting}
+                className="w-7 h-7 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                title="Download HD with Finglora Brand"
+              >
+                <Download className="w-3.5 h-3.5 text-stone-700" />
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareToStory(currentTryOnImage)}
+                disabled={isExporting}
+                className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E0246A] to-[#C2185B] text-white shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                title="Share to Social Stories"
+              >
+                <Share2 className="w-3.5 h-3.5 text-white" />
+              </button>
+              <button
+                type="button"
                 onClick={() => {
                   setZoomImageUrl(currentTryOnImage);
                   setIsZoomOpen(true);
@@ -396,6 +473,30 @@ export function AiCreationView({
                           </span>
                         </div>
                         <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDownloadBrandedLook(msg.imageUrl, msg.appliedDesignTitle);
+                            }}
+                            disabled={isExporting}
+                            className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                            title="Download HD with Finglora Brand"
+                          >
+                            <Download className="w-3 h-3 text-stone-700" />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleShareToStory(msg.imageUrl, msg.appliedDesignTitle);
+                            }}
+                            disabled={isExporting}
+                            className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#E0246A] to-[#C2185B] text-white shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                            title="Share to Social Stories"
+                          >
+                            <Share2 className="w-3 h-3 text-white" />
+                          </button>
                           <button
                             type="button"
                             onClick={(e) => {
@@ -517,9 +618,27 @@ export function AiCreationView({
               <button
                 type="button"
                 onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
-                className="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition cursor-pointer"
+                className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition cursor-pointer"
               >
                 {compareMode === 'after' ? 'Natural Hand' : 'Manicure'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleDownloadBrandedLook(zoomImageUrl || currentTryOnImage)}
+                disabled={isExporting}
+                className="px-3 py-1 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                <Download className="w-3.5 h-3.5 text-stone-900" />
+                <span className="hidden sm:inline">Download HD</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleShareToStory(zoomImageUrl || currentTryOnImage)}
+                disabled={isExporting}
+                className="px-3 py-1 rounded-full bg-gradient-to-r from-[#E0246A] to-[#BE185D] text-white text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+              >
+                <Share2 className="w-3.5 h-3.5 text-white" />
+                <span className="hidden sm:inline">Share Story</span>
               </button>
               <button
                 type="button"
