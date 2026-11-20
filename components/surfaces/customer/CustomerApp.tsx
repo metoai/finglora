@@ -196,7 +196,7 @@ export function CustomerApp({
   return (
     <div
       className={`min-h-screen flex flex-col ${mobilePreview ? '' : 'lg:flex-row'} ${
-        customerRoute === 'ai-create' ? 'h-screen overflow-hidden' : ''
+        customerRoute === 'ai-create' ? 'h-[100dvh] overflow-hidden' : ''
       }`}
     >
       {!mobilePreview && (
@@ -285,7 +285,7 @@ export function CustomerApp({
       {/* Main Content Area with Desktop Header */}
       <div
         className={`flex-1 flex flex-col min-w-0 ${mobilePreview ? '' : 'lg:ml-64'} ${
-          customerRoute === 'ai-create' ? 'h-screen overflow-hidden' : ''
+          customerRoute === 'ai-create' ? 'h-full overflow-hidden' : ''
         }`}
       >
 
