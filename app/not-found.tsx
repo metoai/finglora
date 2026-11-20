@@ -2,73 +2,21 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
-import { Home, Compass, Hand, Paintbrush, ArrowLeft } from 'lucide-react';
+import { Home, Compass, ArrowLeft } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 
 export default function NotFound() {
-  const [cured, setCured] = useState(false);
-  const [activeNailIndex, setActiveNailIndex] = useState(2); // Default to middle 404 nail
+  // Tap nail to switch lacquer shade
+  const [shadeIndex, setShadeIndex] = useState(0);
 
-  const NAILS = [
-    {
-      id: 0,
-      finger: 'Thumb',
-      shade: 'Blush Glaze',
-      color: '#FDE8EF',
-      finish: 'High Gloss',
-      width: 'w-8 sm:w-9',
-      height: 'h-14 sm:h-16',
-      radius: 'rounded-t-2xl',
-      tip: null,
-    },
-    {
-      id: 1,
-      finger: 'Index',
-      shade: 'Bordeaux Lacquer',
-      color: '#E0246A',
-      finish: 'Gel Clearcoat',
-      width: 'w-7 sm:w-8',
-      height: 'h-16 sm:h-18',
-      radius: 'rounded-t-xl',
-      tip: null,
-    },
-    {
-      id: 2,
-      finger: 'Middle',
-      shade: cured ? 'Cured Lacquer' : 'Shade 404',
-      color: cured ? '#E0246A' : 'transparent',
-      finish: cured ? 'Cured' : 'Uncured Void',
-      width: 'w-7.5 sm:w-8.5',
-      height: 'h-18 sm:h-20',
-      radius: 'rounded-t-xl',
-      is404: true,
-      tip: null,
-    },
-    {
-      id: 3,
-      finger: 'Ring',
-      shade: 'French Arc',
-      color: '#FAF2EB',
-      finish: 'Classic French',
-      width: 'w-7 sm:w-8',
-      height: 'h-16 sm:h-18',
-      radius: 'rounded-t-xl',
-      tip: '#FFFFFF',
-    },
-    {
-      id: 4,
-      finger: 'Pinky',
-      shade: 'Atelier Linen',
-      color: '#F4EFEB',
-      finish: 'Satin Shimmer',
-      width: 'w-6 sm:w-7',
-      height: 'h-13 sm:h-15',
-      radius: 'rounded-t-lg',
-      tip: null,
-    },
+  const SHADES = [
+    { name: 'Signature Pink', from: '#E0246A', to: '#BE185D', hasTip: true },
+    { name: 'Bordeaux Glaze', from: '#801A35', to: '#5C1225', hasTip: false },
+    { name: 'Atelier Nude', from: '#E8D5C8', to: '#D8C3B4', hasTip: true },
+    { name: 'Pearl Chrome', from: '#FAF4EF', to: '#EAD7CD', hasTip: false },
   ];
 
-  const currentSelection = NAILS[activeNailIndex];
+  const currentShade = SHADES[shadeIndex];
 
   return (
     <div className="min-h-screen bg-[#FAF7F2] text-[#1F1A1C] font-sans flex flex-col justify-between selection:bg-[#E0246A]/20">
@@ -77,136 +25,89 @@ export default function NotFound() {
         <Link href="/" className="inline-block">
           <BrandLogo size="sm" />
         </Link>
-        <span className="text-[11px] font-mono text-[#8C8085] tracking-wider uppercase">
-          Archive Specimen / 404
-        </span>
+        <Link
+          href="/"
+          className="text-xs text-[#8C8085] hover:text-[#E0246A] transition inline-flex items-center gap-1.5"
+        >
+          <ArrowLeft className="w-3.5 h-3.5" />
+          <span>Home</span>
+        </Link>
       </header>
 
-      {/* Main Specimen Card */}
-      <main className="w-full max-w-md sm:max-w-lg mx-auto px-4 py-8 my-auto">
-        <div className="bg-white rounded-3xl border border-[#F0DFE4] shadow-[0_4px_24px_rgba(31,26,28,0.04)] p-6 sm:p-8 space-y-6">
-          {/* Card Label Bar */}
-          <div className="flex items-center justify-between border-b border-[#F0DFE4] pb-3 text-[10px] font-mono tracking-wider text-[#8C8085] uppercase">
-            <span>FORMULA SPECIMEN</span>
-            <span className="text-[#E0246A] font-semibold">STATUS / UNCATALOGED</span>
-          </div>
-
-          {/* 5-Finger Acrylic Swatch Tray (The Craft Moment) */}
-          <div className="space-y-3">
-            <div className="bg-[#FAF7F2] rounded-2xl p-5 border border-[#F0DFE4]/80 flex items-end justify-center gap-2.5 sm:gap-3.5 min-h-[120px] sm:min-h-[136px]">
-              {NAILS.map((nail, idx) => {
-                const isSelected = activeNailIndex === idx;
-                return (
-                  <button
-                    key={nail.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveNailIndex(idx);
-                      if (nail.is404) {
-                        setCured((prev) => !prev);
-                      }
-                    }}
-                    className={`relative ${nail.width} ${nail.height} ${nail.radius} transition-all duration-200 cursor-pointer flex flex-col items-center justify-center group focus:outline-none ${
-                      isSelected ? 'ring-2 ring-[#E0246A] ring-offset-2 scale-105' : 'hover:-translate-y-1'
-                    }`}
-                    style={{
-                      backgroundColor: nail.color,
-                      border: nail.is404 && !cured ? '1.5px dashed #E0246A' : '1px solid rgba(31,26,28,0.08)',
-                    }}
-                    title={`${nail.finger}: ${nail.shade}`}
-                  >
-                    {/* French Tip Arc if applicable */}
-                    {nail.tip && (
-                      <div
-                        className={`absolute top-0 inset-x-0 h-3 ${nail.radius} bg-white shadow-2xs`}
-                      />
-                    )}
-
-                    {/* Specular Shine Highlight */}
-                    <div className="absolute inset-y-1 left-1 w-1 bg-white/30 rounded-full pointer-events-none" />
-
-                    {/* 404 Center Inscription */}
-                    {nail.is404 && !cured && (
-                      <span className="text-[10px] sm:text-xs font-mono font-bold text-[#E0246A] tracking-tighter select-none">
-                        404
-                      </span>
-                    )}
-
-                    {/* Cured Checkmark */}
-                    {nail.is404 && cured && (
-                      <Paintbrush className="w-3.5 h-3.5 text-white animate-in zoom-in-50 duration-150" />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Interactive Swatch Status Indicator */}
-            <div className="flex items-center justify-between px-1 text-[11px]">
-              <span className="text-[#8C8085]">
-                {currentSelection.finger}: <strong className="text-[#1F1A1C] font-semibold">{currentSelection.shade}</strong>
-              </span>
-              <button
-                type="button"
-                onClick={() => {
-                  setActiveNailIndex(2);
-                  setCured((prev) => !prev);
-                }}
-                className="text-[10px] text-[#E0246A] hover:text-[#BE185D] transition cursor-pointer font-medium"
-              >
-                {cured ? 'Reset 404 swatch' : 'Tap middle nail to cure'}
-              </button>
-            </div>
-          </div>
-
-          {/* Editorial Headline & Explanation */}
-          <div className="space-y-2 text-center pt-1">
-            <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#1F1A1C] tracking-tight leading-snug">
-              This shade has not been mixed
-            </h1>
-            <p className="text-xs text-[#8C8085] leading-relaxed max-w-sm mx-auto">
-              {cured
-                ? 'The swatch is polished, but this page remains uncataloged in our atelier records.'
-                : 'The page or design passport you requested cannot be found in the atelier.'}
-            </p>
-          </div>
-
-          {/* Action Routes */}
-          <div className="space-y-2.5 pt-2">
-            {/* Primary Action: Return to Studio */}
-            <Link
-              href="/"
-              className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition flex items-center justify-center gap-2 shadow-sm shadow-[#E0246A]/20 active:scale-[0.99]"
+      {/* Main Minimal Section */}
+      <main className="w-full max-w-md mx-auto px-4 py-8 my-auto text-center space-y-6">
+        {/* 1 Sculptural Nail */}
+        <div className="flex flex-col items-center justify-center">
+          <button
+            type="button"
+            onClick={() => setShadeIndex((prev) => (prev + 1) % SHADES.length)}
+            className="group relative cursor-pointer focus:outline-none transition-transform hover:scale-105 active:scale-95"
+            title="Tap to switch polish shade"
+          >
+            {/* Acrylic Nail Tip */}
+            <div
+              className="relative w-18 h-32 sm:w-20 sm:h-36 rounded-t-[38px] sm:rounded-t-[42px] rounded-b-md shadow-xl transition-all duration-300 overflow-hidden border border-black/10"
+              style={{
+                background: `linear-gradient(180deg, ${currentShade.from} 0%, ${currentShade.to} 100%)`,
+                boxShadow: `0 12px 28px -4px ${currentShade.from}35`,
+              }}
             >
-              <Home className="w-4 h-4 text-white" />
-              <span>Return to Studio</span>
-            </Link>
+              {/* French Smile-Line Tip */}
+              {currentShade.hasTip && (
+                <div className="absolute top-0 inset-x-0 h-6 sm:h-7 rounded-t-[38px] sm:rounded-t-[42px] bg-white/95 shadow-2xs pointer-events-none" />
+              )}
 
-            {/* Secondary Actions Row */}
-            <div className="grid grid-cols-2 gap-2">
-              <Link
-                href="/explore"
-                className="h-10 rounded-xl border border-[#F0DFE4] hover:bg-[#FAF7F2] text-[#1F1A1C] text-xs font-medium transition flex items-center justify-center gap-1.5 active:scale-[0.99]"
-              >
-                <Compass className="w-3.5 h-3.5 text-[#E0246A]" />
-                <span>Explore Designs</span>
-              </Link>
+              {/* Specular Ridge Gloss Highlight */}
+              <div className="absolute top-2 left-2.5 bottom-3 w-2 rounded-full bg-gradient-to-b from-white/55 via-white/20 to-transparent pointer-events-none" />
 
-              <Link
-                href="/tryon"
-                className="h-10 rounded-xl border border-[#F0DFE4] hover:bg-[#FAF7F2] text-[#1F1A1C] text-xs font-medium transition flex items-center justify-center gap-1.5 active:scale-[0.99]"
-              >
-                <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
-                <span>Photo Try-On</span>
-              </Link>
+              {/* Cuticle Base Shadow */}
+              <div className="absolute bottom-0 inset-x-0 h-3 bg-black/10 rounded-b-md pointer-events-none" />
             </div>
-          </div>
+          </button>
+
+          <span className="text-[10px] text-[#8C8085] mt-2 font-mono tracking-wider uppercase">
+            {currentShade.name} • tap to switch
+          </span>
+        </div>
+
+        {/* Big 404 Numerals */}
+        <div className="font-serif text-7xl sm:text-8xl md:text-9xl font-normal text-[#1F1A1C] tracking-tight leading-none select-none">
+          404
+        </div>
+
+        {/* Can't find the page */}
+        <div className="space-y-2 max-w-xs sm:max-w-sm mx-auto">
+          <h1 className="font-serif text-2xl sm:text-3xl font-normal text-[#1F1A1C] tracking-tight">
+            Can&apos;t find the page
+          </h1>
+          <p className="text-xs sm:text-sm text-[#8C8085] leading-relaxed">
+            The page you&apos;re looking for doesn&apos;t exist or has been moved.
+          </p>
+        </div>
+
+        {/* Action Buttons */}
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-2.5 pt-2 max-w-xs sm:max-w-sm mx-auto w-full">
+          <Link
+            href="/"
+            className="w-full sm:w-auto flex-1 h-11 px-5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition flex items-center justify-center gap-2 shadow-sm shadow-[#E0246A]/20 active:scale-95"
+          >
+            <Home className="w-4 h-4 text-white" />
+            <span>Back to Studio</span>
+          </Link>
+
+          <Link
+            href="/explore"
+            className="w-full sm:w-auto flex-1 h-11 px-5 rounded-xl border border-[#F0DFE4] hover:bg-white text-[#1F1A1C] text-xs font-medium transition flex items-center justify-center gap-2 active:scale-95"
+          >
+            <Compass className="w-4 h-4 text-[#E0246A]" />
+            <span>Explore Designs</span>
+          </Link>
         </div>
       </main>
 
-      {/* Quiet Minimal Footer */}
+      {/* Minimal Footer */}
       <footer className="w-full max-w-4xl mx-auto px-6 py-6 text-center text-[11px] text-[#8C8085]">
-        <span>Finglora Nail Atelier • Virtual Try-On</span>
+        <span>Finglora Nail Atelier</span>
       </footer>
     </div>
   );
