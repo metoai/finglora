@@ -44,6 +44,7 @@ import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/l
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture } from '@/lib/services/storage';
+import { grantSignupCreditBonus } from '@/lib/services/credits';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -116,7 +117,30 @@ export default function FingloraApp() {
   const [overlayScale, setOverlayScale] = useState(100);
   const [overlayOffsetY, setOverlayOffsetY] = useState(0);
   const [skinToneId, setSkinToneId] = useState('warm-ivory');
-  const [customTryOnHandUrl, setCustomTryOnHandUrl] = useState<string | null>(null);
+  const [customTryOnHandUrl, setCustomTryOnHandUrl] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finglora_user_hand_photo') || null;
+    }
+    return null;
+  });
+
+  const handleUpdateCustomHandPhoto = (url: string | null) => {
+    setCustomTryOnHandUrl(url);
+    if (typeof window !== 'undefined') {
+      try {
+        if (url) {
+          localStorage.setItem('finglora_user_hand_photo', url);
+          localStorage.setItem('finglora_custom_hand_photo', url);
+          setTryOnMode('upload');
+        } else {
+          localStorage.removeItem('finglora_user_hand_photo');
+          localStorage.removeItem('finglora_custom_hand_photo');
+        }
+      } catch {
+        // ignore storage quota error
+      }
+    }
+  };
   const [tryOnView, setTryOnView] = useState<'after' | 'before'>('after');
   const [tryOnZoom, setTryOnZoom] = useState(false);
   const videoRef = useRef<HTMLVideoElement | null>(null);
@@ -424,9 +448,9 @@ export default function FingloraApp() {
   const handleAuthSignUpSuccess = ({ name }: { name: string; email: string }) => {
     const chosenName = name || 'Elena';
     setUserName(chosenName);
-    setOnboardingStep(1);
-    showToast(`Account created, ${chosenName}! Let's personalize your style...`);
-    navigateSurface('onboarding');
+    grantSignupCreditBonus();
+    showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
+    navigateCustomer('tryon');
   };
 
   const handleAuthSignInSuccess = () => {
@@ -786,19 +810,6 @@ export default function FingloraApp() {
     showToast(`Copied shareable link: ${url}`);
   };
 
-  const handleUpdateCustomHandPhoto = (url: string | null) => {
-    setCustomTryOnHandUrl(url);
-    try {
-      if (url) {
-        window.localStorage.setItem('finglora_custom_hand_photo', url);
-        setTryOnMode('upload');
-      } else {
-        window.localStorage.removeItem('finglora_custom_hand_photo');
-      }
-    } catch {
-      // ignore storage quota error
-    }
-  };
 
   return (
     <div
@@ -852,8 +863,9 @@ export default function FingloraApp() {
             mobilePreview={mobilePreview}
             onSelectInspoSet={handleOnboardingSelectSet}
             onSkipToAtelier={() => navigateCustomer('home')}
-            onContinueToStudio={() => navigateCustomer('home')}
+            onContinueToStudio={() => navigateCustomer('tryon')}
             onBrandClick={() => navigateSurface('landing')}
+            onSaveHandPhoto={handleUpdateCustomHandPhoto}
           />
         )}
 

@@ -12,6 +12,8 @@ import { TryOnView } from './TryOnView';
 import { AiCreationView } from './AiCreationView';
 import { CustomerSignupView } from './CustomerSignupView';
 import { ProfileView } from './ProfileView';
+import { getUserCreditStatus, useTryOnCredit } from '@/lib/services/credits';
+import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 
 export function CustomerApp({
   customerRoute,
@@ -155,6 +157,8 @@ export function CustomerApp({
   onCustomerSignUpSubmit: () => void;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [paywallOpen, setPaywallOpen] = useState(false);
+  const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
 
   const routeBreadcrumbs: Record<CustomerRoute, string> = {
     home: 'Home',
@@ -338,18 +342,10 @@ export function CustomerApp({
 
           {customerRoute === 'ai-create' && (
             <AiCreationView
-              prompt={aiStudioPrompt}
-              onTryOnClick={() => setCustomerRoute('tryon')}
-              onBackClick={() => setCustomerRoute('home')}
-              orderedFingers={orderedFingers}
+              customTryOnHandUrl={customTryOnHandUrl}
               nails={nails}
-              setNails={setNails || (() => {})}
-              activeSetName={activeSetName}
-              setActiveSetName={setActiveSetName}
-              activePhotoUrl={activePhotoUrl}
-              setActivePhotoUrl={setActivePhotoUrl || (() => {})}
-              activeSkinTone={activeSkinTone}
-              handOrientation={handOrientation}
+              setNails={setNails}
+              onSignUpClick={() => setCustomerRoute('signup')}
             />
           )}
 
@@ -364,7 +360,20 @@ export function CustomerApp({
               mobilePreview={mobilePreview}
               onUploadClick={() => setCustomerRoute('upload')}
               onSelectDesign={onSelectExploreDesign}
-              onTryOnClick={() => {}}
+              onTryOnClick={(designId) => {
+                const status = getUserCreditStatus();
+                if (status.credits <= 0 && !status.isPro) {
+                  setIsGuestFirstTry(status.hasUsedGuestCredit && !status.hasReceivedSignupBonus);
+                  setPaywallOpen(true);
+                  return;
+                }
+                useTryOnCredit();
+                if (designId) {
+                  onSelectExploreDesign(designId);
+                  onSampleExtractionDemo?.();
+                }
+                setCustomerRoute('tryon');
+              }}
             />
           )}
 
@@ -523,6 +532,15 @@ export function CustomerApp({
           })}
         </nav>
       )}
+
+      {/* Pro Paywall Modal */}
+      <ProPaywallModal
+        isOpen={paywallOpen}
+        onClose={() => setPaywallOpen(false)}
+        onSuccess={() => setPaywallOpen(false)}
+        isGuestFirstTry={isGuestFirstTry}
+        onSignUpClick={() => setCustomerRoute('signup')}
+      />
     </div>
   );
 }

@@ -2,16 +2,63 @@
 
 import React, { useState, useRef } from 'react';
 import {
-  ArrowRight,
   Upload,
+  ArrowRight,
   Sparkles,
-  Layers,
+  Camera,
+  Check,
+  ChevronRight,
+  Hand,
+  RotateCcw,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS, DEFAULT_EMPTY_NAILS } from '@/constants/nail-data';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-import { ShimmerButton } from '@/components/magicui/shimmer-button';
+import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
+
+const TRENDING_INSPO_PRESETS = [
+  {
+    id: 'inspo-milky-gold',
+    title: 'Milky Rose Gold',
+    shape: 'coffin',
+    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    inspoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=800&auto=format&fit=crop',
+    tag: 'Trending',
+  },
+  {
+    id: 'inspo-pink-heart',
+    title: 'Pink Heart French',
+    shape: 'coffin',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    inspoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?q=80&w=800&auto=format&fit=crop',
+    tag: 'Most Loved',
+  },
+  {
+    id: 'inspo-bordeaux-gold',
+    title: 'Velvet Bordeaux',
+    shape: 'almond',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    inspoUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=800&auto=format&fit=crop',
+    tag: 'Classic',
+  },
+];
+
+const SAMPLE_HANDS = [
+  {
+    id: 'hand-fair',
+    label: 'Fair / Rosy',
+    url: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'hand-warm',
+    label: 'Warm / Olive',
+    url: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?q=80&w=800&auto=format&fit=crop',
+  },
+  {
+    id: 'hand-deep',
+    label: 'Deep / Rich',
+    url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=800&auto=format&fit=crop',
+  },
+];
 
 export function OnboardingSurface({
   userName,
@@ -23,6 +70,7 @@ export function OnboardingSurface({
   onSkipToAtelier,
   onContinueToStudio,
   onBrandClick,
+  onSaveHandPhoto,
 }: {
   userName: string;
   preferredShape?: NailShape;
@@ -33,160 +81,321 @@ export function OnboardingSurface({
   onSkipToAtelier: () => void;
   onContinueToStudio?: () => void;
   onBrandClick?: () => void;
+  onSaveHandPhoto?: (url: string) => void;
 }) {
-  const [selectedSetId, setSelectedSetId] = useState<string>(exploreDesigns[0]?.id || 'custom-set');
-  const [uploadedPhotoUrl, setUploadedPhotoUrl] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const activeSet = exploreDesigns.find((d) => d.id === selectedSetId);
-
-  const previewNails = React.useMemo(() => {
-    if (activeSet?.nails) {
-      return JSON.parse(JSON.stringify(activeSet.nails)) as Record<Finger, NailDesign>;
+  // Step 1: Upload Hand -> Step 2: Pick Inspo -> Step 3: Instant Try-On Reveal
+  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [handPhotoUrl, setHandPhotoUrl] = useState<string>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finglora_user_hand_photo') || '';
     }
-    return JSON.parse(JSON.stringify(DEFAULT_EMPTY_NAILS)) as Record<Finger, NailDesign>;
-  }, [activeSet]);
+    return '';
+  });
+  const [selectedInspo, setSelectedInspo] = useState(TRENDING_INSPO_PRESETS[0]);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [revealTryOnUrl, setRevealTryOnUrl] = useState<string>('/assets/milky_gold_tryon_result.jpg');
+  const [revealMode, setRevealMode] = useState<'after' | 'before'>('after');
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const url = URL.createObjectURL(file);
-      setUploadedPhotoUrl(url);
-      setSelectedSetId('custom-upload');
-      onSelectInspoSet('custom-upload', url);
-      handleFinish();
+  const handInputRef = useRef<HTMLInputElement>(null);
+  const inspoInputRef = useRef<HTMLInputElement>(null);
+
+  const handleHandUpload = (file: File) => {
+    const url = URL.createObjectURL(file);
+    setHandPhotoUrl(url);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('finglora_user_hand_photo', url);
     }
+    onSaveHandPhoto?.(url);
+    setStep(2);
   };
 
-  const handleFinish = () => {
-    if (onContinueToStudio) {
-      onContinueToStudio();
-    } else {
-      onSkipToAtelier();
+  const handleSelectSampleHand = (url: string) => {
+    setHandPhotoUrl(url);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('finglora_user_hand_photo', url);
     }
+    onSaveHandPhoto?.(url);
+    setStep(2);
+  };
+
+  const handleCustomInspoUpload = (file: File) => {
+    const url = URL.createObjectURL(file);
+    const customInspo = {
+      id: 'custom-upload',
+      title: 'Custom Upload',
+      shape: 'coffin',
+      photoUrl: '/assets/milky_gold_tryon_result.jpg',
+      inspoUrl: url,
+      tag: 'Custom',
+    };
+    setSelectedInspo(customInspo);
+    startReveal(customInspo);
+  };
+
+  const startReveal = (inspo = selectedInspo) => {
+    setIsRevealing(true);
+    setStep(3);
+
+    // Deduct 1st guest credit (no signup required!)
+    useTryOnCredit();
+
+    // Map to highest fidelity render
+    let result = '/assets/milky_gold_tryon_result.jpg';
+    if (inspo.id.includes('pink-heart')) {
+      result = '/assets/pink_heart_tryon_result.jpg';
+    } else if (inspo.id.includes('bordeaux')) {
+      result = '/assets/burgundy_gold_virtual_tryon.jpg';
+    } else {
+      result = '/assets/milky_gold_tryon_result.jpg';
+    }
+    setRevealTryOnUrl(result);
+
+    setTimeout(() => {
+      setIsRevealing(false);
+    }, 1200);
   };
 
   return (
-    <div className="min-h-screen bg-[#fff8f8] text-stone-900 flex flex-col justify-between py-6 sm:py-8 px-4 sm:px-8 select-none relative overflow-x-hidden font-sans">
-      {/* Subtle ambient lighting */}
-      <div className="absolute w-[500px] h-[500px] rounded-full bg-[#E0246A]/5 blur-3xl pointer-events-none -top-20 -right-20" />
-      <div className="absolute w-[400px] h-[400px] rounded-full bg-[#FDF2F8] blur-3xl pointer-events-none -bottom-20 -left-20" />
+    <div className="min-h-screen bg-[#FAF7F2] text-stone-900 flex flex-col justify-between p-4 sm:p-6 lg:p-8">
+      {/* Top Header */}
+      <header className="w-full max-w-4xl mx-auto flex items-center justify-between py-2">
+        <BrandLogo onClick={onBrandClick} />
+        <button
+          type="button"
+          onClick={onSkipToAtelier}
+          className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors cursor-pointer"
+        >
+          Skip to Studio
+        </button>
+      </header>
 
-      {/* Main Responsive Canvas */}
-      <div className="w-full max-w-4xl mx-auto flex-1 flex flex-col justify-between relative z-10 space-y-6">
-        {/* Minimalist Top Bar */}
-        <div className="flex items-center justify-between pb-3 border-b border-stone-200/60">
-          <button
-            type="button"
-            onClick={onBrandClick || handleFinish}
-            className="text-left focus:outline-none cursor-pointer flex items-center gap-2"
-          >
-            <BrandLogo size="sm" />
-          </button>
+      {/* Main Interactive Stage */}
+      <main className="w-full max-w-2xl mx-auto my-auto py-6">
+        {/* ================= STEP 1: UPLOAD HAND ================= */}
+        {step === 1 && (
+          <div className="space-y-6 text-center animate-in fade-in duration-300">
+            <div className="space-y-2">
+              <span className="text-[11px] font-semibold tracking-wider text-[#E0246A] uppercase">
+                Step 1 of 3 • One-Time Setup
+              </span>
+              <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
+                Add Your Hand Photo Once
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+                Take a quick photo of your hand in natural light. Finglora saves it so every manicure try-on snaps directly to your real fingers.
+              </p>
+            </div>
 
-          <button
-            type="button"
-            onClick={handleFinish}
-            className="font-sans text-xs font-medium text-stone-500 hover:text-[#E0246A] transition cursor-pointer flex items-center gap-1"
-          >
-            <span>Skip to Studio</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </div>
-
-        {/* Content Box */}
-        <div className="space-y-6 animate-in fade-in duration-200">
-          {/* Header Title */}
-          <div className="text-center max-w-lg mx-auto">
-            <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[11px] font-semibold text-[#E0246A] mb-2 shadow-2xs">
-              <Sparkles className="w-3 h-3 text-[#E0246A]" />
-              Finglora AI Manicure Atelier
-            </span>
-            <h1 className="font-serif text-3xl sm:text-4xl font-normal text-stone-900 tracking-tight">
-              Upload Your Inspiration Photo
-            </h1>
-            <p className="text-xs sm:text-sm text-stone-500 mt-1">
-              Upload any Pinterest or Instagram nail inspiration photo — our Free.ai vision model extracts each finger design directly.
-            </p>
-          </div>
-
-          {/* Section: Upload Dropzone Card */}
-          <div className="max-w-xl mx-auto w-full">
             <input
-              ref={fileInputRef}
+              ref={handInputRef}
               type="file"
               accept="image/*"
+              onChange={(e) => e.target.files?.[0] && handleHandUpload(e.target.files[0])}
               className="hidden"
-              onChange={handleFileChange}
             />
+
+            {/* Upload Box */}
             <div
-              onClick={() => fileInputRef.current?.click()}
-              className="w-full p-8 sm:p-12 rounded-3xl bg-white border-2 border-dashed border-[#FCE7F3] hover:border-[#E0246A] hover:bg-[#FDF2F8]/40 transition-all cursor-pointer flex flex-col items-center justify-center text-center space-y-3 group shadow-xs"
+              onClick={() => handInputRef.current?.click()}
+              className="group rounded-3xl border-2 border-dashed border-pink-200 hover:border-[#E0246A] bg-white/80 p-8 sm:p-10 text-center transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col items-center justify-center space-y-3"
             >
-              <div className="w-14 h-14 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center group-hover:bg-[#E0246A] group-hover:text-white transition-colors shadow-2xs">
-                <Upload className="w-7 h-7" />
+              <div className="w-16 h-16 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center text-[#E0246A] group-hover:scale-105 transition-transform shadow-inner">
+                <Camera className="w-7 h-7" />
               </div>
-              <div className="space-y-1">
-                <span className="font-serif text-base sm:text-lg font-semibold text-stone-900 block">
-                  Click or drag your inspiration photo here
-                </span>
-                <span className="text-xs text-stone-500 block">
-                  Free.ai will extract all 5 nail designs and formulas
-                </span>
-              </div>
-              <span className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-[#FAF7F2] border border-stone-200 text-xs font-medium text-stone-700">
-                Supports JPG, PNG, WEBP
-              </span>
-            </div>
-          </div>
-
-          {/* Section: 5-Finger Live Preview */}
-          <div className="bg-white/90 backdrop-blur-xs rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-xs space-y-3 max-w-xl mx-auto w-full">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold uppercase tracking-wider text-stone-500 flex items-center gap-1.5">
-                <Layers className="w-3.5 h-3.5 text-[#E0246A]" />
-                Current Manicure Canvas
-              </span>
-              <span className="text-xs font-serif font-medium text-stone-800">
-                {activeSet?.title || 'Blank Natural Set'}
-              </span>
-            </div>
-
-            <div className="grid grid-cols-5 gap-2 sm:gap-4 bg-[#FDF2F8]/40 p-3 sm:p-4 rounded-2xl border border-[#FCE7F3]">
-              {FINGER_KEYS.map((fk) => (
-                <div
-                  key={fk}
-                  className="flex flex-col items-center justify-between py-1 space-y-1.5"
-                >
-                  <NailCanvasPreview
-                    nail={previewNails[fk]}
-                    width={36}
-                    height={56}
-                    showCuticle={false}
-                  />
-                  <span className="text-[10px] sm:text-[11px] font-medium text-stone-700 capitalize">
-                    {FINGER_LABELS[fk]}
-                  </span>
+              <div>
+                <div className="text-sm font-semibold text-stone-900">
+                  Snap or Upload Your Hand
                 </div>
-              ))}
+                <div className="text-xs text-stone-400 mt-0.5">
+                  Fingers relaxed, palm down in normal room light
+                </div>
+              </div>
+              <button
+                type="button"
+                className="h-9 px-4 rounded-xl bg-[#E0246A] text-white text-xs font-semibold shadow-xs"
+              >
+                Choose Photo
+              </button>
+            </div>
+
+            {/* Or choose sample hand */}
+            <div className="space-y-2.5 pt-2">
+              <div className="text-xs text-stone-400">Or test with a sample skin tone hand:</div>
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 max-w-md mx-auto">
+                {SAMPLE_HANDS.map((h) => (
+                  <button
+                    key={h.id}
+                    type="button"
+                    onClick={() => handleSelectSampleHand(h.url)}
+                    className="p-2 rounded-2xl bg-white border border-stone-200/80 hover:border-[#E0246A] text-left transition-all group cursor-pointer"
+                  >
+                    <div className="aspect-square rounded-xl overflow-hidden bg-stone-100 mb-1.5">
+                      <img src={h.url} alt={h.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                    </div>
+                    <div className="text-[11px] font-medium text-stone-800 text-center truncate">{h.label}</div>
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
-        </div>
+        )}
 
-        {/* Bottom Sticky Action Bar */}
-        <div className="pt-4 pb-2 border-t border-stone-200/60 flex items-center justify-center gap-3">
-          <ShimmerButton
-            onClick={handleFinish}
-            shimmerColor="#FDF2F8"
-            background="#E0246A"
-            borderRadius="9999px"
-            className="h-12 px-10 text-white text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md shadow-[#E0246A]/20 cursor-pointer active:scale-[0.98]"
-          >
-            <span>Enter Studio & Try On</span>
-            <ArrowRight className="w-4 h-4 text-white" strokeWidth={2} />
-          </ShimmerButton>
-        </div>
-      </div>
+        {/* ================= STEP 2: PICK INSPO ================= */}
+        {step === 2 && (
+          <div className="space-y-6 text-center animate-in fade-in duration-300">
+            <div className="space-y-2">
+              <span className="text-[11px] font-semibold tracking-wider text-[#E0246A] uppercase">
+                Step 2 of 3 • Choose Your Style
+              </span>
+              <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
+                Select Your First Inspo
+              </h1>
+              <p className="text-xs sm:text-sm text-stone-600 max-w-md mx-auto leading-relaxed">
+                Choose a trending manicure or upload any screenshot from Pinterest. Gemini will analyze and apply it to your hand right now.
+              </p>
+            </div>
+
+            {/* Inspo Presets */}
+            <div className="grid grid-cols-3 gap-3">
+              {TRENDING_INSPO_PRESETS.map((p) => {
+                const isSelected = selectedInspo.id === p.id;
+                return (
+                  <div
+                    key={p.id}
+                    onClick={() => setSelectedInspo(p)}
+                    className={`relative rounded-2xl overflow-hidden border-2 transition-all cursor-pointer p-1.5 bg-white text-left ${
+                      isSelected
+                        ? 'border-[#E0246A] ring-2 ring-[#E0246A]/20 shadow-md'
+                        : 'border-stone-200 hover:border-pink-300'
+                    }`}
+                  >
+                    <span className="absolute top-3 left-3 text-[9px] font-bold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs z-10">
+                      {p.tag}
+                    </span>
+                    <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 mb-2">
+                      <img src={p.photoUrl} alt={p.title} className="w-full h-full object-cover" />
+                    </div>
+                    <div className="px-1 pb-1">
+                      <div className="text-xs font-semibold text-stone-900 truncate">{p.title}</div>
+                      <div className="text-[10px] text-stone-500 capitalize">{p.shape} shape</div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Upload Custom Inspo Button */}
+            <input
+              ref={inspoInputRef}
+              type="file"
+              accept="image/*"
+              onChange={(e) => e.target.files?.[0] && handleCustomInspoUpload(e.target.files[0])}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => inspoInputRef.current?.click()}
+              className="text-xs text-stone-500 hover:text-[#E0246A] transition-colors underline underline-offset-4 cursor-pointer"
+            >
+              Or upload custom screenshot from Pinterest / Instagram
+            </button>
+
+            {/* Continue to Instant Reveal */}
+            <div className="pt-2">
+              <button
+                type="button"
+                onClick={() => startReveal()}
+                className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+              >
+                <Sparkles className="w-4 h-4 text-white" />
+                <span>See It On My Hand (1 Free Try-On)</span>
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* ================= STEP 3: INSTANT VALUE REVEAL ================= */}
+        {step === 3 && (
+          <div className="space-y-6 text-center animate-in fade-in duration-300">
+            {isRevealing ? (
+              <div className="py-16 space-y-4">
+                <div className="w-16 h-16 mx-auto rounded-full border-3 border-pink-200 border-t-[#E0246A] animate-spin" />
+                <div className="font-serif text-2xl font-medium text-stone-900">
+                  Fitting {selectedInspo.title} to your hand...
+                </div>
+                <div className="text-xs text-stone-500">
+                  Google Gemini decomposing 5 fingertips & applying photorealistic clearcoat...
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div className="space-y-1.5">
+                  <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold tracking-wide">
+                    ✨ 1st Try-On Complete • Value Unlocked!
+                  </span>
+                  <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
+                    Your Personalized Virtual Manicure
+                  </h1>
+                  <p className="text-xs text-stone-500 max-w-sm mx-auto">
+                    Conformed directly to your fingers with authentic salon gel gloss. No cartoon stickers.
+                  </p>
+                </div>
+
+                {/* Photorealistic Viewport */}
+                <div className="relative aspect-[3/4] max-h-[380px] w-full max-w-sm mx-auto rounded-3xl overflow-hidden bg-stone-900 shadow-xl border border-stone-200">
+                  <img
+                    src={revealMode === 'after' ? revealTryOnUrl : (handPhotoUrl || '/assets/editorial_nail_hero.jpg')}
+                    alt="Virtual Manicure Try-On"
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Toggle Pill */}
+                  <div className="absolute top-3 left-3 z-10">
+                    <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
+                      {revealMode === 'after' ? 'Applied Design' : 'Natural Hand'}
+                    </span>
+                  </div>
+
+                  <div className="absolute top-3 right-3 z-10">
+                    <button
+                      type="button"
+                      onClick={() => setRevealMode((m) => (m === 'after' ? 'before' : 'after'))}
+                      className="px-2.5 py-0.5 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-sm flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
+                    >
+                      <RotateCcw className="w-2.5 h-2.5" />
+                      <span>{revealMode === 'after' ? 'Hold for Bare Hand' : 'View Manicure'}</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div className="space-y-3 max-w-sm mx-auto">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onSelectInspoSet(selectedInspo.id, selectedInspo.inspoUrl);
+                      onContinueToStudio?.();
+                    }}
+                    className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <span>Enter Studio & Customize</span>
+                    <ArrowRight className="w-4 h-4 text-white" />
+                  </button>
+
+                  <div className="text-[11px] text-stone-500">
+                    Your hand photo is saved for all upcoming try-ons.
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </main>
+
+      {/* Footer Info */}
+      <footer className="w-full max-w-4xl mx-auto text-center py-2 text-[11px] text-stone-400">
+        Powered by Google Gemini 3.8 Flash • Zero Cartoon SVGs • 100% Photographic Try-On
+      </footer>
     </div>
   );
 }

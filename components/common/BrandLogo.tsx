@@ -8,6 +8,7 @@ export interface BrandLogoProps {
   className?: string;
   showIcon?: boolean;
   showText?: boolean;
+  onClick?: () => void;
 }
 
 export function BrandLogoIcon({
@@ -52,6 +53,7 @@ export function BrandLogo({
   showText = true,
   badgeText,
   subtitle,
+  onClick,
 }: BrandLogoProps) {
   if (!showIcon && !showText) return null;
 
@@ -65,6 +67,7 @@ export function BrandLogo({
 
   return (
     <div
+      onClick={onClick}
       className={`inline-flex items-center gap-2.5 select-none group cursor-pointer transition-transform duration-200 hover:scale-[1.02] active:scale-98 ${className}`}
       aria-label="Finglora"
     >

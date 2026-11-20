@@ -28,7 +28,7 @@ export function ExploreGalleryView({
   mobilePreview: boolean;
   onUploadClick: () => void;
   onSelectDesign: (id: string) => void;
-  onTryOnClick?: () => void;
+  onTryOnClick?: (designId?: string) => void;
 }) {
   const filteredDesigns = exploreDesigns.filter((d) => {
     const catOk = exploreCategory === 'All' || d.category === exploreCategory;
@@ -175,7 +175,7 @@ export function ExploreGalleryView({
                   onClick={(e) => {
                     e.stopPropagation();
                     onSelectDesign(item.id);
-                    onTryOnClick?.();
+                    onTryOnClick?.(item.id);
                   }}
                   className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                 >
