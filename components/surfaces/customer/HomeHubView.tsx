@@ -18,15 +18,15 @@ import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES } from '@/constants/nail-data'
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 const PROMPT_SUGGESTIONS = [
-  'Glazed Pearl',
-  'Micro-French',
-  'Velvet Aura',
-  'Tortoiseshell',
-  'Bordeaux Lacquer',
-  'Clean Girl Sheer',
+  'Glazed',
+  'French',
+  'Velvet',
+  'Chrome',
+  'Aura',
+  'Nude',
 ];
 
-const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimalist'];
+const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
 
 function createFallbackSet(
   id: string,
@@ -107,7 +107,7 @@ const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
   createFallbackSet(
     'set-editorial-nude',
     'Atelier Nude Minimal',
-    'Minimalist',
+    'Minimal',
     '/assets/editorial_nail_hero.jpg',
     '#FAF0EA',
     '#FFFFFF',
@@ -161,16 +161,29 @@ export function HomeHubView({
   customTryOnHandUrl?: string | null;
   setCustomTryOnHandUrl?: (url: string | null) => void;
 }) {
-  const designs = useMemo(() => {
-    return exploreDesigns?.length ? exploreDesigns : FALLBACK_CURATED_DESIGNS;
-  }, [exploreDesigns]);
-
   const [activeCategory, setActiveCategory] = useState('All');
   const [promptText, setPromptText] = useState(aiStudioPrompt || '');
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // High-fashion editorial photography only: filter out any salon table / drill / unsplash photos
+  const designs = useMemo(() => {
+    const valid = exploreDesigns?.filter((d) => {
+      const url = d.photoUrl || '';
+      return (
+        !url.includes('unsplash.com') &&
+        !url.includes('photo-1604654894610') &&
+        !url.includes('photo-1607779097040')
+      );
+    });
+
+    if (valid && valid.length > 0) {
+      return valid;
+    }
+    return FALLBACK_CURATED_DESIGNS;
+  }, [exploreDesigns]);
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -222,18 +235,15 @@ export function HomeHubView({
   const filteredDesigns = useMemo(() => {
     if (activeCategory === 'All') return designs;
     return designs.filter((d) => {
-      const cat = d.category || '';
-      const title = d.title || '';
-      return (
-        cat.toLowerCase().includes(activeCategory.toLowerCase()) ||
-        title.toLowerCase().includes(activeCategory.toLowerCase())
-      );
+      const cat = (d.category || '').toLowerCase();
+      const title = (d.title || '').toLowerCase();
+      const target = activeCategory.toLowerCase();
+      return cat.includes(target) || title.includes(target);
     });
   }, [designs, activeCategory]);
 
-
   return (
-    <div className="space-y-4 sm:space-y-6 w-full max-w-[1300px] pb-6">
+    <div className="space-y-3.5 sm:space-y-4 w-full max-w-[1300px] pb-6">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -248,13 +258,15 @@ export function HomeHubView({
       {/* 1. ATELIER STATUS & REFINED GREETING BAR                           */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex items-center justify-between px-0.5">
-        <div>
-          <div className="text-[10px] font-mono tracking-wider uppercase text-stone-600 font-medium">
-            Finglora Atelier
-          </div>
-          <h1 className="font-serif text-xl sm:text-2xl text-stone-900 font-normal tracking-tight mt-0.5">
-            {userName ? `Welcome, ${userName}` : 'Personal Atelier'}
+        <div className="flex items-baseline gap-2">
+          <h1 className="font-serif text-xl sm:text-2xl text-stone-900 font-normal tracking-tight">
+            Atelier
           </h1>
+          {userName && (
+            <span className="text-xs text-stone-500 font-normal">
+              · {userName}
+            </span>
+          )}
         </div>
 
         {/* Preferred Shape Calibration Pill */}
@@ -271,17 +283,15 @@ export function HomeHubView({
         </button>
       </div>
 
-
-
       {/* ------------------------------------------------------------------ */}
-      {/* 3. SYMMETRICAL STUDIO VERB CARDS (MY HAND & INSPIRATION)           */}
+      {/* 2. SYMMETRICAL ACTION CARDS (MY HAND & EXTRACT INSPO)              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3.5">
+      <div className="grid grid-cols-2 gap-2.5">
         {/* Card 1: My Hand Photo (Rule: Always 1st Option = Upload, 2nd = Camera) */}
         <button
           type="button"
           onClick={() => setIsHandModalOpen(true)}
-          className="p-3.5 sm:p-4 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[96px] cursor-pointer group active:scale-[0.98]"
+          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[84px] cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between w-full">
             <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center transition shadow-2xs">
@@ -294,25 +304,24 @@ export function HomeHubView({
                 <span>Saved</span>
               </span>
             ) : (
-              <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
+              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 group-hover:text-stone-900 transition">
+                Upload
+              </span>
             )}
           </div>
 
-          <div className="mt-2.5">
+          <div className="mt-2">
             <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors tracking-tight">
-              {customTryOnHandUrl ? 'My Hand Photo' : 'Save Hand Photo'}
-            </div>
-            <div className="text-[10px] text-stone-500 mt-0.5 leading-tight truncate">
-              {customTryOnHandUrl ? '1-tap instant try-on ready' : 'Upload or camera capture'}
+              My Hand
             </div>
           </div>
         </button>
 
-        {/* Card 2: Extract from Inspiration Photo */}
+        {/* Card 2: Extract Inspo Photo */}
         <button
           type="button"
           onClick={onUploadClick}
-          className="p-3.5 sm:p-4 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[96px] cursor-pointer group active:scale-[0.98]"
+          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[84px] cursor-pointer group active:scale-[0.98]"
         >
           <div className="flex items-center justify-between w-full">
             <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center transition shadow-2xs">
@@ -321,58 +330,47 @@ export function HomeHubView({
             <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
           </div>
 
-          <div className="mt-2.5">
+          <div className="mt-2">
             <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors tracking-tight">
-              Extract from Photo
-            </div>
-            <div className="text-[10px] text-stone-500 mt-0.5 leading-tight truncate">
-              Decode Pinterest or IG inspo
+              Extract Inspo
             </div>
           </div>
         </button>
       </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 4. REFINED ATELIER CREATION BAR ("DESCRIBE YOUR DESIGN")           */}
+      {/* 3. SLEEK STUDIO PROMPT GENERATION BAR                              */}
       {/* ------------------------------------------------------------------ */}
-      <section className="bg-white rounded-3xl border border-stone-200/80 p-4 sm:p-5 shadow-2xs space-y-3">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-            <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
-              Describe Your Look
-            </h2>
-          </div>
-          <span className="text-[11px] text-stone-500">
-            Tailored to {preferredShape || 'Almond'}
-          </span>
-        </div>
-
+      <div className="space-y-2">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleGenerate();
           }}
-          className="flex items-center gap-2 bg-[#FAF8F5] rounded-xl border border-stone-200/80 px-3 py-1.5 focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition"
+          className="bg-white rounded-2xl border border-stone-200/80 p-2 sm:p-2.5 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2"
         >
+          <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] flex items-center justify-center shrink-0">
+            <Sparkles className="w-4 h-4 text-[#E0246A]" />
+          </div>
+
           <input
             type="text"
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
-            placeholder="e.g. sheer blush almond with glazed chrome tips..."
+            placeholder="Describe any look or aesthetic..."
             className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0"
           />
 
           <button
             type="submit"
-            className="h-8 px-3.5 rounded-lg bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 transition shadow-xs cursor-pointer shrink-0 active:scale-95"
+            className="h-9 px-3.5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
           >
             <span>Create</span>
-            <ArrowRight className="w-3 h-3" />
+            <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>
 
-        {/* Curated Aesthetic Suggestion Chips */}
+        {/* 1-Word Aesthetic Suggestion Chips */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
           {PROMPT_SUGGESTIONS.map((suggestion) => (
             <button
@@ -388,35 +386,30 @@ export function HomeHubView({
             </button>
           ))}
         </div>
-      </section>
+      </div>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 5. CURATED INSPIRATION CAROUSEL (MOBILE & DESKTOP)                 */}
+      {/* 4. CURATED INSPIRATION (HIGH CONVERSION & FAST ACTION)             */}
       {/* ------------------------------------------------------------------ */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-0.5">
-          <div>
-            <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 tracking-tight">
-              Curated Inspiration
-            </h2>
-            <p className="text-[11px] text-stone-500">
-              Handcrafted sets ready to try on instantly
-            </p>
-          </div>
+          <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 tracking-tight">
+            Inspiration
+          </h2>
 
           {onExploreClick && (
             <button
               type="button"
               onClick={onExploreClick}
-              className="h-8 px-3 rounded-lg text-xs font-medium text-stone-800 hover:text-[#E0246A] hover:bg-stone-100 transition inline-flex items-center gap-1 cursor-pointer active:scale-95"
+              className="h-7 px-2.5 rounded-lg text-xs font-medium text-stone-600 hover:text-[#E0246A] hover:bg-stone-100 transition inline-flex items-center gap-1 cursor-pointer active:scale-95"
             >
               <span>View All</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              <ArrowRight className="w-3 h-3" />
             </button>
           )}
         </div>
 
-        {/* Category Filter Chips */}
+        {/* Compact Category Filter Tabs */}
         <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
           {CATEGORY_TABS.map((tab) => {
             const active = activeCategory === tab;
@@ -437,7 +430,7 @@ export function HomeHubView({
           })}
         </div>
 
-        {/* Mobile Horizontal Carousel */}
+        {/* Mobile Horizontal Carousel: 3:4 Portrait Ratio with 1-Tap Try On */}
         <div className="flex lg:hidden items-center gap-3 overflow-x-auto pb-2 scrollbar-none -mx-2 px-2 snap-x snap-mandatory scroll-smooth">
           {filteredDesigns.map((design) => {
             const isActive = design.id === activeSample?.id;
@@ -448,7 +441,7 @@ export function HomeHubView({
               <div
                 key={design.id}
                 onClick={() => onSelectExploreDesign?.(design.id)}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left shrink-0 cursor-pointer snap-start active:scale-[0.98] w-48 sm:w-56 h-64 sm:h-72 bg-stone-100 ${
+                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left shrink-0 cursor-pointer snap-start active:scale-[0.98] w-44 sm:w-52 aspect-[3/4] bg-stone-100 ${
                   isActive
                     ? 'border-[#E0246A] ring-2 ring-[#E0246A]/25 shadow-sm'
                     : 'border-stone-200/80 hover:border-stone-300 shadow-2xs'
@@ -460,17 +453,17 @@ export function HomeHubView({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Top Shape Badge */}
                 <div className="absolute top-2.5 left-2.5">
-                  <span className="px-2 py-0.5 rounded-full bg-black/45 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
+                  <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
                     {shapeLabel}
                   </span>
                 </div>
 
                 {/* Bottom Card Scrim & Try-On Action */}
-                <div className="absolute inset-x-2.5 bottom-2.5 space-y-1.5">
+                <div className="absolute inset-x-2.5 bottom-2.5 space-y-2">
                   <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
                     {design.title}
                   </div>
@@ -493,8 +486,8 @@ export function HomeHubView({
           })}
         </div>
 
-        {/* Desktop Grid Layout */}
-        <div className="hidden lg:grid lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        {/* Desktop Grid Layout: 3:4 Aspect Ratio */}
+        <div className="hidden lg:grid lg:grid-cols-4 gap-3.5">
           {filteredDesigns.slice(0, 8).map((design) => {
             const isActive = design.id === activeSample?.id;
             const primaryFinger = design.nails?.middle || design.nails?.index;
@@ -504,7 +497,7 @@ export function HomeHubView({
               <div
                 key={design.id}
                 onClick={() => onSelectExploreDesign?.(design.id)}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left cursor-pointer active:scale-[0.98] h-72 bg-stone-100 ${
+                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${
                   isActive
                     ? 'border-[#E0246A] ring-2 ring-[#E0246A]/25 shadow-sm'
                     : 'border-stone-200/80 hover:border-stone-300 shadow-2xs'
@@ -516,10 +509,10 @@ export function HomeHubView({
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
 
-                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent pointer-events-none" />
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
                 <div className="absolute top-2.5 left-2.5">
-                  <span className="px-2 py-0.5 rounded-full bg-black/45 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
+                  <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
                     {shapeLabel}
                   </span>
                 </div>
@@ -549,7 +542,7 @@ export function HomeHubView({
       </section>
 
       {/* ------------------------------------------------------------------ */}
-      {/* 6. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA)     */}
+      {/* 5. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA)     */}
       {/* ------------------------------------------------------------------ */}
       {isHandModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -560,7 +553,7 @@ export function HomeHubView({
                   Your Hand Photo
                 </h3>
                 <p className="text-[11px] text-stone-500">
-                  Save once to preview all atelier manicures instantly
+                  Preview any look instantly on your hand
                 </p>
               </div>
               <button
@@ -582,7 +575,7 @@ export function HomeHubView({
                   />
                   <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-emerald-600/90 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1 shadow-xs">
                     <Check className="w-3 h-3 text-white" />
-                    <span>Saved on Your Hand</span>
+                    <span>Saved</span>
                   </div>
                 </div>
 
@@ -596,7 +589,7 @@ export function HomeHubView({
                     className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                   >
                     <Hand className="w-4 h-4" />
-                    <span>Open in Virtual Try-On</span>
+                    <span>Open Virtual Try-On</span>
                   </button>
 
                   {/* Symmetrical 2-Column: 1st Option = Upload, 2nd Option = Camera */}
@@ -626,13 +619,13 @@ export function HomeHubView({
                     className="w-full h-8 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
                   >
                     <Trash2 className="w-3 h-3" />
-                    <span>Remove saved hand photo</span>
+                    <span>Remove hand photo</span>
                   </button>
                 </div>
               </div>
             ) : (
               <div className="space-y-4">
-                <div className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-stone-200 bg-[#FAF8F5] flex flex-col items-center justify-center p-5 text-center space-y-2">
+                <div className="aspect-[4/3] w-full rounded-2xl border border-dashed border-stone-200 bg-[#FAF8F5] flex flex-col items-center justify-center p-5 text-center space-y-2">
                   <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
                     <Hand className="w-6 h-6" strokeWidth={1.5} />
                   </div>
@@ -664,10 +657,6 @@ export function HomeHubView({
                     <span>Camera</span>
                   </button>
                 </div>
-
-                <p className="text-[11px] text-stone-500 text-center leading-relaxed">
-                  Saved once so every look in the atelier will instantly render onto your own hand.
-                </p>
               </div>
             )}
 
