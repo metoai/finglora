@@ -489,8 +489,8 @@ export function TryOnView({
               </div>
             )}
 
-            {/* Bottom 3-Source Hand Bar (Upload, Camera, Studio Sample) */}
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 sm:gap-2.5 pt-1">
+            {/* Hand Source Actions (Upload, Camera) */}
+            <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-1">
               <button
                 type="button"
                 onClick={() => changeHandInputRef.current?.click()}
@@ -507,25 +507,6 @@ export function TryOnView({
               >
                 <Camera className="w-4 h-4 text-[#E0246A] shrink-0" />
                 <span className="truncate">Live Camera</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => {
-                  const sampleUrl = '/assets/editorial_nail_hero.jpg';
-                  setCustomTryOnHandUrl(sampleUrl);
-                  setInternalSynthesizedHandUrl(null);
-                  propSetSynthesizedHandUrl?.(null);
-                  try {
-                    localStorage.setItem('finglora_custom_hand_photo', sampleUrl);
-                    localStorage.setItem('finglora_user_hand_photo', sampleUrl);
-                  } catch {}
-                  setTimeout(() => handleSynthesizeHand(), 60);
-                }}
-                className="col-span-2 sm:col-span-1 h-10 sm:h-11 px-3 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-700 text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-              >
-                <Hand className="w-3.5 h-3.5 text-stone-500" />
-                <span className="truncate">Studio Sample</span>
               </button>
             </div>
           </div>
