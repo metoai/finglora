@@ -19,6 +19,7 @@ interface ChatMessage {
   text: string;
   timestamp: string;
   appliedDesignTitle?: string;
+  imageUrl?: string;
 }
 
 export function AiCreationView({
@@ -45,6 +46,7 @@ export function AiCreationView({
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
 
   // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
   const originalBareHandPhoto =
@@ -94,6 +96,8 @@ export function AiCreationView({
         sender: 'gemini',
         text: "Your hand is ready. Describe any design or adjustment you'd like to create, such as nail shape, color, finish, or artistry.",
         timestamp: 'Just now',
+        imageUrl: initialHandDesignUrl || originalBareHandPhoto,
+        appliedDesignTitle: 'Starting Hand',
       },
     ];
   });
@@ -164,6 +168,7 @@ export function AiCreationView({
               : `Applied "${trimmed}" directly onto your hand in photorealistic detail. What else would you like to customize?`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             appliedDesignTitle: trimmed,
+            imageUrl: data.imageUrl,
           };
           setMessages((prev) => [...prev, geminiMsg]);
           setIsIterating(false);
@@ -247,27 +252,47 @@ export function AiCreationView({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-stone-100 border border-stone-200/60 text-[11px] sm:text-xs font-medium text-stone-700 shadow-2xs shrink-0">
-          <Sliders className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
-          <span>Atelier Studio</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Active Hand Thumbnail on Mobile (Tap to inspect anytime) */}
+          <button
+            type="button"
+            onClick={() => {
+              setZoomImageUrl(currentTryOnImage);
+              setIsZoomOpen(true);
+            }}
+            className="flex lg:hidden items-center gap-1.5 p-1 rounded-full bg-white border border-stone-200 shadow-2xs cursor-pointer hover:border-[#E0246A] transition active:scale-95"
+            title="Inspect Active Hand"
+          >
+            <img
+              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
+              alt="Active Hand"
+              className="w-6 h-6 rounded-full object-cover"
+            />
+            <span className="text-[10px] font-medium text-stone-600 pr-1.5">Inspect</span>
+          </button>
+
+          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-stone-100 border border-stone-200/60 text-[11px] sm:text-xs font-medium text-stone-700 shadow-2xs">
+            <Sliders className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
+            <span>Atelier Studio</span>
+          </div>
         </div>
       </div>
 
       {/* Main Studio Area:
-          - Mobile (< lg): Vertical flex split with compact hand preview at top + live chat & prompt dock below
+          - Mobile (< lg): Conversational studio timeline where each new design appears inline as a card in the chat
           - Desktop (lg+): 12-column grid with hand viewport on left and chat on right
       */}
       <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-12 gap-2.5 sm:gap-4 lg:gap-6 items-stretch">
-        {/* Left Column: Hand Photo Viewport (7 Cols on desktop, compact centered preview on mobile) */}
-        <div className="lg:col-span-7 flex flex-col items-center justify-center shrink-0 lg:min-h-0">
-          <div className="relative h-[185px] xs:h-[205px] sm:h-[240px] lg:h-full lg:max-h-[600px] aspect-[3/4] rounded-2xl lg:rounded-3xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200/90 flex items-center justify-center mx-auto transition-all duration-200 shrink-0 group">
+        {/* Desktop Left Column: Large Constant Viewport (7 Cols on desktop, HIDDEN ON MOBILE so mobile flows as dynamic timeline) */}
+        <div className="hidden lg:flex lg:col-span-7 flex-col items-center justify-center min-h-0">
+          <div className="relative h-full max-h-[620px] aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200/90 flex items-center justify-center mx-auto transition-all duration-200 shrink-0 group">
             {isIterating && (
               <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white text-center p-4">
-                <Loader2 className="w-7 h-7 sm:w-8 sm:h-8 animate-spin text-[#E0246A]" />
-                <span className="text-xs sm:text-sm font-semibold tracking-wide">
+                <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
+                <span className="text-sm font-semibold tracking-wide">
                   Creating manicure...
                 </span>
-                <span className="text-[10px] sm:text-xs text-stone-300">
+                <span className="text-xs text-stone-300">
                   Fitting requested nail art to your fingernails
                 </span>
               </div>
@@ -277,44 +302,50 @@ export function AiCreationView({
             <img
               src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
               alt="Hand Try-On"
-              onClick={() => setIsZoomOpen(true)}
+              onClick={() => {
+                setZoomImageUrl(currentTryOnImage);
+                setIsZoomOpen(true);
+              }}
               className="w-full h-full object-cover transition duration-200 cursor-pointer"
               title="Click to zoom in"
             />
 
             {/* Badges & Controls */}
-            <div className="absolute top-2.5 left-2.5 z-20">
-              <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[9px] sm:text-[10px] font-medium tracking-wide">
+            <div className="absolute top-3 left-3 z-20">
+              <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
                 {compareMode === 'after' ? 'Manicure' : 'Natural Hand'}
               </span>
             </div>
 
-            <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1.5">
+            <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
               <button
                 type="button"
                 onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
-                className="px-2 py-0.5 sm:px-2.5 sm:py-1 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[9px] sm:text-[10px] font-medium tracking-wide shadow-xs flex items-center gap-1 cursor-pointer transition active:scale-95"
+                className="px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-xs flex items-center gap-1 cursor-pointer transition active:scale-95"
               >
-                <RotateCcw className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-stone-600" />
+                <RotateCcw className="w-3 h-3 text-stone-600" />
                 <span>{compareMode === 'after' ? 'Hold for Natural' : 'View Manicure'}</span>
               </button>
               <button
                 type="button"
-                onClick={() => setIsZoomOpen(true)}
-                className="w-6 h-6 sm:w-7 sm:h-7 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95"
+                onClick={() => {
+                  setZoomImageUrl(currentTryOnImage);
+                  setIsZoomOpen(true);
+                }}
+                className="w-7 h-7 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95"
                 title="Inspect Fullscreen"
               >
-                <Maximize2 className="w-3 h-3 text-stone-600" />
+                <Maximize2 className="w-3.5 h-3.5 text-stone-600" />
               </button>
             </div>
           </div>
 
-          <div className="hidden lg:block text-center text-[11px] text-stone-400 mt-2">
+          <div className="text-center text-[11px] text-stone-400 mt-2">
             Hand anatomy, skin tone, fingers, and lighting remain constant across all prompts.
           </div>
         </div>
 
-        {/* Right Column: Conversational AI Prompt Stream & Input Dock (5 Cols on desktop, flex-1 on mobile) */}
+        {/* Right Column / Mobile Full Area: Conversational AI Prompt Stream & Input Dock */}
         <div className="lg:col-span-5 flex-1 min-h-0 flex flex-col rounded-2xl lg:rounded-3xl bg-white border border-stone-200/90 shadow-sm overflow-hidden">
           {/* Stream Header */}
           <div className="px-3 py-2 sm:px-3.5 sm:py-2.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/70 shrink-0">
@@ -324,28 +355,96 @@ export function AiCreationView({
                 Atelier AI Assistant
               </span>
             </div>
-            <span className="text-[10px] text-stone-400 font-mono">Live Studio Chat</span>
+            <span className="text-[10px] text-stone-400 font-mono">Live Studio Timeline</span>
           </div>
 
           {/* Messages Body (scrollable) */}
-          <div className="flex-1 min-h-0 p-2.5 sm:p-4 overflow-y-auto space-y-2.5 scrollbar-thin">
-            {messages.map((msg) => (
-              <div
-                key={msg.id}
-                className={`flex flex-col ${msg.sender === 'user' ? 'items-end' : 'items-start'}`}
-              >
+          <div className="flex-1 min-h-0 p-2.5 sm:p-4 overflow-y-auto space-y-3 scrollbar-thin">
+            {messages.map((msg) => {
+              const isUser = msg.sender === 'user';
+              return (
                 <div
-                  className={`max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 text-xs leading-relaxed ${
-                    msg.sender === 'user'
-                      ? 'bg-[#E0246A] text-white shadow-xs rounded-br-xs'
-                      : 'bg-stone-100 text-stone-800 rounded-bl-xs'
-                  }`}
+                  key={msg.id}
+                  className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
                 >
-                  {msg.text}
+                  <div
+                    className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 text-xs leading-relaxed ${
+                      isUser
+                        ? 'bg-[#E0246A] text-white shadow-xs rounded-br-xs'
+                        : 'bg-stone-100 text-stone-800 rounded-bl-xs'
+                    }`}
+                  >
+                    <p>{msg.text}</p>
+
+                    {/* Generated Design Card (Inline in the message stream!) */}
+                    {msg.imageUrl && (
+                      <div className="mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden bg-stone-200 border border-stone-300/80 shadow-xs relative group max-w-[240px] xs:max-w-[260px] sm:max-w-[280px] aspect-[3/4]">
+                        <img
+                          src={msg.imageUrl}
+                          alt={msg.appliedDesignTitle || 'Manicure Design'}
+                          className="w-full h-full object-cover cursor-pointer transition group-hover:scale-[1.02] duration-200"
+                          onClick={() => {
+                            setZoomImageUrl(msg.imageUrl || null);
+                            setIsZoomOpen(true);
+                          }}
+                          title="Click to zoom in"
+                        />
+                        {/* Badges on card */}
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[9px] font-medium">
+                            {msg.appliedDesignTitle || 'Manicure'}
+                          </span>
+                        </div>
+                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setZoomImageUrl(msg.imageUrl || null);
+                              setIsZoomOpen(true);
+                            }}
+                            className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95"
+                            title="Fullscreen inspector"
+                          >
+                            <Maximize2 className="w-3 h-3 text-stone-600" />
+                          </button>
+                        </div>
+                        {/* Bottom tap hint */}
+                        <div
+                          onClick={() => {
+                            setZoomImageUrl(msg.imageUrl || null);
+                            setIsZoomOpen(true);
+                          }}
+                          className="absolute inset-x-0 bottom-0 py-1.5 px-2.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between text-white text-[9px] font-medium cursor-pointer"
+                        >
+                          <span>{msg.appliedDesignTitle || 'New Design'}</span>
+                          <span className="text-white/90 underline text-[9px]">Tap to inspect</span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[9px] text-stone-400 px-1 mt-0.5">{msg.timestamp}</span>
                 </div>
-                <span className="text-[9px] text-stone-400 px-1 mt-0.5">{msg.timestamp}</span>
+              );
+            })}
+
+            {/* In-stream Assistant Loading State */}
+            {isIterating && (
+              <div className="flex flex-col items-start animate-in fade-in duration-200">
+                <div className="bg-stone-100 text-stone-800 rounded-2xl rounded-bl-xs px-3.5 py-2.5 text-xs flex items-center gap-2.5 shadow-2xs border border-stone-200/80">
+                  <Loader2 className="w-4 h-4 animate-spin text-[#E0246A] shrink-0" />
+                  <div>
+                    <span className="font-semibold text-stone-900 block text-xs">
+                      Creating new manicure on your hand...
+                    </span>
+                    <span className="text-[10px] text-stone-500">
+                      Fitting requested nail art to your fingernails
+                    </span>
+                  </div>
+                </div>
               </div>
-            ))}
+            )}
+
             <div ref={chatEndRef} />
           </div>
 
@@ -399,14 +498,20 @@ export function AiCreationView({
       </div>
 
       {/* Fullscreen Zoom Lightbox Modal */}
-      {isZoomOpen && (
+      {(zoomImageUrl || isZoomOpen) && (
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-4 animate-in fade-in duration-150"
-          onClick={() => setIsZoomOpen(false)}
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-3 sm:p-4 animate-in fade-in duration-150"
+          onClick={() => {
+            setZoomImageUrl(null);
+            setIsZoomOpen(false);
+          }}
         >
-          <div className="flex items-center justify-between text-white pb-3 shrink-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex items-center justify-between text-white pb-3 shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             <span className="text-xs font-medium text-white/80">Hand Manicure Inspector</span>
             <div className="flex items-center gap-2">
               <button
@@ -418,16 +523,26 @@ export function AiCreationView({
               </button>
               <button
                 type="button"
-                onClick={() => setIsZoomOpen(false)}
+                onClick={() => {
+                  setZoomImageUrl(null);
+                  setIsZoomOpen(false);
+                }}
                 className="w-8 h-8 rounded-full bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
           </div>
-          <div className="flex-1 flex items-center justify-center min-h-0" onClick={(e) => e.stopPropagation()}>
+          <div
+            className="flex-1 flex items-center justify-center min-h-0"
+            onClick={(e) => e.stopPropagation()}
+          >
             <img
-              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
+              src={
+                compareMode === 'before'
+                  ? originalBareHandPhoto
+                  : (zoomImageUrl || currentTryOnImage)
+              }
               alt="Hand High Resolution"
               className="max-h-[82vh] max-w-full rounded-2xl object-contain shadow-2xl"
             />
