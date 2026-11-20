@@ -13,6 +13,7 @@ import {
   Trash2,
   Sparkles,
   Compass,
+  Heart,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
@@ -201,6 +202,7 @@ export function HomeHubView({
   onCustomizeClick,
   onUploadClick,
   onExploreClick,
+  onFavoritesClick,
   onCreatePromptClick,
   customTryOnHandUrl,
   setCustomTryOnHandUrl,
@@ -223,6 +225,7 @@ export function HomeHubView({
   onCustomizeClick: () => void;
   onUploadClick: () => void;
   onExploreClick?: (query?: string) => void;
+  onFavoritesClick?: () => void;
   onCreatePromptClick?: (prompt: string) => void;
   customTryOnHandUrl?: string | null;
   setCustomTryOnHandUrl?: (url: string | null) => void;
@@ -353,70 +356,63 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 2. AI Creation Studio Dock */}
+      {/* 2. AI Creation Studio Box with Generous Height & No Word Repetitions */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between px-1">
-          <div className="flex items-center gap-1.5">
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-            <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
-              AI Creation Studio
-            </h2>
-          </div>
-          <span className="text-[10px] sm:text-[11px] text-stone-400 font-normal">
-            Generate custom sets with prompt
-          </span>
+        <div className="flex items-center gap-1.5 px-1">
+          <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+          <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
+            Design with AI
+          </h2>
         </div>
 
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleGenerate();
-          }}
-          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-11 sm:h-12 px-2.5 sm:px-3.5 transition-all flex items-center gap-2 sm:gap-2.5 border border-transparent shadow-2xs"
-        >
-          {/* AI Creation Badge inside dock */}
-          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] text-[10px] sm:text-[11px] font-bold shrink-0 border border-[#FCE7F3]">
-            <Sparkles className="w-3 h-3 text-[#E0246A]" />
-            <span className="hidden sm:inline">AI Creation</span>
-            <span className="sm:hidden">AI</span>
-          </span>
-
-          <input
-            type="text"
+        <div className="w-full bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 hover:border-stone-300 focus-within:border-[#E0246A]/50 focus-within:ring-2 focus-within:ring-[#E0246A]/10 p-3 sm:p-4 transition-all shadow-2xs space-y-2.5">
+          {/* Top: Generous Input Area */}
+          <textarea
+            rows={2}
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
-            placeholder="Describe any design (e.g. Glazed donut chrome with blush hearts)..."
-            className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none min-w-0"
+            onKeyDown={(e) => {
+              if (e.key === 'Enter' && !e.shiftKey) {
+                e.preventDefault();
+                handleGenerate();
+              }
+            }}
+            placeholder="Describe any look or aesthetic (e.g. Hailey Bieber glazed chrome, cherry mocha french, blush bows)..."
+            className="w-full bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none resize-none leading-relaxed"
           />
 
-          <button
-            type="submit"
-            className="h-8 sm:h-8.5 px-3 sm:px-4 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
-          >
-            <span className="hidden sm:inline">Create with AI</span>
-            <span className="sm:hidden">Create</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </form>
+          {/* Bottom Toolbar: Prompt Chips on Left, Generate on Right */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-stone-100">
+            {/* Quick Suggestion Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 select-none">
+              <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 shrink-0">
+                Prompts:
+              </span>
+              {QUICK_PROMPT_CHIPS.map((chip) => (
+                <button
+                  key={chip}
+                  type="button"
+                  onClick={() => {
+                    setPromptText(chip);
+                    handleGenerate(chip);
+                  }}
+                  className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full bg-stone-100 hover:bg-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
+                >
+                  {chip}
+                </button>
+              ))}
+            </div>
 
-        {/* Short 1-2 Word Aesthetic Prompt Chips */}
-        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 select-none">
-          <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 shrink-0">
-            Prompts:
-          </span>
-          {QUICK_PROMPT_CHIPS.map((chip) => (
+            {/* Submit Action */}
             <button
-              key={chip}
               type="button"
-              onClick={() => {
-                setPromptText(chip);
-                handleGenerate(chip);
-              }}
-              className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
+              onClick={() => handleGenerate()}
+              className="h-8.5 sm:h-9 px-4 sm:px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 active:scale-95 shadow-xs shrink-0 cursor-pointer transition self-end sm:self-auto"
             >
-              {chip}
+              <span>Generate</span>
+              <ArrowRight className="w-3.5 h-3.5" />
             </button>
-          ))}
+          </div>
         </div>
       </div>
 
@@ -464,29 +460,29 @@ export function HomeHubView({
           </div>
         </div>
 
-        {/* Station 3: AI Studio */}
+        {/* Station 3: Saved Looks */}
         <div
           onClick={() => {
-            if (onCreatePromptClick) {
-              onCreatePromptClick(promptText || 'Glazed Donut Chrome');
-            } else {
-              onCustomizeClick();
+            if (onFavoritesClick) {
+              onFavoritesClick();
+            } else if (onExploreClick) {
+              onExploreClick();
             }
           }}
           className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/90 border border-stone-200/80 hover:border-[#E0246A]/35 transition-all shadow-2xs hover:shadow-xs cursor-pointer group flex flex-col justify-between min-h-[105px] sm:min-h-[118px] active:scale-98"
         >
           <div className="flex items-center justify-between">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
-              <Sparkles className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
+              <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
             <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
           <div>
             <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
-              AI Studio
+              Saved Looks
             </h3>
             <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 truncate">
-              Generate custom set
+              Your saved manicures
             </p>
           </div>
         </div>

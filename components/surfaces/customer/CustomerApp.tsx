@@ -261,6 +261,7 @@ export function CustomerApp({
                 }
                 setCustomerRoute('explore');
               }}
+              onFavoritesClick={() => setCustomerRoute('favorites')}
               onCreatePromptClick={(prompt) => {
                 setAiStudioPrompt(prompt);
                 setActiveSetName(prompt.slice(0, 32) || 'Custom AI Set');
