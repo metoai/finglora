@@ -44,7 +44,7 @@ export function HomeHubView({
 }: {
   userName?: string;
   preferredShape: NailShape;
-  activeSample: ExploreDesignSet;
+  activeSample?: ExploreDesignSet;
   activePhotoUrl?: string;
   activeSetName: string;
   orderedFingers: Finger[];
@@ -323,7 +323,6 @@ export function HomeHubView({
           className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-8 scroll-mt-4"
         >
           {filteredDesigns.slice(0, 8).map((design, index) => {
-            const isActive = design.id === activeSample?.id;
             const primaryFinger = design.nails?.middle || design.nails?.index;
             const shapeLabel = primaryFinger?.shape || 'almond';
 
@@ -338,11 +337,7 @@ export function HomeHubView({
                   onSelectExploreDesign?.(design.id);
                   onTryOnClick();
                 }}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${hideClass} ${
-                  isActive
-                    ? 'border-[#E0246A] ring-2 ring-[#E0246A]/25 shadow-sm'
-                    : 'border-stone-200/80 hover:border-stone-300 shadow-2xs'
-                }`}
+                className={`group relative rounded-2xl overflow-hidden border border-stone-200/80 hover:border-stone-300 shadow-2xs transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${hideClass}`}
               >
                 <img
                   src={design.photoUrl || '/assets/milky_gold_tryon_result.jpg'}
