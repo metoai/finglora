@@ -168,9 +168,9 @@ export function HomeHubView({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // High-fashion editorial photography only: filter out any salon table / drill / unsplash photos
+  // High-fashion editorial photography only: filter out salon table/drill photos and polish titles
   const designs = useMemo(() => {
-    const valid = exploreDesigns?.filter((d) => {
+    const rawList = exploreDesigns?.filter((d) => {
       const url = d.photoUrl || '';
       return (
         !url.includes('unsplash.com') &&
@@ -179,10 +179,24 @@ export function HomeHubView({
       );
     });
 
-    if (valid && valid.length > 0) {
-      return valid;
-    }
-    return FALLBACK_CURATED_DESIGNS;
+    const list = rawList && rawList.length > 0 ? rawList : FALLBACK_CURATED_DESIGNS;
+
+    return list.map((d) => {
+      let title = d.title || 'Atelier Set';
+      if (title === 'AI Extracted Manicure') title = 'French Chrome Rose';
+      if (title.startsWith("L'Atelier ")) title = title.replace("L'Atelier ", '');
+
+      let photoUrl = d.photoUrl;
+      if (!photoUrl || photoUrl === '/assets/editorial_nail_hero.jpg') {
+        photoUrl = '/assets/milky_gold_tryon_result.jpg';
+      }
+
+      return {
+        ...d,
+        title,
+        photoUrl,
+      };
+    });
   }, [exploreDesigns]);
 
   const showToast = (msg: string) => {
@@ -258,28 +272,21 @@ export function HomeHubView({
       {/* 1. ATELIER STATUS & REFINED GREETING BAR                           */}
       {/* ------------------------------------------------------------------ */}
       <div className="flex items-center justify-between px-0.5">
-        <div className="flex items-baseline gap-2">
-          <h1 className="font-serif text-xl sm:text-2xl text-stone-900 font-normal tracking-tight">
-            Atelier
-          </h1>
-          {userName && (
-            <span className="text-xs text-stone-500 font-normal">
-              · {userName}
-            </span>
-          )}
-        </div>
+        <h1 className="font-serif text-2xl text-stone-900 font-normal tracking-tight">
+          Atelier
+        </h1>
 
         {/* Preferred Shape Calibration Pill */}
         <button
           type="button"
           onClick={onTuneVibeClick}
-          className="h-8 px-3 rounded-full bg-white border border-stone-200 hover:border-stone-300 text-stone-700 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
+          className="h-8 px-3 rounded-full bg-white border border-stone-200/90 hover:border-stone-300 text-stone-700 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
           title="Change preferred nail shape"
         >
           <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A]" />
           <span className="capitalize">{preferredShape || 'Almond'}</span>
           <span className="text-stone-300">/</span>
-          <span className="text-[11px] text-stone-500 font-normal">Shape</span>
+          <span className="text-[11px] text-stone-400 font-normal">Shape</span>
         </button>
       </div>
 
@@ -291,50 +298,52 @@ export function HomeHubView({
         <button
           type="button"
           onClick={() => setIsHandModalOpen(true)}
-          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[84px] cursor-pointer group active:scale-[0.98]"
+          className="p-3 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center transition shadow-2xs">
-              <Hand className="w-4 h-4" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
+              <Hand className="w-4.5 h-4.5" strokeWidth={1.75} />
             </div>
-
-            {customTryOnHandUrl ? (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1">
-                <Check className="w-2.5 h-2.5 text-emerald-600" />
-                <span>Saved</span>
-              </span>
-            ) : (
-              <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 group-hover:text-stone-900 transition">
-                Upload
-              </span>
-            )}
-          </div>
-
-          <div className="mt-2">
-            <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors tracking-tight">
-              My Hand
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                My Hand
+              </div>
+              <div className="text-[10px] text-stone-400 font-medium">
+                {customTryOnHandUrl ? 'Saved' : 'Upload'}
+              </div>
             </div>
           </div>
+
+          {customTryOnHandUrl ? (
+            <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
+              <Check className="w-3 h-3" strokeWidth={2.5} />
+            </span>
+          ) : (
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
+          )}
         </button>
 
         {/* Card 2: Extract Inspo Photo */}
         <button
           type="button"
           onClick={onUploadClick}
-          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-[#FAF8F5] border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition duration-200 shadow-2xs flex flex-col justify-between min-h-[84px] cursor-pointer group active:scale-[0.98]"
+          className="p-3 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
         >
-          <div className="flex items-center justify-between w-full">
-            <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center transition shadow-2xs">
-              <ImagePlus className="w-4 h-4" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
+              <ImagePlus className="w-4.5 h-4.5" strokeWidth={1.75} />
             </div>
-            <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition" />
+            <div className="min-w-0">
+              <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                Extract Inspo
+              </div>
+              <div className="text-[10px] text-stone-400 font-medium">
+                Pinterest · IG
+              </div>
+            </div>
           </div>
 
-          <div className="mt-2">
-            <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors tracking-tight">
-              Extract Inspo
-            </div>
-          </div>
+          <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
         </button>
       </div>
 
@@ -347,23 +356,22 @@ export function HomeHubView({
             e.preventDefault();
             handleGenerate();
           }}
-          className="bg-white rounded-2xl border border-stone-200/80 p-2 sm:p-2.5 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2"
+          className="bg-white rounded-2xl border border-stone-200/80 pl-3.5 pr-2 py-2 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
         >
-          <div className="w-8 h-8 rounded-xl bg-[#FDF2F8] flex items-center justify-center shrink-0">
-            <Sparkles className="w-4 h-4 text-[#E0246A]" />
-          </div>
+          <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0" />
 
           <input
             type="text"
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
             placeholder="Describe any look or aesthetic..."
-            className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0"
+            className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0 leading-normal"
           />
 
           <button
             type="submit"
-            className="h-9 px-3.5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+            className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+            title="Generate look"
           >
             <span>Create</span>
             <ArrowRight className="w-3.5 h-3.5" />
