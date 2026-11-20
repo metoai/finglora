@@ -329,12 +329,6 @@ sequenceDiagram
 │       │   ├── StudioView.tsx            # 5-nail studio, color swatches, inspector
 │       │   ├── TryOnView.tsx             # Camera, upload, and model hand try-on
 │       │   └── PassportView.tsx          # Design Passport shareable view
-│       └── tech/                         # Nail Technician Portal (/tech)
-│           ├── TechApp.tsx               # Tech layout & navigation
-│           ├── TechSidebar.tsx           # Tech portal side navigation
-│           ├── TechSignupView.tsx        # Technician profile registration
-│           ├── TechWorkspaceView.tsx     # Client link & WhatsApp photo decoder
-│           └── TechGuideView.tsx         # Step-by-step layer formulas & station view
 ├── constants/
 │   └── nail-data.ts                      # Shapes, lengths, finishes, palettes & sets
 ├── lib/

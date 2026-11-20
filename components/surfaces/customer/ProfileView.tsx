@@ -10,7 +10,6 @@ import {
   Bell,
   HelpCircle,
   LogOut,
-  Paintbrush,
   Hand,
   Compass,
   X,
@@ -20,6 +19,7 @@ import {
   Camera,
   UploadCloud,
   Trash2,
+  Sparkles,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -28,6 +28,7 @@ import {
   NailShape,
   SkinTonePreset,
 } from '@/types/nail';
+import { NAIL_SHAPES } from '@/constants/nail-data';
 import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
@@ -63,6 +64,8 @@ interface ProfileViewProps {
 export function ProfileView({
   userName,
   setUserName,
+  preferredShape = 'almond',
+  setPreferredShape,
   exploreDesigns = [],
   setExploreDesigns,
   onSelectExploreDesign,
@@ -76,7 +79,7 @@ export function ProfileView({
   // Navigation inside Profile: 'settings' | 'favorites'
   const [currentView, setCurrentView] = useState<'settings' | 'favorites'>(initialView);
 
-  // Open-source DiceBear Avatar Seed (v9, latest free open-source package)
+  // Open-source DiceBear Avatar Seed
   const [avatarSeed, setAvatarSeed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('finglora_avatar_seed');
@@ -294,7 +297,7 @@ export function ProfileView({
   };
 
   // -------------------------------------------------------------------------
-  // VIEW: FAVORITES PAGE
+  // VIEW: FAVORITES / SAVED DESIGNS TAB
   // -------------------------------------------------------------------------
   if (currentView === 'favorites') {
     return (
@@ -316,15 +319,15 @@ export function ProfileView({
               type="button"
               onClick={() => setCurrentView('settings')}
               className="w-9 h-9 rounded-full bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-[#281720] flex items-center justify-center transition cursor-pointer active:scale-95"
-              title="Back"
+              title="Back to Settings"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
             <div className="flex items-center gap-2">
               <h1 className="font-serif text-xl sm:text-2xl font-medium text-[#281720]">
-                Favorites
+                Saved Designs
               </h1>
-              <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#FDE8EF] text-[#E0246A]">
+              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FDE8EF] text-[#E0246A]">
                 {savedDesigns.length}
               </span>
             </div>
@@ -336,13 +339,13 @@ export function ProfileView({
               onClick={onNavigateLookbook}
               className="text-xs font-medium text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer"
             >
-              <span>Designs</span>
-              <ChevronRight className="w-3 h-3" />
+              <span>Explore More</span>
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Filter Pills */}
+        {/* Category Filter Pills */}
         {savedDesigns.length > 0 && (
           <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
             {['All', 'Floral', 'Chrome', 'French', 'Minimal', 'Bold'].map((cat) => {
@@ -352,7 +355,7 @@ export function ProfileView({
                   key={cat}
                   type="button"
                   onClick={() => setFavoriteCategory(cat)}
-                  className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 ${
+                  className={`h-7 px-3.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 ${
                     active
                       ? 'bg-[#281720] text-white shadow-xs font-semibold'
                       : 'bg-white text-[#806D76] hover:text-[#281720] border border-[#F0DFE4]'
@@ -365,7 +368,7 @@ export function ProfileView({
           </div>
         )}
 
-        {/* Grid of Saved Favorites */}
+        {/* 2-Column Mobile Grid of Saved Manicures with 1-Tap Try On */}
         {filteredFavorites.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3.5 sm:gap-4">
             {filteredFavorites.map((item) => (
@@ -386,7 +389,7 @@ export function ProfileView({
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-                  {/* Heart / Unsave button */}
+                  {/* Heart Unsave Button */}
                   <button
                     type="button"
                     title="Remove from favorites"
@@ -401,7 +404,7 @@ export function ProfileView({
                     {item.category}
                   </span>
 
-                  {/* Try On Button on card bottom */}
+                  {/* 1-Tap Try On Button on Card Bottom */}
                   <div className="absolute inset-x-2.5 bottom-2.5">
                     <button
                       type="button"
@@ -409,9 +412,9 @@ export function ProfileView({
                         e.stopPropagation();
                         onSelectExploreDesign?.(item.id);
                       }}
-                      className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                      className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-xs backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                     >
-                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
+                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
                       <span>Try On</span>
                     </button>
                   </div>
@@ -425,13 +428,13 @@ export function ProfileView({
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-2xl p-8 border border-[#F0DFE4] text-center space-y-3">
+          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#F0DFE4] text-center space-y-3">
             <div className="w-12 h-12 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center mx-auto">
               <Heart className="w-6 h-6 text-[#E0246A]" />
             </div>
-            <h3 className="text-sm font-semibold text-[#281720]">No favorites</h3>
+            <h3 className="text-sm font-semibold text-[#281720]">No Saved Designs Yet</h3>
             <p className="text-xs text-[#806D76] max-w-sm mx-auto">
-              Tap the heart icon on any look to save it here.
+              Tap the heart icon on any curated manicure look to build your personal bespoke try-on collection.
             </p>
             {onNavigateLookbook && (
               <button
@@ -450,7 +453,7 @@ export function ProfileView({
   }
 
   // -------------------------------------------------------------------------
-  // VIEW: MINIMAL GROUPED SECTIONS (1-Word Names, No Descriptions)
+  // VIEW: MAIN PROFILE VIEW (Clean Profile Card + Account Settings)
   // -------------------------------------------------------------------------
   return (
     <div className="max-w-xl lg:max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 space-y-6 text-[#281720]">
@@ -465,100 +468,137 @@ export function ProfileView({
       )}
 
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-2 border-b border-[#F0DFE4]">
+      <div className="flex items-center justify-between pb-3 border-b border-[#F0DFE4]">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBackClick}
             className="w-9 h-9 rounded-full bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-[#281720] flex items-center justify-center transition cursor-pointer active:scale-95"
-            title="Return"
+            title="Return to Atelier"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
           <h1 className="font-serif text-xl sm:text-2xl font-medium text-[#281720]">
-            Profile
+            Profile & Settings
           </h1>
         </div>
       </div>
 
       {/* Main Grid: 2-column on desktop (lg), stacked on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8 items-start gap-4">
-        {/* Left Column on Desktop: User Hero & Overview */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 lg:gap-8 items-start gap-5">
+        {/* Left Column: Clean Profile Card & Saved Summary */}
         <div className="lg:col-span-5 space-y-4">
-          {/* User Card with DiceBear Open-Source Avatar */}
-          <div className="bg-white rounded-2xl p-4 sm:p-5 border border-[#F0DFE4] shadow-2xs flex items-center justify-between gap-3">
-            <div className="flex items-center gap-3.5 min-w-0">
-              {/* Avatar with Randomizer Dice overlay */}
-              <div className="relative shrink-0 group">
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-[#E0246A]/25 bg-[#FDE8EF] shadow-xs flex items-center justify-center">
-                  <img
-                    src={avatarUrl || "https://api.dicebear.com/9.x/lorelei/svg?seed=Elise&backgroundColor=fde8ef"}
-                    alt={userName}
-                    className="w-full h-full object-cover transition-transform group-hover:scale-105"
-                    onError={(e) => {
-                      (e.target as HTMLElement).style.display = 'none';
-                    }}
-                  />
+          {/* Clean Profile Card with User Name, Preferred Shape Badge, and Saved Hand Status */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0DFE4] shadow-2xs space-y-4">
+            {/* Top Row: Avatar & Name */}
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5 min-w-0">
+                {/* Avatar with Randomizer Dice Overlay */}
+                <div className="relative shrink-0 group">
+                  <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-[#E0246A]/25 bg-[#FDE8EF] shadow-xs flex items-center justify-center">
+                    <img
+                      src={avatarUrl}
+                      alt={userName}
+                      className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={randomizeAvatar}
+                    title="Generate random profile avatar"
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-[#F0DFE4] shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-[#FDE8EF] transition active:scale-90 cursor-pointer"
+                  >
+                    <Dices className="w-3.5 h-3.5" />
+                  </button>
                 </div>
+
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-semibold text-[#281720] truncate leading-tight">
+                    {userName}
+                  </h2>
+                  <p className="text-xs text-[#806D76] truncate mt-0.5">{userEmail}</p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setNameInput(userName);
+                  setEmailInput(userEmail);
+                  setIsEditProfileOpen(true);
+                }}
+                className="h-8 px-3 rounded-xl bg-transparent hover:bg-[#FDE8EF] border border-[#F0DFE4] hover:border-[#E0246A]/30 text-xs font-medium text-[#281720] hover:text-[#E0246A] transition cursor-pointer shrink-0"
+              >
+                Edit
+              </button>
+            </div>
+
+            {/* Badges Row: Preferred Shape Badge & Hand Photo Status */}
+            <div className="pt-2 border-t border-[#F0DFE4] flex flex-wrap items-center gap-2">
+              {/* Preferred Nail Shape Badge */}
+              <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-[#FDE8EF] text-[#E0246A] border border-[#E0246A]/20 capitalize">
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>{preferredShape || 'Almond'} Shape</span>
+              </span>
+
+              {/* Saved Hand Photo Status Badge */}
+              {customTryOnHandUrl ? (
                 <button
                   type="button"
-                  onClick={randomizeAvatar}
-                  title="Generate random profile avatar"
-                  className="absolute -bottom-1 -right-1 w-6 h-6 rounded-full bg-white border border-[#F0DFE4] shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-[#FDE8EF] transition active:scale-90 cursor-pointer"
+                  onClick={() => setIsHandModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9] hover:bg-[#C8E6C9]/40 transition cursor-pointer"
+                  title="View or update saved hand photo"
                 >
-                  <Dices className="w-3.5 h-3.5" />
+                  <Check className="w-3.5 h-3.5 text-[#2E7D32]" />
+                  <span>Hand Photo Saved</span>
                 </button>
-              </div>
-
-              <div className="min-w-0">
-                <h2 className="text-base sm:text-lg font-semibold text-[#281720] truncate leading-tight">
-                  {userName}
-                </h2>
-                <p className="text-xs text-[#806D76] truncate mt-0.5">{userEmail}</p>
-              </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsHandModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-medium bg-[#FFF3E0] text-[#E65100] border border-[#FFE0B2] hover:bg-[#FFE0B2]/40 transition cursor-pointer"
+                  title="Upload hand photo for 1-tap try-on"
+                >
+                  <Hand className="w-3.5 h-3.5" />
+                  <span>Upload Hand Photo</span>
+                </button>
+              )}
             </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setNameInput(userName);
-                setEmailInput(userEmail);
-                setIsEditProfileOpen(true);
-              }}
-              className="h-8 px-3 rounded-xl bg-transparent hover:bg-[#FDE8EF] border border-[#F0DFE4] hover:border-[#E0246A]/30 text-xs font-medium text-[#281720] hover:text-[#E0246A] transition cursor-pointer shrink-0"
-            >
-              Edit
-            </button>
           </div>
 
-          {/* Desktop Studio Overview Card */}
-          <div className="hidden lg:block bg-white rounded-2xl p-4 border border-[#F0DFE4] shadow-2xs space-y-3">
+          {/* Quick Studio Overview Summary */}
+          <div className="bg-white rounded-3xl p-5 border border-[#F0DFE4] shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
-              <h3 className="text-xs font-semibold text-[#281720]">Studio Overview</h3>
-              <span className="text-[10px] font-mono uppercase text-[#806D76]">Client</span>
+              <h3 className="text-xs font-semibold text-[#281720] uppercase tracking-wider text-[11px]">
+                Atelier Quick Access
+              </h3>
+              <span className="text-[10px] font-mono text-[#806D76]">Customer Account</span>
             </div>
-            <div className="grid grid-cols-2 gap-2 text-center">
+            <div className="grid grid-cols-2 gap-2.5 text-center">
               <button
                 type="button"
                 onClick={() => setCurrentView('favorites')}
-                className="p-3 rounded-xl bg-[#FAF7F2] hover:bg-[#FDE8EF] border border-[#F0DFE4]/50 transition cursor-pointer group text-left"
+                className="p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#FDE8EF] border border-[#F0DFE4]/50 transition cursor-pointer group text-left"
               >
-                <span className="block text-xl font-serif font-bold text-[#E0246A]">
+                <span className="block text-2xl font-serif font-bold text-[#E0246A]">
                   {savedDesigns.length}
                 </span>
-                <span className="text-[11px] text-[#806D76] group-hover:text-[#281720] font-medium">
+                <span className="text-xs text-[#806D76] group-hover:text-[#281720] font-medium">
                   Saved Looks
                 </span>
               </button>
               <button
                 type="button"
                 onClick={() => setIsHandModalOpen(true)}
-                className="p-3 rounded-xl bg-[#FAF7F2] hover:bg-[#FDE8EF] border border-[#F0DFE4]/50 transition cursor-pointer group text-left"
+                className="p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#FDE8EF] border border-[#F0DFE4]/50 transition cursor-pointer group text-left"
               >
-                <span className="block text-xl font-serif font-bold text-[#281720]">
+                <span className="block text-2xl font-serif font-bold text-[#281720]">
                   {customTryOnHandUrl ? 'Ready' : 'Setup'}
                 </span>
-                <span className="text-[11px] text-[#806D76] group-hover:text-[#281720] font-medium">
+                <span className="text-xs text-[#806D76] group-hover:text-[#281720] font-medium">
                   Try-On Hand
                 </span>
               </button>
@@ -566,17 +606,15 @@ export function ProfileView({
           </div>
         </div>
 
-        {/* Right Column on Desktop: Grouped Sections with Visible Titles */}
+        {/* Right Column: Account Settings Clean List (Zero Technician Slop) */}
         <div className="lg:col-span-7 space-y-5">
-          {/* =====================================================================
-              SECTION 1: SAVED & HAND
-              ===================================================================== */}
+          {/* SECTION 1: SAVED DESIGNS & HAND */}
           <div className="space-y-1.5">
             <p className="text-[11px] font-semibold tracking-wider text-[#806D76] uppercase px-1">
-              SAVED & HAND
+              SAVED LOOKS & HAND BLUEPRINT
             </p>
             <div className="bg-white rounded-2xl border border-[#F0DFE4] divide-y divide-[#F0DFE4] shadow-2xs overflow-hidden">
-              {/* FAVORITES (OPENS FAVORITES PAGE) */}
+              {/* Saved Designs Tab Trigger */}
               <button
                 type="button"
                 onClick={() => setCurrentView('favorites')}
@@ -586,9 +624,14 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center shrink-0">
                     <Heart className="w-4 h-4 fill-[#E0246A]" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors">
-                    Favorites
-                  </span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors block">
+                      Saved Designs
+                    </span>
+                    <span className="text-[10px] text-[#806D76]">
+                      Access your bookmarked nail art inspirations
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -599,7 +642,7 @@ export function ProfileView({
                 </div>
               </button>
 
-              {/* HAND (UPLOAD ONCE FOR 1-TAP TRY-ON) */}
+              {/* Hand Photo Setting */}
               <button
                 type="button"
                 onClick={() => setIsHandModalOpen(true)}
@@ -609,9 +652,14 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center shrink-0">
                     <Hand className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors">
-                    Hand
-                  </span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors block">
+                      My Hand Photo
+                    </span>
+                    <span className="text-[10px] text-[#806D76]">
+                      Saved once for instant 1-tap try-on across any design
+                    </span>
+                  </div>
                 </div>
 
                 <div className="flex items-center gap-2">
@@ -630,15 +678,13 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* =====================================================================
-              SECTION 2: ACCOUNT & NOTIFICATIONS
-              ===================================================================== */}
+          {/* SECTION 2: ACCOUNT & NAIL PREFERENCES */}
           <div className="space-y-1.5">
             <p className="text-[11px] font-semibold tracking-wider text-[#806D76] uppercase px-1">
               ACCOUNT & PREFERENCES
             </p>
             <div className="bg-white rounded-2xl border border-[#F0DFE4] divide-y divide-[#F0DFE4] shadow-2xs overflow-hidden">
-              {/* ACCOUNT */}
+              {/* Account Profile Edit */}
               <button
                 type="button"
                 onClick={() => {
@@ -652,21 +698,76 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                     <User className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors">
-                    Account
-                  </span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors block">
+                      Account Details
+                    </span>
+                    <span className="text-[10px] text-[#806D76]">
+                      {userName} • {userEmail}
+                    </span>
+                  </div>
                 </div>
 
                 <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors" />
               </button>
 
-              {/* NOTIFICATIONS */}
+              {/* Preferred Shape Selector */}
+              <div className="px-4 py-3.5 space-y-2">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                      <Sparkles className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <span className="text-xs font-semibold text-[#281720] block">
+                        Preferred Nail Silhouette
+                      </span>
+                      <span className="text-[10px] text-[#806D76]">
+                        Default shape used across atelier previews
+                      </span>
+                    </div>
+                  </div>
+                  <span className="text-xs font-mono font-medium text-[#E0246A] capitalize">
+                    {preferredShape || 'Almond'}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-4 gap-1.5 pt-1">
+                  {NAIL_SHAPES.map((s) => {
+                    const isSelected = (preferredShape || 'almond') === s.id;
+                    return (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => {
+                          setPreferredShape?.(s.id);
+                          showToast(`Preferred shape updated to ${s.label}`);
+                        }}
+                        className={`h-8 rounded-lg text-xs font-medium transition cursor-pointer ${
+                          isSelected
+                            ? 'bg-[#E0246A] text-white shadow-2xs font-semibold'
+                            : 'bg-stone-50 text-[#806D76] hover:bg-stone-100 hover:text-[#281720] border border-[#F0DFE4]/50'
+                        }`}
+                      >
+                        {s.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Notifications Toggle */}
               <div className="px-4 py-3.5 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                     <Bell className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720]">Notifications</span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] block">Notifications</span>
+                    <span className="text-[10px] text-[#806D76]">
+                      Seasonal look drops & bespoke design updates
+                    </span>
+                  </div>
                 </div>
 
                 <button
@@ -690,15 +791,13 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* =====================================================================
-              SECTION 3: SUPPORT & PRIVACY
-              ===================================================================== */}
+          {/* SECTION 3: SUPPORT & PRIVACY (Clean Customer Items) */}
           <div className="space-y-1.5">
             <p className="text-[11px] font-semibold tracking-wider text-[#806D76] uppercase px-1">
               SUPPORT & PRIVACY
             </p>
             <div className="bg-white rounded-2xl border border-[#F0DFE4] divide-y divide-[#F0DFE4] shadow-2xs overflow-hidden">
-              {/* SUPPORT */}
+              {/* Support Item */}
               <button
                 type="button"
                 onClick={() => setIsSupportModalOpen(true)}
@@ -708,15 +807,20 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                     <HelpCircle className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors">
-                    Support
-                  </span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors block">
+                      Atelier Support
+                    </span>
+                    <span className="text-[10px] text-[#806D76]">
+                      Help with try-on, virtual fitting, or design questions
+                    </span>
+                  </div>
                 </div>
 
                 <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors" />
               </button>
 
-              {/* PRIVACY */}
+              {/* Privacy Item */}
               <button
                 type="button"
                 onClick={() => setIsPrivacyModalOpen(true)}
@@ -726,9 +830,14 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                     <ShieldCheck className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors">
-                    Privacy
-                  </span>
+                  <div>
+                    <span className="text-xs font-semibold text-[#281720] group-hover:text-[#E0246A] transition-colors block">
+                      Camera & Data Privacy
+                    </span>
+                    <span className="text-[10px] text-[#806D76]">
+                      Private local processing and hand photo security
+                    </span>
+                  </div>
                 </div>
 
                 <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors" />
@@ -736,15 +845,12 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* =====================================================================
-              SECTION 4: SESSION
-              ===================================================================== */}
+          {/* SECTION 4: SESSION */}
           <div className="space-y-1.5">
             <p className="text-[11px] font-semibold tracking-wider text-[#806D76] uppercase px-1">
               SESSION
             </p>
             <div className="bg-white rounded-2xl border border-[#F0DFE4] shadow-2xs overflow-hidden">
-              {/* LOGOUT */}
               <button
                 type="button"
                 onClick={async () => {
@@ -762,7 +868,7 @@ export function ProfileView({
                   <div className="w-8 h-8 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center shrink-0">
                     <LogOut className="w-4 h-4" />
                   </div>
-                  <span className="text-xs font-semibold text-[#E0246A]">Logout</span>
+                  <span className="text-xs font-semibold text-[#E0246A]">Sign Out</span>
                 </div>
               </button>
             </div>
@@ -771,14 +877,14 @@ export function ProfileView({
       </div>
 
       {/* ---------------------------------------------------------------------
-          MODAL: MY HAND PHOTO (UPLOAD ONCE & NEVER RE-UPLOAD)
+          MODAL: MY HAND PHOTO (UPLOAD ONCE & 1-TAP READY)
           --------------------------------------------------------------------- */}
       {isHandModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif text-lg font-semibold text-[#281720]">My Hand</h3>
+                <h3 className="font-serif text-lg font-semibold text-[#281720]">My Hand Photo</h3>
                 <p className="text-[11px] text-[#806D76]">
                   Upload once to try on designs anytime
                 </p>
@@ -796,17 +902,16 @@ export function ProfileView({
               <div className="space-y-3">
                 <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-[#F0DFE4] bg-stone-100">
                   <img
-                    src={customTryOnHandUrl || '/assets/editorial_nail_hero.jpg'}
+                    src={customTryOnHandUrl}
                     alt="My Hand"
                     className="w-full h-full object-cover"
                   />
-                  <div className="absolute top-2.5 left-2.5 px-2 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1">
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1">
                     <Check className="w-3 h-3 text-[#E8F5E9]" />
                     <span>Saved for 1-Tap Try-On</span>
                   </div>
                 </div>
 
-                {/* 1st Option: Upload Photo | 2nd Option: Camera | Remove */}
                 <div className="flex gap-2">
                   <button
                     type="button"
@@ -814,7 +919,7 @@ export function ProfileView({
                     className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
-                    <span>Upload Photo</span>
+                    <span>Upload New</span>
                   </button>
                   <button
                     type="button"
@@ -851,7 +956,6 @@ export function ProfileView({
                   </div>
                 </div>
 
-                {/* Always 1st Option = Upload Photo, 2nd Option = Camera */}
                 <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
@@ -895,13 +999,13 @@ export function ProfileView({
       )}
 
       {/* ---------------------------------------------------------------------
-          MODAL: EDIT NAME & EMAIL
+          MODAL: EDIT ACCOUNT DETAILS
           --------------------------------------------------------------------- */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Account</h3>
+              <h3 className="font-serif text-lg font-semibold text-[#281720]">Account Details</h3>
               <button
                 type="button"
                 onClick={() => setIsEditProfileOpen(false)}
@@ -967,7 +1071,7 @@ export function ProfileView({
       )}
 
       {/* ---------------------------------------------------------------------
-          MODAL: SUPPORT
+          MODAL: ATELIER SUPPORT
           --------------------------------------------------------------------- */}
       {isSupportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
@@ -976,19 +1080,19 @@ export function ProfileView({
               <HelpCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Support</h3>
+              <h3 className="font-serif text-lg font-semibold text-[#281720]">Atelier Support</h3>
               <p className="text-xs text-[#806D76] mt-1">
-                Need nail consultation, custom sizing, or assistance with Virtual Try-On?
+                Need bespoke nail styling advice, custom fitting, or assistance with Virtual Try-On?
               </p>
             </div>
-            <div className="bg-[#FFFAF8] rounded-2xl p-3 border border-[#F0DFE4] text-xs text-[#281720] space-y-1">
-              <p className="font-semibold">Finglora Studio Support</p>
+            <div className="bg-[#FFFAF8] rounded-2xl p-3.5 border border-[#F0DFE4] text-xs text-[#281720] space-y-1">
+              <p className="font-semibold text-sm">Finglora Concierge</p>
               <p className="text-[#806D76]">support@finglora.com</p>
             </div>
             <button
               type="button"
               onClick={() => setIsSupportModalOpen(false)}
-              className="w-full h-9 rounded-xl bg-[#281720] text-white text-xs font-medium cursor-pointer"
+              className="w-full h-10 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-semibold cursor-pointer transition active:scale-95"
             >
               Done
             </button>
@@ -997,13 +1101,13 @@ export function ProfileView({
       )}
 
       {/* ---------------------------------------------------------------------
-          MODAL: PRIVACY
+          MODAL: CAMERA & DATA PRIVACY
           --------------------------------------------------------------------- */}
       {isPrivacyModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Privacy</h3>
+              <h3 className="font-serif text-lg font-semibold text-[#281720]">Privacy & Security</h3>
               <button
                 type="button"
                 onClick={() => setIsPrivacyModalOpen(false)}
@@ -1012,18 +1116,18 @@ export function ProfileView({
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2 text-xs text-[#806D76] leading-relaxed">
+            <div className="space-y-2.5 text-xs text-[#806D76] leading-relaxed">
               <p>
-                Camera frames and hand photos used for Virtual Try-On are processed locally on your device and are never sent to external servers without your permission.
+                Camera frames and hand photos used for Virtual Try-On are processed securely on your device and are never shared with third parties.
               </p>
               <p>
-                Your design passports, saved hand photo, and favorites are safely stored on your browser.
+                Your design passports, saved hand photo, and bespoke favorites remain private to your Finglora account.
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsPrivacyModalOpen(false)}
-              className="w-full h-9 rounded-xl bg-[#281720] text-white text-xs font-medium cursor-pointer"
+              className="w-full h-10 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-semibold cursor-pointer transition active:scale-95"
             >
               Close
             </button>

@@ -42,12 +42,6 @@ Desktop/Finglora/
 │       │   ├── StudioView.tsx            # 5-finger editor, color palette, swapping
 │       │   ├── TryOnView.tsx             # Live camera, photo upload, sample hand
 │       │   └── PassportView.tsx          # Design Passport shareable view
-│       └── tech/                         # Nail technician portal (/tech)
-│           ├── TechApp.tsx               # Tech layout & navigation
-│           ├── TechSidebar.tsx           # Technician portal navigation
-│           ├── TechSignupView.tsx        # Technician profile & studio setup
-│           ├── TechWorkspaceView.tsx     # Client link & WhatsApp photo decoder
-│           └── TechGuideView.tsx         # Step-by-step layer formulas & station view
 ├── constants/
 │   └── nail-data.ts                      # Shapes, lengths, finishes, palettes, sample sets
 ├── types/

@@ -12,6 +12,8 @@ import { TryOnView } from './TryOnView';
 import { AiCreationView } from './AiCreationView';
 import { CustomerSignupView } from './CustomerSignupView';
 import { ProfileView } from './ProfileView';
+import { StudioView } from './StudioView';
+import { PassportView } from './PassportView';
 import { getUserCreditStatus, useTryOnCredit } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 
@@ -167,9 +169,11 @@ export function CustomerApp({
     home: 'Home',
     explore: 'Explore',
     tryon: 'Try On',
-    'ai-create': 'Create with AI',
+    'ai-create': 'Studio',
+    studio: 'Studio',
+    passport: 'Passport',
     upload: 'Try On',
-    favorites: 'Favorites',
+    favorites: 'Saved',
     profile: 'Profile',
     signup: 'Create Account',
   };
@@ -182,10 +186,10 @@ export function CustomerApp({
     icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   }[] = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'upload', label: 'Try On', icon: Hand },
     { id: 'explore', label: 'Explore', icon: Compass },
-    { id: 'ai-create', label: 'Create with AI', icon: Paintbrush },
-    { id: 'favorites', label: 'Favorites', icon: Heart },
+    { id: 'tryon', label: 'Try On', icon: Hand },
+    { id: 'ai-create', label: 'Studio', icon: Paintbrush },
+    { id: 'favorites', label: 'Saved', icon: Heart },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 
@@ -248,7 +252,9 @@ export function CustomerApp({
           {mobileMenuOpen && (
             <div className="bg-[#FFFFFF] border-b border-[#F0DFE4] px-4 py-2.5 space-y-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
               {customerNavItems.map(({ id, label, icon: Icon }) => {
-                const active = customerRoute === id;
+                const active =
+                  customerRoute === id ||
+                  (id === 'tryon' && (customerRoute === 'tryon' || customerRoute === 'upload'));
                 return (
                   <button
                     key={id}
@@ -516,6 +522,45 @@ export function CustomerApp({
               onLogout={onBrandClick}
             />
           )}
+
+          {customerRoute === 'studio' && (
+            <StudioView
+              activeSample={activeSample}
+              activePhotoUrl={activePhotoUrl}
+              activeSetName={activeSetName}
+              setActiveSetName={setActiveSetName}
+              handOrientation={handOrientation}
+              setHandOrientation={setHandOrientation}
+              swapMode={swapMode}
+              setSwapMode={setSwapMode}
+              swapFirstFinger={swapFirstFinger}
+              orderedFingers={orderedFingers}
+              selectedFinger={selectedFinger}
+              nails={nails}
+              mobilePreview={mobilePreview}
+              onSelectFinger={onSelectFinger}
+              onUndoFingerEdit={onUndoFingerEdit}
+              onUpdateActiveFinger={onUpdateActiveFinger}
+              onOpenApplyAllModal={onOpenApplyAllModal}
+              onTryOnClick={() => setCustomerRoute('tryon')}
+              onPassportClick={() => setCustomerRoute('passport')}
+              exploreDesigns={exploreDesigns}
+              onSelectExploreDesign={onSelectExploreDesign}
+            />
+          )}
+
+          {customerRoute === 'passport' && (
+            <PassportView
+              activePassportCode={activePassportCode}
+              activeSetName={activeSetName}
+              orderedFingers={orderedFingers}
+              nails={nails}
+              activeSkinTone={activeSkinTone}
+              handOrientation={handOrientation}
+              onCopyShareLink={onCopyShareLink}
+              onTryOnClick={() => setCustomerRoute('tryon')}
+            />
+          )}
         </div>
       </main>
       </div>
@@ -530,19 +575,21 @@ export function CustomerApp({
           {(
             [
               { id: 'home' as const, label: 'Home', Icon: Home },
-              { id: 'upload' as const, label: 'Try On', Icon: Hand, isCenter: true },
+              { id: 'tryon' as const, label: 'Try On', Icon: Hand, isCenter: true },
               { id: 'explore' as const, label: 'Explore', Icon: Compass },
             ]
           ).map(({ id, label, Icon, isCenter }) => {
-            const active = customerRoute === id || (id === 'upload' && customerRoute === 'tryon');
+            const active =
+              customerRoute === id ||
+              (id === 'tryon' && (customerRoute === 'tryon' || customerRoute === 'upload'));
             if (isCenter) {
               return (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setCustomerRoute(customTryOnHandUrl || synthesizedHandUrl ? 'tryon' : 'upload')}
+                  onClick={() => setCustomerRoute('tryon')}
                   className="relative -top-2.5 flex flex-col items-center group cursor-pointer focus:outline-none"
-                  title="Photo Try-On"
+                  title="Virtual Try-On"
                 >
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${

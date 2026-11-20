@@ -62,16 +62,6 @@ export interface TechStep {
   category?: 'prep' | 'base' | 'art' | 'finish';
 }
 
-export interface TechProfile {
-  name: string;
-  studio: string;
-  specialty: string;
-  gelSystem: string;
-  chairCount?: number;
-  stationNumber?: string | number;
-  experienceYears?: string | number;
-  instagram?: string;
-}
 
 export interface ToastItem {
   id: number;

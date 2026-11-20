@@ -1,11 +1,12 @@
 'use client';
 
 import React from 'react';
-import { Heart, Search, Upload, ArrowRight, Hand } from 'lucide-react';
+import { Heart, Search, Upload, Hand, X } from 'lucide-react';
 import { ExploreDesignSet } from '@/types/nail';
-import { InspirationPhotoCard } from '@/components/visuals/InspirationPhotoCard';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { getCurrentUser } from '@/lib/services/auth';
+
+const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'] as const;
 
 export function ExploreGalleryView({
   exploreDesigns,
@@ -34,52 +35,82 @@ export function ExploreGalleryView({
     const catOk = exploreCategory === 'All' || d.category === exploreCategory;
     const q = exploreSearch.trim().toLowerCase();
     const searchOk =
-      !q || d.title.toLowerCase().includes(q) || d.subtitle.toLowerCase().includes(q);
+      !q ||
+      d.title.toLowerCase().includes(q) ||
+      (d.subtitle && d.subtitle.toLowerCase().includes(q)) ||
+      d.category.toLowerCase().includes(q);
     return catOk && searchOk;
   });
 
   return (
-    <div className="space-y-5 sm:space-y-6 w-full max-w-[1400px]">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-4 pb-2 border-b border-stone-200/60">
-        <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-          Explore Designs
-        </h1>
+    <div className="space-y-6 w-full max-w-[1400px] mx-auto pb-12">
+      {/* Editorial Header */}
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-stone-200/60">
+        <div className="space-y-1">
+          <div className="flex items-center gap-2.5">
+            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
+              Explore Manicures
+            </h1>
+            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200/60">
+              {filteredDesigns.length}
+            </span>
+          </div>
+          <p className="text-xs sm:text-sm text-stone-500 font-normal">
+            Curated high-fashion manicures ready for instant virtual try-on.
+          </p>
+        </div>
 
         <button
           type="button"
           onClick={onUploadClick}
-          className="h-9 px-3.5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+          className="h-9.5 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
         >
           <Upload className="w-3.5 h-3.5" strokeWidth={1.75} />
-          <span>Upload Photo</span>
+          <span>Upload Inspo Photo</span>
         </button>
       </div>
 
-      {/* Filter and Search Bar */}
-      <div className="space-y-2.5">
-        <div className="relative">
-          <Search className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2" strokeWidth={1.5} />
-          <input
-            type="text"
-            value={exploreSearch}
-            onChange={(e) => setExploreSearch(e.target.value)}
-            placeholder="Search designs by style or color..."
-            className="w-full pl-9 pr-4 h-9 sm:h-10 rounded-xl bg-white border border-stone-200 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-[#E0246A] focus:ring-2 focus:ring-[#E0246A]/15 transition-all shadow-2xs"
-          />
+      {/* Search Bar & Category Filter Pills */}
+      <div className="space-y-3.5">
+        {/* Sleek container with nested radii (rounded-2xl container, rounded-xl input) */}
+        <div className="p-1 rounded-2xl bg-stone-100/80 border border-stone-200/60 shadow-2xs">
+          <div className="relative">
+            <Search
+              className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+              strokeWidth={1.75}
+            />
+            <input
+              type="text"
+              value={exploreSearch}
+              onChange={(e) => setExploreSearch(e.target.value)}
+              placeholder="Search manicures by style, color, or shape..."
+              className="w-full pl-9.5 pr-9 h-10 rounded-xl bg-white border border-stone-200/60 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-1 focus:ring-stone-400/20 transition-all shadow-2xs"
+            />
+            {exploreSearch && (
+              <button
+                type="button"
+                onClick={() => setExploreSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5"
+                title="Clear search"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-          {['All', 'Floral', 'Chrome', 'French', 'Minimal', 'Bold'].map((cat) => {
+        {/* Category Filter Pills: ['All', 'French', 'Glazed', 'Aura', 'Minimal'] with active black pill */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {CATEGORY_TABS.map((cat) => {
             const isActive = exploreCategory === cat;
             return (
               <button
                 key={cat}
                 type="button"
                 onClick={() => setExploreCategory(cat)}
-                className={`h-7 sm:h-8 px-3 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
+                className={`h-8 px-3.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
                   isActive
-                    ? 'bg-[#E0246A] text-white shadow-xs font-semibold'
+                    ? 'bg-stone-900 text-white shadow-xs font-semibold'
                     : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-stone-50'
                 }`}
               >
@@ -90,110 +121,141 @@ export function ExploreGalleryView({
         </div>
       </div>
 
-      {/* Pinterest-Style Lookbook Grid or Clean Empty State */}
+      {/* Discovery Grid or Symmetrical Empty State */}
       {filteredDesigns.length === 0 ? (
-        <div className="py-16 text-center space-y-4 bg-white/70 rounded-3xl border border-stone-200/80 p-8 max-w-lg mx-auto">
-          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] mx-auto flex items-center justify-center">
-            <Upload className="w-6 h-6" />
+        <div className="py-16 px-6 max-w-md mx-auto text-center space-y-4 bg-white/80 rounded-3xl border border-stone-200/80 shadow-2xs">
+          <div className="w-12 h-12 rounded-2xl bg-stone-100 text-stone-700 mx-auto flex items-center justify-center border border-stone-200/60">
+            <Search className="w-5 h-5 text-stone-500" strokeWidth={1.75} />
           </div>
           <div className="space-y-1">
-            <h3 className="font-serif text-lg font-medium text-stone-900">No Nail Designs Yet</h3>
-            <p className="text-xs text-stone-500">
-              Upload your own inspiration photo to let our Free.ai model extract your custom 5-finger manicure.
+            <h3 className="font-serif text-lg font-medium text-stone-900">
+              No Matching Manicures
+            </h3>
+            <p className="text-xs text-stone-500 leading-relaxed max-w-xs mx-auto">
+              We couldn&apos;t find any designs matching &ldquo;{exploreSearch}&rdquo; in {exploreCategory === 'All' ? 'our catalog' : exploreCategory}.
             </p>
           </div>
-          <button
-            type="button"
-            onClick={onUploadClick}
-            className="px-5 py-2.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition cursor-pointer"
-          >
-            Upload Inspo Photo
-          </button>
-        </div>
-      ) : (
-        <div className={`grid grid-cols-2 ${mobilePreview ? '' : 'sm:grid-cols-3 lg:grid-cols-4'} gap-3 sm:gap-4.5`}>
-          {filteredDesigns.map((item) => (
-          <div
-            key={item.id}
-            onClick={() => {
-              onSelectDesign(item.id);
-            }}
-            className="group relative flex flex-col cursor-pointer"
-          >
-            {/* Pinterest Card Image Container */}
-            <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-2xs border border-stone-200/70">
-              <img
-                src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
-                alt={item.title || 'Nail Design'}
-                loading="lazy"
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-              />
-
-              {/* Gentle non-intrusive gradient */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/50 via-transparent to-transparent pointer-events-none" />
-
-              {/* Category Pill at Top Left */}
-              <span className="absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs z-10">
-                {item.category}
-              </span>
-
-              {/* Subtle Heart Save Button at Top Right */}
+          <div className="flex items-center justify-center gap-2 pt-1">
+            {exploreSearch && (
               <button
                 type="button"
-                title="Save design"
-                onClick={async (e) => {
-                  e.stopPropagation();
-                  const nextState = !item.isSaved;
-                  setExploreDesigns((prev) =>
-                    prev.map((x) => (x.id === item.id ? { ...x, isSaved: nextState } : x))
-                  );
-                  try {
-                    const user = await getCurrentUser();
-                    if (user?.id) {
-                      await toggleSetFavorite(user.id, item.id, nextState);
-                    }
-                  } catch (err) {
-                    console.warn('Favorite sync skipped:', err);
-                  }
-                }}
-                className={`absolute top-2 right-2 w-7 h-7 rounded-full bg-white/85 hover:bg-white backdrop-blur-md flex items-center justify-center shadow-2xs transition-all z-10 cursor-pointer ${
-                  item.isSaved
-                    ? 'text-[#E0246A]'
-                    : 'text-stone-600 hover:text-stone-900 sm:opacity-0 sm:group-hover:opacity-100'
-                }`}
+                onClick={() => setExploreSearch('')}
+                className="h-8.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
               >
-                <Heart
-                  className={`w-3.5 h-3.5 ${item.isSaved ? 'fill-current' : ''}`}
-                  strokeWidth={1.75}
-                />
+                Clear Search
               </button>
+            )}
+            {exploreCategory !== 'All' && (
+              <button
+                type="button"
+                onClick={() => setExploreCategory('All')}
+                className="h-8.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition cursor-pointer"
+              >
+                View All Designs
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={onUploadClick}
+              className="h-8.5 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+            >
+              Upload Inspo
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div
+          className={`grid ${
+            mobilePreview
+              ? 'grid-cols-2 gap-3'
+              : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4'
+          }`}
+        >
+          {filteredDesigns.map((item) => {
+            const primaryFinger = item.nails?.middle || item.nails?.index;
+            const shapeLabel = primaryFinger?.shape || item.category || 'Almond';
 
-              {/* Try On Button matching Favorite and Home */}
-              <div className="absolute inset-x-2.5 bottom-2.5 z-10">
+            return (
+              <div
+                key={item.id}
+                onClick={() => {
+                  onSelectDesign(item.id);
+                  onTryOnClick?.(item.id);
+                }}
+                className="group relative aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/70 shadow-2xs hover:shadow-md transition-all duration-300 text-left cursor-pointer active:scale-[0.98]"
+              >
+                {/* 3:4 Portrait Image Container */}
+                <img
+                  src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                  alt={item.title || 'Manicure Design'}
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                />
+
+                {/* Subtle scrim gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                {/* Subtle shape pill on top-left */}
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <span className="px-2.5 py-0.5 rounded-full bg-black/45 text-white text-[10px] font-medium backdrop-blur-xs capitalize tracking-wide">
+                    {shapeLabel}
+                  </span>
+                </div>
+
+                {/* Subtle Heart save button at top-right */}
                 <button
                   type="button"
-                  onClick={(e) => {
+                  title="Save design"
+                  onClick={async (e) => {
                     e.stopPropagation();
-                    onSelectDesign(item.id);
-                    onTryOnClick?.(item.id);
+                    const nextState = !item.isSaved;
+                    setExploreDesigns((prev) =>
+                      prev.map((x) => (x.id === item.id ? { ...x, isSaved: nextState } : x))
+                    );
+                    try {
+                      const user = await getCurrentUser();
+                      if (user?.id) {
+                        await toggleSetFavorite(user.id, item.id, nextState);
+                      }
+                    } catch (err) {
+                      console.warn('Favorite sync skipped:', err);
+                    }
                   }}
-                  className="w-full h-8 rounded-xl bg-white/95 hover:bg-white text-[#281720] text-xs font-semibold shadow-md backdrop-blur-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                  className={`absolute top-2.5 right-2.5 w-7.5 h-7.5 rounded-full bg-white/85 hover:bg-white backdrop-blur-md flex items-center justify-center shadow-2xs transition-all z-10 cursor-pointer ${
+                    item.isSaved
+                      ? 'text-[#E0246A]'
+                      : 'text-stone-600 hover:text-stone-900 sm:opacity-0 sm:group-hover:opacity-100'
+                  }`}
                 >
-                  <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
-                  <span>Try On</span>
+                  <Heart
+                    className={`w-3.5 h-3.5 ${item.isSaved ? 'fill-current' : ''}`}
+                    strokeWidth={1.75}
+                  />
                 </button>
-              </div>
-            </div>
 
-            {/* Less Text: Single clean title below photo */}
-            <div className="pt-1.5 px-0.5">
-              <p className="text-xs font-medium text-stone-800 truncate">
-                {item.title}
-              </p>
-            </div>
-          </div>
-        ))}
-      </div>
+                {/* Clean title with drop-shadow & 1-tap Try On button */}
+                <div className="absolute inset-x-2.5 bottom-2.5 space-y-1.5 sm:space-y-2 z-10">
+                  <div className="text-white text-xs sm:text-sm font-medium leading-tight truncate drop-shadow-xs">
+                    {item.title}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectDesign(item.id);
+                      onTryOnClick?.(item.id);
+                    }}
+                    className="w-full h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 font-semibold text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                  >
+                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                    <span>Try On</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );

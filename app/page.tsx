@@ -922,7 +922,17 @@ export default function FingloraApp() {
             exploreDesigns={exploreDesigns}
             mobilePreview={mobilePreview}
             onOnboardingClick={() => navigateSurface('onboarding')}
-            onExploreClick={() => navigateSurface('onboarding')}
+            onExploreClick={() => {
+              const hasHand = Boolean(
+                customTryOnHandUrl ||
+                (typeof window !== 'undefined' && localStorage.getItem('finglora_user_hand_photo'))
+              );
+              if (supabaseUser || hasHand) {
+                navigateCustomer('home');
+              } else {
+                navigateSurface('onboarding');
+              }
+            }}
             onTryOnClick={() => navigateCustomer('tryon')}
             onSignInClick={() => {
               setAuthModalMode('signin');
@@ -1046,17 +1056,39 @@ export default function FingloraApp() {
             }}
             onSelectExploreDesign={(id) => {
               const allSets = exploreDesigns.length > 0 ? exploreDesigns : INITIAL_EXPLORE_DESIGNS;
-              const found = allSets.find((d) => d.id === id) || INITIAL_EXPLORE_DESIGNS.find((d) => d.id === id);
+              const found =
+                allSets.find((d) => d.id === id || d.photoUrl === id) ||
+                INITIAL_EXPLORE_DESIGNS.find((d) => d.id === id || d.photoUrl === id);
               if (found) {
                 setActiveSetId(found.id);
                 setActivePhotoUrl(found.photoUrl);
                 setActiveSetName(found.title);
-                setActivePassportCode(found.passportCode);
+                setActivePassportCode(found.passportCode || 'FGL-0001');
                 if (found.nails) {
                   setNails(JSON.parse(JSON.stringify(found.nails)));
                 }
                 setSynthesizedHandUrl(null);
                 navigateCustomer('tryon');
+              } else if (id && (id.startsWith('data:') || id.startsWith('http') || id.startsWith('blob:') || id.startsWith('/'))) {
+                setActiveSetId(`custom-${Date.now()}`);
+                setActivePhotoUrl(id);
+                setActiveSetName('Custom Inspo Look');
+                setActivePassportCode(`FGL-${Math.floor(1000 + Math.random() * 9000)}`);
+                setSynthesizedHandUrl(null);
+                navigateCustomer('tryon');
+              } else {
+                const fallback = allSets[0] || INITIAL_EXPLORE_DESIGNS[0];
+                if (fallback) {
+                  setActiveSetId(fallback.id);
+                  setActivePhotoUrl(fallback.photoUrl);
+                  setActiveSetName(fallback.title);
+                  setActivePassportCode(fallback.passportCode || 'FGL-0001');
+                  if (fallback.nails) {
+                    setNails(JSON.parse(JSON.stringify(fallback.nails)));
+                  }
+                  setSynthesizedHandUrl(null);
+                  navigateCustomer('tryon');
+                }
               }
             }}
             onCopyShareLink={copyShareLink}

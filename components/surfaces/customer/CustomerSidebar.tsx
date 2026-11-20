@@ -18,6 +18,8 @@ export type CustomerRoute =
   | 'upload'
   | 'tryon'
   | 'ai-create'
+  | 'studio'
+  | 'passport'
   | 'profile'
   | 'favorites'
   | 'signup';
@@ -56,15 +58,15 @@ export function CustomerSidebar({
       title: 'ATELIER',
       items: [
         { id: 'home', label: 'Home', Icon: Home },
-        { id: 'upload', label: 'Try On', Icon: Hand },
+        { id: 'tryon', label: 'Try On', Icon: Hand },
         { id: 'explore', label: 'Explore', Icon: Compass },
       ],
     },
     {
       title: 'STUDIO & PROFILE',
       items: [
-        { id: 'ai-create', label: 'Create with AI', Icon: Paintbrush },
-        { id: 'favorites', label: 'Favorites', Icon: Heart, badge: favoritesCount > 0 ? favoritesCount : undefined },
+        { id: 'ai-create', label: 'Studio', Icon: Paintbrush },
+        { id: 'favorites', label: 'Saved', Icon: Heart, badge: favoritesCount > 0 ? favoritesCount : undefined },
         { id: 'profile', label: 'Profile', Icon: User },
       ],
     },
@@ -100,7 +102,10 @@ export function CustomerSidebar({
 
               <div className="flex flex-col gap-[2px]">
                 {section.items.map(({ id, label, Icon, badge }) => {
-                  const active = currentRoute === id || (id === 'upload' && currentRoute === 'tryon');
+                  const active =
+                    currentRoute === id ||
+                    (id === 'tryon' && (currentRoute === 'tryon' || currentRoute === 'upload')) ||
+                    (id === 'ai-create' && (currentRoute === 'ai-create' || (currentRoute as string) === 'studio'));
                   return (
                     <button
                       key={id}
@@ -151,9 +156,9 @@ export function CustomerSidebar({
       {/* Bottom Section: Active Set Reference Card */}
       <div className="space-y-3 pt-4 border-t border-[rgba(31,26,28,0.08)]">
         <div
-          onClick={() => onNavigate('upload')}
+          onClick={() => onNavigate('tryon')}
           className="cursor-pointer bg-[#FFFFFF] rounded-2xl p-3 border border-[rgba(31,26,28,0.08)] shadow-2xs hover:border-[#E0246A]/40 transition-all group"
-          title="Click to view or upload hand in Virtual Try-On"
+          title="Click to view on your hand in Virtual Try-On"
         >
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-mono tracking-wider uppercase text-[#8C8085]">
