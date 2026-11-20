@@ -1,29 +1,26 @@
 'use client';
 
-import React from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   UploadCloud,
   ArrowRight,
   Sparkles,
   Check,
+  Hand,
+  ImagePlus,
+  RefreshCw,
+  Camera,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-
-const EDITORIAL_PHASES = [
-  'Gemini Vision analyzing 5-finger silhouettes & shapes',
-  'Vertex AI generating 5 individual finger nail designs',
-  '5 AI designs conformed • Opening Virtual Try-On',
-];
 
 export function UploadInspirationView({
   isAnalyzing,
   analysisStep,
   nails,
   activePhotoUrl,
-  isCached,
+  customTryOnHandUrl,
   onImageSelected,
+  onUploadHandPhoto,
   onSampleDemoClick,
   onCancel,
   onComplete,
@@ -32,132 +29,134 @@ export function UploadInspirationView({
   analysisStep: number;
   nails: Record<Finger, NailDesign>;
   activePhotoUrl?: string;
-  isCached?: boolean;
+  customTryOnHandUrl?: string | null;
   onImageSelected: (file: File) => void;
+  onUploadHandPhoto?: (file: File) => void;
   onSampleDemoClick: () => void;
   onCancel?: () => void;
   onComplete?: () => void;
 }) {
-  const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const inspoFileInputRef = useRef<HTMLInputElement>(null);
+  const handFileInputRef = useRef<HTMLInputElement>(null);
 
-  // Safety fallback & auto-advancing progress so user is never frozen
-  const [visualPhase, setVisualPhase] = React.useState(0);
-
-  React.useEffect(() => {
-    if (!isAnalyzing) {
-      setVisualPhase(0);
-      return;
+  // Retrieve user hand from storage if not provided in props
+  const [localHandPhoto, setLocalHandPhoto] = useState<string | null>(() => {
+    if (customTryOnHandUrl) return customTryOnHandUrl;
+    if (typeof window !== 'undefined') {
+      return (
+        localStorage.getItem('finglora_custom_hand_photo') ||
+        localStorage.getItem('finglora_user_hand_photo') ||
+        null
+      );
     }
+    return null;
+  });
 
-    const interval = setInterval(() => {
-      setVisualPhase((prev) => Math.min(EDITORIAL_PHASES.length - 1, prev + 1));
-    }, 2200);
+  useEffect(() => {
+    if (customTryOnHandUrl) {
+      setLocalHandPhoto(customTryOnHandUrl);
+    }
+  }, [customTryOnHandUrl]);
 
-    // Hard safety timeout: never stack longer than 9.5 seconds
-    const safetyTimer = setTimeout(() => {
-      if (onComplete) {
-        onComplete();
-      }
-    }, 9500);
-
-    return () => {
-      clearInterval(interval);
-      clearTimeout(safetyTimer);
-    };
-  }, [isAnalyzing, onComplete]);
-
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Handle Inspiration File Upload
+  const handleInspoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       onImageSelected(file);
     }
   };
 
-  // State A: Analyzing Inspo Photo (Minimal, Non-AI-Slop, High Fashion)
-  if (isAnalyzing) {
-    const currentPhaseIndex = Math.max(
-      visualPhase,
-      Math.min(
-        EDITORIAL_PHASES.length - 1,
-        Math.floor((analysisStep - 1) / 1.5)
-      )
-    );
+  // Handle Hand Photo File Upload
+  const handleHandFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const dataUrl = reader.result as string;
+        setLocalHandPhoto(dataUrl);
+        try {
+          if (typeof window !== 'undefined') {
+            localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+            localStorage.setItem('finglora_user_hand_photo', dataUrl);
+          }
+        } catch {
+          // ignore
+        }
+      };
+      reader.readAsDataURL(file);
+      onUploadHandPhoto?.(file);
+    }
+  };
 
+  // State A: Applying Reference Design to Hand (Zero Fake Pills, Pure Photographic Visuals)
+  if (isAnalyzing) {
     return (
-      <div className="w-full max-w-xl mx-auto py-10 px-4 text-center space-y-8 animate-in fade-in duration-300">
-        {/* Subtle Luxury Circular Inspo Preview */}
-        <div className="relative w-36 h-36 mx-auto rounded-full p-1 bg-gradient-to-tr from-[#E0246A]/20 via-pink-100 to-rose-200 shadow-xl">
-          <div className="relative w-full h-full rounded-full overflow-hidden bg-stone-900 border-2 border-white shadow-inner flex items-center justify-center">
+      <div className="w-full max-w-xl mx-auto py-12 px-4 text-center space-y-8 animate-in fade-in duration-300">
+        {/* Dynamic Reference + Hand Composition Preview */}
+        <div className="flex items-center justify-center gap-4 sm:gap-6">
+          {/* Reference Inspo Photo */}
+          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-900 border-2 border-white shadow-lg">
             {activePhotoUrl ? (
               <img
                 src={activePhotoUrl}
-                alt="Inspiration reference"
-                className="w-full h-full object-cover scale-105 filter contrast-105"
+                alt="Reference design"
+                className="w-full h-full object-cover"
               />
             ) : (
-              <div className="text-3xl text-pink-300">💅</div>
+              <div className="w-full h-full flex items-center justify-center text-2xl text-stone-300">
+                💅
+              </div>
             )}
-            <div className="absolute inset-0 bg-[#E0246A]/10 mix-blend-overlay animate-pulse" />
+            <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
+              Reference
+            </div>
           </div>
-          {/* Subtle spinning ring */}
-          <div className="absolute -inset-1.5 rounded-full border border-[#E0246A]/30 border-t-[#E0246A] animate-spin [animation-duration:3s]" />
+
+          {/* Animated Connecting Pulse */}
+          <div className="flex flex-col items-center justify-center gap-1.5">
+            <div className="w-9 h-9 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-md animate-pulse">
+              <ArrowRight className="w-4 h-4" />
+            </div>
+            <span className="text-[10px] font-mono text-[#E0246A] uppercase tracking-wider font-semibold">
+              Applying
+            </span>
+          </div>
+
+          {/* User's Hand Photo */}
+          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-900 border-2 border-white shadow-lg">
+            {localHandPhoto ? (
+              <img
+                src={localHandPhoto}
+                alt="My Hand"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <img
+                src="/assets/editorial_nail_hero.jpg"
+                alt="Studio Hand"
+                className="w-full h-full object-cover"
+              />
+            )}
+            <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
+              Your Hand
+            </div>
+          </div>
         </div>
 
         {/* Minimal Editorial Copy */}
         <div className="space-y-2">
           <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-            Gemini Vision Analysis
+            Vertex AI Atelier
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-            Decomposing Manicure Architecture
+            Applying Reference Design to Your Hand
           </h2>
-          <p className="text-xs text-stone-500 max-w-xs mx-auto transition-all duration-300">
-            {EDITORIAL_PHASES[currentPhaseIndex]}
+          <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+            Aligning manicure architecture, nail shape curvature, and finish directly onto your hand geometry.
           </p>
         </div>
 
-        {/* 5 Isolated Finger AI Nail Art Visual Cards (Zero JSON - Pure Image & Shape) */}
-        <div className="pt-2">
-          <div className="grid grid-cols-5 gap-2 sm:gap-3 max-w-lg mx-auto">
-            {FINGER_KEYS.map((fk) => {
-              const nail = nails[fk];
-              return (
-                <div
-                  key={fk}
-                  className="bg-white rounded-2xl p-2 border border-stone-200/80 shadow-xs flex flex-col items-center text-center space-y-1.5 transition-all hover:scale-105"
-                >
-                  <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
-                    {FINGER_LABELS[fk]}
-                  </span>
-                  <div className="w-12 h-18 sm:w-14 sm:h-20 bg-stone-50 rounded-xl flex items-center justify-center overflow-hidden border border-stone-100">
-                    <NailCanvasPreview nail={nail} width={42} height={68} interactive={false} />
-                  </div>
-                  <span className="text-[9px] font-medium text-stone-600 capitalize truncate max-w-[50px]">
-                    {nail.shape}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* 3 Quiet Progress Dots */}
-        <div className="flex items-center justify-center gap-2 pt-2">
-          {EDITORIAL_PHASES.map((_, idx) => (
-            <div
-              key={idx}
-              className={`h-1.5 rounded-full transition-all duration-500 ${
-                idx === currentPhaseIndex
-                  ? 'w-8 bg-[#E0246A]'
-                  : idx < currentPhaseIndex
-                  ? 'w-2 bg-pink-300'
-                  : 'w-2 bg-stone-200'
-              }`}
-            />
-          ))}
-        </div>
-
-        {/* Instant Try-On Redirection CTA */}
+        {/* Instant Open Try-On CTA */}
         {onComplete && (
           <div className="pt-2 max-w-xs mx-auto">
             <button
@@ -166,13 +165,12 @@ export function UploadInspirationView({
               className="w-full h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
             >
               <Sparkles className="w-3.5 h-3.5 text-white" />
-              <span>See on My Hand (Virtual Try-On)</span>
+              <span>Open Virtual Try-On</span>
               <ArrowRight className="w-3.5 h-3.5 text-white" />
             </button>
           </div>
         )}
 
-        {/* Cancel Button */}
         {onCancel && (
           <div className="pt-1">
             <button
@@ -180,7 +178,7 @@ export function UploadInspirationView({
               onClick={onCancel}
               className="text-xs text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
             >
-              Cancel analysis
+              Cancel
             </button>
           </div>
         )}
@@ -188,67 +186,179 @@ export function UploadInspirationView({
     );
   }
 
-  // State B: Upload Dropzone & Sample Selector
+  // State B: Simple 2-Card Inspo + Hand Studio
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-8 py-4 px-2">
-      {/* Editorial Header */}
-      <div className="text-center space-y-2">
-        <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-          Inspiration Extraction
-        </span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
-          Upload Any Manicure Photo
-        </h1>
-        <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-          Drop any photo from Pinterest or Instagram. Gemini will analyze the design across all five fingers for your virtual try-on.
-        </p>
-      </div>
-
-      {/* Main Upload Dropzone */}
+    <div className="w-full max-w-2xl mx-auto space-y-6 py-4 px-2">
+      {/* Hidden File Inputs */}
       <input
-        ref={fileInputRef}
+        ref={inspoFileInputRef}
         type="file"
         accept="image/*"
-        onChange={handleFileChange}
+        onChange={handleInspoFileChange}
+        className="hidden"
+      />
+      <input
+        ref={handFileInputRef}
+        type="file"
+        accept="image/*"
+        onChange={handleHandFileChange}
         className="hidden"
       />
 
-      <div
-        onClick={() => fileInputRef.current?.click()}
-        className="group relative rounded-3xl border-2 border-dashed border-pink-200 hover:border-[#E0246A] bg-white/70 hover:bg-[#FFF5F8] p-8 sm:p-12 text-center transition-all cursor-pointer shadow-xs hover:shadow-md flex flex-col items-center justify-center space-y-4"
-      >
-        <div className="w-16 h-16 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center text-[#E0246A] group-hover:scale-105 transition-transform shadow-inner">
-          <UploadCloud className="w-7 h-7" />
-        </div>
-
-        <div className="space-y-1">
-          <div className="text-sm font-semibold text-stone-800">
-            Choose a photo from your gallery
-          </div>
-          <div className="text-xs text-stone-400">
-            PNG, JPG, HEIC, or WEBP up to 20MB
-          </div>
-        </div>
-
-        <button
-          type="button"
-          className="h-10 px-5 rounded-xl bg-[#E0246A] text-white text-xs font-medium shadow-xs group-hover:bg-[#BE185D] transition-colors inline-flex items-center gap-1.5"
-        >
-          <span>Select Photo</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
+      {/* Header */}
+      <div className="text-center space-y-1.5">
+        <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
+          Virtual Atelier Try-On
+        </span>
+        <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
+          Try Any Nail Design On Your Hand
+        </h1>
+        <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
+          Provide your reference nail picture from Pinterest or Instagram, and see it fitted directly on your hand.
+        </p>
       </div>
 
-      {/* Quick Try Sample Demo */}
-      <div className="text-center pt-2">
+      {/* 2 Simple Cards: [1] Reference Nail Design + [2] My Hand */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {/* Card 1: Reference Nail Design Picture */}
+        <div
+          onClick={() => inspoFileInputRef.current?.click()}
+          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-5 sm:p-6 text-center transition-all cursor-pointer shadow-2xs hover:shadow-md flex flex-col justify-between min-h-[260px]"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#E0246A] font-semibold">
+                1. Reference Picture
+              </span>
+              {activePhotoUrl && (
+                <span className="text-[10px] bg-pink-100 text-[#E0246A] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                  <Check className="w-3 h-3" />
+                  <span>Ready</span>
+                </span>
+              )}
+            </div>
+
+            {activePhotoUrl ? (
+              <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-xs">
+                <img
+                  src={activePhotoUrl}
+                  alt="Reference nail design"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
+                  Tap to change reference
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 flex flex-col items-center justify-center space-y-2.5">
+                <div className="w-14 h-14 rounded-2xl bg-pink-50 border border-pink-100 flex items-center justify-center text-[#E0246A] group-hover:scale-105 transition-transform shadow-inner">
+                  <ImagePlus className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-stone-800">
+                    Upload Reference Design
+                  </div>
+                  <div className="text-[11px] text-stone-400 mt-0.5">
+                    Pinterest, Instagram, or Camera
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="w-full h-10 mt-3 rounded-xl bg-stone-100 group-hover:bg-[#E0246A] text-stone-800 group-hover:text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5"
+          >
+            <UploadCloud className="w-3.5 h-3.5" />
+            <span>{activePhotoUrl ? 'Change Reference Photo' : 'Choose Reference Photo'}</span>
+          </button>
+        </div>
+
+        {/* Card 2: Your Hand Photo */}
+        <div
+          onClick={() => handFileInputRef.current?.click()}
+          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-5 sm:p-6 text-center transition-all cursor-pointer shadow-2xs hover:shadow-md flex flex-col justify-between min-h-[260px]"
+        >
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <span className="text-[11px] font-mono uppercase tracking-wider text-[#E0246A] font-semibold">
+                2. Your Hand
+              </span>
+              {localHandPhoto && (
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>My Hand Saved</span>
+                </span>
+              )}
+            </div>
+
+            {localHandPhoto ? (
+              <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-xs">
+                <img
+                  src={localHandPhoto}
+                  alt="My Hand"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
+                  Tap to change hand photo
+                </div>
+              </div>
+            ) : (
+              <div className="py-6 flex flex-col items-center justify-center space-y-2.5">
+                <div className="w-14 h-14 rounded-2xl bg-stone-50 border border-stone-100 flex items-center justify-center text-[#E0246A] group-hover:scale-105 transition-transform shadow-inner">
+                  <Hand className="w-6 h-6" />
+                </div>
+                <div>
+                  <div className="text-xs font-semibold text-stone-800">
+                    Upload Your Hand Photo
+                  </div>
+                  <div className="text-[11px] text-stone-400 mt-0.5">
+                    Or use our studio hand model
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          <button
+            type="button"
+            className="w-full h-10 mt-3 rounded-xl bg-stone-100 group-hover:bg-[#E0246A] text-stone-800 group-hover:text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5"
+          >
+            <Camera className="w-3.5 h-3.5" />
+            <span>{localHandPhoto ? 'Change Hand Photo' : 'Upload Hand Photo'}</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Primary Action Button: "Apply Reference to My Hand" */}
+      <div className="pt-2 text-center space-y-2">
         <button
           type="button"
-          onClick={onSampleDemoClick}
-          className="text-xs font-medium text-stone-500 hover:text-[#E0246A] transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 underline-offset-4 hover:decoration-[#E0246A]"
+          onClick={() => {
+            if (activePhotoUrl) {
+              onComplete?.();
+            } else {
+              inspoFileInputRef.current?.click();
+            }
+          }}
+          className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
         >
-          <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-          <span>Or test with trending sample design</span>
+          <Sparkles className="w-4 h-4 text-white" />
+          <span>{activePhotoUrl ? 'See Reference Design on My Hand' : 'Choose Reference Photo & Try On'}</span>
+          <ArrowRight className="w-4 h-4 text-white" />
         </button>
+
+        {/* Quick Sample Demo Link */}
+        <div>
+          <button
+            type="button"
+            onClick={onSampleDemoClick}
+            className="text-xs font-medium text-stone-500 hover:text-[#E0246A] transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 underline-offset-4 hover:decoration-[#E0246A] cursor-pointer"
+          >
+            <span>Or test with trending sample reference design</span>
+          </button>
+        </div>
       </div>
     </div>
   );

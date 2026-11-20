@@ -684,11 +684,8 @@ export default function FingloraApp() {
       [newPhotoUrl]: extractedEntry,
     }));
 
-    // Brief pause at 100% so user sees the completed analysis logs before transitioning
-    await new Promise((r) => setTimeout(r, 1200));
-
     setIsAnalyzing(false);
-    showToast('5 AI nail designs generated! Opening Virtual Try-On ✨');
+    showToast('Reference manicure applied to your hand! Opening Virtual Try-On ✨');
     navigateCustomer('tryon');
   };
 

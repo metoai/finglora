@@ -11,9 +11,7 @@ import {
   Paintbrush,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
-import { FINGER_KEYS } from '@/constants/nail-data';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
 export type CustomerRoute =
   | 'home'
@@ -41,6 +39,7 @@ export function CustomerSidebar({
   currentRoute,
   onNavigate,
   activeSetName,
+  activePhotoUrl,
   nails,
   onBrandClick,
   favoritesCount = 0,
@@ -48,6 +47,7 @@ export function CustomerSidebar({
   currentRoute: CustomerRoute;
   onNavigate: (route: CustomerRoute) => void;
   activeSetName: string;
+  activePhotoUrl?: string;
   nails: Record<Finger, NailDesign>;
   onBrandClick: () => void;
   favoritesCount?: number;
@@ -150,44 +150,45 @@ export function CustomerSidebar({
         </nav>
       </div>
 
-      {/* Bottom Section: Active Set Mini Visualizer & Client Profile */}
+      {/* Bottom Section: Active Set Reference Card & Client Profile */}
       <div className="space-y-3 pt-4 border-t border-[rgba(31,26,28,0.08)]">
-        {/* Active Set Card with Mini Procedural 5-Finger Tray */}
+        {/* Active Set Reference Card */}
         <div
           onClick={() => onNavigate('tryon')}
-          className="cursor-pointer bg-[#FFFFFF] rounded-2xl p-3 border border-[rgba(31,26,28,0.08)] shadow-2xs hover:border-[rgba(31,26,28,0.16)] transition-all group"
+          className="cursor-pointer bg-[#FFFFFF] rounded-2xl p-3 border border-[rgba(31,26,28,0.08)] shadow-2xs hover:border-[#E0246A]/40 transition-all group"
+          title="Click to view on your hand in Virtual Try-On"
         >
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-mono tracking-wider uppercase text-[#8C8085]">
-              Active Set
+              Active Inspo
             </span>
             <span className="text-[10px] font-medium text-[#E0246A] capitalize">
               {currentShape}
             </span>
           </div>
-          <p className="text-xs font-medium text-[#18181B] truncate mb-2.5 group-hover:text-[#E0246A] transition-colors">
+          <p className="text-xs font-medium text-[#18181B] truncate mb-2 group-hover:text-[#E0246A] transition-colors">
             {activeSetName}
           </p>
 
-          {/* Mini Procedural 5-Finger Tray */}
-          <div className="bg-[#FAFAFA] rounded-xl p-2 border border-[rgba(31,26,28,0.06)] grid grid-cols-5 gap-1 items-end justify-items-center">
-            {FINGER_KEYS.map((fk) => {
-              const nail = nails[fk];
-              return (
-                <div key={fk} className="flex flex-col items-center">
-                  <NailCanvasPreview
-                    nail={nail}
-                    width={22}
-                    height={34}
-                    showCuticle={false}
-                  />
-                  <span className="text-[8px] font-mono text-[#8C8085] mt-1">
-                    {fk.slice(0, 1).toUpperCase()}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
+          {activePhotoUrl ? (
+            <div className="relative h-20 w-full rounded-xl overflow-hidden bg-stone-100 border border-[rgba(31,26,28,0.06)]">
+              <img
+                src={activePhotoUrl}
+                alt={activeSetName}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+              />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-2">
+                <span className="text-[10px] text-white font-medium flex items-center gap-1">
+                  Try On Hand →
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="h-10 w-full rounded-xl bg-[#FAF9F6] flex items-center justify-between px-3 border border-[rgba(31,26,28,0.06)] text-xs text-[#8C8085]">
+              <span>Reference Look</span>
+              <span className="text-[#E0246A] font-medium text-[11px]">Try On →</span>
+            </div>
+          )}
         </div>
 
         {/* Profile / Account Link */}

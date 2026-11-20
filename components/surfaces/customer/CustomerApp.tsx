@@ -194,6 +194,7 @@ export function CustomerApp({
           currentRoute={customerRoute}
           onNavigate={setCustomerRoute}
           activeSetName={activeSetName}
+          activePhotoUrl={activePhotoUrl}
           nails={nails}
           onBrandClick={onBrandClick}
           favoritesCount={favoritesCount}
@@ -379,7 +380,19 @@ export function CustomerApp({
               analysisStep={analysisStep}
               nails={nails}
               activePhotoUrl={activePhotoUrl}
-              isCached={isAnalyzingCached}
+              customTryOnHandUrl={customTryOnHandUrl}
+              onUploadHandPhoto={(file) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                  const dataUrl = reader.result as string;
+                  setCustomTryOnHandUrl(dataUrl);
+                  try {
+                    localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+                    localStorage.setItem('finglora_user_hand_photo', dataUrl);
+                  } catch {}
+                };
+                reader.readAsDataURL(file);
+              }}
               onImageSelected={onImageSelectedForExtraction}
               onSampleDemoClick={onSampleExtractionDemo}
               onCancel={() => {
