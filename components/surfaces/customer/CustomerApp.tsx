@@ -1,7 +1,8 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Compass, Hand } from 'lucide-react';
+import { Home, Compass, Hand, Heart } from 'lucide-react';
+import { motion } from 'framer-motion';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 
 import { CustomerRoute, CustomerSidebar } from './CustomerSidebar';
@@ -486,151 +487,86 @@ export function CustomerApp({
       </main>
       </div>
 
-      {/* Mobile Bottom Navigation - Floating Curved Notched Bar */}
-      {customerRoute !== 'ai-create' && (
-        <nav
-          className={`${
-            mobilePreview ? 'flex' : 'flex md:hidden'
-          } fixed bottom-2.5 sm:bottom-3 inset-x-3 sm:inset-x-6 max-w-md mx-auto z-40 h-[64px] items-end justify-center select-none filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.08)]`}
-          aria-label="Mobile Navigation"
-        >
-          {/* Background Shape with Center Concave Scoop */}
-          <div className="absolute inset-0 flex items-stretch pointer-events-none">
-            {/* Left Wing */}
-            <div className="flex-1 bg-white rounded-l-[28px] border-l border-t border-b border-stone-200/90" />
+      {/* Mobile Bottom Navigation - Modern Floating Capsule with Fluid Sliding Active Shape */}
+      {customerRoute !== 'ai-create' && (() => {
+        const activeNavTab: 'home' | 'tryon' | 'explore' | 'favorites' =
+          customerRoute === 'tryon' || customerRoute === 'upload'
+            ? 'tryon'
+            : customerRoute === 'explore'
+            ? 'explore'
+            : customerRoute === 'favorites'
+            ? 'favorites'
+            : 'home';
 
-            {/* Center Notched Scoop SVG */}
-            <div className="w-[94px] -mx-[1px] h-full relative shrink-0">
-              <svg
-                viewBox="0 0 94 64"
-                className="w-full h-full overflow-visible"
-                preserveAspectRatio="none"
-              >
-                {/* White filled background body */}
-                <path
-                  d="M 0,0 C 18,0 24,28 47,28 C 70,28 76,0 94,0 L 94,64 L 0,64 Z"
-                  fill="#FFFFFF"
-                />
-                {/* Scooped Top Border */}
-                <path
-                  d="M 0,0 C 18,0 24,28 47,28 C 70,28 76,0 94,0"
-                  fill="none"
-                  stroke="rgba(228, 228, 231, 0.9)"
-                  strokeWidth="1"
-                />
-                {/* Flat Bottom Border */}
-                <line
-                  x1="0"
-                  y1="64"
-                  x2="94"
-                  y2="64"
-                  stroke="rgba(228, 228, 231, 0.9)"
-                  strokeWidth="1"
-                />
-              </svg>
+        const mobileNavTabs: {
+          id: 'home' | 'tryon' | 'explore' | 'favorites';
+          label: string;
+          Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
+          route: CustomerRoute;
+        }[] = [
+          { id: 'home', label: 'Home', Icon: Home, route: 'home' },
+          { id: 'tryon', label: 'Try On', Icon: Hand, route: 'tryon' },
+          { id: 'explore', label: 'Explore', Icon: Compass, route: 'explore' },
+          { id: 'favorites', label: 'Saved', Icon: Heart, route: 'favorites' },
+        ];
+
+        return (
+          <nav
+            className={`${
+              mobilePreview ? 'flex' : 'flex md:hidden'
+            } fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 max-w-[370px] mx-auto z-40 h-[60px] items-center justify-between p-1.5 rounded-full bg-white/90 backdrop-blur-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] select-none`}
+            aria-label="Mobile Navigation"
+          >
+            <div className="relative w-full h-full flex items-center justify-between gap-1">
+              {mobileNavTabs.map((tab) => {
+                const isActive = activeNavTab === tab.id;
+
+                return (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setCustomerRoute(tab.route)}
+                    className="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer select-none rounded-full py-1 group active:scale-95 transition-transform"
+                  >
+                    {/* Modern Active Shape that Smoothly Glides with Spring Physics */}
+                    {isActive && (
+                      <motion.div
+                        layoutId="activeMobileBottomTabPill"
+                        className="absolute inset-0 bg-[#E0246A] rounded-full shadow-[0_4px_18px_rgba(224,36,106,0.38)] z-0"
+                        transition={{
+                          type: 'spring',
+                          stiffness: 440,
+                          damping: 32,
+                          mass: 0.7,
+                        }}
+                      />
+                    )}
+
+                    {/* Tab Icon & Label */}
+                    <div className="relative z-10 flex flex-col items-center justify-center gap-0.5 pointer-events-none">
+                      <tab.Icon
+                        className={`w-5 h-5 transition-colors duration-200 ${
+                          isActive ? 'text-white' : 'text-stone-400 group-hover:text-stone-700'
+                        }`}
+                        strokeWidth={isActive ? 2.25 : 1.75}
+                      />
+                      <span
+                        className={`text-[10px] tracking-tight leading-none transition-colors duration-200 ${
+                          isActive
+                            ? 'text-white font-semibold'
+                            : 'text-stone-500 font-medium group-hover:text-stone-800'
+                        }`}
+                      >
+                        {tab.label}
+                      </span>
+                    </div>
+                  </button>
+                );
+              })}
             </div>
-
-            {/* Right Wing */}
-            <div className="flex-1 bg-white rounded-r-[28px] border-r border-t border-b border-stone-200/90" />
-          </div>
-
-          {/* Interactive Navigation Items Layer */}
-          <div className="relative w-full h-full flex items-center justify-between px-3">
-            {/* 1. Home Tab */}
-            <button
-              type="button"
-              onClick={() => setCustomerRoute('home')}
-              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 cursor-pointer py-1 group active:scale-95 transition"
-            >
-              <div className="relative">
-                <Home
-                  className={`w-5 h-5 transition-colors ${
-                    customerRoute === 'home'
-                      ? 'text-[#E0246A]'
-                      : 'text-stone-400 group-hover:text-stone-700'
-                  }`}
-                  strokeWidth={customerRoute === 'home' ? 2.25 : 1.75}
-                />
-                {customerRoute === 'home' && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E0246A] shadow-[0_0_6px_#E0246A]" />
-                )}
-              </div>
-              <span
-                className={`text-[10px] transition-colors ${
-                  customerRoute === 'home'
-                    ? 'font-semibold text-[#E0246A]'
-                    : 'font-medium text-stone-400 group-hover:text-stone-700'
-                }`}
-              >
-                Home
-              </span>
-            </button>
-
-            {/* 2. Elevated Center Try-On Button (Nestled in the Scoop) */}
-            <div className="w-[94px] h-full flex flex-col items-center justify-start shrink-0">
-              <button
-                type="button"
-                onClick={() => setCustomerRoute('tryon')}
-                className="relative -top-3.5 flex flex-col items-center group cursor-pointer focus:outline-none"
-                title="Virtual Try-On"
-              >
-                {/* Outer Glow Halo Rim */}
-                <div
-                  className={`p-1 rounded-full transition-all duration-300 ${
-                    customerRoute === 'tryon' || customerRoute === 'upload'
-                      ? 'bg-[#E0246A]/25 scale-105 shadow-[0_4px_20px_rgba(224,36,106,0.45)]'
-                      : 'bg-[#E0246A]/15 hover:bg-[#E0246A]/25 shadow-[0_4px_16px_rgba(224,36,106,0.3)]'
-                  }`}
-                >
-                  <div className="w-12 h-12 rounded-full bg-gradient-to-b from-[#E0246A] to-[#BE185D] flex items-center justify-center text-white active:scale-95 transition shadow-xs">
-                    <Hand className="w-5 h-5 text-white" strokeWidth={2} />
-                  </div>
-                </div>
-
-                <span
-                  className={`text-[10px] mt-0.5 font-medium transition-colors ${
-                    customerRoute === 'tryon' || customerRoute === 'upload'
-                      ? 'text-[#E0246A] font-semibold'
-                      : 'text-stone-500 group-hover:text-stone-900'
-                  }`}
-                >
-                  Try On
-                </span>
-              </button>
-            </div>
-
-            {/* 3. Explore Tab */}
-            <button
-              type="button"
-              onClick={() => setCustomerRoute('explore')}
-              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 cursor-pointer py-1 group active:scale-95 transition"
-            >
-              <div className="relative">
-                <Compass
-                  className={`w-5 h-5 transition-colors ${
-                    customerRoute === 'explore'
-                      ? 'text-[#E0246A]'
-                      : 'text-stone-400 group-hover:text-stone-700'
-                  }`}
-                  strokeWidth={customerRoute === 'explore' ? 2.25 : 1.75}
-                />
-                {customerRoute === 'explore' && (
-                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E0246A] shadow-[0_0_6px_#E0246A]" />
-                )}
-              </div>
-              <span
-                className={`text-[10px] transition-colors ${
-                  customerRoute === 'explore'
-                    ? 'font-semibold text-[#E0246A]'
-                    : 'font-medium text-stone-400 group-hover:text-stone-700'
-                }`}
-              >
-                Explore
-              </span>
-            </button>
-          </div>
-        </nav>
-      )}
+          </nav>
+        );
+      })()}
 
       {/* Pro Paywall Modal */}
       <ProPaywallModal
