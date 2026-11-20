@@ -62,7 +62,7 @@ try {
   const extractRes = await fetch(`${BASE_URL}/api/extract-nails`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ imageUrl: manicureUrl }),
+    body: JSON.stringify({ imageUrl: manicureUrl, generateImages: false }),
   });
   const duration = ((Date.now() - startTime) / 1000).toFixed(2);
 

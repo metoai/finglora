@@ -179,7 +179,7 @@ export function HandCameraCaptureModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-200">
+    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-in fade-in duration-150">
       {/* Hidden File Input for fallback */}
       <input
         ref={fileFallbackInputRef}
@@ -189,47 +189,27 @@ export function HandCameraCaptureModal({
         className="hidden"
       />
 
-      <div className="relative w-full max-w-md sm:max-w-lg bg-stone-900 text-white rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col max-h-[92vh]">
-        {/* Modal Top Bar */}
-        <div className="flex items-center justify-between px-5 py-4 border-b border-white/10 z-20 bg-stone-900/90 backdrop-blur-xs">
-          <div>
-            <h3 className="font-serif text-lg font-normal text-white">
-              {cameraState === 'captured' ? 'Confirm Your Photo' : 'Capture Your Hand'}
-            </h3>
-            <p className="text-[11px] text-stone-400">
-              {cameraState === 'captured'
-                ? 'Check hand position and clarity'
-                : 'Hold your hand flat facing the camera'}
-            </p>
-          </div>
+      <div className="relative w-full max-w-sm sm:max-w-md bg-neutral-950 text-white rounded-3xl overflow-hidden shadow-2xl border border-white/10 flex flex-col">
+        {/* Minimal Top Bar */}
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/10 z-20 bg-neutral-950/90 backdrop-blur-md">
+          <span className="text-xs font-semibold tracking-wide text-white/90">
+            {cameraState === 'captured' ? 'Review Photo' : 'Capture Hand'}
+          </span>
 
-          <div className="flex items-center gap-2">
-            {cameraState === 'live' && (
-              <button
-                type="button"
-                onClick={handleToggleFacingMode}
-                className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-200 transition-colors cursor-pointer"
-                title="Flip camera"
-              >
-                <FlipHorizontal className="w-4 h-4" />
-              </button>
-            )}
-
-            <button
-              type="button"
-              onClick={() => {
-                stopStream();
-                onClose();
-              }}
-              className="w-9 h-9 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-stone-300 hover:text-white transition-colors cursor-pointer"
-              title="Close camera"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              stopStream();
+              onClose();
+            }}
+            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Viewfinder / Captured Frame Viewport */}
+        {/* Clean Viewfinder Viewport */}
         <div className="relative aspect-[3/4] w-full bg-black flex items-center justify-center overflow-hidden">
           {/* Live Video Element */}
           <video
@@ -247,130 +227,122 @@ export function HandCameraCaptureModal({
             <img
               src={capturedDataUrl}
               alt="Captured hand frame"
-              className="w-full h-full object-cover animate-in fade-in zoom-in-95 duration-200"
+              className="w-full h-full object-cover animate-in fade-in zoom-in-95 duration-150"
             />
           )}
 
-          {/* Hand Alignment Silhouette Guide (Only visible during live camera) */}
+          {/* Subtle Pro Viewfinder Framing Brackets */}
           {cameraState === 'live' && (
-            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-center p-6 z-10">
-              {/* Hand Guide Oval / Outline */}
-              <div className="relative w-56 h-76 sm:w-64 sm:h-84 rounded-[42px] border-2 border-dashed border-[#E0246A]/80 shadow-[0_0_24px_rgba(224,36,106,0.25)] flex items-center justify-center">
-                {/* Center Hand Marker */}
-                <div className="w-8 h-8 rounded-full border border-white/40 flex items-center justify-center opacity-40">
-                  <div className="w-1.5 h-1.5 rounded-full bg-white" />
-                </div>
-              </div>
-
-              {/* Minimal floating prompt */}
-              <div className="mt-4 px-3.5 py-1.5 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-xs font-medium tracking-wide border border-white/10">
-                Fit hand inside the guide
+            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8 z-10">
+              <div className="relative w-56 h-72 sm:w-64 sm:h-80 max-w-[85%] max-h-[85%]">
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/35 rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/35 rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/35 rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/35 rounded-br-lg" />
               </div>
             </div>
           )}
 
-          {/* Starting / Loading Spinner */}
+          {/* Loading Spinner */}
           {cameraState === 'starting' && (
-            <div className="flex flex-col items-center justify-center gap-3 text-stone-300">
-              <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
-              <span className="text-xs font-medium tracking-wide">Starting camera...</span>
+            <div className="flex flex-col items-center justify-center gap-2.5 text-white/70">
+              <Loader2 className="w-7 h-7 animate-spin text-[#E0246A]" />
+              <span className="text-xs font-medium">Starting camera...</span>
             </div>
           )}
 
           {/* Error State */}
           {cameraState === 'error' && (
-            <div className="p-6 text-center space-y-4 max-w-xs">
-              <div className="w-12 h-12 rounded-full bg-amber-500/10 text-amber-400 mx-auto flex items-center justify-center border border-amber-500/20">
-                <AlertCircle className="w-6 h-6" />
+            <div className="p-6 text-center space-y-3.5 max-w-xs">
+              <div className="w-10 h-10 rounded-full bg-white/10 text-white/80 mx-auto flex items-center justify-center">
+                <AlertCircle className="w-5 h-5" />
               </div>
               <div className="space-y-1">
-                <h4 className="text-sm font-semibold text-white">Camera Unavailable</h4>
-                <p className="text-xs text-stone-400 leading-relaxed">
+                <h4 className="text-xs font-semibold text-white">Camera Unavailable</h4>
+                <p className="text-[11px] text-white/60 leading-relaxed">
                   {errorMessage || 'Could not start your device camera.'}
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => fileFallbackInputRef.current?.click()}
-                className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium inline-flex items-center justify-center gap-2 transition cursor-pointer"
+                className="w-full h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium inline-flex items-center justify-center gap-2 transition cursor-pointer"
               >
                 <UploadCloud className="w-4 h-4" />
-                <span>Upload Hand Photo Instead</span>
+                <span>Upload Hand Photo</span>
               </button>
             </div>
           )}
         </div>
 
-        {/* Modal Bottom Controls */}
-        <div className="px-5 py-4 border-t border-white/10 bg-stone-900/95 z-20">
+        {/* Minimal Bottom Controls */}
+        <div className="px-6 py-4 border-t border-white/10 bg-neutral-950 z-20">
           {cameraState === 'captured' ? (
-            /* Review State: Retake vs Use This Photo */
-            <div className="space-y-3">
-              <div className="grid grid-cols-2 gap-3">
-                <button
-                  type="button"
-                  onClick={handleRetake}
-                  className="h-12 rounded-2xl bg-white/10 hover:bg-white/15 text-stone-200 text-xs sm:text-sm font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-                >
-                  <RotateCcw className="w-4 h-4 text-stone-300" />
-                  <span>Retake</span>
-                </button>
+            /* Review State: Retake vs Use Photo */
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={handleRetake}
+                className="h-11 rounded-xl bg-white/10 hover:bg-white/15 text-white/90 text-xs font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+              >
+                <RotateCcw className="w-4 h-4 text-white/70" />
+                <span>Retake</span>
+              </button>
 
-                <button
-                  type="button"
-                  onClick={handleConfirmPhoto}
-                  className="h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-lg shadow-[#E0246A]/30"
-                >
-                  <Check className="w-4 h-4 text-white" />
-                  <span>Use This Photo</span>
-                </button>
-              </div>
-              <p className="text-center text-[11px] text-stone-400">
-                This photo will be saved as your personal hand model for try-ons.
-              </p>
+              <button
+                type="button"
+                onClick={handleConfirmPhoto}
+                className="h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 shadow-md shadow-[#E0246A]/25"
+              >
+                <Check className="w-4 h-4 text-white" />
+                <span>Use Photo</span>
+              </button>
             </div>
           ) : cameraState === 'live' ? (
-            /* Live State: Shutter Button + Alternative Upload Option */
-            <div className="flex flex-col items-center justify-center gap-3">
-              <div className="flex items-center justify-center w-full relative">
-                {/* Shutter Button */}
-                <button
-                  type="button"
-                  onClick={handleSnapPhoto}
-                  className="relative w-18 h-18 sm:w-20 sm:h-20 rounded-full border-4 border-white/30 hover:border-white/50 flex items-center justify-center cursor-pointer transition active:scale-90"
-                  title="Take photo"
-                >
-                  <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-full bg-[#E0246A] hover:bg-[#BE185D] shadow-lg flex items-center justify-center transition">
-                    <Camera className="w-6 h-6 text-white" />
-                  </div>
-                </button>
+            /* Live State: Balanced Circular Controls (Upload, Shutter, Flip) */
+            <div className="flex items-center justify-between px-2 sm:px-4">
+              {/* 1st Option: Upload from files */}
+              <button
+                type="button"
+                onClick={() => fileFallbackInputRef.current?.click()}
+                className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition cursor-pointer active:scale-95"
+                title="Upload Hand Photo"
+              >
+                <UploadCloud className="w-5 h-5" />
+              </button>
 
-                {/* Or Upload Button (Right Aligned) */}
-                <button
-                  type="button"
-                  onClick={() => fileFallbackInputRef.current?.click()}
-                  className="absolute right-0 text-xs text-stone-400 hover:text-stone-200 inline-flex items-center gap-1.5 transition cursor-pointer px-2.5 py-1.5 rounded-lg hover:bg-white/5"
-                  title="Upload from device"
-                >
-                  <UploadCloud className="w-4 h-4" />
-                  <span className="hidden sm:inline">Upload File</span>
-                </button>
-              </div>
+              {/* Shutter Button with Camera Icon */}
+              <button
+                type="button"
+                onClick={handleSnapPhoto}
+                className="w-16 h-16 sm:w-17 sm:h-17 rounded-full border-2 border-white/80 p-1 flex items-center justify-center cursor-pointer transition active:scale-95 hover:border-white shadow-lg shadow-[#E0246A]/25"
+                title="Capture Photo"
+              >
+                <div className="w-full h-full rounded-full bg-[#E0246A] hover:bg-[#BE185D] active:scale-90 transition flex items-center justify-center text-white">
+                  <Camera className="w-6 h-6 text-white" strokeWidth={2} />
+                </div>
+              </button>
 
-              <span className="text-[11px] text-stone-400 text-center">
-                Tap to snap photo when your hand is aligned
-              </span>
+              {/* Flip Camera */}
+              <button
+                type="button"
+                onClick={handleToggleFacingMode}
+                className="w-11 h-11 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/80 hover:text-white transition cursor-pointer active:scale-95"
+                title="Flip Camera"
+              >
+                <FlipHorizontal className="w-5 h-5" />
+              </button>
             </div>
           ) : (
             /* Starting or Error footer */
-            <div className="flex items-center justify-between text-xs text-stone-400">
+            <div className="flex items-center justify-between text-xs text-white/60">
               <button
                 type="button"
                 onClick={() => fileFallbackInputRef.current?.click()}
                 className="hover:text-white inline-flex items-center gap-1.5 cursor-pointer transition"
               >
                 <UploadCloud className="w-4 h-4" />
-                <span>Upload from device instead</span>
+                <span>Upload from device</span>
               </button>
 
               <button
