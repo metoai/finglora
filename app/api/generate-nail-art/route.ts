@@ -15,11 +15,11 @@ export async function POST(request: Request) {
     }
 
     const primaryKey = process.env.GEMINI_API_KEY;
-    const fallbackKey = process.env.GEMINI_FALLBACK_KEY;
-    const apiKey = primaryKey || fallbackKey;
+    const secondaryKey = process.env.VERTEX_API_KEY_2;
+    const candidateKeys = Array.from(new Set([primaryKey, secondaryKey].filter(Boolean))) as string[];
 
-    if (!apiKey) {
-      return NextResponse.json({ error: 'API key is not configured' }, { status: 500 });
+    if (candidateKeys.length === 0) {
+      return NextResponse.json({ error: 'Vertex API key is not configured' }, { status: 500 });
     }
 
     const rawHandBase64 = handImageBase64?.replace(/^data:image\/\w+;base64,/, '');
@@ -44,38 +44,41 @@ export async function POST(request: Request) {
     let generatedImageData: string | null = null;
     let lastError = 'Image generation failed';
 
-    for (const model of candidateImageModels) {
-      try {
-        const res = await fetch(
-          `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${apiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [{ role: 'user', parts }],
-              generationConfig: {
-                responseModalities: ['IMAGE'],
-              },
-            }),
-            signal: AbortSignal.timeout(15000),
-          }
-        );
-
-        if (res.ok) {
-          const json = await res.json();
-          const imgPart = json?.candidates?.[0]?.content?.parts?.find(
-            (p: any) => p.inlineData?.data
+    keyLoop: for (const apiKey of candidateKeys) {
+      for (const model of candidateImageModels) {
+        try {
+          const res = await fetch(
+            `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${apiKey}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [{ role: 'user', parts }],
+                generationConfig: {
+                  responseModalities: ['IMAGE'],
+                },
+              }),
+              signal: AbortSignal.timeout(18000),
+            }
           );
-          if (imgPart?.inlineData?.data) {
-            generatedImageData = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
-            break;
+
+          if (res.ok) {
+            const json = await res.json();
+            const imgPart = json?.candidates?.[0]?.content?.parts?.find(
+              (p: any) => p.inlineData?.data
+            );
+            if (imgPart?.inlineData?.data) {
+              generatedImageData = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+              break keyLoop;
+            }
+          } else {
+            const errJson = await res.json().catch(() => ({}));
+            lastError = errJson?.error?.message || `HTTP ${res.status}`;
+            console.warn(`[Finglora Vertex AI Image] ${model} unavailable (${res.status}: ${lastError}), trying next key...`);
           }
-        } else {
-          const errJson = await res.json().catch(() => ({}));
-          lastError = errJson?.error?.message || `HTTP ${res.status}`;
+        } catch (err: unknown) {
+          lastError = err instanceof Error ? err.message : 'Network timeout';
         }
-      } catch (err: unknown) {
-        lastError = err instanceof Error ? err.message : 'Network timeout';
       }
     }
 
