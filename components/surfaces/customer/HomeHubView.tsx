@@ -290,8 +290,8 @@ export function HomeHubView({
                   >
                     <div className="w-44 sm:w-52 h-56 sm:h-64 relative overflow-hidden bg-black/5">
                       <img
-                        src={design.photoUrl}
-                        alt={design.title}
+                        src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                        alt={design.title || 'Nail Design'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
@@ -334,8 +334,8 @@ export function HomeHubView({
                   >
                     <div className="w-full h-56 sm:h-64 relative overflow-hidden bg-black/5">
                       <img
-                        src={design.photoUrl}
-                        alt={design.title}
+                        src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                        alt={design.title || 'Nail Design'}
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/10 to-transparent pointer-events-none" />
@@ -389,7 +389,7 @@ export function HomeHubView({
               <div className="space-y-3">
                 <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-[#F0DFE4] bg-stone-100">
                   <img
-                    src={customTryOnHandUrl}
+                    src={customTryOnHandUrl || '/assets/editorial_nail_hero.jpg'}
                     alt="My Hand"
                     className="w-full h-full object-cover"
                   />

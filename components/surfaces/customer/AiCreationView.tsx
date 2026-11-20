@@ -250,7 +250,7 @@ export function AiCreationView({
 
             {/* The constant hand photo: ALWAYS the user's authentic uploaded hand */}
             <img
-              src={handPhoto}
+              src={handPhoto || '/assets/editorial_nail_hero.jpg'}
               alt="Constant Hand Try-On"
               className="w-full h-full object-cover transition-opacity duration-200"
             />

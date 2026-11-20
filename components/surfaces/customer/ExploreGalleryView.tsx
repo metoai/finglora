@@ -123,8 +123,8 @@ export function ExploreGalleryView({
             {/* Pinterest Card Image Container */}
             <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-2xs border border-stone-200/70">
               <img
-                src={item.photoUrl}
-                alt={item.title}
+                src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                alt={item.title || 'Nail Design'}
                 loading="lazy"
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
               />

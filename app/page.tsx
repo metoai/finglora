@@ -44,7 +44,7 @@ import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/l
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
-import { grantSignupCreditBonus } from '@/lib/services/credits';
+import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -447,16 +447,28 @@ export default function FingloraApp() {
     }
   };
 
-  const handleAuthSignUpSuccess = ({ name }: { name: string; email: string }) => {
+  const handleAuthSignUpSuccess = ({ name, email }: { name: string; email: string }) => {
     const chosenName = name || 'Elena';
     setUserName(chosenName);
-    grantSignupCreditBonus();
-    showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
+    if (isVipEmail(email)) {
+      activateProSubscription();
+      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active ✨`);
+    } else {
+      grantSignupCreditBonus();
+      showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
+    }
     navigateCustomer('tryon');
   };
 
-  const handleAuthSignInSuccess = () => {
-    showToast(`Welcome back, ${userName}! Opening your dashboard...`);
+  const handleAuthSignInSuccess = (user?: { email?: string }) => {
+    const email = user?.email || (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_email') : '');
+    if (email && isVipEmail(email)) {
+      activateProSubscription();
+      setUserName('VIP Creator');
+      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active ✨`);
+    } else {
+      showToast(`Welcome back, ${userName}! Opening your dashboard...`);
+    }
     navigateCustomer('home');
   };
 

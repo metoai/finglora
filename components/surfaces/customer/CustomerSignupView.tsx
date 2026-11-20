@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { ArrowRight } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 
-import { signUpWithEmail, signInWithEmail, signInWithGoogle } from '@/lib/services/auth';
+import { signUpWithEmail, signInWithEmail, signInWithGoogle, VIP_ACCOUNT } from '@/lib/services/auth';
 
 export interface CustomerSignupViewProps {
   userName: string;
@@ -222,6 +222,21 @@ export function CustomerSignupView({
             >
               <span>Continue as Guest</span>
             </button>
+
+            {/* Quick-fill VIP Unlimited Pro Account */}
+            <div className="pt-2 border-t border-stone-100 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setEmail(VIP_ACCOUNT.email);
+                  setPassword(VIP_ACCOUNT.password);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] text-[11px] font-semibold transition cursor-pointer"
+              >
+                <span>✨ Use VIP Pro Account (Unlimited)</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

@@ -387,7 +387,7 @@ export function TryOnView({
           <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-900 shadow-md border border-stone-200/80 flex items-center justify-center mx-auto">
             {capturedFrameUrl || customTryOnHandUrl ? (
               <img
-                src={resultImageUrl}
+                src={resultImageUrl || '/assets/editorial_nail_hero.jpg'}
                 alt="Try-On Hand"
                 className="w-full h-full object-cover"
               />

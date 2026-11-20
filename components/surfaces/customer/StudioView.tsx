@@ -193,7 +193,7 @@ export function StudioView({
                 >
                   <div className="h-16 w-24 sm:h-20 sm:w-28 relative overflow-hidden bg-black/5">
                     <img
-                      src={design.photoUrl}
+                      src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
                       alt={design.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     />

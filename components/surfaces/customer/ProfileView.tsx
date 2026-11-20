@@ -311,7 +311,7 @@ export function ProfileView({
                 {/* Photo Container */}
                 <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#FAF7F2]">
                   <img
-                    src={item.photoUrl}
+                    src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
                     alt={item.title}
                     loading="lazy"
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
@@ -424,7 +424,7 @@ export function ProfileView({
               <div className="relative shrink-0 group">
                 <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-[#E0246A]/25 bg-[#FDE8EF] shadow-xs flex items-center justify-center">
                   <img
-                    src={avatarUrl}
+                    src={avatarUrl || "https://api.dicebear.com/9.x/lorelei/svg?seed=Elise&backgroundColor=fde8ef"}
                     alt={userName}
                     className="w-full h-full object-cover transition-transform group-hover:scale-105"
                     onError={(e) => {
@@ -728,7 +728,7 @@ export function ProfileView({
               <div className="space-y-3">
                 <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-[#F0DFE4] bg-stone-100">
                   <img
-                    src={customTryOnHandUrl}
+                    src={customTryOnHandUrl || '/assets/editorial_nail_hero.jpg'}
                     alt="My Hand"
                     className="w-full h-full object-cover"
                   />

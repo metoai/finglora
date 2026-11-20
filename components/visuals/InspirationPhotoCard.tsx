@@ -16,7 +16,7 @@ export function InspirationPhotoCard({
   detectedCount?: number;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const activeUrl = photoOverride || item.photoUrl;
+  const activeUrl = (photoOverride || item.photoUrl || '').trim() || '/assets/editorial_nail_hero.jpg';
 
   useEffect(() => {
     setImgFailed(false);
@@ -37,7 +37,7 @@ export function InspirationPhotoCard({
     >
       {!imgFailed ? (
         <img
-          src={activeUrl}
+          src={activeUrl || '/assets/editorial_nail_hero.jpg'}
           alt={item.title}
           loading="lazy"
           onError={() => setImgFailed(true)}

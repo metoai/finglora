@@ -6,6 +6,20 @@
 const CREDITS_STORAGE_KEY = 'finglora_tryon_credits';
 const SIGNUP_BONUS_KEY = 'finglora_signup_bonus_granted';
 const PRO_STATUS_KEY = 'finglora_is_pro_subscriber';
+const USER_EMAIL_KEY = 'finglora_user_email';
+
+export const VIP_EMAILS = [
+  'finglora.vip.pro@gmail.com',
+  'vip@finglora.com',
+  'pro@finglora.com',
+  'admin@finglora.com',
+];
+
+export function isVipEmail(email?: string | null): boolean {
+  if (!email) return false;
+  const clean = email.trim().toLowerCase();
+  return VIP_EMAILS.includes(clean) || clean.includes('finglora.vip') || clean.includes('+pro');
+}
 
 export interface UserCreditStatus {
   credits: number;
@@ -19,21 +33,23 @@ export function getUserCreditStatus(): UserCreditStatus {
     return { credits: 1, isPro: false, hasUsedGuestCredit: false, hasReceivedSignupBonus: false };
   }
 
-  const isPro = localStorage.getItem(PRO_STATUS_KEY) === 'true';
+  const storedEmail = localStorage.getItem(USER_EMAIL_KEY) || '';
+  const isVip = isVipEmail(storedEmail);
+  const isPro = isVip || localStorage.getItem(PRO_STATUS_KEY) === 'true';
   const hasReceivedSignupBonus = localStorage.getItem(SIGNUP_BONUS_KEY) === 'true';
   
   const storedCredits = localStorage.getItem(CREDITS_STORAGE_KEY);
-  let credits = 1; // Default: 1 free guest credit
+  let credits = isPro ? 999999 : 1; // Default: 1 free guest credit
 
-  if (storedCredits !== null) {
+  if (!isPro && storedCredits !== null) {
     credits = parseInt(storedCredits, 10);
     if (isNaN(credits)) credits = 0;
-  } else {
+  } else if (!isPro && storedCredits === null) {
     // First time guest: initialize with 1 credit
     localStorage.setItem(CREDITS_STORAGE_KEY, '1');
   }
 
-  const hasUsedGuestCredit = storedCredits !== null && credits < 1 && !hasReceivedSignupBonus;
+  const hasUsedGuestCredit = !isPro && storedCredits !== null && credits < 1 && !hasReceivedSignupBonus;
 
   return {
     credits: isPro ? 999999 : credits,

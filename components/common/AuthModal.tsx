@@ -3,7 +3,7 @@
 import React, { useState } from 'react';
 import { X, ArrowRight, Check } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { signUpWithEmail, signInWithEmail, signInWithGoogle } from '@/lib/services/auth';
+import { signUpWithEmail, signInWithEmail, signInWithGoogle, VIP_ACCOUNT } from '@/lib/services/auth';
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -238,6 +238,21 @@ export function AuthModal({
                 ? 'Already have an account? Sign In'
                 : "Don't have an account? Create Account"}
             </button>
+
+            {/* Quick-fill VIP Unlimited Pro Account */}
+            <div className="pt-2 border-t border-stone-100 text-center">
+              <button
+                type="button"
+                onClick={() => {
+                  setMode('signin');
+                  setEmail(VIP_ACCOUNT.email);
+                  setPassword(VIP_ACCOUNT.password);
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] text-[11px] font-semibold transition cursor-pointer"
+              >
+                <span>✨ Use VIP Pro Account (Unlimited)</span>
+              </button>
+            </div>
           </div>
         </form>
       </div>

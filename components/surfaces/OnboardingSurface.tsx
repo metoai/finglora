@@ -256,7 +256,7 @@ export function OnboardingSurface({
                     className="p-2 rounded-2xl bg-white border border-stone-200/80 hover:border-[#E0246A] text-left transition-all group cursor-pointer"
                   >
                     <div className="aspect-square rounded-xl overflow-hidden bg-stone-100 mb-1.5">
-                      <img src={h.url} alt={h.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={h.url || '/assets/editorial_nail_hero.jpg'} alt={h.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                     <div className="text-[11px] font-medium text-stone-800 text-center truncate">{h.label}</div>
                   </button>
@@ -299,7 +299,7 @@ export function OnboardingSurface({
                       {p.tag}
                     </span>
                     <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 mb-2">
-                      <img src={p.photoUrl} alt={p.title} className="w-full h-full object-cover" />
+                      <img src={p.photoUrl || '/assets/editorial_nail_hero.jpg'} alt={p.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="px-1 pb-1">
                       <div className="text-xs font-semibold text-stone-900 truncate">{p.title}</div>
@@ -370,7 +370,7 @@ export function OnboardingSurface({
                 {/* Photorealistic Viewport */}
                 <div className="relative aspect-[3/4] max-h-[380px] w-full max-w-sm mx-auto rounded-3xl overflow-hidden bg-stone-900 shadow-xl border border-stone-200">
                   <img
-                    src={revealMode === 'after' ? revealTryOnUrl : (handPhotoUrl || '/assets/editorial_nail_hero.jpg')}
+                    src={(revealMode === 'after' ? (revealTryOnUrl || handPhotoUrl) : handPhotoUrl) || '/assets/editorial_nail_hero.jpg'}
                     alt="Virtual Manicure Try-On"
                     className="w-full h-full object-cover transition-all duration-300"
                   />
