@@ -16,6 +16,15 @@ import { Finger, NailDesign, NailShape } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
+import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
+
+const AI_STUDIO_FINGERTIP_ANCHORS: Record<Finger, { tipX: number; tipY: number; angleDeg: number; scale: number }> = {
+  thumb: { tipX: 0.22, tipY: 0.60, angleDeg: -28, scale: 0.95 },
+  index: { tipX: 0.36, tipY: 0.30, angleDeg: -10, scale: 1.0 },
+  middle: { tipX: 0.50, tipY: 0.23, angleDeg: 0, scale: 1.05 },
+  ring: { tipX: 0.64, tipY: 0.29, angleDeg: 10, scale: 1.0 },
+  pinky: { tipX: 0.78, tipY: 0.44, angleDeg: 22, scale: 0.88 },
+};
 
 interface ChatMessage {
   id: string;
@@ -164,11 +173,40 @@ export function AiCreationView({
               </div>
             )}
 
+            {/* The constant hand photo: ALWAYS the user's authentic uploaded hand */}
             <img
-              src={compareMode === 'after' ? currentTryOnImage : handPhoto}
+              src={handPhoto}
               alt="Constant Hand Try-On"
               className="w-full h-full object-cover transition-opacity duration-200"
             />
+
+            {/* Overlaid Manicure Nails directly on user's hand */}
+            {compareMode === 'after' && (
+              <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
+                {(['thumb', 'index', 'middle', 'ring', 'pinky'] as const).map((fk) => {
+                  const anchor = AI_STUDIO_FINGERTIP_ANCHORS[fk];
+                  return (
+                    <div
+                      key={fk}
+                      className="absolute transition-transform duration-200"
+                      style={{
+                        left: `${anchor.tipX * 100}%`,
+                        top: `${anchor.tipY * 100}%`,
+                        transform: `translate(-50%, -75%) rotate(${anchor.angleDeg}deg) scale(${anchor.scale})`,
+                        transformOrigin: 'center 80%',
+                      }}
+                    >
+                      <NailCanvasPreview
+                        nail={nails[fk]}
+                        width={52}
+                        height={78}
+                        showCuticle={false}
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+            )}
 
             {/* Badges */}
             <div className="absolute top-3 left-3 z-20">
