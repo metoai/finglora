@@ -45,7 +45,7 @@ import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
-import { slice5NailSetImage, cropNailFromPhoto } from '@/lib/services/nail-image-processor';
+import { slice5NailSetImage, generateSingleFingerAiImage } from '@/lib/services/nail-image-processor';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -591,22 +591,13 @@ export default function FingloraApp() {
             }
           }
 
-          const defaultAnchors = {
-            thumb: { x: 0.22, y: 0.60 },
-            index: { x: 0.36, y: 0.30 },
-            middle: { x: 0.50, y: 0.23 },
-            ring: { x: 0.64, y: 0.29 },
-            pinky: { x: 0.78, y: 0.44 },
-          };
-
           for (const fk of FINGER_KEYS) {
             if (apiNails[fk]) {
-              const artImg = fingerImages?.[fk] || (await cropNailFromPhoto(customUploadedUrl, defaultAnchors[fk].x, defaultAnchors[fk].y));
+              const artImg = fingerImages?.[fk] || undefined;
               detectedNails[fk] = {
                 ...detectedNails[fk],
                 ...apiNails[fk],
                 artImageUrl: artImg,
-                extractedTextureUrl: customUploadedUrl,
                 status: 'detected',
               };
             }
@@ -616,19 +607,10 @@ export default function FingloraApp() {
             setActiveSetName(newTitle);
           }
         } else {
-          // Graceful fallback: synthesize elegant detected manicure designs with cropped texture
-          const defaultAnchors = {
-            thumb: { x: 0.22, y: 0.60 },
-            index: { x: 0.36, y: 0.30 },
-            middle: { x: 0.50, y: 0.23 },
-            ring: { x: 0.64, y: 0.29 },
-            pinky: { x: 0.78, y: 0.44 },
-          };
-
+          // Graceful fallback: synthesize elegant detected manicure designs
           for (let idx = 0; idx < FINGER_KEYS.length; idx++) {
             const fk = FINGER_KEYS[idx];
             const patterns = ['heart-french', 'classic-french', 'heart-french', 'classic-french', 'heart-french'] as const;
-            const artImg = await cropNailFromPhoto(customUploadedUrl, defaultAnchors[fk].x, defaultAnchors[fk].y);
             detectedNails[fk] = {
               ...detectedNails[fk],
               title: idx % 2 === 0 ? 'Blush Heart French' : 'Rose French Tip',
@@ -639,8 +621,7 @@ export default function FingloraApp() {
               length: 'long',
               finish: 'glossy',
               clientNote: 'Soft pink base with white/pink heart French tip and rhinestone accents.',
-              artImageUrl: artImg,
-              extractedTextureUrl: customUploadedUrl,
+              artImageUrl: undefined,
               status: 'detected',
             };
           }

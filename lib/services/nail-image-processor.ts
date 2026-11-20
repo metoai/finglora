@@ -77,53 +77,30 @@ export async function slice5NailSetImage(
 }
 
 /**
- * Crops an individual nail texture from an inspiration photo using relative anchor coordinates.
+ * Calls Vertex AI gemini-3.1-flash-image to generate an authentic AI nail art image for an individual finger.
  */
-export async function cropNailFromPhoto(
-  photoUrl: string,
-  tipX: number,
-  tipY: number,
-  cropRatio = 0.22
-): Promise<string> {
-  if (typeof window === 'undefined') return photoUrl;
-
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-
-    img.onload = () => {
-      const canvas = document.createElement('canvas');
-      const cropSize = Math.round(Math.min(img.naturalWidth, img.naturalHeight) * cropRatio);
-      canvas.width = cropSize;
-      canvas.height = Math.round(cropSize * 1.4); // 3:4 portrait aspect ratio
-      const ctx = canvas.getContext('2d');
-
-      if (!ctx) {
-        resolve(photoUrl);
-        return;
-      }
-
-      const centerX = tipX * img.naturalWidth;
-      const centerY = tipY * img.naturalHeight;
-      const srcX = Math.max(0, Math.min(img.naturalWidth - cropSize, centerX - cropSize / 2));
-      const srcY = Math.max(0, Math.min(img.naturalHeight - canvas.height, centerY - canvas.height * 0.3));
-
-      ctx.drawImage(
-        img,
-        srcX,
-        srcY,
-        cropSize,
-        canvas.height,
-        0,
-        0,
-        canvas.width,
-        canvas.height
-      );
-
-      resolve(canvas.toDataURL('image/png'));
-    };
-
-    img.onerror = () => resolve(photoUrl);
-    img.src = photoUrl;
-  });
+export async function generateSingleFingerAiImage(
+  finger: Finger,
+  shape: string,
+  designPrompt: string
+): Promise<string | null> {
+  try {
+    const res = await fetch('/api/generate-nail-art', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        mode: 'single-nail',
+        finger,
+        nailShape: shape,
+        prompt: designPrompt,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      return data.imageUrl || null;
+    }
+  } catch (err) {
+    console.warn('[Finglora AI] Single finger AI generation error:', err);
+  }
+  return null;
 }
