@@ -26,8 +26,6 @@ export async function generateBrandedEditorialImage(
   options: EditorialExportOptions = {}
 ): Promise<BrandedImageResult> {
   const {
-    designTitle,
-    category,
     filename = 'finglora-atelier-look.jpg',
     storyAspect = false,
   } = options;
@@ -87,74 +85,54 @@ export async function generateBrandedEditorialImage(
   const w = canvas.width;
   const h = canvas.height;
 
-  // 1. Subtle top-corner editorial badge: [ ✿ FINGLORA ATELIER ]
-  const badgeWidth = Math.round(w * 0.28);
-  const badgeHeight = Math.round(badgeWidth * 0.22);
-  const badgeX = Math.round(w * 0.04);
-  const badgeY = Math.round(w * 0.04);
+  // Pure Finglora Logo Watermark (ONLY the logo badge, zero extra text, no dark scrim)
+  const badgeHeight = Math.max(44, Math.round(w * 0.048));
+  const badgeWidth = Math.max(160, Math.round(badgeHeight * 3.4));
+
+  // Position: centered at bottom with comfortable margin (above story safe zone when in 9:16)
+  const badgeX = Math.round((w - badgeWidth) / 2);
+  const badgeY = storyAspect
+    ? h - badgeHeight - 140 // Instagram Stories safe zone
+    : h - badgeHeight - Math.round(w * 0.045); // Standard portrait margin
 
   ctx.save();
-  ctx.fillStyle = 'rgba(15, 12, 14, 0.45)';
+
+  // Clean luxury frosted pill background
+  ctx.fillStyle = 'rgba(20, 16, 18, 0.72)';
   ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
   ctx.lineWidth = 1.5;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 4;
+
   ctx.beginPath();
   ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
   ctx.fill();
   ctx.stroke();
 
+  // Reset shadow for razor-sharp logo rendering
+  ctx.shadowColor = 'transparent';
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
+
+  // 1. Draw Brand Flower Mark (✿)
+  const flowerSize = Math.round(badgeHeight * 0.52);
   ctx.fillStyle = '#E0246A';
-  ctx.font = `600 ${Math.round(badgeHeight * 0.45)}px serif`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
-  ctx.fillText('✿', badgeX + badgeHeight * 0.35, badgeY + badgeHeight / 2);
-
-  ctx.fillStyle = '#FFFFFF';
-  ctx.font = `600 ${Math.round(badgeHeight * 0.36)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.fillText('FINGLORA', badgeX + badgeHeight * 0.85, badgeY + badgeHeight / 2);
-  ctx.restore();
-
-  // 2. Luxury bottom gradient scrim for maximum text legibility
-  const scrimHeight = Math.round(h * 0.24);
-  const grad = ctx.createLinearGradient(0, h - scrimHeight, 0, h);
-  grad.addColorStop(0, 'rgba(15, 12, 14, 0)');
-  grad.addColorStop(0.35, 'rgba(15, 12, 14, 0.45)');
-  grad.addColorStop(0.7, 'rgba(15, 12, 14, 0.82)');
-  grad.addColorStop(1, 'rgba(15, 12, 14, 0.95)');
-  ctx.fillStyle = grad;
-  ctx.fillRect(0, h - scrimHeight, w, scrimHeight);
-
-  // 3. Brand Typography Footer
-  ctx.save();
+  ctx.font = `600 ${flowerSize}px serif`;
   ctx.textAlign = 'center';
   ctx.textBaseline = 'middle';
+  const flowerX = badgeX + Math.round(badgeHeight * 0.6);
+  const centerY = badgeY + badgeHeight / 2;
+  ctx.fillText('✿', flowerX, centerY);
 
-  // Optional design title
-  let currentY = h - Math.round(scrimHeight * 0.65);
-  if (designTitle && designTitle.trim()) {
-    ctx.font = `italic 500 ${Math.round(w * 0.028)}px "Playfair Display", Georgia, serif`;
-    ctx.fillStyle = 'rgba(253, 232, 239, 0.95)';
-    ctx.shadowColor = 'rgba(0, 0, 0, 0.6)';
-    ctx.shadowBlur = 6;
-    ctx.fillText(`“${designTitle.trim()}”`, w / 2, currentY);
-    currentY += Math.round(w * 0.038);
-  }
-
-  // Finglora Wordmark with Letterspacing
-  ctx.font = `bold ${Math.round(w * 0.045)}px "Playfair Display", Georgia, serif`;
+  // 2. Draw 'Finglora' Wordmark
+  const textSize = Math.round(badgeHeight * 0.42);
   ctx.fillStyle = '#FFFFFF';
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.7)';
-  ctx.shadowBlur = 8;
-  ctx.fillText('F I N G L O R A', w / 2, currentY);
-
-  // Subtitle / Atelier Tagline
-  currentY += Math.round(w * 0.034);
-  ctx.font = `600 ${Math.round(w * 0.018)}px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif`;
-  ctx.fillStyle = 'rgba(255, 255, 255, 0.85)';
-  ctx.shadowBlur = 4;
-  const tagText = category
-    ? `ATELIER DE MANUCURE • ${category.toUpperCase()} • finglora.com`
-    : 'ATELIER DE MANUCURE • VIRTUAL TRY-ON • finglora.com';
-  ctx.fillText(tagText, w / 2, currentY);
+  ctx.font = `600 ${textSize}px "Playfair Display", Georgia, serif`;
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'middle';
+  const textX = flowerX + Math.round(flowerSize * 0.7);
+  ctx.fillText('Finglora', textX, centerY);
 
   ctx.restore();
 
