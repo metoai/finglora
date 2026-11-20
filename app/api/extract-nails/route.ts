@@ -73,8 +73,11 @@ export async function POST(request: Request) {
       );
     }
 
-    const geminiKey = process.env.GEMINI_API_KEY;
-    if (!geminiKey) {
+    const primaryKey = process.env.GEMINI_API_KEY;
+    const fallbackKey = process.env.GEMINI_FALLBACK_KEY;
+    const candidateKeys = Array.from(new Set([primaryKey, fallbackKey].filter(Boolean))) as string[];
+
+    if (candidateKeys.length === 0) {
       return NextResponse.json(
         { error: 'GEMINI_API_KEY is not configured.' },
         { status: 500 }
@@ -103,44 +106,46 @@ export async function POST(request: Request) {
     let activeModel = 'gemini-3.5-flash-lite';
     let lastErrorMsg = 'Google Gemini analysis request failed';
 
-    for (const model of candidateModels) {
-      try {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              contents: [
-                {
-                  parts: [
-                    { text: MANICURE_PROMPT },
-                    finalBase64
-                      ? { inlineData: { mimeType: finalMimeType, data: finalBase64 } }
-                      : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
-                  ],
+    keyLoop: for (const key of candidateKeys) {
+      for (const model of candidateModels) {
+        try {
+          const geminiRes = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                contents: [
+                  {
+                    parts: [
+                      { text: MANICURE_PROMPT },
+                      finalBase64
+                        ? { inlineData: { mimeType: finalMimeType, data: finalBase64 } }
+                        : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
+                    ],
+                  },
+                ],
+                generationConfig: {
+                  temperature: 0.1,
+                  responseMimeType: 'application/json',
                 },
-              ],
-              generationConfig: {
-                temperature: 0.1,
-                responseMimeType: 'application/json',
-              },
-            }),
-            signal: AbortSignal.timeout(8000),
-          }
-        );
+              }),
+              signal: AbortSignal.timeout(8000),
+            }
+          );
 
-        if (geminiRes.ok) {
-          geminiData = await geminiRes.json();
-          activeModel = model;
-          break;
-        } else {
-          const errorData = await geminiRes.json().catch(() => ({}));
-          lastErrorMsg = errorData?.error?.message || `HTTP ${geminiRes.status}`;
-          console.warn(`[Finglora Gemini Vision] ${model} unavailable (${geminiRes.status}), attempting fallback...`);
+          if (geminiRes.ok) {
+            geminiData = await geminiRes.json();
+            activeModel = model;
+            break keyLoop;
+          } else {
+            const errorData = await geminiRes.json().catch(() => ({}));
+            lastErrorMsg = errorData?.error?.message || `HTTP ${geminiRes.status}`;
+            console.warn(`[Finglora Gemini Vision] ${model} unavailable (${geminiRes.status}: ${lastErrorMsg}), attempting fallback...`);
+          }
+        } catch (err: unknown) {
+          lastErrorMsg = err instanceof Error ? err.message : 'Network error';
         }
-      } catch (err: unknown) {
-        lastErrorMsg = err instanceof Error ? err.message : 'Network error';
       }
     }
 
