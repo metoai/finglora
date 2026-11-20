@@ -19,6 +19,7 @@ import {
   UploadCloud,
   Trash2,
   Sparkles,
+  Search,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -83,6 +84,12 @@ export function ProfileView({
   // Navigation inside Profile: 'settings' | 'favorites'
   const [currentView, setCurrentView] = useState<'settings' | 'favorites'>(initialView);
 
+  useEffect(() => {
+    if (initialView) {
+      setCurrentView(initialView);
+    }
+  }, [initialView]);
+
   // Luxury Editorial Monogram Initials (e.g. "VC" or user initials on refined bordeaux badge)
   const userInitials = useMemo(() => {
     const name = (userName || 'Client').trim();
@@ -118,8 +125,9 @@ export function ProfileView({
   // Notifications toggle
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-  // Favorite filter
+  // Favorite filter & search
   const [favoriteCategory, setFavoriteCategory] = useState<string>('All');
+  const [favoriteSearch, setFavoriteSearch] = useState<string>('');
 
   // File input ref for hand photo upload
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -265,8 +273,17 @@ export function ProfileView({
   // Saved designs list
   const savedDesigns = exploreDesigns.filter((d) => d.isSaved);
   const filteredFavorites = savedDesigns.filter((d) => {
-    if (favoriteCategory === 'All') return true;
-    return d.category === favoriteCategory;
+    const matchesCategory =
+      favoriteCategory === 'All' ||
+      d.category.toLowerCase().includes(favoriteCategory.toLowerCase());
+    const middleNail = d.nails?.middle;
+    const matchesSearch =
+      !favoriteSearch.trim() ||
+      d.title.toLowerCase().includes(favoriteSearch.toLowerCase()) ||
+      d.category.toLowerCase().includes(favoriteSearch.toLowerCase()) ||
+      Boolean(middleNail?.finish && middleNail.finish.toLowerCase().includes(favoriteSearch.toLowerCase())) ||
+      Boolean(middleNail?.shape && middleNail.shape.toLowerCase().includes(favoriteSearch.toLowerCase()));
+    return matchesCategory && matchesSearch;
   });
 
   // Curated recommendations for low-count filler (< 4) or empty state
@@ -306,35 +323,47 @@ export function ProfileView({
   // -------------------------------------------------------------------------
   if (currentView === 'favorites') {
     return (
-      <div className="max-w-xl lg:max-w-6xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 space-y-6 text-[#281720]">
+      <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
         {/* Toast */}
         {toastMessage && (
-          <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
-            <div className="bg-[#281720] text-white text-xs font-medium px-4 py-2 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
+            <div className="bg-[#181416] text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
               <Check className="w-3.5 h-3.5 text-[#E0246A]" />
               <span>{toastMessage}</span>
             </div>
           </div>
         )}
 
-        {/* Header with Back to Profile */}
-        <div className="flex items-center justify-between pb-3 border-b border-[#F0DFE4]">
-          <div className="flex items-center gap-3">
+        {/* 1. Header with Back button, Title, Count Badge, and Explore More link */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200/80">
+          <div className="flex items-center gap-2.5 sm:gap-3">
             <button
               type="button"
-              onClick={() => setCurrentView('settings')}
-              className="w-9 h-9 rounded-full bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-[#281720] flex items-center justify-center transition cursor-pointer active:scale-95"
-              title="Back to Settings"
+              onClick={() => {
+                if (initialView === 'favorites' && onBackClick) {
+                  onBackClick();
+                } else {
+                  setCurrentView('settings');
+                }
+              }}
+              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 hover:text-stone-900 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
+              title="Back"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
-            <div className="flex items-center gap-2">
-              <h1 className="font-serif text-xl sm:text-2xl font-medium text-[#281720]">
-                Saved Designs
-              </h1>
-              <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FDE8EF] text-[#E0246A]">
-                {savedDesigns.length}
-              </span>
+
+            <div>
+              <div className="flex items-center gap-2">
+                <h1 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight leading-tight">
+                  Saved Looks
+                </h1>
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
+                  {savedDesigns.length}
+                </span>
+              </div>
+              <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5">
+                Your personal curated moodboard and try-on collection
+              </p>
             </div>
           </div>
 
@@ -342,28 +371,29 @@ export function ProfileView({
             <button
               type="button"
               onClick={onNavigateLookbook}
-              className="text-xs font-medium text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer"
+              className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer self-start sm:self-auto"
             >
-              <span>Explore More</span>
+              <span>Explore More Pins</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Category Filter Pills */}
-        {savedDesigns.length > 0 && (
-          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
-            {['All', 'French', 'Glazed', 'Aura', 'Minimal'].map((cat) => {
-              const active = favoriteCategory === cat;
+        {/* 2. Search & Category Filters Toolbar */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+          {/* Category Filter Pills */}
+          <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-1 select-none">
+            {['All', 'French', 'Glazed', 'Chrome', 'Velvet', 'Minimal'].map((cat) => {
+              const active = favoriteCategory.toLowerCase() === cat.toLowerCase();
               return (
                 <button
                   key={cat}
                   type="button"
                   onClick={() => setFavoriteCategory(cat)}
-                  className={`h-7 px-3.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 ${
+                  className={`h-8 sm:h-8.5 px-3 sm:px-3.5 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0 ${
                     active
-                      ? 'bg-[#281720] text-white shadow-xs font-semibold'
-                      : 'bg-white text-[#806D76] hover:text-[#281720] border border-[#F0DFE4]'
+                      ? 'bg-stone-900 text-white font-semibold shadow-xs'
+                      : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700'
                   }`}
                 >
                   {cat}
@@ -371,11 +401,34 @@ export function ProfileView({
               );
             })}
           </div>
-        )}
 
-        {/* Responsive Grid of Saved Manicures with 1-Tap Try On */}
+          {/* Quick Search in Saved Designs */}
+          {savedDesigns.length > 0 && (
+            <div className="relative w-full sm:w-64 shrink-0">
+              <Search className="w-3.5 h-3.5 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
+              <input
+                type="text"
+                value={favoriteSearch}
+                onChange={(e) => setFavoriteSearch(e.target.value)}
+                placeholder="Search saved manicures..."
+                className="w-full h-8.5 pl-8 pr-7 rounded-full bg-stone-100 hover:bg-stone-200/60 focus:bg-white focus:ring-2 focus:ring-stone-300 border border-transparent text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none transition"
+              />
+              {favoriteSearch && (
+                <button
+                  type="button"
+                  onClick={() => setFavoriteSearch('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-600 cursor-pointer"
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* 3. Expansive Full-Space Moodboard Grid (2 to 6 columns) */}
         {filteredFavorites.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4.5">
             {filteredFavorites.map((item, idx) => {
               const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
               return (
@@ -384,98 +437,131 @@ export function ProfileView({
                   onClick={() => {
                     onSelectExploreDesign?.(item.id);
                   }}
-                  className="group relative flex flex-col rounded-2xl overflow-hidden bg-white border border-[#F0DFE4] shadow-2xs hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                  className="group relative flex flex-col justify-end rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer aspect-[3/4.2]"
                 >
-                  {/* Photo Container */}
-                  <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#FAF7F2]">
-                    <img
-                      src={photoSrc}
-                      alt={item.title}
-                      loading="lazy"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                      }}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+                  {/* Photo with zoom on hover */}
+                  <img
+                    src={photoSrc}
+                    alt={item.title}
+                    loading="lazy"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).src =
+                        EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                    }}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-104 transition-transform duration-500 ease-out"
+                  />
 
-                    {/* Heart Unsave Button */}
-                    <button
-                      type="button"
-                      title="Remove from favorites"
-                      onClick={(e) => handleToggleFavorite(item.id, e)}
-                      className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center text-[#E0246A] hover:scale-110 active:scale-90 transition shadow-xs cursor-pointer z-10"
-                    >
-                      <Heart className="w-4 h-4 fill-[#E0246A]" />
-                    </button>
+                  {/* Gradient Scrim */}
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
-                    {/* Category Pill */}
-                    <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs">
+                  {/* Category Badge top-left */}
+                  <div className="absolute top-2.5 left-2.5 z-10">
+                    <span className="px-2.5 py-0.5 rounded-full bg-black/50 text-white text-[9.5px] font-semibold backdrop-blur-xs capitalize border border-white/10">
                       {item.category}
                     </span>
-
-                    {/* 1-Tap Try On Button on Card Bottom */}
-                    <div className="absolute inset-x-2.5 bottom-2.5">
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onSelectExploreDesign?.(item.id);
-                        }}
-                        className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
-                      >
-                        <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                        <span>Try On</span>
-                      </button>
-                    </div>
                   </div>
 
-                  {/* Card Title */}
-                  <div className="p-2.5 bg-white">
-                    <p className="text-xs font-semibold text-[#281720] truncate">{item.title}</p>
+                  {/* Heart Unsave Button top-right */}
+                  <button
+                    type="button"
+                    title="Remove from favorites"
+                    onClick={(e) => handleToggleFavorite(item.id, e)}
+                    className="absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center text-[#E0246A] hover:scale-110 active:scale-90 transition shadow-xs cursor-pointer z-10"
+                  >
+                    <Heart className="w-4 h-4 fill-[#E0246A]" />
+                  </button>
+
+                  {/* Card Bottom Details & 1-Tap Try On */}
+                  <div className="relative z-10 p-3 sm:p-3.5 space-y-2">
+                    <div>
+                      <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs truncate">
+                        {item.title}
+                      </h4>
+                      <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5 truncate">
+                        {item.nails?.middle?.finish || 'Gel Gloss'} · <span className="capitalize">{item.nails?.middle?.shape || 'Almond'}</span>
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onSelectExploreDesign?.(item.id);
+                      }}
+                      className="w-full h-8 sm:h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] sm:text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    >
+                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                      <span>Try On</span>
+                    </button>
                   </div>
                 </div>
               );
             })}
           </div>
-        ) : (
-          <div className="bg-white rounded-3xl p-8 sm:p-12 border border-[#F0DFE4] text-center space-y-3">
-            <div className="w-12 h-12 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center mx-auto">
-              <Heart className="w-6 h-6 text-[#E0246A]" />
-            </div>
-            <h3 className="text-sm font-semibold text-[#281720]">No Saved Designs Yet</h3>
-            <p className="text-xs text-[#806D76] max-w-sm mx-auto">
-              Tap the heart icon on any curated manicure look to build your personal bespoke try-on collection.
+        ) : savedDesigns.length > 0 ? (
+          /* Empty search result */
+          <div className="bg-stone-50 rounded-3xl p-8 sm:p-12 border border-stone-200 text-center space-y-3">
+            <p className="text-sm font-medium text-stone-700">
+              No saved manicures match &ldquo;{favoriteSearch}&rdquo;
             </p>
+            <button
+              type="button"
+              onClick={() => {
+                setFavoriteSearch('');
+                setFavoriteCategory('All');
+              }}
+              className="h-8.5 px-4 rounded-full bg-stone-900 text-white text-xs font-semibold transition cursor-pointer active:scale-95"
+            >
+              Clear Filters
+            </button>
+          </div>
+        ) : (
+          /* Empty State: 0 saved designs */
+          <div className="bg-white rounded-3xl p-8 sm:p-14 border border-stone-200 text-center space-y-4 max-w-lg mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center mx-auto shadow-2xs">
+              <Heart className="w-7 h-7 text-[#E0246A]" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-serif font-medium text-stone-900">
+                Your Saved Collection is Empty
+              </h3>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+                Tap the heart on any manicure from Inspiration or Virtual Try-On to curate your bespoke favorites moodboard.
+              </p>
+            </div>
+
             {onNavigateLookbook && (
-              <button
-                type="button"
-                onClick={onNavigateLookbook}
-                className="mt-2 h-9 px-4 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-medium transition cursor-pointer inline-flex items-center gap-1.5 shadow-2xs active:scale-95"
-              >
-                <Compass className="w-3.5 h-3.5" />
-                <span>Explore Designs</span>
-              </button>
+              <div className="pt-2 flex justify-center gap-2">
+                <button
+                  type="button"
+                  onClick={onNavigateLookbook}
+                  className="h-10 px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-xs active:scale-95"
+                >
+                  <Compass className="w-4 h-4" />
+                  <span>Explore Manicures</span>
+                </button>
+              </div>
             )}
           </div>
         )}
 
-        {/* Rich Low-Count / Empty Filler: Trending to Discover section */}
-        {filteredFavorites.length < 4 && recommendations.length > 0 && (
-          <div className="pt-6 sm:pt-8 border-t border-[#F0DFE4] space-y-4">
+        {/* 4. Rich Trending to Discover Section (Fills the space when favorites are few) */}
+        {filteredFavorites.length < 6 && recommendations.length > 0 && (
+          <div className="pt-8 sm:pt-10 border-t border-stone-200/80 space-y-4">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
                 <div className="flex items-center gap-2">
                   <Sparkles className="w-4 h-4 text-[#E0246A]" />
-                  <h2 className="font-serif text-lg sm:text-xl font-medium text-[#281720]">
+                  <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
                     Trending to Discover
                   </h2>
                 </div>
-                <p className="text-xs text-[#806D76]">
-                  High-fashion editorial looks to inspire your collection
+                <p className="text-xs text-stone-500">
+                  Curated editorial looks ready for your moodboard and instant 1-tap try-on
                 </p>
               </div>
+
               {onNavigateLookbook && (
                 <button
                   type="button"
@@ -488,7 +574,7 @@ export function ProfileView({
               )}
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3 sm:gap-4.5">
               {recommendations.map((item, idx) => {
                 const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
                 return (
@@ -497,79 +583,84 @@ export function ProfileView({
                     onClick={() => {
                       onSelectExploreDesign?.(item.id);
                     }}
-                    className="group relative flex flex-col rounded-2xl overflow-hidden bg-white border border-[#F0DFE4] shadow-2xs hover:shadow-md transition-all cursor-pointer active:scale-[0.98]"
+                    className="group relative flex flex-col justify-end rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer aspect-[3/4.2]"
                   >
-                    <div className="relative aspect-[3/4] w-full overflow-hidden bg-[#FAF7F2]">
-                      <img
-                        src={photoSrc}
-                        alt={item.title}
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                        }}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/10 to-transparent pointer-events-none" />
+                    <img
+                      src={photoSrc}
+                      alt={item.title}
+                      loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                      }}
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-104 transition-transform duration-500 ease-out"
+                    />
 
-                      {/* Heart Save / Add Button */}
-                      <button
-                        type="button"
-                        title={item.isSaved ? 'Remove from favorites' : 'Save to favorites'}
-                        onClick={async (e) => {
-                          e.stopPropagation();
-                          if (setExploreDesigns) {
-                            const nextSaved = !item.isSaved;
-                            setExploreDesigns((prev) =>
-                              prev.map((x) => (x.id === item.id ? { ...x, isSaved: nextSaved } : x))
-                            );
-                            showToast(nextSaved ? 'Saved to favorites' : 'Removed from favorites');
-                            try {
-                              const user = await getCurrentUser();
-                              if (user?.id) {
-                                await toggleSetFavorite(user.id, item.id, nextSaved);
-                              }
-                            } catch (err) {
-                              console.warn('Favorite sync skipped:', err);
-                            }
-                          }
-                        }}
-                        className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center transition shadow-xs cursor-pointer z-10 ${
-                          item.isSaved
-                            ? 'text-[#E0246A]'
-                            : 'text-[#806D76] hover:text-[#E0246A] hover:scale-110 active:scale-90'
-                        }`}
-                      >
-                        <Heart
-                          className={`w-4 h-4 ${item.isSaved ? 'fill-[#E0246A]' : ''}`}
-                          strokeWidth={1.75}
-                        />
-                      </button>
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
 
-                      {/* Category Pill */}
-                      <span className="absolute top-2.5 left-2.5 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-black/60 text-white backdrop-blur-xs">
+                    {/* Category Tag */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2.5 py-0.5 rounded-full bg-black/50 text-white text-[9.5px] font-semibold backdrop-blur-xs capitalize border border-white/10">
                         {item.category}
                       </span>
-
-                      {/* 1-Tap Try On Button */}
-                      <div className="absolute inset-x-2.5 bottom-2.5">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectExploreDesign?.(item.id);
-                          }}
-                          className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
-                        >
-                          <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                          <span>Try On</span>
-                        </button>
-                      </div>
                     </div>
 
-                    {/* Card Title */}
-                    <div className="p-2.5 bg-white">
-                      <p className="text-xs font-semibold text-[#281720] truncate">{item.title}</p>
+                    {/* Heart Save / Add Button */}
+                    <button
+                      type="button"
+                      title={item.isSaved ? 'Remove from favorites' : 'Save to favorites'}
+                      onClick={async (e) => {
+                        e.stopPropagation();
+                        if (setExploreDesigns) {
+                          const nextSaved = !item.isSaved;
+                          setExploreDesigns((prev) =>
+                            prev.map((x) => (x.id === item.id ? { ...x, isSaved: nextSaved } : x))
+                          );
+                          showToast(nextSaved ? 'Saved to favorites' : 'Removed from favorites');
+                          try {
+                            const user = await getCurrentUser();
+                            if (user?.id) {
+                              await toggleSetFavorite(user.id, item.id, nextSaved);
+                            }
+                          } catch (err) {
+                            console.warn('Favorite sync skipped:', err);
+                          }
+                        }
+                      }}
+                      className={`absolute top-2.5 right-2.5 w-8 h-8 rounded-full bg-white/95 backdrop-blur-sm flex items-center justify-center transition shadow-xs cursor-pointer z-10 ${
+                        item.isSaved
+                          ? 'text-[#E0246A]'
+                          : 'text-stone-400 hover:text-[#E0246A] hover:scale-110 active:scale-90'
+                      }`}
+                    >
+                      <Heart
+                        className={`w-4 h-4 ${item.isSaved ? 'fill-[#E0246A] text-[#E0246A]' : ''}`}
+                        strokeWidth={1.75}
+                      />
+                    </button>
+
+                    {/* Card Bottom Details & 1-Tap Try On */}
+                    <div className="relative z-10 p-3 sm:p-3.5 space-y-2">
+                      <div>
+                        <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs truncate">
+                          {item.title}
+                        </h4>
+                        <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5 truncate">
+                          {item.nails?.middle?.finish || 'Gel Gloss'} · <span className="capitalize">{item.nails?.middle?.shape || 'Almond'}</span>
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onSelectExploreDesign?.(item.id);
+                        }}
+                        className="w-full h-8 sm:h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] sm:text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                      >
+                        <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                        <span>Try On</span>
+                      </button>
                     </div>
                   </div>
                 );

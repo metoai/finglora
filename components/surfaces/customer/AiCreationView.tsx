@@ -1,6 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
-  Sliders,
   Send,
   RotateCcw,
   ArrowLeft,
@@ -10,6 +9,14 @@ import {
   Download,
   Share2,
   Sparkles,
+  ChevronDown,
+  Plus,
+  Hand,
+  Check,
+  Copy,
+  Sliders,
+  Eye,
+  MessageSquare,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
@@ -25,6 +32,39 @@ interface ChatMessage {
   appliedDesignTitle?: string;
   imageUrl?: string;
 }
+
+const CHATGPT_SUGGESTION_PROMPTS = [
+  {
+    title: 'Glazed Donut Chrome',
+    subtitle: 'Pearlescent glazed chrome on soft almond silhouette',
+    prompt: 'Glazed donut chrome with soft pearlescent shimmer on almond nails',
+  },
+  {
+    title: 'Micro French Tips',
+    subtitle: 'Clean milky rubber base with crisp ultra-thin white tips',
+    prompt: 'Micro French tips with sheer pink rubber base and crisp white smile line',
+  },
+  {
+    title: 'Cherry Mocha Velvet',
+    subtitle: 'Deep burgundy aura with high-gloss mirror gel shine',
+    prompt: 'Cherry mocha velvet burgundy nails with deep mirror gloss finish',
+  },
+  {
+    title: 'Blush Ribbon Coquette',
+    subtitle: 'Sheer strawberry milk base with delicate hand-drawn ribbon art',
+    prompt: 'Blush pink coquette nails with delicate white ribbon bow accents',
+  },
+];
+
+const QUICK_CHIPS = [
+  'Glazed Chrome',
+  'French Tips',
+  'Cherry Mocha',
+  'Almond Shape',
+  'Velvet Aura',
+  'Micro Glitter',
+  'Square Tips',
+];
 
 export function AiCreationView({
   customTryOnHandUrl,
@@ -53,6 +93,8 @@ export function AiCreationView({
   const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
   const [exportToast, setExportToast] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'canvas'>('chat');
 
   // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
   const originalBareHandPhoto =
@@ -96,24 +138,26 @@ export function AiCreationView({
         },
       ];
     }
-    return [
-      {
-        id: '1',
-        sender: 'gemini',
-        text: "Your hand is ready. Describe any design or adjustment you'd like to create, such as nail shape, color, finish, or artistry.",
-        timestamp: 'Just now',
-        imageUrl: initialHandDesignUrl || originalBareHandPhoto,
-        appliedDesignTitle: 'Starting Hand',
-      },
-    ];
+    return [];
   });
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const executedInitialPromptRef = useRef<string | null>(null);
 
+  // Auto-scroll chat
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+  }, [messages, isIterating]);
+
+  // Adjust textarea height like ChatGPT
+  const handleTextareaInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setPromptText(e.target.value);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${Math.min(textareaRef.current.scrollHeight, 120)}px`;
+    }
+  };
 
   // Main Prompt Execution Function
   const executePrompt = async (text: string, isInitialCreation = false) => {
@@ -133,7 +177,6 @@ export function AiCreationView({
 
     try {
       // 1. Downscale hand image for vision model
-      // If initial creation, always anchor directly to the user's natural bare hand photo
       const baseSource = isInitialCreation ? originalBareHandPhoto : (currentTryOnImage || originalBareHandPhoto);
       let handBase64 = '';
       if (baseSource.startsWith('data:image/')) {
@@ -170,8 +213,8 @@ export function AiCreationView({
             id: (Date.now() + 1).toString(),
             sender: 'gemini',
             text: isInitialCreation
-              ? `Created "${trimmed}" directly on your hand! Describe any adjustments or details you'd like to refine.`
-              : `Applied "${trimmed}" directly onto your hand in photorealistic detail. What else would you like to customize?`,
+              ? `Created "${trimmed}" directly on your hand in high-definition salon gel realism. What adjustments would you like to refine?`
+              : `Applied "${trimmed}" directly onto your hand. All fingernails have been updated with seamless edge blending.`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
             appliedDesignTitle: trimmed,
             imageUrl: data.imageUrl,
@@ -186,7 +229,7 @@ export function AiCreationView({
       const is429 = res.status === 429 || errJson?.isRateLimit;
       const errorMsg = is429
         ? 'Service is experiencing high demand. Please wait a moment and try again.'
-        : `Could not apply "${trimmed}". Please try describing the change differently.`;
+        : `Could not apply "${trimmed}". Please try describing the change with different details.`;
 
       const geminiErr: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -199,7 +242,7 @@ export function AiCreationView({
       const geminiErr: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'gemini',
-        text: 'Connection error. Please try again.',
+        text: 'Connection error while contacting AI atelier. Please try again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, geminiErr]);
@@ -230,7 +273,23 @@ export function AiCreationView({
 
     setMessages((prev) => [...prev, userMsg]);
     setPromptText('');
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+    }
     executePrompt(text, false);
+  };
+
+  const handleStartNewLook = () => {
+    setMessages([]);
+    setPromptText('');
+    setCurrentTryOnImage(originalBareHandPhoto);
+    setCompareMode('after');
+  };
+
+  const handleCopyText = (id: string, text: string) => {
+    navigator.clipboard?.writeText(text);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
   };
 
   const handleDownloadBrandedLook = async (targetImg?: string | null, title?: string) => {
@@ -242,7 +301,7 @@ export function AiCreationView({
         designTitle: title || 'Custom AI Manicure',
         filename: `finglora-${(title || 'ai-manicure').toLowerCase().replace(/\s+/g, '-')}.jpg`,
       });
-      setExportToast('High-resolution photo saved with Finglora brand');
+      setExportToast('High-resolution manicure photo saved with Finglora atelier brand');
       setTimeout(() => setExportToast(null), 3000);
     } catch {
       setExportToast('Could not download image. Please try again.');
@@ -259,11 +318,11 @@ export function AiCreationView({
     try {
       const res = await shareToStoryOrSocial(imgUrl, {
         designTitle: title || 'Custom AI Manicure',
-        filename: `finglora-story-${(title || 'ai-look').toLowerCase().replace(/\s+/g, '-')}.jpg`,
+        filename: `finglora-story-${(title || 'ai-manicure').toLowerCase().replace(/\s+/g, '-')}.jpg`,
         storyAspect: true,
       });
       if (res.mode === 'shared') {
-        setExportToast('Opening story share sheet...');
+        setExportToast('Story sheet opened');
       } else {
         setExportToast('Story photo downloaded with Finglora branding');
       }
@@ -277,7 +336,7 @@ export function AiCreationView({
   };
 
   return (
-    <div className="w-full max-w-6xl xl:max-w-7xl mx-auto h-full flex flex-col min-h-0 py-2 sm:py-4 px-3 sm:px-6 gap-2 sm:gap-4">
+    <div className="w-full h-full flex flex-col bg-white text-stone-900 overflow-hidden select-none">
       {/* Toast Notification */}
       {exportToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -288,312 +347,479 @@ export function AiCreationView({
         </div>
       )}
 
-      {/* Editorial Header */}
-      <div className="flex items-center justify-between gap-3 pb-2 sm:pb-3 border-b border-stone-200/80 shrink-0">
-        <div className="flex items-center gap-2.5 sm:gap-3">
+      {/* 1. ChatGPT-Style Clean White Header */}
+      <header className="h-13 sm:h-14 border-b border-stone-200/80 px-3 sm:px-6 flex items-center justify-between shrink-0 bg-white z-20">
+        {/* Left: Back button + Model dropdown badge */}
+        <div className="flex items-center gap-2 sm:gap-3">
           {onBackToTryOn && (
             <button
               type="button"
               onClick={onBackToTryOn}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-stone-200 hover:border-[#E0246A] flex items-center justify-center text-stone-700 hover:text-[#E0246A] transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
+              className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-600 hover:text-stone-900 transition cursor-pointer active:scale-95"
               title="Back to Virtual Try-On"
             >
               <ArrowLeft className="w-4 h-4" />
             </button>
           )}
-          <div>
-            <span className="text-[9px] sm:text-[10px] font-mono tracking-wider text-stone-400 uppercase block leading-none mb-0.5">
-              Virtual Studio
+
+          {/* ChatGPT Model Selector Pill */}
+          <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg hover:bg-stone-100 transition cursor-pointer group">
+            <span className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight">
+              Finglora AI
             </span>
-            <h1 className="font-serif text-lg sm:text-2xl font-normal text-stone-900 tracking-tight leading-tight">
-              Create with AI
-            </h1>
+            <span className="text-[11px] font-medium text-stone-400 group-hover:text-stone-600 hidden sm:inline">
+              Vision 3.1
+            </span>
+            <ChevronDown className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-600" />
           </div>
         </div>
 
-        <div className="flex items-center gap-2 shrink-0">
-          {/* Active Hand Thumbnail on Mobile (Tap to inspect anytime) */}
+        {/* Center on Mobile: Tab toggle between Chat and Hand Canvas */}
+        <div className="flex lg:hidden items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/70">
           <button
             type="button"
-            onClick={() => {
-              setZoomImageUrl(currentTryOnImage);
-              setIsZoomOpen(true);
-            }}
-            className="flex lg:hidden items-center gap-1.5 p-1 rounded-full bg-white border border-stone-200 shadow-2xs cursor-pointer hover:border-[#E0246A] transition active:scale-95"
-            title="Inspect Active Hand"
+            onClick={() => setMobileActiveTab('chat')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+              mobileActiveTab === 'chat'
+                ? 'bg-white text-stone-900 shadow-2xs font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
           >
-            <img
-              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
-              alt="Active Hand"
-              className="w-6 h-6 rounded-full object-cover"
-            />
-            <span className="text-[10px] font-medium text-stone-600 pr-1.5">Inspect</span>
+            <MessageSquare className="w-3 h-3" />
+            <span>Chat</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMobileActiveTab('canvas')}
+            className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer flex items-center gap-1.5 ${
+              mobileActiveTab === 'canvas'
+                ? 'bg-white text-stone-900 shadow-2xs font-semibold'
+                : 'text-stone-500 hover:text-stone-800'
+            }`}
+          >
+            <Hand className="w-3 h-3 text-[#E0246A]" />
+            <span>Hand Canvas</span>
+          </button>
+        </div>
+
+        {/* Right: Quick Actions (+ New Look, Download HD, Share) */}
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <button
+            type="button"
+            onClick={handleStartNewLook}
+            className="h-8 sm:h-8.5 px-2.5 sm:px-3 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+            title="Start fresh look"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            <span className="hidden sm:inline">New Look</span>
           </button>
 
-          <div className="hidden sm:flex items-center gap-1.5 px-2.5 py-1 sm:px-3 sm:py-1.5 rounded-full bg-stone-100 border border-stone-200/60 text-[11px] sm:text-xs font-medium text-stone-700 shadow-2xs">
-            <Sliders className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
-            <span>Atelier Studio</span>
-          </div>
+          <button
+            type="button"
+            onClick={() => handleDownloadBrandedLook(currentTryOnImage)}
+            disabled={isExporting}
+            className="w-8 h-8 rounded-full hover:bg-stone-100 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 disabled:opacity-50"
+            title="Download high-resolution image"
+          >
+            <Download className="w-4 h-4" />
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleShareToStory(currentTryOnImage)}
+            disabled={isExporting}
+            className="w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
+            title="Share to Instagram Story"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+          </button>
         </div>
-      </div>
+      </header>
 
-      {/* Main Studio Area:
-          - Mobile (< lg): Conversational studio timeline where each new design appears inline as a card in the chat
-          - Desktop (lg+): 12-column grid with hand viewport on left and chat on right
-      */}
-      <div className="flex-1 min-h-0 flex flex-col lg:grid lg:grid-cols-12 gap-2.5 sm:gap-4 lg:gap-6 items-stretch">
-        {/* Desktop Left Column: Large Constant Viewport (7 Cols on desktop, HIDDEN ON MOBILE so mobile flows as dynamic timeline) */}
-        <div className="hidden lg:flex lg:col-span-7 flex-col items-center justify-center min-h-0">
-          <div className="relative h-full max-h-[620px] aspect-[3/4] rounded-3xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200/90 flex items-center justify-center mx-auto transition-all duration-200 shrink-0 group">
-            {isIterating && (
-              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white text-center p-4">
-                <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
-                <span className="text-sm font-semibold tracking-wide">
-                  Creating manicure...
-                </span>
-                <span className="text-xs text-stone-300">
-                  Fitting requested nail art to your fingernails
-                </span>
-              </div>
-            )}
+      {/* 2. Full-Space Workspace: Desktop Split Screen / Mobile View Switcher */}
+      <div className="flex-1 min-h-0 w-full flex overflow-hidden">
+        {/* ============================================================== */}
+        {/* LEFT PANE: PHOTOREALISTIC HAND CANVAS                          */}
+        {/* (Full width on mobile when tab='canvas', 48% on desktop)       */}
+        {/* ============================================================== */}
+        <div
+          className={`${
+            mobileActiveTab === 'canvas' ? 'flex' : 'hidden lg:flex'
+          } w-full lg:w-[46%] xl:w-[44%] h-full flex-col bg-[#F9F9F9] border-r border-stone-200/80 p-3 sm:p-5 lg:p-6 justify-between items-center relative overflow-hidden`}
+        >
+          {/* Top Canvas Bar */}
+          <div className="w-full flex items-center justify-between z-10">
+            {/* Pill Toggle: [Natural Hand] [Manicure] */}
+            <div className="inline-flex rounded-full bg-white p-0.5 border border-stone-200 shadow-2xs">
+              <button
+                type="button"
+                onClick={() => setCompareMode('before')}
+                className={`px-3 py-1 rounded-full text-xs transition cursor-pointer ${
+                  compareMode === 'before'
+                    ? 'bg-stone-900 text-white font-semibold shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                Natural Hand
+              </button>
+              <button
+                type="button"
+                onClick={() => setCompareMode('after')}
+                className={`px-3 py-1 rounded-full text-xs transition cursor-pointer ${
+                  compareMode === 'after'
+                    ? 'bg-[#E0246A] text-white font-semibold shadow-2xs'
+                    : 'text-stone-600 hover:text-stone-900'
+                }`}
+              >
+                Manicure Look
+              </button>
+            </div>
 
-            {/* Photorealistic Hand */}
-            <img
-              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
-              alt="Hand Try-On"
+            {/* Quick Fullscreen Inspector */}
+            <button
+              type="button"
               onClick={() => {
                 setZoomImageUrl(currentTryOnImage);
                 setIsZoomOpen(true);
               }}
-              className="w-full h-full object-cover transition duration-200 cursor-pointer"
-              title="Click to zoom in"
-            />
-
-            {/* Badges & Controls */}
-            <div className="absolute top-3 left-3 z-20">
-              <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
-                {compareMode === 'after' ? 'Manicure' : 'Natural Hand'}
-              </span>
-            </div>
-
-            <div className="absolute top-3 right-3 z-20 flex items-center gap-1.5">
-              <button
-                type="button"
-                onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
-                className="px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-xs flex items-center gap-1 cursor-pointer transition active:scale-95"
-              >
-                <RotateCcw className="w-3 h-3 text-stone-600" />
-                <span>{compareMode === 'after' ? 'Hold for Natural' : 'View Manicure'}</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleDownloadBrandedLook(currentTryOnImage)}
-                disabled={isExporting}
-                className="w-7 h-7 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                title="Download HD with Finglora Brand"
-              >
-                <Download className="w-3.5 h-3.5 text-stone-700" />
-              </button>
-              <button
-                type="button"
-                onClick={() => handleShareToStory(currentTryOnImage)}
-                disabled={isExporting}
-                className="w-7 h-7 rounded-full bg-gradient-to-tr from-[#E0246A] to-[#C2185B] text-white shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                title="Share to Social Stories"
-              >
-                <Share2 className="w-3.5 h-3.5 text-white" />
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setZoomImageUrl(currentTryOnImage);
-                  setIsZoomOpen(true);
-                }}
-                className="w-7 h-7 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95"
-                title="Inspect Fullscreen"
-              >
-                <Maximize2 className="w-3.5 h-3.5 text-stone-600" />
-              </button>
-            </div>
+              className="w-8 h-8 rounded-full bg-white border border-stone-200 text-stone-700 hover:text-stone-900 shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95"
+              title="Inspect Fullscreen"
+            >
+              <Maximize2 className="w-3.5 h-3.5" />
+            </button>
           </div>
 
-          <div className="text-center text-[11px] text-stone-400 mt-2">
-            Hand anatomy, skin tone, fingers, and lighting remain constant across all prompts.
-          </div>
-        </div>
-
-        {/* Right Column / Mobile Full Area: Conversational AI Prompt Stream & Input Dock */}
-        <div className="lg:col-span-5 flex-1 min-h-0 flex flex-col rounded-2xl lg:rounded-3xl bg-white border border-stone-200/90 shadow-sm overflow-hidden">
-          {/* Stream Header */}
-          <div className="px-3 py-2 sm:px-3.5 sm:py-2.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/70 shrink-0">
-            <div className="flex items-center gap-1.5">
-              <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-xs font-semibold text-stone-800">
-                Atelier AI Assistant
-              </span>
-            </div>
-            <span className="text-[10px] text-stone-400 font-mono">Live Studio Timeline</span>
-          </div>
-
-          {/* Messages Body (scrollable) */}
-          <div className="flex-1 min-h-0 p-2.5 sm:p-4 overflow-y-auto space-y-3 scrollbar-thin">
-            {messages.map((msg) => {
-              const isUser = msg.sender === 'user';
-              return (
-                <div
-                  key={msg.id}
-                  className={`flex flex-col ${isUser ? 'items-end' : 'items-start'}`}
-                >
-                  <div
-                    className={`max-w-[88%] sm:max-w-[85%] rounded-2xl px-3 sm:px-3.5 py-2 sm:py-2.5 text-xs leading-relaxed ${
-                      isUser
-                        ? 'bg-[#E0246A] text-white shadow-xs rounded-br-xs'
-                        : 'bg-stone-100 text-stone-800 rounded-bl-xs'
-                    }`}
-                  >
-                    <p>{msg.text}</p>
-
-                    {/* Generated Design Card (Inline in the message stream!) */}
-                    {msg.imageUrl && (
-                      <div className="mt-2.5 rounded-xl sm:rounded-2xl overflow-hidden bg-stone-200 border border-stone-300/80 shadow-xs relative group max-w-[240px] xs:max-w-[260px] sm:max-w-[280px] aspect-[3/4]">
-                        <img
-                          src={msg.imageUrl}
-                          alt={msg.appliedDesignTitle || 'Manicure Design'}
-                          className="w-full h-full object-cover cursor-pointer transition group-hover:scale-[1.02] duration-200"
-                          onClick={() => {
-                            setZoomImageUrl(msg.imageUrl || null);
-                            setIsZoomOpen(true);
-                          }}
-                          title="Click to zoom in"
-                        />
-                        {/* Badges on card */}
-                        <div className="absolute top-2 left-2 z-10">
-                          <span className="px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[9px] font-medium">
-                            {msg.appliedDesignTitle || 'Manicure'}
-                          </span>
-                        </div>
-                        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleDownloadBrandedLook(msg.imageUrl, msg.appliedDesignTitle);
-                            }}
-                            disabled={isExporting}
-                            className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                            title="Download HD with Finglora Brand"
-                          >
-                            <Download className="w-3 h-3 text-stone-700" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleShareToStory(msg.imageUrl, msg.appliedDesignTitle);
-                            }}
-                            disabled={isExporting}
-                            className="w-6 h-6 rounded-full bg-gradient-to-tr from-[#E0246A] to-[#C2185B] text-white shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                            title="Share to Social Stories"
-                          >
-                            <Share2 className="w-3 h-3 text-white" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setZoomImageUrl(msg.imageUrl || null);
-                              setIsZoomOpen(true);
-                            }}
-                            className="w-6 h-6 rounded-full bg-white/90 hover:bg-white text-stone-800 shadow-xs flex items-center justify-center cursor-pointer transition active:scale-95"
-                            title="Fullscreen inspector"
-                          >
-                            <Maximize2 className="w-3 h-3 text-stone-600" />
-                          </button>
-                        </div>
-                        {/* Bottom tap hint */}
-                        <div
-                          onClick={() => {
-                            setZoomImageUrl(msg.imageUrl || null);
-                            setIsZoomOpen(true);
-                          }}
-                          className="absolute inset-x-0 bottom-0 py-1.5 px-2.5 bg-gradient-to-t from-black/70 to-transparent flex items-center justify-between text-white text-[9px] font-medium cursor-pointer"
-                        >
-                          <span>{msg.appliedDesignTitle || 'New Design'}</span>
-                          <span className="text-white/90 underline text-[9px]">Tap to inspect</span>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                  <span className="text-[9px] text-stone-400 px-1 mt-0.5">{msg.timestamp}</span>
-                </div>
-              );
-            })}
-
-            {/* In-stream Assistant Loading State */}
+          {/* Main Hand Viewport */}
+          <div className="relative w-full max-w-[440px] aspect-[3/4] my-auto rounded-3xl overflow-hidden bg-stone-200/70 border border-stone-300/80 shadow-md flex items-center justify-center group">
             {isIterating && (
-              <div className="flex flex-col items-start animate-in fade-in duration-200">
-                <div className="bg-stone-100 text-stone-800 rounded-2xl rounded-bl-xs px-3.5 py-2.5 text-xs flex items-center gap-2.5 shadow-2xs border border-stone-200/80">
-                  <Loader2 className="w-4 h-4 animate-spin text-[#E0246A] shrink-0" />
-                  <div>
-                    <span className="font-semibold text-stone-900 block text-xs">
-                      Creating new manicure on your hand...
-                    </span>
-                    <span className="text-[10px] text-stone-500">
-                      Fitting requested nail art to your fingernails
-                    </span>
-                  </div>
+              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white text-center p-6 animate-in fade-in duration-200">
+                <Loader2 className="w-9 h-9 animate-spin text-[#E0246A]" />
+                <div className="space-y-1">
+                  <span className="text-sm font-semibold tracking-wide block">
+                    Generating Bespoke Manicure...
+                  </span>
+                  <span className="text-xs text-stone-300 block max-w-xs leading-relaxed">
+                    Preserving hand anatomy, finger pose, and lighting with high-gloss salon gel clearcoat
+                  </span>
                 </div>
               </div>
             )}
 
-            <div ref={chatEndRef} />
-          </div>
+            <img
+              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
+              alt="Live Hand Viewport"
+              onClick={() => {
+                setZoomImageUrl(currentTryOnImage);
+                setIsZoomOpen(true);
+              }}
+              className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102 cursor-pointer"
+              title="Click to zoom in"
+            />
 
-          {/* Prompt Suggestions */}
-          <div className="px-2.5 py-1.5 sm:px-3 sm:py-2 border-t border-stone-100 bg-stone-50/40 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0">
-            {[
-              'Almond shape',
-              'White French tips',
-              'Glazed chrome finish',
-              'Deep bordeaux lacquer',
-              'Velvet aura gradient',
-            ].map((sug, i) => (
+            {/* Live Indicator Pill */}
+            <div className="absolute top-3 left-3 z-20">
+              <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
+                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{compareMode === 'after' ? 'Manicure Active' : 'Natural Hand'}</span>
+              </span>
+            </div>
+
+            {/* Hold to Compare floating button */}
+            <div className="absolute bottom-3 inset-x-0 flex justify-center z-20 pointer-events-none">
               <button
-                key={i}
                 type="button"
-                onClick={() => setPromptText(sug)}
-                className="px-2.5 py-1 rounded-full bg-white border border-stone-200 text-[10px] font-medium text-stone-600 hover:text-stone-900 hover:border-[#E0246A] transition whitespace-nowrap cursor-pointer shrink-0 active:scale-95"
+                onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
+                className="pointer-events-auto px-3.5 py-1.5 rounded-full bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-stone-200/60"
               >
-                + {sug}
+                <RotateCcw className="w-3 h-3 text-[#E0246A]" />
+                <span>{compareMode === 'after' ? 'View Natural Hand' : 'View Manicure'}</span>
               </button>
-            ))}
+            </div>
           </div>
 
-          {/* Input Bar */}
-          <div className="p-2 sm:p-3 border-t border-stone-200 bg-white shrink-0">
+          {/* Bottom Anatomy Note */}
+          <div className="w-full text-center text-[11px] text-stone-400 font-mono tracking-tight pt-1">
+            Hand anatomy, skin tone, and lighting locked · Photorealistic LED gel clearcoat
+          </div>
+        </div>
+
+        {/* ============================================================== */}
+        {/* RIGHT PANE: CHATGPT LIGHT-MODE CONVERSATIONAL ASSISTANT        */}
+        {/* (Full width on mobile when tab='chat', 54% on desktop)         */}
+        {/* ============================================================== */}
+        <div
+          className={`${
+            mobileActiveTab === 'chat' ? 'flex' : 'hidden lg:flex'
+          } w-full lg:w-[54%] xl:w-[56%] h-full flex-col bg-white justify-between overflow-hidden relative`}
+        >
+          {/* Scrollable Message History Area */}
+          <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-8 lg:px-12 py-4 sm:py-6 space-y-6 scrollbar-thin">
+            {/* If no messages yet: Show ChatGPT-Style Welcome Hero with 4 Suggestion Cards */}
+            {messages.length === 0 ? (
+              <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto py-8 sm:py-12 space-y-6 animate-in fade-in duration-300">
+                {/* Brand Monogram */}
+                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shadow-2xs">
+                  <Sparkles className="w-7 h-7 sm:w-8 sm:h-8" strokeWidth={1.75} />
+                </div>
+
+                <div className="space-y-1.5">
+                  <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
+                    What look are we creating today?
+                  </h2>
+                  <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
+                    Describe any manicure, shape, color, or finish. Finglora AI applies it directly onto your hand in photorealistic detail.
+                  </p>
+                </div>
+
+                {/* 2x2 Clean Suggestion Cards */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3 w-full text-left pt-2">
+                  {CHATGPT_SUGGESTION_PROMPTS.map((card, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setPromptText(card.prompt);
+                        if (textareaRef.current) {
+                          textareaRef.current.focus();
+                        }
+                      }}
+                      className="p-3 sm:p-3.5 rounded-2xl border border-stone-200/80 hover:border-stone-300 hover:bg-stone-50/80 transition-all text-left cursor-pointer group active:scale-98 shadow-2xs space-y-1"
+                    >
+                      <h4 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors">
+                        {card.title}
+                      </h4>
+                      <p className="text-[11px] text-stone-500 leading-normal line-clamp-2">
+                        {card.subtitle}
+                      </p>
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              /* Message Stream */
+              <div className="space-y-6 max-w-2xl mx-auto">
+                {messages.map((msg) => {
+                  const isUser = msg.sender === 'user';
+
+                  if (isUser) {
+                    return (
+                      <div key={msg.id} className="flex justify-end animate-in fade-in duration-150">
+                        <div className="bg-[#F4F4F4] text-stone-900 rounded-3xl rounded-br-md px-4 sm:px-5 py-2.5 sm:py-3 max-w-[85%] text-xs sm:text-sm leading-relaxed shadow-2xs">
+                          {msg.text}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Gemini / Assistant Message
+                  return (
+                    <div key={msg.id} className="flex gap-3 sm:gap-4 items-start animate-in fade-in duration-200">
+                      {/* Avatar */}
+                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shrink-0 mt-0.5 shadow-2xs">
+                        <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                      </div>
+
+                      {/* Content */}
+                      <div className="flex-1 space-y-3">
+                        <p className="text-xs sm:text-sm text-stone-800 leading-relaxed">
+                          {msg.text}
+                        </p>
+
+                        {/* Generated Manicure Card inline in thread */}
+                        {msg.imageUrl && (
+                          <div className="rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-stone-200 shadow-sm max-w-xs sm:max-w-sm space-y-0 group">
+                            <div className="relative aspect-[3/4] overflow-hidden bg-stone-200">
+                              <img
+                                src={msg.imageUrl}
+                                alt={msg.appliedDesignTitle || 'Generated Look'}
+                                onClick={() => {
+                                  setZoomImageUrl(msg.imageUrl || null);
+                                  setIsZoomOpen(true);
+                                }}
+                                className="w-full h-full object-cover cursor-pointer group-hover:scale-102 transition duration-300"
+                              />
+
+                              <div className="absolute top-2.5 left-2.5">
+                                <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[10px] font-medium capitalize">
+                                  {msg.appliedDesignTitle || 'Manicure'}
+                                </span>
+                              </div>
+
+                              <div className="absolute top-2.5 right-2.5 flex items-center gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => handleDownloadBrandedLook(msg.imageUrl, msg.appliedDesignTitle)}
+                                  disabled={isExporting}
+                                  className="w-7 h-7 rounded-full bg-white/95 text-stone-800 hover:bg-white shadow-xs flex items-center justify-center transition cursor-pointer active:scale-90"
+                                  title="Download HD"
+                                >
+                                  <Download className="w-3.5 h-3.5" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleShareToStory(msg.imageUrl, msg.appliedDesignTitle)}
+                                  disabled={isExporting}
+                                  className="w-7 h-7 rounded-full bg-[#E0246A] text-white hover:bg-[#BE185D] shadow-xs flex items-center justify-center transition cursor-pointer active:scale-90"
+                                  title="Share to Story"
+                                >
+                                  <Share2 className="w-3 h-3" />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setZoomImageUrl(msg.imageUrl || null);
+                                    setIsZoomOpen(true);
+                                  }}
+                                  className="w-7 h-7 rounded-full bg-white/95 text-stone-800 hover:bg-white shadow-xs flex items-center justify-center transition cursor-pointer active:scale-90"
+                                  title="Inspect Fullscreen"
+                                >
+                                  <Maximize2 className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            {/* Card Footer Actions */}
+                            <div className="p-3 bg-white flex items-center justify-between border-t border-stone-100">
+                              <div>
+                                <span className="text-xs font-semibold text-stone-900 block truncate">
+                                  {msg.appliedDesignTitle || 'Custom Look'}
+                                </span>
+                                <span className="text-[10px] text-stone-400">High-gloss gel finish</span>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (msg.imageUrl) {
+                                    setCurrentTryOnImage(msg.imageUrl);
+                                    setCompareMode('after');
+                                    setMobileActiveTab('canvas');
+                                  }
+                                }}
+                                className="px-3 py-1.5 rounded-full bg-stone-900 hover:bg-[#E0246A] text-white text-xs font-semibold transition cursor-pointer active:scale-95 shadow-xs"
+                              >
+                                View on Hand
+                              </button>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Assistant Action Bar (Copy text, timestamp) */}
+                        <div className="flex items-center gap-2 pt-1 text-[11px] text-stone-400">
+                          <span>{msg.timestamp}</span>
+                          <span>•</span>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyText(msg.id, msg.text)}
+                            className="hover:text-stone-700 transition cursor-pointer flex items-center gap-1"
+                          >
+                            {copiedId === msg.id ? (
+                              <>
+                                <Check className="w-3 h-3 text-emerald-600" />
+                                <span className="text-emerald-600">Copied</span>
+                              </>
+                            ) : (
+                              <>
+                                <Copy className="w-3 h-3" />
+                                <span>Copy</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {/* Loading / Generating State in thread */}
+                {isIterating && (
+                  <div className="flex gap-3 sm:gap-4 items-start animate-in fade-in duration-200">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
+                      <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin" />
+                    </div>
+                    <div className="space-y-1 py-1">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs sm:text-sm font-semibold text-stone-900">
+                          Finglora AI is crafting your manicure...
+                        </span>
+                      </div>
+                      <p className="text-xs text-stone-500">
+                        Applying custom gel layer, blending cuticle edges, and rendering specular light reflections.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div ref={chatEndRef} />
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Floating Prompt Dock (ChatGPT Style in White Mode) */}
+          <div className="p-3 sm:p-4 lg:p-6 bg-gradient-to-t from-white via-white to-transparent shrink-0 max-w-2xl w-full mx-auto space-y-2">
+            {/* Quick Suggestion Chips */}
+            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 select-none">
+              {QUICK_CHIPS.map((chip, idx) => (
+                <button
+                  key={idx}
+                  type="button"
+                  onClick={() => {
+                    setPromptText((prev) => (prev ? `${prev}, ${chip}` : chip));
+                    if (textareaRef.current) {
+                      textareaRef.current.focus();
+                    }
+                  }}
+                  className="px-2.5 py-1 rounded-full bg-stone-100 hover:bg-stone-200 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
+                >
+                  + {chip}
+                </button>
+              ))}
+            </div>
+
+            {/* ChatGPT White Floating Capsule Input */}
             <form
               onSubmit={(e) => {
                 e.preventDefault();
                 handleSendPrompt();
               }}
-              className="flex items-center gap-2"
+              className="bg-[#F4F4F4] hover:bg-[#EFEFEF] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-300 rounded-[28px] border border-stone-200/80 p-2 sm:p-2.5 shadow-sm transition-all flex items-end gap-2"
             >
-              <input
-                type="text"
+              <textarea
+                ref={textareaRef}
+                rows={1}
                 value={promptText}
-                onChange={(e) => setPromptText(e.target.value)}
-                placeholder="Describe a change (e.g. 'Almond shape with glazed chrome')..."
-                className="flex-1 h-9 sm:h-10 px-3 rounded-xl bg-stone-50 border border-stone-200 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-[#E0246A] focus:bg-white transition"
+                onChange={handleTextareaInput}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleSendPrompt();
+                  }
+                }}
+                placeholder="Message Finglora AI to customize shape, color, pattern, finish..."
+                className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none resize-none px-2 py-1 max-h-28 leading-relaxed"
               />
+
               <button
                 type="submit"
                 disabled={!promptText.trim() || isIterating}
-                className="h-9 sm:h-10 px-3.5 sm:px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs disabled:opacity-40 transition cursor-pointer shrink-0 flex items-center justify-center gap-1 active:scale-95"
+                className={`w-8 h-8 sm:w-9 sm:h-9 rounded-full flex items-center justify-center transition-all cursor-pointer shrink-0 shadow-2xs active:scale-95 ${
+                  promptText.trim() && !isIterating
+                    ? 'bg-stone-900 hover:bg-[#E0246A] text-white'
+                    : 'bg-stone-200 text-stone-400 cursor-not-allowed'
+                }`}
+                title="Send Prompt"
               >
-                <Send className="w-3.5 h-3.5" />
-                <span>Send</span>
+                {isIterating ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-stone-400" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
               </button>
             </form>
+
+            <div className="text-center text-[10px] text-stone-400">
+              Finglora AI uses Google Gemini Vision to photorealistically adapt manicures to human hands.
+            </div>
           </div>
         </div>
       </div>
@@ -603,7 +829,7 @@ export function AiCreationView({
         <div
           role="dialog"
           aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-3 sm:p-4 animate-in fade-in duration-150"
+          className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex flex-col p-3 sm:p-6 animate-in fade-in duration-150"
           onClick={() => {
             setZoomImageUrl(null);
             setIsZoomOpen(false);
@@ -613,20 +839,23 @@ export function AiCreationView({
             className="flex items-center justify-between text-white pb-3 shrink-0"
             onClick={(e) => e.stopPropagation()}
           >
-            <span className="text-xs font-medium text-white/80">Hand Manicure Inspector</span>
+            <span className="text-xs font-semibold tracking-wide text-white/90">
+              Hand Manicure Inspector
+            </span>
+
             <div className="flex items-center gap-2">
               <button
                 type="button"
                 onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
-                className="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition cursor-pointer"
+                className="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-medium transition cursor-pointer"
               >
-                {compareMode === 'after' ? 'Natural Hand' : 'Manicure'}
+                {compareMode === 'after' ? 'Show Natural Hand' : 'Show Manicure'}
               </button>
               <button
                 type="button"
                 onClick={() => handleDownloadBrandedLook(zoomImageUrl || currentTryOnImage)}
                 disabled={isExporting}
-                className="px-3 py-1 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+                className="px-3 py-1 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
               >
                 <Download className="w-3.5 h-3.5 text-stone-900" />
                 <span className="hidden sm:inline">Download HD</span>
@@ -635,7 +864,7 @@ export function AiCreationView({
                 type="button"
                 onClick={() => handleShareToStory(zoomImageUrl || currentTryOnImage)}
                 disabled={isExporting}
-                className="px-3 py-1 rounded-full bg-gradient-to-r from-[#E0246A] to-[#BE185D] text-white text-xs font-medium transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+                className="px-3 py-1 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
               >
                 <Share2 className="w-3.5 h-3.5 text-white" />
                 <span className="hidden sm:inline">Share Story</span>
@@ -652,6 +881,7 @@ export function AiCreationView({
               </button>
             </div>
           </div>
+
           <div
             className="flex-1 flex items-center justify-center min-h-0"
             onClick={(e) => e.stopPropagation()}
