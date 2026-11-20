@@ -212,7 +212,7 @@ export function CustomerApp({
           className={`flex-1 w-full ${
             customerRoute === 'ai-create'
               ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
-              : customerRoute === 'explore'
+              : customerRoute === 'explore' || customerRoute === 'home'
               ? 'min-h-screen pb-24 md:pb-12 w-full p-0'
               : mobilePreview
               ? 'pb-24 px-4 pt-4'
@@ -254,9 +254,14 @@ export function CustomerApp({
                 setCustomerRoute('tryon');
               }}
               onTryOnClick={() => setCustomerRoute('tryon')}
-              onCustomizeClick={() => setCustomerRoute('tryon')}
+              onCustomizeClick={() => setCustomerRoute('studio')}
               onUploadClick={() => setCustomerRoute('upload')}
-              onExploreClick={() => setCustomerRoute('explore')}
+              onExploreClick={(query?: string) => {
+                if (query) {
+                  setExploreSearch(query);
+                }
+                setCustomerRoute('explore');
+              }}
               onCreatePromptClick={(prompt) => {
                 setAiStudioPrompt(prompt);
                 setActiveSetName(prompt.slice(0, 32) || 'Custom AI Set');

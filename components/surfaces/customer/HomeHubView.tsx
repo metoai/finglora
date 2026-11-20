@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef, useMemo } from 'react';
+import React, { useState, useRef } from 'react';
 import {
   Hand,
   ImagePlus,
@@ -12,28 +12,141 @@ import {
   X,
   Trash2,
   Sparkles,
+  Compass,
+  SlidersHorizontal,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
-import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES, CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
-const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
+interface FeaturedLook {
+  id: string;
+  title: string;
+  category: string;
+  photoUrl: string;
+  shape: NailShape;
+  finish: string;
+  baseColor: string;
+  accentColor: string;
+}
+
+const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
+  {
+    id: 'feat-french-bow',
+    title: 'French Tip Ribbons',
+    category: 'Coquette',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    shape: 'almond',
+    finish: 'Glossy Gel',
+    baseColor: '#FCE7F3',
+    accentColor: '#E0246A',
+  },
+  {
+    id: 'feat-cherry-mocha',
+    title: 'Cherry Mocha French',
+    category: 'Velvet',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    shape: 'coffin',
+    finish: 'Velvet Gloss',
+    baseColor: '#FAF0EA',
+    accentColor: '#3B111D',
+  },
+  {
+    id: 'feat-milky-gold',
+    title: 'Milky Glazed Gold',
+    category: 'Chrome',
+    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    shape: 'almond',
+    finish: 'Chrome Powder',
+    baseColor: '#F5ECE3',
+    accentColor: '#D4AF37',
+  },
+  {
+    id: 'feat-atelier-nude',
+    title: 'Atelier Nude Minimal',
+    category: 'Minimalist',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
+    shape: 'square',
+    finish: 'High-Gloss',
+    baseColor: '#FAF0EA',
+    accentColor: '#FFFFFF',
+  },
+  {
+    id: 'feat-clean-micro-french',
+    title: 'Clean Micro-French',
+    category: 'French',
+    photoUrl: '/images/ar-nail-hero.jpg',
+    shape: 'almond',
+    finish: 'Sheer Glaze',
+    baseColor: '#FAF0EA',
+    accentColor: '#E0246A',
+  },
+  {
+    id: 'feat-luminous-pearl',
+    title: 'Luminous Pearl Sheen',
+    category: 'Glazed',
+    photoUrl: '/images/ar-nail-hero-pearl.jpg',
+    shape: 'oval',
+    finish: 'Pearl Glaze',
+    baseColor: '#FAF4EF',
+    accentColor: '#C59B27',
+  },
+];
+
+interface AestheticCollection {
+  id: string;
+  title: string;
+  subtitle: string;
+  photoUrl: string;
+  tag: string;
+}
+
+const AESTHETIC_COLLECTIONS: AestheticCollection[] = [
+  {
+    id: 'col-glazed',
+    title: 'Glazed Chrome & Pearl',
+    subtitle: 'Hailey Bieber pearl powder, chrome swirls & dewy reflections',
+    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    tag: 'chrome',
+  },
+  {
+    id: 'col-coquette',
+    title: 'Coquette & Nail Art',
+    subtitle: 'Blush pink aura, miniature ribbons & delicate negative space',
+    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    tag: 'coquette',
+  },
+  {
+    id: 'col-velvet',
+    title: 'Velvet & Deep Burgundy',
+    subtitle: 'Cherry mocha, rich bordeaux lacquer & 24K gold foil accents',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    tag: 'red',
+  },
+  {
+    id: 'col-minimal',
+    title: 'Clean Girl Micro-French',
+    subtitle: 'Ultra-fine smile curves, sheer milky bases & reinforced apex',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
+    tag: 'french',
+  },
+];
+
+const QUICK_PROMPT_CHIPS = [
+  'Glazed Donut Chrome',
+  'Cherry Mocha French',
+  'Blush Heart Coquette',
+  'Burgundy Velvet & Gold',
+  'Clean Minimalist Nude',
+  'Cat Eye Magnetic Shimmer',
+  'Almond French Tip',
+];
 
 export function HomeHubView({
-  userName,
-  preferredShape,
-  activeSample,
-  activePhotoUrl,
-  activeSetName,
-  orderedFingers,
-  nails,
+  userName = 'Flora',
+  preferredShape = 'almond',
   aiStudioPrompt,
   setAiStudioPrompt,
-  mobilePreview,
-  exploreDesigns = INITIAL_EXPLORE_DESIGNS,
   onSelectExploreDesign,
-  onTuneVibeClick,
-  onSelectFinger,
   onTryOnClick,
   onCustomizeClick,
   onUploadClick,
@@ -59,52 +172,23 @@ export function HomeHubView({
   onTryOnClick: () => void;
   onCustomizeClick: () => void;
   onUploadClick: () => void;
-  onExploreClick?: () => void;
+  onExploreClick?: (query?: string) => void;
   onCreatePromptClick?: (prompt: string) => void;
   customTryOnHandUrl?: string | null;
   setCustomTryOnHandUrl?: (url: string | null) => void;
 }) {
-  const [activeCategory, setActiveCategory] = useState('All');
   const [promptText, setPromptText] = useState(aiStudioPrompt || '');
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // High-fashion editorial photography only: filter out salon table/drill/gravel photos and polish titles
-  const designs = useMemo(() => {
-    const rawList = exploreDesigns?.filter((d) => {
-      const url = d.photoUrl || '';
-      return (
-        !url.includes('unsplash.com') &&
-        !url.includes('photo-1604654894610') &&
-        !url.includes('photo-1607779097040') &&
-        !url.includes('photo-1632345031435') &&
-        !url.includes('imagefes.jpeg') &&
-        !url.includes('images22.jpeg') &&
-        !url.includes('1795176925816_images.jpeg') &&
-        !url.includes('1795127479510_images.jpeg') &&
-        !url.includes('ar-nail-hero.jpg')
-      );
-    });
-
-    // If rawList has fewer than 8 designs, fallback to our curated 8-design luxury set
-    const list = rawList && rawList.length >= 8 ? rawList : CURATED_EDITORIAL_DESIGNS;
-
-    return list.map((d) => {
-      let title = d.title || 'Atelier Set';
-      if (title === 'AI Extracted Manicure') title = 'French Chrome Rose';
-      if (title.startsWith("L'Atelier ")) title = title.replace("L'Atelier ", '');
-
-      const photoUrl = d.photoUrl || '/assets/milky_gold_tryon_result.jpg';
-
-      return {
-        ...d,
-        title,
-        photoUrl,
-      };
-    });
-  }, [exploreDesigns]);
+  const getGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) return 'Good morning';
+    if (hour < 18) return 'Good afternoon';
+    return 'Good evening';
+  };
 
   const showToast = (msg: string) => {
     setToastMsg(msg);
@@ -137,10 +221,7 @@ export function HomeHubView({
         // quota safety
       }
       setIsHandModalOpen(false);
-      setTimeout(() => {
-        document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
-      }, 150);
-      showToast('Hand saved! Select an inspiration look below to try on');
+      showToast('Hand photo saved! Ready for 1-tap try on');
     };
     reader.readAsDataURL(file);
   };
@@ -156,19 +237,8 @@ export function HomeHubView({
     showToast('Hand photo removed');
   };
 
-  // Filter curated designs by active category
-  const filteredDesigns = useMemo(() => {
-    if (activeCategory === 'All') return designs;
-    return designs.filter((d) => {
-      const cat = (d.category || '').toLowerCase();
-      const title = (d.title || '').toLowerCase();
-      const target = activeCategory.toLowerCase();
-      return cat.includes(target) || title.includes(target);
-    });
-  }, [designs, activeCategory]);
-
   return (
-    <div className="space-y-3.5 sm:space-y-4 w-full max-w-[1300px] pb-6">
+    <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10 py-5 space-y-8 pb-20">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -179,221 +249,361 @@ export function HomeHubView({
         </div>
       )}
 
+      {/* 1. Atelier Greeting & Live Status Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+        <div>
+          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
+            {getGreeting()}, {userName}
+          </h1>
+          <p className="text-xs sm:text-sm text-stone-500 font-normal mt-1">
+            Your personal nail atelier. Try on looks live, extract from inspiration, or create with AI.
+          </p>
+        </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 2. SYMMETRICAL ACTION CARDS (MY HAND & EXTRACT INSPO)              */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto sm:max-w-none">
-        {/* Card 1: My Hand Photo (Rule: Always 1st Option = Upload, 2nd = Camera) */}
-        <button
-          type="button"
-          onClick={() => setIsHandModalOpen(true)}
-          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
-              <Hand className="w-4.5 h-4.5" strokeWidth={1.75} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                My Hand
-              </div>
-              <div className="text-[10px] text-stone-400 font-medium">
-                {customTryOnHandUrl ? 'Saved' : 'Upload'}
-              </div>
-            </div>
+        {/* Status Indicators */}
+        <div className="flex items-center gap-2 shrink-0">
+          {/* Silhouette Badge */}
+          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-100 border border-stone-200/80 text-xs font-semibold text-stone-700 select-none">
+            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <span className="capitalize">{preferredShape} Silhouette</span>
           </div>
 
-          {customTryOnHandUrl ? (
-            <span className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 border border-emerald-200 flex items-center justify-center shrink-0">
-              <Check className="w-3 h-3" strokeWidth={2.5} />
-            </span>
-          ) : (
-            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
-          )}
-        </button>
-
-        {/* Card 2: Extract Inspo Photo */}
-        <button
-          type="button"
-          onClick={onUploadClick}
-          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
-        >
-          <div className="flex items-center gap-2.5 min-w-0">
-            <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
-              <ImagePlus className="w-4.5 h-4.5" strokeWidth={1.75} />
-            </div>
-            <div className="min-w-0">
-              <div className="text-xs sm:text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                Extract Inspo
-              </div>
-              <div className="text-[10px] text-stone-400 font-medium">
-                Pinterest · IG
-              </div>
-            </div>
-          </div>
-
-          <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition shrink-0" />
-        </button>
+          {/* Hand Status Pill */}
+          <button
+            type="button"
+            onClick={() => setIsHandModalOpen(true)}
+            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer active:scale-95 border ${
+              customTryOnHandUrl
+                ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+                : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300 hover:bg-stone-50'
+            }`}
+          >
+            {customTryOnHandUrl ? (
+              <>
+                <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
+                <span>Hand Photo Ready</span>
+              </>
+            ) : (
+              <>
+                <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                <span>+ Add Hand Photo</span>
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 3. SLEEK STUDIO PROMPT GENERATION BAR                              */}
-      {/* ------------------------------------------------------------------ */}
-      <form
-        onSubmit={(e) => {
-          e.preventDefault();
-          handleGenerate();
-        }}
-        className="bg-white rounded-2xl border border-stone-200/80 p-2 sm:p-2.5 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
-      >
-        <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0 ml-1.5" />
-
-        <input
-          type="text"
-          value={promptText}
-          onChange={(e) => setPromptText(e.target.value)}
-          placeholder="Describe any look or aesthetic..."
-          className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0 leading-normal"
-        />
-
-        <button
-          type="submit"
-          className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
-          title="Generate look"
+      {/* 2. Sleek Pinterest-Ease Search & AI Generation Dock */}
+      <div className="space-y-2.5">
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            handleGenerate();
+          }}
+          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-13 px-4 sm:px-5 transition-all flex items-center gap-3 border border-transparent shadow-2xs"
         >
-          <span>Create</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </button>
-      </form>
+          <Sparkles className="w-5 h-5 text-[#E0246A] shrink-0" />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 4. CURATED INSPIRATION (HIGH CONVERSION & FAST ACTION)             */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="space-y-3">
-        <div className="flex items-center justify-between px-0.5">
-          <div className="flex items-center gap-2">
-            <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 tracking-tight">
-              Inspiration
+          <input
+            type="text"
+            value={promptText}
+            onChange={(e) => setPromptText(e.target.value)}
+            placeholder="Describe or search any look (e.g. Hailey Bieber glazed donut chrome, cherry mocha french, blush aura)..."
+            className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none min-w-0"
+          />
+
+          <button
+            type="submit"
+            className="h-9 px-4 sm:px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+          >
+            <span>Create with AI</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </form>
+
+        {/* Quick Suggestion Chips */}
+        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 select-none">
+          <span className="text-[11px] font-medium text-stone-400 shrink-0">Try:</span>
+          {QUICK_PROMPT_CHIPS.map((chip) => (
+            <button
+              key={chip}
+              type="button"
+              onClick={() => {
+                setPromptText(chip);
+                handleGenerate(chip);
+              }}
+              className="h-7 px-3 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
+            >
+              {chip}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 3. Four Tactile Studio Launchpad Stations (Balanced Across Widescreen) */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        {/* Station 1: Virtual Try-On */}
+        <div
+          onClick={onTryOnClick}
+          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
+              <Hand className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+
+            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
+              Live AR
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+              Virtual Try-On
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              {customTryOnHandUrl
+                ? 'Your hand photo is active. Tap any manicure to try it on live.'
+                : 'Upload your hand once or open camera to see sets live on your fingers.'}
+            </p>
+          </div>
+
+          <div className="pt-2 flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
+              <span>Open Try-On Studio</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+
+        {/* Station 2: Extract Inspiration */}
+        <div
+          onClick={onUploadClick}
+          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
+              <ImagePlus className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+
+            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
+              5-Finger AI
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+              Extract Inspo Photo
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              Upload any Pinterest or Instagram manicure photo to decompose it into 5 distinct finger recipes.
+            </p>
+          </div>
+
+          <div className="pt-2 flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
+              <span>Upload Manicure</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+
+        {/* Station 3: AI Creation Studio */}
+        <div
+          onClick={() => {
+            if (onCreatePromptClick) {
+              onCreatePromptClick(promptText || 'Glazed Donut Chrome');
+            } else {
+              onCustomizeClick();
+            }
+          }}
+          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
+              <Sparkles className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+
+            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
+              Conversational
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+              AI Design Studio
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              Chat directly with our AI to generate custom nail art, chrome powders, or color palettes.
+            </p>
+          </div>
+
+          <div className="pt-2 flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
+              <span>Start Creating</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+
+        {/* Station 4: Bespoke 5-Finger Studio */}
+        <div
+          onClick={onCustomizeClick}
+          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+        >
+          <div className="flex items-start justify-between gap-3">
+            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
+              <SlidersHorizontal className="w-6 h-6" strokeWidth={1.75} />
+            </div>
+
+            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
+              Customizer
+            </span>
+          </div>
+
+          <div className="space-y-1">
+            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+              Bespoke Workbench
+            </h3>
+            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
+              Hand-craft each finger&apos;s lacquer hue, apex curvature, shape silhouette, and gel finish.
+            </p>
+          </div>
+
+          <div className="pt-2 flex items-center gap-2">
+            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
+              <span>Customize Nails</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 4. Curated Atelier Spotlight (6 Editorial Looks across the Widescreen) */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
+              Curated Atelier Looks
             </h2>
-            {customTryOnHandUrl && (
-              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-medium inline-flex items-center gap-1">
-                <Check className="w-2.5 h-2.5" />
-                <span>Hand Ready</span>
-              </span>
-            )}
+            <p className="text-xs text-stone-500">
+              Ready for immediate 1-tap try-on on your hand.
+            </p>
           </div>
 
           {onExploreClick && (
             <button
               type="button"
-              onClick={onExploreClick}
-              className="h-7 px-2.5 rounded-lg text-xs font-medium text-stone-600 hover:text-[#E0246A] hover:bg-stone-100 transition inline-flex items-center gap-1 cursor-pointer active:scale-95"
+              onClick={() => onExploreClick()}
+              className="text-xs font-semibold text-[#E0246A] hover:underline inline-flex items-center gap-1 cursor-pointer"
             >
-              <span>View All →</span>
+              <span>Explore All Pins</span>
+              <Compass className="w-3.5 h-3.5" />
             </button>
           )}
         </div>
 
-        {/* Compact Category Filter Tabs */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
-          {CATEGORY_TABS.map((tab) => {
-            const active = activeCategory === tab;
-            return (
-              <button
-                key={tab}
-                type="button"
-                onClick={() => setActiveCategory(tab)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer shrink-0 active:scale-95 ${
-                  active
-                    ? 'bg-stone-900 text-white shadow-2xs'
-                    : 'bg-white border border-stone-200 text-stone-600 hover:bg-stone-50'
-                }`}
-              >
-                {tab}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Responsive Editorial Manicure Grid (Exactly 2 Rows: 4 on mobile, 6 on tablet, 8 on desktop) */}
-        <div
-          id="inspiration-feed"
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-6 scroll-mt-4"
-        >
-          {filteredDesigns.slice(0, 8).map((design, index) => {
-            const primaryFinger = design.nails?.middle || design.nails?.index;
-            const shapeLabel = primaryFinger?.shape || 'almond';
-
-            // 2 rows limit: 4 cards on mobile (<sm: 2 cols x 2 rows), 6 on tablet (sm-lg: 3 cols x 2 rows), 8 on desktop (>=lg: 4 cols x 2 rows)
-            const hideClass =
-              index >= 6 ? 'hidden lg:block' : index >= 4 ? 'hidden sm:block' : '';
-
-            return (
-              <div
-                key={design.id}
-                onClick={() => {
-                  onSelectExploreDesign?.(design.id);
-                  onTryOnClick();
-                }}
-                className={`group relative rounded-2xl overflow-hidden border border-stone-200/80 hover:border-stone-300 shadow-2xs transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[4/4.5] max-h-[220px] lg:max-h-[200px] xl:max-h-[225px] bg-stone-100 ${hideClass}`}
-              >
-                <img
-                  src={design.photoUrl || '/assets/milky_gold_tryon_result.jpg'}
-                  alt={design.title || 'Manicure Design'}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
-
-                {/* Top Shape Badge */}
-                <div className="absolute top-2 left-2">
-                  <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
-                    {shapeLabel}
-                  </span>
-                </div>
-
-                {/* Bottom Card Scrim & Try-On Action */}
-                <div className="absolute inset-x-2 bottom-2 space-y-1">
-                  <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
-                    {design.title}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectExploreDesign?.(design.id);
-                      onTryOnClick();
-                    }}
-                    className="w-full h-7 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-[11px] font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                  >
-                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                    <span>{customTryOnHandUrl ? 'Try on My Hand' : 'Try On'}</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {filteredDesigns.length === 0 && (
-          <div className="py-10 text-center space-y-2 bg-white rounded-2xl border border-stone-200/80 p-6">
-            <p className="text-xs text-stone-500">No manicures found in this category.</p>
-            <button
-              type="button"
-              onClick={() => setActiveCategory('All')}
-              className="text-xs font-semibold text-[#E0246A] hover:underline cursor-pointer"
+        {/* 6 Featured Large Editorial Cards in a Responsive Full-Width Grid */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4">
+          {FEATURED_ATELIER_LOOKS.map((look) => (
+            <div
+              key={look.id}
+              onClick={() => {
+                onSelectExploreDesign?.(look.id);
+                onTryOnClick();
+              }}
+              className="group relative rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2]"
             >
-              Show all designs
-            </button>
-          </div>
-        )}
-      </section>
+              <img
+                src={look.photoUrl}
+                alt={look.title}
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
+              />
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 5. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA)     */}
-      {/* ------------------------------------------------------------------ */}
+              {/* Gradient Scrim */}
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+
+              {/* Top Category Badge */}
+              <div className="absolute top-3 left-3 z-10">
+                <span className="px-2.5 py-1 rounded-full bg-black/40 text-white text-[10px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+                  {look.category}
+                </span>
+              </div>
+
+              {/* Bottom Details & 1-Tap Try On */}
+              <div className="relative z-10 p-3 sm:p-4 space-y-2">
+                <div>
+                  <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs">
+                    {look.title}
+                  </h4>
+                  <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5">
+                    {look.finish} · <span className="capitalize">{look.shape}</span>
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onSelectExploreDesign?.(look.id);
+                    onTryOnClick();
+                  }}
+                  className="w-full h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                >
+                  <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                  <span>{customTryOnHandUrl ? 'Try on My Hand' : 'Try On'}</span>
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Distinct Aesthetic Collection Shelves */}
+      <div className="space-y-4">
+        <div>
+          <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
+            Explore by Aesthetic
+          </h2>
+          <p className="text-xs text-stone-500">
+            Discover curated moodboards tailored to your silhouette.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+          {AESTHETIC_COLLECTIONS.map((col) => (
+            <div
+              key={col.id}
+              onClick={() => onExploreClick?.(col.tag)}
+              className="p-4 sm:p-5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-stone-300 transition-all shadow-2xs cursor-pointer group flex flex-col justify-between gap-3"
+            >
+              <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 relative">
+                <img
+                  src={col.photoUrl}
+                  alt={col.title}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <h4 className="font-serif text-base font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+                  {col.title}
+                </h4>
+                <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
+                  {col.subtitle}
+                </p>
+              </div>
+
+              <div className="pt-1 flex items-center gap-1 text-xs font-semibold text-stone-700 group-hover:text-[#E0246A]">
+                <span>Browse Collection</span>
+                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 6. MODAL: SAVE HAND PHOTO (STRICT: 1ST = UPLOAD, 2ND = CAMERA) */}
       {isHandModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
           <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-xl border border-stone-200 space-y-4">
@@ -430,124 +640,72 @@ export function HomeHubView({
                 </div>
 
                 <div className="space-y-2">
-                  {/* Primary CTA: Choose Look from Inspiration */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setIsHandModalOpen(false);
-                      setTimeout(() => {
-                        document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
-                      }, 100);
-                      showToast('Select any manicure below to try on your hand');
-                    }}
-                    className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
-                  >
-                    <Sparkles className="w-4 h-4" />
-                    <span>Choose Look from Inspiration</span>
-                  </button>
-
-                  {/* Secondary CTA: Direct Virtual Try-On */}
                   <button
                     type="button"
                     onClick={() => {
                       setIsHandModalOpen(false);
                       onTryOnClick();
                     }}
-                    className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-semibold shadow-2xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                    className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                   >
-                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <Sparkles className="w-4 h-4" />
                     <span>Open Virtual Try-On</span>
                   </button>
-
-                  {/* Symmetrical 2-Column: 1st Option = Upload, 2nd Option = Camera */}
-                  <div className="grid grid-cols-2 gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={() => handFileInputRef.current?.click()}
-                      className="h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
-                    >
-                      <UploadCloud className="w-3.5 h-3.5 text-stone-600" />
-                      <span>Upload New</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setIsCameraCaptureOpen(true)}
-                      className="h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
-                    >
-                      <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
-                      <span>Camera</span>
-                    </button>
-                  </div>
 
                   <button
                     type="button"
                     onClick={handleRemoveHandPhoto}
-                    className="w-full h-7 text-[11px] text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                    className="w-full h-9 rounded-xl border border-stone-200 hover:bg-rose-50 hover:border-rose-200 text-rose-600 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                   >
-                    <Trash2 className="w-3 h-3" />
-                    <span>Remove hand photo</span>
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Remove Photo</span>
                   </button>
                 </div>
               </div>
             ) : (
-              <div className="space-y-4">
-                <div className="aspect-[4/3] w-full rounded-2xl border border-dashed border-stone-200 bg-[#FAF8F5] flex flex-col items-center justify-center p-5 text-center space-y-2">
-                  <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
-                    <Hand className="w-6 h-6" strokeWidth={1.5} />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-stone-900">Your Hand Photo</p>
-                    <p className="text-[10px] text-stone-500 mt-0.5">
-                      Upload from files or capture with camera
-                    </p>
-                  </div>
-                </div>
+              <div className="space-y-3">
+                <input
+                  ref={handFileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleHandPhotoUpload(file);
+                  }}
+                />
 
-                {/* Symmetrical 2-Column: 1st Option = Upload, 2nd Option = Camera */}
-                <div className="grid grid-cols-2 gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => handFileInputRef.current?.click()}
-                    className="h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs active:scale-95"
-                  >
-                    <UploadCloud className="w-4 h-4" />
-                    <span>Upload Photo</span>
-                  </button>
+                <button
+                  type="button"
+                  onClick={() => handFileInputRef.current?.click()}
+                  className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <UploadCloud className="w-4 h-4" />
+                  <span>Option 1: Upload Photo</span>
+                </button>
 
-                  <button
-                    type="button"
-                    onClick={() => setIsCameraCaptureOpen(true)}
-                    className="h-11 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs sm:text-sm font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
-                  >
-                    <Camera className="w-4 h-4 text-[#E0246A]" />
-                    <span>Camera</span>
-                  </button>
-                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsHandModalOpen(false);
+                    setIsCameraCaptureOpen(true);
+                  }}
+                  className="w-full h-11 rounded-xl bg-white border border-stone-200 hover:bg-stone-50 text-stone-800 text-xs sm:text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-2 active:scale-95"
+                >
+                  <Camera className="w-4 h-4 text-stone-600" />
+                  <span>Option 2: Live Camera</span>
+                </button>
               </div>
             )}
-
-            <input
-              type="file"
-              ref={handFileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  handleHandPhotoUpload(file);
-                }
-              }}
-            />
           </div>
         </div>
       )}
 
-      {/* Live Hand Camera Capture Modal */}
+      {/* 7. LIVE CAMERA CAPTURE MODAL */}
       <HandCameraCaptureModal
         isOpen={isCameraCaptureOpen}
         onClose={() => setIsCameraCaptureOpen(false)}
-        onCaptureHand={(dataUrl) => {
+        onCaptureHand={(dataUrl: string) => {
           if (setCustomTryOnHandUrl) {
             setCustomTryOnHandUrl(dataUrl);
           }
@@ -556,16 +714,11 @@ export function HomeHubView({
               localStorage.setItem('finglora_custom_hand_photo', dataUrl);
               localStorage.setItem('finglora_user_hand_photo', dataUrl);
             }
-          } catch {}
-          setIsHandModalOpen(false);
+          } catch {
+            // quota safety
+          }
           setIsCameraCaptureOpen(false);
-          setTimeout(() => {
-            document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
-          }, 150);
-          showToast('Hand saved! Select an inspiration look below to try on');
-        }}
-        onUploadFileFallback={(file) => {
-          handleHandPhotoUpload(file);
+          showToast('Live camera photo saved!');
         }}
       />
     </div>
