@@ -471,14 +471,23 @@ export function TryOnView({
                 </div>
 
                 {/* Row 3: Photo Switchers */}
-                <div className="pt-2 flex items-center justify-center gap-4 text-xs text-stone-500">
+                <div className="pt-2 flex flex-wrap items-center justify-center gap-2 sm:gap-3 text-xs text-stone-500">
+                  <button
+                    type="button"
+                    onClick={() => changeHandInputRef.current?.click()}
+                    className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1.5 px-2.5 rounded-lg hover:bg-stone-100"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-stone-500" />
+                    <span>Upload Hand</span>
+                  </button>
+                  <span className="text-stone-300">•</span>
                   <button
                     type="button"
                     onClick={() => setIsCameraModalOpen(true)}
                     className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1.5 px-2.5 rounded-lg hover:bg-stone-100"
                   >
-                    <Hand className="w-4 h-4 text-stone-400" />
-                    <span>Change Hand</span>
+                    <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Camera</span>
                   </button>
                   <span className="text-stone-300">•</span>
                   <button
@@ -486,7 +495,7 @@ export function TryOnView({
                     onClick={() => changeRefInspoInputRef.current?.click()}
                     className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1.5 px-2.5 rounded-lg hover:bg-stone-100"
                   >
-                    <RotateCcw className="w-4 h-4 text-stone-400" />
+                    <RotateCcw className="w-3.5 h-3.5 text-stone-400" />
                     <span>Change Reference</span>
                   </button>
                 </div>
@@ -580,10 +589,11 @@ export function TryOnView({
               </p>
             </div>
 
-            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-md justify-center">
-              <label className="cursor-pointer h-13 px-6 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold inline-flex items-center justify-center gap-2.5 shadow-lg shadow-[#E0246A]/25 transition-all active:scale-95 w-full sm:w-auto">
-                <UploadCloud className="w-4.5 h-4.5" />
-                <span>Upload Hand Photo</span>
+            {/* Action Buttons: 1st Option = Upload Photo, 2nd Option = Camera */}
+            <div className="grid grid-cols-2 gap-2.5 w-full max-w-xs sm:max-w-sm mx-auto">
+              <label className="cursor-pointer h-11 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-xs transition-all active:scale-95">
+                <UploadCloud className="w-4 h-4 shrink-0" />
+                <span className="truncate">Upload Photo</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -608,10 +618,10 @@ export function TryOnView({
               <button
                 type="button"
                 onClick={() => setIsCameraModalOpen(true)}
-                className="cursor-pointer h-13 px-6 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-sm font-medium inline-flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto shadow-2xs"
+                className="cursor-pointer h-11 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 hover:border-stone-300 text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-1.5 transition-all active:scale-95 shadow-2xs"
               >
-                <Camera className="w-4.5 h-4.5 text-[#E0246A]" />
-                <span>Camera</span>
+                <Camera className="w-4 h-4 text-[#E0246A] shrink-0" />
+                <span className="truncate">Camera</span>
               </button>
             </div>
 
