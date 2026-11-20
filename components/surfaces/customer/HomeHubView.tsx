@@ -12,12 +12,9 @@ import {
   X,
   Trash2,
   Sparkles,
-  Sliders,
-  RotateCcw,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
-import { INITIAL_EXPLORE_DESIGNS, FINGER_LABELS, HAND_SKIN_TONES } from '@/constants/nail-data';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
+import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES } from '@/constants/nail-data';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 const PROMPT_SUGGESTIONS = [
@@ -234,10 +231,6 @@ export function HomeHubView({
     });
   }, [designs, activeCategory]);
 
-  // Derived active manicure look specs
-  const middleNail = nails?.middle || nails?.index;
-  const currentShape = middleNail?.shape || preferredShape || 'almond';
-  const currentFinish = middleNail?.finish || 'glossy';
 
   return (
     <div className="space-y-4 sm:space-y-6 w-full max-w-[1300px] pb-6">
@@ -278,103 +271,7 @@ export function HomeHubView({
         </button>
       </div>
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 2. FLAGSHIP CENTERPIECE: ACTIVE MANICURE STUDIO CARD               */}
-      {/* ------------------------------------------------------------------ */}
-      <section className="bg-white rounded-3xl border border-stone-200/80 p-4 sm:p-5 shadow-2xs space-y-4">
-        {/* Card Header: Set Name & Specs */}
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-stone-600 font-medium">
-                Active Look
-              </span>
-              {customTryOnHandUrl && (
-                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 inline-flex items-center gap-1">
-                  <Check className="w-2.5 h-2.5 text-emerald-600" />
-                  <span>On Your Hand</span>
-                </span>
-              )}
-            </div>
-            <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 truncate tracking-tight mt-0.5">
-              {activeSetName || 'Glazed Pearl Almond'}
-            </h2>
-          </div>
 
-          <div className="shrink-0 text-right">
-            <span className="text-[11px] text-stone-500 font-medium capitalize">
-              {currentShape} · {currentFinish}
-            </span>
-          </div>
-        </div>
-
-        {/* 5-Finger Tactile Visual Workbench */}
-        <div className="pt-2 pb-1">
-          <div className="grid grid-cols-5 gap-1.5 sm:gap-2.5 items-end justify-items-center bg-[#FAF8F5] rounded-2xl p-3 sm:p-4 border border-stone-200/60">
-            {orderedFingers.map((fk) => {
-              const nail = nails[fk];
-              // Anatomical visual height scale
-              const heightMap: Record<Finger, number> = {
-                thumb: 60,
-                index: 68,
-                middle: 74,
-                ring: 70,
-                pinky: 54,
-              };
-              const widthMap: Record<Finger, number> = {
-                thumb: 40,
-                index: 38,
-                middle: 40,
-                ring: 38,
-                pinky: 34,
-              };
-
-              return (
-                <button
-                  key={fk}
-                  type="button"
-                  onClick={() => onSelectFinger(fk)}
-                  className="flex flex-col items-center gap-1.5 group cursor-pointer focus:outline-none"
-                  title={`Inspect ${FINGER_LABELS[fk]}`}
-                >
-                  <div className="transition-transform group-hover:scale-105 group-active:scale-95 duration-150">
-                    <NailCanvasPreview
-                      nail={nail}
-                      width={widthMap[fk]}
-                      height={heightMap[fk]}
-                      showCuticle={true}
-                    />
-                  </div>
-                  <span className="text-[10px] font-mono uppercase text-stone-600 font-medium">
-                    {FINGER_LABELS[fk].slice(0, 3)}
-                  </span>
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Action Controls: 1st Option = Try On, 2nd Option = Studio / Hand */}
-        <div className="grid grid-cols-2 gap-2.5 pt-1">
-          <button
-            type="button"
-            onClick={onTryOnClick}
-            className="h-11 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition inline-flex items-center justify-center gap-1.5 shadow-xs active:scale-95 cursor-pointer"
-          >
-            <Hand className="w-4 h-4 shrink-0" />
-            <span className="truncate">Virtual Try-On</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={onCustomizeClick}
-            className="h-11 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 hover:border-stone-300 text-xs sm:text-sm font-medium transition inline-flex items-center justify-center gap-1.5 active:scale-95 cursor-pointer shadow-2xs"
-          >
-            <Sliders className="w-4 h-4 text-stone-600 shrink-0" />
-            <span className="truncate">Customize Look</span>
-          </button>
-        </div>
-      </section>
 
       {/* ------------------------------------------------------------------ */}
       {/* 3. SYMMETRICAL STUDIO VERB CARDS (MY HAND & INSPIRATION)           */}
