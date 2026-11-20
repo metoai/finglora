@@ -63,7 +63,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   {
     id: 'feat-atelier-nude',
     title: 'Atelier Nude Minimal',
-    category: 'Minimalist',
+    category: 'Minimal',
     photoUrl: '/assets/editorial_nail_hero.jpg',
     shape: 'square',
     finish: 'High-Gloss',
@@ -95,7 +95,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
 interface AestheticCollection {
   id: string;
   title: string;
-  subtitle: string;
+  badge: string;
   photoUrl: string;
   tag: string;
 }
@@ -103,42 +103,42 @@ interface AestheticCollection {
 const AESTHETIC_COLLECTIONS: AestheticCollection[] = [
   {
     id: 'col-glazed',
-    title: 'Glazed Chrome & Pearl',
-    subtitle: 'Hailey Bieber pearl powder, chrome swirls & dewy reflections',
+    title: 'Glazed Chrome',
+    badge: 'Hailey Bieber',
     photoUrl: '/assets/milky_gold_tryon_result.jpg',
     tag: 'chrome',
   },
   {
     id: 'col-coquette',
-    title: 'Coquette & Nail Art',
-    subtitle: 'Blush pink aura, miniature ribbons & delicate negative space',
+    title: 'Coquette & Ribbons',
+    badge: 'Blush & Bows',
     photoUrl: '/assets/pink_heart_tryon_result.jpg',
     tag: 'coquette',
   },
   {
     id: 'col-velvet',
-    title: 'Velvet & Deep Burgundy',
-    subtitle: 'Cherry mocha, rich bordeaux lacquer & 24K gold foil accents',
+    title: 'Velvet & Burgundy',
+    badge: 'Deep Wine',
     photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
     tag: 'red',
   },
   {
     id: 'col-minimal',
-    title: 'Clean Girl Micro-French',
-    subtitle: 'Ultra-fine smile curves, sheer milky bases & reinforced apex',
+    title: 'Clean Micro-French',
+    badge: 'Ultra-Fine Apex',
     photoUrl: '/assets/editorial_nail_hero.jpg',
     tag: 'french',
   },
 ];
 
 const QUICK_PROMPT_CHIPS = [
-  'Glazed Donut Chrome',
-  'Cherry Mocha French',
-  'Blush Heart Coquette',
-  'Burgundy Velvet & Gold',
-  'Clean Minimalist Nude',
-  'Cat Eye Magnetic Shimmer',
-  'Almond French Tip',
+  'Glazed Chrome',
+  'Cherry Mocha',
+  'Blush Coquette',
+  'Velvet Wine',
+  'Micro French',
+  'Cat Eye Aura',
+  'Clean Nude',
 ];
 
 export function HomeHubView({
@@ -190,6 +190,11 @@ export function HomeHubView({
     return 'Good evening';
   };
 
+  const cleanUserName =
+    userName && userName !== 'VIP Creator' && userName !== 'Guest'
+      ? userName
+      : 'Flora';
+
   const showToast = (msg: string) => {
     setToastMsg(msg);
     setTimeout(() => setToastMsg(null), 2400);
@@ -238,7 +243,7 @@ export function HomeHubView({
   };
 
   return (
-    <div className="w-full max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-10 py-5 space-y-8 pb-20">
+    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-5 sm:space-y-6 lg:space-y-7 pb-24 md:pb-16">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -249,30 +254,27 @@ export function HomeHubView({
         </div>
       )}
 
-      {/* 1. Atelier Greeting & Live Status Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">
+      {/* 1. Header: Greeting & Status Indicators (No Verbose Subtitles) */}
+      <div className="flex items-center justify-between gap-3 pt-0.5">
         <div>
-          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
-            {getGreeting()}, {userName}
+          <h1 className="font-serif text-xl sm:text-2xl lg:text-3xl font-medium text-stone-900 tracking-tight">
+            {getGreeting()}, {cleanUserName}
           </h1>
-          <p className="text-xs sm:text-sm text-stone-500 font-normal mt-1">
-            Your personal nail atelier. Try on looks live, extract from inspiration, or create with AI.
-          </p>
         </div>
 
         {/* Status Indicators */}
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
           {/* Silhouette Badge */}
-          <div className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-100 border border-stone-200/80 text-xs font-semibold text-stone-700 select-none">
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-            <span className="capitalize">{preferredShape} Silhouette</span>
+          <div className="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full bg-stone-100 border border-stone-200/80 text-[11px] sm:text-xs font-semibold text-stone-700 select-none">
+            <Sparkles className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
+            <span className="capitalize">{preferredShape}</span>
           </div>
 
           {/* Hand Status Pill */}
           <button
             type="button"
             onClick={() => setIsHandModalOpen(true)}
-            className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-semibold transition cursor-pointer active:scale-95 border ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1 sm:py-1.5 rounded-full text-[11px] sm:text-xs font-semibold transition cursor-pointer active:scale-95 border ${
               customTryOnHandUrl
                 ? 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
                 : 'bg-white text-stone-700 border-stone-200 hover:border-stone-300 hover:bg-stone-50'
@@ -280,50 +282,51 @@ export function HomeHubView({
           >
             {customTryOnHandUrl ? (
               <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" strokeWidth={2.5} />
-                <span>Hand Photo Ready</span>
+                <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-emerald-600" strokeWidth={2.5} />
+                <span className="hidden sm:inline">Hand Ready</span>
+                <span className="sm:hidden">Ready</span>
               </>
             ) : (
               <>
-                <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
-                <span>+ Add Hand Photo</span>
+                <Hand className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" />
+                <span>+ Hand</span>
               </>
             )}
           </button>
         </div>
       </div>
 
-      {/* 2. Sleek Pinterest-Ease Search & AI Generation Dock */}
-      <div className="space-y-2.5">
+      {/* 2. Sleek Pinterest-Style Search & AI Generation Dock */}
+      <div className="space-y-2">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleGenerate();
           }}
-          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-13 px-4 sm:px-5 transition-all flex items-center gap-3 border border-transparent shadow-2xs"
+          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-11 sm:h-12 px-3.5 sm:px-4.5 transition-all flex items-center gap-2.5 sm:gap-3 border border-transparent shadow-2xs"
         >
-          <Sparkles className="w-5 h-5 text-[#E0246A] shrink-0" />
+          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#E0246A] shrink-0" />
 
           <input
             type="text"
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
-            placeholder="Describe or search any look (e.g. Hailey Bieber glazed donut chrome, cherry mocha french, blush aura)..."
+            placeholder="Search manicures or describe any vibe..."
             className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none min-w-0"
           />
 
           <button
             type="submit"
-            className="h-9 px-4 sm:px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-1.5 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+            className="h-8 sm:h-8.5 px-3 sm:px-4 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
           >
-            <span>Create with AI</span>
+            <span className="hidden sm:inline">Create with AI</span>
+            <span className="sm:hidden">Create</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
         </form>
 
-        {/* Quick Suggestion Chips */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-0.5 select-none">
-          <span className="text-[11px] font-medium text-stone-400 shrink-0">Try:</span>
+        {/* Short 1-2 Word Aesthetic Chips */}
+        <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 select-none">
           {QUICK_PROMPT_CHIPS.map((chip) => (
             <button
               key={chip}
@@ -332,7 +335,7 @@ export function HomeHubView({
                 setPromptText(chip);
                 handleGenerate(chip);
               }}
-              className="h-7 px-3 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
+              className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
             >
               {chip}
             </button>
@@ -340,75 +343,51 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 3. Four Tactile Studio Launchpad Stations (Balanced Across Widescreen) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+      {/* 3. Four Compact, Tactile Action Tiles (2x2 on Mobile, 4-col on Desktop, Zero Text Bloat) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Station 1: Virtual Try-On */}
         <div
           onClick={onTryOnClick}
-          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
-              <Hand className="w-6 h-6" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+              <Hand className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-
-            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
-              Live AR
-            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                Virtual Try-On
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
+                Live AR on hand
+              </p>
+            </div>
           </div>
-
-          <div className="space-y-1">
-            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
-              Virtual Try-On
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
-              {customTryOnHandUrl
-                ? 'Your hand photo is active. Tap any manicure to try it on live.'
-                : 'Upload your hand once or open camera to see sets live on your fingers.'}
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
-              <span>Open Try-On Studio</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
+          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
 
-        {/* Station 2: Extract Inspiration */}
+        {/* Station 2: Extract Inspo */}
         <div
           onClick={onUploadClick}
-          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
-              <ImagePlus className="w-6 h-6" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+              <ImagePlus className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-
-            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
-              5-Finger AI
-            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                Extract Inspo
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
+                From photo or IG
+              </p>
+            </div>
           </div>
-
-          <div className="space-y-1">
-            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
-              Extract Inspo Photo
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
-              Upload any Pinterest or Instagram manicure photo to decompose it into 5 distinct finger recipes.
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
-              <span>Upload Manicure</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
+          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
 
-        {/* Station 3: AI Creation Studio */}
+        {/* Station 3: AI Studio */}
         <div
           onClick={() => {
             if (onCreatePromptClick) {
@@ -417,79 +396,52 @@ export function HomeHubView({
               onCustomizeClick();
             }
           }}
-          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
-              <Sparkles className="w-6 h-6" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-
-            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
-              Conversational
-            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                AI Studio
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
+                Generate custom set
+              </p>
+            </div>
           </div>
-
-          <div className="space-y-1">
-            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
-              AI Design Studio
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
-              Chat directly with our AI to generate custom nail art, chrome powders, or color palettes.
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
-              <span>Start Creating</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
+          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
 
-        {/* Station 4: Bespoke 5-Finger Studio */}
+        {/* Station 4: Bespoke Workbench */}
         <div
           onClick={onCustomizeClick}
-          className="p-5 sm:p-6 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all duration-300 shadow-2xs cursor-pointer group flex flex-col justify-between gap-4"
+          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
         >
-          <div className="flex items-start justify-between gap-3">
-            <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-xs">
-              <SlidersHorizontal className="w-6 h-6" strokeWidth={1.75} />
+          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+              <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-
-            <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider group-hover:bg-[#E0246A] group-hover:text-white transition-colors">
-              Customizer
-            </span>
+            <div className="min-w-0">
+              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
+                Bespoke Nails
+              </h3>
+              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
+                5-finger designer
+              </p>
+            </div>
           </div>
-
-          <div className="space-y-1">
-            <h3 className="font-serif text-lg sm:text-xl font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
-              Bespoke Workbench
-            </h3>
-            <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
-              Hand-craft each finger&apos;s lacquer hue, apex curvature, shape silhouette, and gel finish.
-            </p>
-          </div>
-
-          <div className="pt-2 flex items-center gap-2">
-            <span className="text-xs font-semibold text-[#E0246A] inline-flex items-center gap-1 group-hover:underline">
-              <span>Customize Nails</span>
-              <ArrowRight className="w-3.5 h-3.5" />
-            </span>
-          </div>
+          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
       </div>
 
-      {/* 4. Curated Atelier Spotlight (6 Editorial Looks across the Widescreen) */}
-      <div className="space-y-4">
+      {/* 4. Curated Atelier Looks (Visual-First Grid) */}
+      <div className="space-y-3">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
-              Curated Atelier Looks
-            </h2>
-            <p className="text-xs text-stone-500">
-              Ready for immediate 1-tap try-on on your hand.
-            </p>
-          </div>
+          <h2 className="font-serif text-base sm:text-lg lg:text-xl font-medium text-stone-900 tracking-tight">
+            Curated Looks
+          </h2>
 
           {onExploreClick && (
             <button
@@ -504,7 +456,7 @@ export function HomeHubView({
         </div>
 
         {/* 6 Featured Large Editorial Cards in a Responsive Full-Width Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3.5 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
           {FEATURED_ATELIER_LOOKS.map((look) => (
             <div
               key={look.id}
@@ -512,7 +464,7 @@ export function HomeHubView({
                 onSelectExploreDesign?.(look.id);
                 onTryOnClick();
               }}
-              className="group relative rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2]"
+              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2]"
             >
               <img
                 src={look.photoUrl}
@@ -524,19 +476,19 @@ export function HomeHubView({
               <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
 
               {/* Top Category Badge */}
-              <div className="absolute top-3 left-3 z-10">
-                <span className="px-2.5 py-1 rounded-full bg-black/40 text-white text-[10px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+              <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
+                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/40 text-white text-[9px] sm:text-[10px] font-semibold backdrop-blur-xs capitalize border border-white/10">
                   {look.category}
                 </span>
               </div>
 
               {/* Bottom Details & 1-Tap Try On */}
-              <div className="relative z-10 p-3 sm:p-4 space-y-2">
+              <div className="relative z-10 p-2.5 sm:p-3.5 space-y-1.5 sm:space-y-2">
                 <div>
-                  <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs">
+                  <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs truncate">
                     {look.title}
                   </h4>
-                  <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5">
+                  <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5 truncate">
                     {look.finish} · <span className="capitalize">{look.shape}</span>
                   </p>
                 </div>
@@ -548,10 +500,10 @@ export function HomeHubView({
                     onSelectExploreDesign?.(look.id);
                     onTryOnClick();
                   }}
-                  className="w-full h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-xs font-bold shadow-md flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                  className="w-full h-8 sm:h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] sm:text-xs font-bold shadow-md flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer"
                 >
-                  <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                  <span>{customTryOnHandUrl ? 'Try on My Hand' : 'Try On'}</span>
+                  <Hand className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" strokeWidth={2} />
+                  <span>{customTryOnHandUrl ? 'Try on Hand' : 'Try On'}</span>
                 </button>
               </div>
             </div>
@@ -559,44 +511,35 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 5. Distinct Aesthetic Collection Shelves */}
-      <div className="space-y-4">
-        <div>
-          <h2 className="font-serif text-lg sm:text-xl font-medium text-stone-900 tracking-tight">
-            Explore by Aesthetic
-          </h2>
-          <p className="text-xs text-stone-500">
-            Discover curated moodboards tailored to your silhouette.
-          </p>
-        </div>
+      {/* 5. Distinct Aesthetic Collection Moodboards (Visual-First, No Text Clutter) */}
+      <div className="space-y-3">
+        <h2 className="font-serif text-base sm:text-lg lg:text-xl font-medium text-stone-900 tracking-tight">
+          Explore by Aesthetic
+        </h2>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-5">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-4">
           {AESTHETIC_COLLECTIONS.map((col) => (
             <div
               key={col.id}
               onClick={() => onExploreClick?.(col.tag)}
-              className="p-4 sm:p-5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-stone-300 transition-all shadow-2xs cursor-pointer group flex flex-col justify-between gap-3"
+              className="p-2.5 sm:p-3 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-stone-300 transition-all shadow-2xs cursor-pointer group flex flex-col justify-between gap-2.5 active:scale-98"
             >
-              <div className="aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 relative">
+              <div className="aspect-[4/3] w-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-100 relative">
                 <img
                   src={col.photoUrl}
                   alt={col.title}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] sm:text-[10px] font-semibold backdrop-blur-xs border border-white/10">
+                  {col.badge}
+                </span>
               </div>
 
-              <div className="space-y-1">
-                <h4 className="font-serif text-base font-medium text-stone-900 group-hover:text-[#E0246A] transition-colors">
+              <div className="flex items-center justify-between gap-1 px-1">
+                <h4 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
                   {col.title}
                 </h4>
-                <p className="text-xs text-stone-500 line-clamp-2 leading-relaxed">
-                  {col.subtitle}
-                </p>
-              </div>
-
-              <div className="pt-1 flex items-center gap-1 text-xs font-semibold text-stone-700 group-hover:text-[#E0246A]">
-                <span>Browse Collection</span>
-                <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
+                <ArrowRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5" />
               </div>
             </div>
           ))}
