@@ -295,22 +295,39 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 2. Sleek Pinterest-Style Search & AI Generation Dock */}
+      {/* 2. AI Creation Studio Dock */}
       <div className="space-y-2">
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
+              AI Creation Studio
+            </h2>
+          </div>
+          <span className="text-[10px] sm:text-[11px] text-stone-400 font-normal">
+            Generate custom sets with prompt
+          </span>
+        </div>
+
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleGenerate();
           }}
-          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-11 sm:h-12 px-3.5 sm:px-4.5 transition-all flex items-center gap-2.5 sm:gap-3 border border-transparent shadow-2xs"
+          className="w-full bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full h-11 sm:h-12 px-2.5 sm:px-3.5 transition-all flex items-center gap-2 sm:gap-2.5 border border-transparent shadow-2xs"
         >
-          <Sparkles className="w-4 h-4 sm:w-5 sm:h-5 text-[#E0246A] shrink-0" />
+          {/* AI Creation Badge inside dock */}
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] text-[10px] sm:text-[11px] font-bold shrink-0 border border-[#FCE7F3]">
+            <Sparkles className="w-3 h-3 text-[#E0246A]" />
+            <span className="hidden sm:inline">AI Creation</span>
+            <span className="sm:hidden">AI</span>
+          </span>
 
           <input
             type="text"
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
-            placeholder="Search manicures or describe any vibe..."
+            placeholder="Describe any design (e.g. Glazed donut chrome with blush hearts)..."
             className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none min-w-0"
           />
 
@@ -324,8 +341,11 @@ export function HomeHubView({
           </button>
         </form>
 
-        {/* Short 1-2 Word Aesthetic Chips */}
+        {/* Short 1-2 Word Aesthetic Prompt Chips */}
         <div className="flex items-center gap-1.5 sm:gap-2 overflow-x-auto scrollbar-none py-0.5 select-none">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 shrink-0">
+            Prompts:
+          </span>
           {QUICK_PROMPT_CHIPS.map((chip) => (
             <button
               key={chip}
