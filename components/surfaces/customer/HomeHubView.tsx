@@ -36,7 +36,8 @@ function createFallbackSet(
   baseColor: string,
   accentColor: string,
   pattern: any,
-  finish: any = 'glossy'
+  finish: any = 'glossy',
+  shape: NailShape = 'almond'
 ): ExploreDesignSet {
   const fingerNail = (finger: Finger): NailDesign => ({
     finger,
@@ -44,7 +45,7 @@ function createFallbackSet(
     baseColor,
     accentColor,
     pattern,
-    shape: 'almond',
+    shape,
     length: 'medium',
     finish,
     clientNote: `${title} bespoke atelier look`,
@@ -56,7 +57,7 @@ function createFallbackSet(
     passportCode: `FGL-${id.slice(-4).toUpperCase()}`,
     title,
     category,
-    subtitle: `${category} · Almond · Atelier Finish`,
+    subtitle: `${category} · ${shape.charAt(0).toUpperCase() + shape.slice(1)} · Atelier Finish`,
     photoUrl,
     likes: 128,
     isSaved: false,
@@ -82,7 +83,8 @@ const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
     '#F5ECE3',
     '#D4AF37',
     'aura',
-    'chrome'
+    'chrome',
+    'almond'
   ),
   createFallbackSet(
     'set-blush-heart',
@@ -92,7 +94,8 @@ const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
     '#FCE7F3',
     '#E0246A',
     'heart-french',
-    'glossy'
+    'glossy',
+    'almond'
   ),
   createFallbackSet(
     'set-burgundy-aura',
@@ -102,7 +105,8 @@ const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
     '#FAF0EA',
     '#801A35',
     'aura',
-    'glossy'
+    'glossy',
+    'almond'
   ),
   createFallbackSet(
     'set-editorial-nude',
@@ -112,7 +116,52 @@ const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
     '#FAF0EA',
     '#FFFFFF',
     'solid',
-    'glossy'
+    'glossy',
+    'square'
+  ),
+  createFallbackSet(
+    'set-rose-glazed',
+    'Rose Quartz Glaze',
+    'Glazed',
+    '/assets/pink_heart_tryon_result.jpg',
+    '#FCE7F3',
+    '#F5ECE3',
+    'aura',
+    'chrome',
+    'oval'
+  ),
+  createFallbackSet(
+    'set-french-chrome',
+    'French Chrome Rose',
+    'French',
+    '/assets/milky_gold_tryon_result.jpg',
+    '#F5ECE3',
+    '#E0246A',
+    'classic-french',
+    'chrome',
+    'coffin'
+  ),
+  createFallbackSet(
+    'set-velvet-wine',
+    'Mulberry Velvet Aura',
+    'Aura',
+    '/assets/burgundy_gold_virtual_tryon.jpg',
+    '#3B111D',
+    '#E0246A',
+    'aura',
+    'matte',
+    'coffin'
+  ),
+  createFallbackSet(
+    'set-quiet-linen',
+    'Quiet Luxury Linen',
+    'Minimal',
+    '/assets/editorial_nail_hero.jpg',
+    '#FAF0EA',
+    '#8FA893',
+    'minimal-line',
+    'glossy',
+    'almond'
   ),
 ];
 
@@ -168,28 +217,32 @@ export function HomeHubView({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // High-fashion editorial photography only: filter out salon table/drill photos and polish titles
+  // High-fashion editorial photography only: filter out salon table/drill/gravel photos and polish titles
   const designs = useMemo(() => {
     const rawList = exploreDesigns?.filter((d) => {
       const url = d.photoUrl || '';
       return (
         !url.includes('unsplash.com') &&
         !url.includes('photo-1604654894610') &&
-        !url.includes('photo-1607779097040')
+        !url.includes('photo-1607779097040') &&
+        !url.includes('photo-1632345031435') &&
+        !url.includes('imagefes.jpeg') &&
+        !url.includes('images22.jpeg') &&
+        !url.includes('1795176925816_images.jpeg') &&
+        !url.includes('1795127479510_images.jpeg') &&
+        !url.includes('ar-nail-hero.jpg')
       );
     });
 
-    const list = rawList && rawList.length > 0 ? rawList : FALLBACK_CURATED_DESIGNS;
+    // If rawList has fewer than 8 designs, fallback to our curated 8-design luxury set
+    const list = rawList && rawList.length >= 8 ? rawList : FALLBACK_CURATED_DESIGNS;
 
     return list.map((d) => {
       let title = d.title || 'Atelier Set';
       if (title === 'AI Extracted Manicure') title = 'French Chrome Rose';
       if (title.startsWith("L'Atelier ")) title = title.replace("L'Atelier ", '');
 
-      let photoUrl = d.photoUrl;
-      if (!photoUrl || photoUrl === '/assets/editorial_nail_hero.jpg') {
-        photoUrl = '/assets/milky_gold_tryon_result.jpg';
-      }
+      const photoUrl = d.photoUrl || '/assets/milky_gold_tryon_result.jpg';
 
       return {
         ...d,
@@ -438,65 +491,9 @@ export function HomeHubView({
           })}
         </div>
 
-        {/* Mobile Horizontal Carousel: 3:4 Portrait Ratio with 1-Tap Try On */}
-        <div className="flex lg:hidden items-center gap-3 overflow-x-auto pb-2 scrollbar-none -mx-2 px-2 snap-x snap-mandatory scroll-smooth">
+        {/* Responsive Editorial Manicure Grid (2 Columns on Mobile, 3 on Tablet, 4 on Desktop) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-8">
           {filteredDesigns.map((design) => {
-            const isActive = design.id === activeSample?.id;
-            const primaryFinger = design.nails?.middle || design.nails?.index;
-            const shapeLabel = primaryFinger?.shape || 'almond';
-
-            return (
-              <div
-                key={design.id}
-                onClick={() => onSelectExploreDesign?.(design.id)}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left shrink-0 cursor-pointer snap-start active:scale-[0.98] w-44 sm:w-52 aspect-[3/4] bg-stone-100 ${
-                  isActive
-                    ? 'border-[#E0246A] ring-2 ring-[#E0246A]/25 shadow-sm'
-                    : 'border-stone-200/80 hover:border-stone-300 shadow-2xs'
-                }`}
-              >
-                <img
-                  src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
-                  alt={design.title || 'Manicure Design'}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                />
-
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
-
-                {/* Top Shape Badge */}
-                <div className="absolute top-2.5 left-2.5">
-                  <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
-                    {shapeLabel}
-                  </span>
-                </div>
-
-                {/* Bottom Card Scrim & Try-On Action */}
-                <div className="absolute inset-x-2.5 bottom-2.5 space-y-2">
-                  <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
-                    {design.title}
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelectExploreDesign?.(design.id);
-                      onTryOnClick();
-                    }}
-                    className="w-full h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                  >
-                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
-                    <span>Try On</span>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-
-        {/* Desktop Grid Layout: 3:4 Aspect Ratio */}
-        <div className="hidden lg:grid lg:grid-cols-4 gap-3.5">
-          {filteredDesigns.slice(0, 8).map((design) => {
             const isActive = design.id === activeSample?.id;
             const primaryFinger = design.nails?.middle || design.nails?.index;
             const shapeLabel = primaryFinger?.shape || 'almond';
@@ -512,20 +509,22 @@ export function HomeHubView({
                 }`}
               >
                 <img
-                  src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                  src={design.photoUrl || '/assets/milky_gold_tryon_result.jpg'}
                   alt={design.title || 'Manicure Design'}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
 
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
+                {/* Top Shape Badge */}
                 <div className="absolute top-2.5 left-2.5">
                   <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
                     {shapeLabel}
                   </span>
                 </div>
 
-                <div className="absolute inset-x-3 bottom-3 space-y-2">
+                {/* Bottom Card Scrim & Try-On Action */}
+                <div className="absolute inset-x-2.5 bottom-2.5 space-y-1.5 sm:space-y-2">
                   <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
                     {design.title}
                   </div>
@@ -537,9 +536,9 @@ export function HomeHubView({
                       onSelectExploreDesign?.(design.id);
                       onTryOnClick();
                     }}
-                    className="w-full h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                   >
-                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={1.75} />
+                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
                     <span>Try On</span>
                   </button>
                 </div>
@@ -547,6 +546,19 @@ export function HomeHubView({
             );
           })}
         </div>
+
+        {filteredDesigns.length === 0 && (
+          <div className="py-10 text-center space-y-2 bg-white rounded-2xl border border-stone-200/80 p-6">
+            <p className="text-xs text-stone-500">No manicures found in this category.</p>
+            <button
+              type="button"
+              onClick={() => setActiveCategory('All')}
+              className="text-xs font-semibold text-[#E0246A] hover:underline cursor-pointer"
+            >
+              Show all designs
+            </button>
+          </div>
+        )}
       </section>
 
       {/* ------------------------------------------------------------------ */}
