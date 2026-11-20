@@ -45,6 +45,7 @@ import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
+import { slice5NailSetImage, cropNailFromPhoto } from '@/lib/services/nail-image-processor';
 
 export default function FingloraApp() {
   // Top-level Surface & Viewport State: defaults to Finglora mobile-first landing hero
@@ -579,25 +580,55 @@ export default function FingloraApp() {
 
         if (aiResponse?.data?.nails) {
           const apiNails = aiResponse.data.nails;
-          FINGER_KEYS.forEach((fk) => {
+          
+          // Slice master 5-nail AI image into 5 individual finger image data URLs
+          let fingerImages: Record<Finger, string> | null = null;
+          if (aiResponse.data.master5NailImageUrl) {
+            try {
+              fingerImages = await slice5NailSetImage(aiResponse.data.master5NailImageUrl);
+            } catch (sliceErr) {
+              console.warn('[Finglora AI] Slicing master set image failed:', sliceErr);
+            }
+          }
+
+          const defaultAnchors = {
+            thumb: { x: 0.22, y: 0.60 },
+            index: { x: 0.36, y: 0.30 },
+            middle: { x: 0.50, y: 0.23 },
+            ring: { x: 0.64, y: 0.29 },
+            pinky: { x: 0.78, y: 0.44 },
+          };
+
+          for (const fk of FINGER_KEYS) {
             if (apiNails[fk]) {
+              const artImg = fingerImages?.[fk] || (await cropNailFromPhoto(customUploadedUrl, defaultAnchors[fk].x, defaultAnchors[fk].y));
               detectedNails[fk] = {
                 ...detectedNails[fk],
                 ...apiNails[fk],
-                artImageUrl: undefined,
-                extractedTextureUrl: undefined,
+                artImageUrl: artImg,
+                extractedTextureUrl: customUploadedUrl,
                 status: 'detected',
               };
             }
-          });
+          }
           if (aiResponse.data.title) {
             newTitle = aiResponse.data.title;
             setActiveSetName(newTitle);
           }
         } else {
-          // Graceful fallback: synthesize elegant detected manicure designs
-          FINGER_KEYS.forEach((fk, idx) => {
+          // Graceful fallback: synthesize elegant detected manicure designs with cropped texture
+          const defaultAnchors = {
+            thumb: { x: 0.22, y: 0.60 },
+            index: { x: 0.36, y: 0.30 },
+            middle: { x: 0.50, y: 0.23 },
+            ring: { x: 0.64, y: 0.29 },
+            pinky: { x: 0.78, y: 0.44 },
+          };
+
+          for (let idx = 0; idx < FINGER_KEYS.length; idx++) {
+            const fk = FINGER_KEYS[idx];
             const patterns = ['heart-french', 'classic-french', 'heart-french', 'classic-french', 'heart-french'] as const;
+            const artImg = await cropNailFromPhoto(customUploadedUrl, defaultAnchors[fk].x, defaultAnchors[fk].y);
             detectedNails[fk] = {
               ...detectedNails[fk],
               title: idx % 2 === 0 ? 'Blush Heart French' : 'Rose French Tip',
@@ -608,11 +639,11 @@ export default function FingloraApp() {
               length: 'long',
               finish: 'glossy',
               clientNote: 'Soft pink base with white/pink heart French tip and rhinestone accents.',
-              artImageUrl: undefined,
-              extractedTextureUrl: undefined,
+              artImageUrl: artImg,
+              extractedTextureUrl: customUploadedUrl,
               status: 'detected',
             };
-          });
+          }
         }
 
         // Live update active nails so the detection screen can display them
@@ -676,7 +707,7 @@ export default function FingloraApp() {
     await new Promise((r) => setTimeout(r, 1200));
 
     setIsAnalyzing(false);
-    showToast('5 individual nail designs extracted & ready in studio!');
+    showToast('5 AI nail designs generated! Opening Virtual Try-On ✨');
     navigateCustomer('tryon');
   };
 
@@ -785,7 +816,7 @@ export default function FingloraApp() {
     showToast(`Undid last edit on ${FINGER_LABELS[selectedFinger]}`);
   };
 
-  const regenerateSingleFinger = (fk: Finger) => {
+  const regenerateSingleFinger = async (fk: Finger) => {
     setFingerHistory((prev) => ({
       ...prev,
       [fk]: [...(prev[fk] || []), JSON.parse(JSON.stringify(nails[fk]))],
@@ -794,18 +825,47 @@ export default function FingloraApp() {
     const patternIds = NAIL_PATTERNS.map((p) => p.id);
     const hexes = COLOR_PALETTE.map((c) => c.hex);
     const finishIds = NAIL_FINISHES.map((f) => f.id);
+    const newPattern = patternIds[(patternIds.indexOf(current.pattern) + 1) % patternIds.length];
+    const newAccent = hexes[(hexes.indexOf(current.accentColor) + 2) % hexes.length];
+    const newFinish = finishIds[(finishIds.indexOf(current.finish) + 1) % finishIds.length];
+
     setNails((prev) => ({
       ...prev,
       [fk]: {
         ...current,
-        title: `${FINGER_LABELS[fk]} Custom Variation`,
-        pattern: patternIds[(patternIds.indexOf(current.pattern) + 1) % patternIds.length],
-        accentColor: hexes[(hexes.indexOf(current.accentColor) + 2) % hexes.length],
-        finish: finishIds[(finishIds.indexOf(current.finish) + 1) % finishIds.length],
+        title: `${FINGER_LABELS[fk]} Variation`,
+        pattern: newPattern,
+        accentColor: newAccent,
+        finish: newFinish,
         status: 'edited',
       },
     }));
-    showToast(`Regenerated ${FINGER_LABELS[fk]} only — other 4 nails untouched`);
+    showToast(`Synthesizing new AI design for ${FINGER_LABELS[fk]}...`);
+
+    try {
+      const res = await fetch('/api/generate-nail-art', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'single-nail',
+          finger: fk,
+          nailShape: current.shape,
+          prompt: `${newPattern} nail art in ${current.baseColor} and ${newAccent} lacquer with ${newFinish} finish`,
+        }),
+      });
+      if (res.ok) {
+        const json = await res.json();
+        if (json.imageUrl) {
+          setNails((prev) => ({
+            ...prev,
+            [fk]: { ...prev[fk], artImageUrl: json.imageUrl, status: 'edited' },
+          }));
+          showToast(`Generated new AI art for ${FINGER_LABELS[fk]}!`);
+        }
+      }
+    } catch {
+      // Fallback already in state
+    }
   };
 
   const applySelectedToAllFive = () => {

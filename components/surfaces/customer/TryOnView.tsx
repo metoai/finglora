@@ -174,6 +174,39 @@ export function TryOnView({
   const [isApplyingAi, setIsApplyingAi] = useState(false);
   const [customizedToast, setCustomizedToast] = useState(false);
 
+  // Generative AI Synthesis of User's Hand with the 5 Nail Designs
+  const [synthesizedHandUrl, setSynthesizedHandUrl] = useState<string | null>(null);
+  const [isSynthesizingHand, setIsSynthesizingHand] = useState(false);
+
+  const handleSynthesizeHand = async () => {
+    const sourceHand = customTryOnHandUrl || capturedFrameUrl;
+    if (!sourceHand) return;
+    setIsSynthesizingHand(true);
+    try {
+      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}. High gloss gel clearcoat on nails.`;
+      const res = await fetch('/api/generate-nail-art', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hand-tryon',
+          handImageBase64: sourceHand,
+          prompt,
+        }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.imageUrl) {
+          setSynthesizedHandUrl(data.imageUrl);
+          setTryOnView('after');
+        }
+      }
+    } catch (err) {
+      console.warn('AI hand synthesis error:', err);
+    } finally {
+      setIsSynthesizingHand(false);
+    }
+  };
+
   // Screen 7 is active when a frame has been captured or a personal photo is uploaded
   const isShowingResult = cameraStatus === 'captured' || Boolean(customTryOnHandUrl);
 
@@ -387,9 +420,13 @@ export function TryOnView({
           <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-900 shadow-md border border-stone-200/80 flex items-center justify-center mx-auto">
             {capturedFrameUrl || customTryOnHandUrl ? (
               <img
-                src={resultImageUrl || '/assets/editorial_nail_hero.jpg'}
+                src={
+                  (tryOnView === 'after' && synthesizedHandUrl)
+                    ? synthesizedHandUrl
+                    : (resultImageUrl || '/assets/editorial_nail_hero.jpg')
+                }
                 alt="Try-On Hand"
-                className="w-full h-full object-cover"
+                className="w-full h-full object-cover transition-all duration-300"
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center bg-stone-900">
@@ -404,8 +441,16 @@ export function TryOnView({
               </div>
             )}
 
-            {/* Overlaid Manicure Nails (Only on authentic user hand when calibrated or in manual alignment mode) */}
-            {tryOnView === 'after' && (capturedFrameUrl || customTryOnHandUrl) && (photoAnchors || showAdjustSliders) && (
+            {/* AI Synthesizing Spinner Overlay */}
+            {isSynthesizingHand && (
+              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2.5 text-white p-4 text-center">
+                <div className="w-10 h-10 rounded-full border-2 border-pink-200 border-t-[#E0246A] animate-spin" />
+                <span className="text-xs font-medium">Vertex AI synthesizing manicure on your hand...</span>
+              </div>
+            )}
+
+            {/* Overlaid Manicure Nails (Only on authentic user hand when calibrated or in manual alignment mode and not yet baked) */}
+            {tryOnView === 'after' && !synthesizedHandUrl && (capturedFrameUrl || customTryOnHandUrl) && (photoAnchors || showAdjustSliders) && (
               <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
                 {orderedFingers.map((fk) => {
                   const anchor = photoAnchors?.[fk] || DEFAULT_PHOTO_ANCHORS[fk];
@@ -541,19 +586,32 @@ export function TryOnView({
             </div>
           </div>
 
-          {/* AI Customization Prompt Button */}
-          <div className="flex items-center justify-between px-1">
+          {/* AI Generation & Customization Controls */}
+          <div className="flex flex-wrap items-center justify-between gap-2 px-1">
             <span className="text-[11px] text-stone-500 font-medium">
-              Want to tweak colors or patterns?
+              Manicure fitted to your hand
             </span>
-            <button
-              type="button"
-              onClick={() => setShowAiCustomizer(true)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#FDF2F8] border border-stone-200 hover:border-[#E0246A]/40 text-stone-800 hover:text-[#E0246A] text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
-            >
-              <Paintbrush className="w-3.5 h-3.5 text-[#E0246A]" />
-              <span>Customize with AI</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {(customTryOnHandUrl || capturedFrameUrl) && (
+                <button
+                  type="button"
+                  disabled={isSynthesizingHand}
+                  onClick={handleSynthesizeHand}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-60"
+                >
+                  <Sparkles className="w-3.5 h-3.5 text-white" />
+                  <span>{isSynthesizingHand ? 'Synthesizing...' : 'Regenerate Hand with AI'}</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowAiCustomizer(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#FDF2F8] border border-stone-200 hover:border-[#E0246A]/40 text-stone-800 hover:text-[#E0246A] text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
+              >
+                <Paintbrush className="w-3.5 h-3.5 text-[#E0246A]" />
+                <span>Customize Colors</span>
+              </button>
+            </div>
           </div>
 
           {/* Bottom Action Bar */}

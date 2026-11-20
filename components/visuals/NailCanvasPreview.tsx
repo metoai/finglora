@@ -118,20 +118,29 @@ export function NailCanvasPreview({
           }}
         />
 
-        {/* ===== ARTISTRY PATTERNS (PURE CSS & PHOTOGRAPHIC COMPOSITION) ===== */}
-
-        {/* 1. Classic French Tip */}
-        {nail.pattern === 'classic-french' && (
-          <div
-            className="absolute inset-x-0 top-0"
-            style={{
-              height: '32%',
-              backgroundColor: nail.accentColor || '#FFFFFF',
-              borderRadius: '0 0 50% 50% / 0 0 18px 18px',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
-            }}
+        {/* Authentic AI Generated Nail Art Image Layer */}
+        {(nail.artImageUrl || nail.extractedTextureUrl) ? (
+          <img
+            src={nail.artImageUrl || nail.extractedTextureUrl || '/assets/editorial_nail_hero.jpg'}
+            alt={nail.title || 'Nail Art Design'}
+            className="absolute inset-0 w-full h-full object-cover scale-105 pointer-events-none"
           />
-        )}
+        ) : (
+          <>
+            {/* ===== ARTISTRY PATTERNS (PURE CSS & PHOTOGRAPHIC COMPOSITION) ===== */}
+
+            {/* 1. Classic French Tip */}
+            {nail.pattern === 'classic-french' && (
+              <div
+                className="absolute inset-x-0 top-0"
+                style={{
+                  height: '32%',
+                  backgroundColor: nail.accentColor || '#FFFFFF',
+                  borderRadius: '0 0 50% 50% / 0 0 18px 18px',
+                  boxShadow: '0 2px 4px rgba(0,0,0,0.08)',
+                }}
+              />
+            )}
 
         {/* 2. Heart French & Swoopy Lines */}
         {nail.pattern === 'heart-french' && (
@@ -228,8 +237,10 @@ export function NailCanvasPreview({
             }}
           >
             <div className="absolute inset-0 bg-[radial-gradient(#FFFFFF_1px,transparent_1px)] [background-size:6px_6px] opacity-70" />
-          </div>
-        )}
+            </div>
+          )}
+        </>
+      )}
 
         {/* Finish Optical Glaze Sheen */}
         {!isMatte && (

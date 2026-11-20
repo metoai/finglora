@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 interface ExtractionRequestBody {
   imageUrl?: string;
   imageBase64?: string;
+  generateImages?: boolean;
 }
 
 const MANICURE_PROMPT = `You are Finglora's Master Manicure Analyzer powered by Google Gemini.
@@ -168,10 +169,54 @@ export async function POST(request: Request) {
       );
     }
 
+    let master5NailImageUrl: string | null = null;
+    if (body.generateImages !== false && parsed?.nails) {
+      try {
+        const nailShape = (parsed.nails as any)?.middle?.shape || 'almond';
+        const title = parsed.title || 'Luxury Atelier Manicure';
+        const imagePrompt = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: "${title}". Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish.`;
+
+        const imageCandidateModels = ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
+        imgLoop: for (const key of candidateKeys) {
+          for (const imgModel of imageCandidateModels) {
+            try {
+              const imgRes = await fetch(
+                `https://aiplatform.googleapis.com/v1/publishers/google/models/${imgModel}:generateContent?key=${key}`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    contents: [{ role: 'user', parts: [{ text: imagePrompt }] }],
+                    generationConfig: { responseModalities: ['IMAGE'] },
+                  }),
+                  signal: AbortSignal.timeout(12000),
+                }
+              );
+              if (imgRes.ok) {
+                const imgJson = await imgRes.json();
+                const imgPart = imgJson?.candidates?.[0]?.content?.parts?.find((p: any) => p.inlineData?.data);
+                if (imgPart?.inlineData?.data) {
+                  master5NailImageUrl = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
+                  break imgLoop;
+                }
+              }
+            } catch {
+              // Graceful continuation
+            }
+          }
+        }
+      } catch (imgErr) {
+        console.warn('[Finglora AI] 5-nail master image generation skipped:', imgErr);
+      }
+    }
+
     return NextResponse.json({
       success: true,
       source: `google-${activeModel}`,
-      data: parsed,
+      data: {
+        ...parsed,
+        master5NailImageUrl,
+      },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Gemini vision extraction error';

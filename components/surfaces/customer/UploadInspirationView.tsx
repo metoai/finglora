@@ -9,11 +9,12 @@ import {
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
+import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
 const EDITORIAL_PHASES = [
-  'Decomposing 5-finger silhouette & apex curvature',
-  'Formulating lacquer pigments & metallic accents',
-  'Preparing bespoke virtual try-on',
+  'Gemini Vision analyzing 5-finger silhouettes & shapes',
+  'Vertex AI generating 5 individual finger nail designs',
+  '5 AI designs conformed • Opening Virtual Try-On',
 ];
 
 export function UploadInspirationView({
@@ -115,6 +116,31 @@ export function UploadInspirationView({
           </p>
         </div>
 
+        {/* 5 Isolated Finger AI Nail Art Visual Cards (Zero JSON - Pure Image & Shape) */}
+        <div className="pt-2">
+          <div className="grid grid-cols-5 gap-2 sm:gap-3 max-w-lg mx-auto">
+            {FINGER_KEYS.map((fk) => {
+              const nail = nails[fk];
+              return (
+                <div
+                  key={fk}
+                  className="bg-white rounded-2xl p-2 border border-stone-200/80 shadow-xs flex flex-col items-center text-center space-y-1.5 transition-all hover:scale-105"
+                >
+                  <span className="text-[10px] font-semibold text-stone-500 uppercase tracking-wider">
+                    {FINGER_LABELS[fk]}
+                  </span>
+                  <div className="w-12 h-18 sm:w-14 sm:h-20 bg-stone-50 rounded-xl flex items-center justify-center overflow-hidden border border-stone-100">
+                    <NailCanvasPreview nail={nail} width={42} height={68} interactive={false} />
+                  </div>
+                  <span className="text-[9px] font-medium text-stone-600 capitalize truncate max-w-[50px]">
+                    {nail.shape}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* 3 Quiet Progress Dots */}
         <div className="flex items-center justify-center gap-2 pt-2">
           {EDITORIAL_PHASES.map((_, idx) => (
@@ -131,13 +157,28 @@ export function UploadInspirationView({
           ))}
         </div>
 
+        {/* Instant Try-On Redirection CTA */}
+        {onComplete && (
+          <div className="pt-2 max-w-xs mx-auto">
+            <button
+              type="button"
+              onClick={onComplete}
+              className="w-full h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <span>See on My Hand (Virtual Try-On)</span>
+              <ArrowRight className="w-3.5 h-3.5 text-white" />
+            </button>
+          </div>
+        )}
+
         {/* Cancel Button */}
         {onCancel && (
-          <div className="pt-4">
+          <div className="pt-1">
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs text-stone-400 hover:text-stone-700 transition-colors"
+              className="text-xs text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
             >
               Cancel analysis
             </button>
