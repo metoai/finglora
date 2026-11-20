@@ -377,24 +377,24 @@ export function UploadInspirationView({
             )}
           </div>
 
-          {/* Action Buttons: Take Photo (Camera) & Upload Photo */}
+          {/* Action Buttons: 1st Option = Upload Photo, 2nd Option = Camera */}
           <div className="grid grid-cols-2 gap-2.5 mt-4">
             <button
               type="button"
-              onClick={() => setIsCameraModalOpen(true)}
+              onClick={() => handFileInputRef.current?.click()}
               className="h-10 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-xs shadow-[#E0246A]/20"
             >
-              <Camera className="w-3.5 h-3.5" />
-              <span>{localHandPhoto ? 'Retake Photo' : 'Take Photo'}</span>
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span>Upload Photo</span>
             </button>
 
             <button
               type="button"
-              onClick={() => handFileInputRef.current?.click()}
+              onClick={() => setIsCameraModalOpen(true)}
               className="h-10 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
             >
-              <UploadCloud className="w-3.5 h-3.5" />
-              <span>Upload Photo</span>
+              <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
+              <span>{localHandPhoto ? 'Retake Photo' : 'Camera'}</span>
             </button>
           </div>
         </div>

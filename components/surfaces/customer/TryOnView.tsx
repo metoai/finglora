@@ -581,18 +581,9 @@ export function TryOnView({
             </div>
 
             <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-md justify-center">
-              <button
-                type="button"
-                onClick={() => setIsCameraModalOpen(true)}
-                className="cursor-pointer h-13 px-6 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold inline-flex items-center justify-center gap-2.5 shadow-lg shadow-[#E0246A]/25 transition-all active:scale-95 w-full sm:w-auto"
-              >
-                <Camera className="w-4.5 h-4.5" />
-                <span>Take Photo with Camera</span>
-              </button>
-
-              <label className="cursor-pointer h-13 px-6 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-sm font-medium inline-flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto shadow-2xs">
+              <label className="cursor-pointer h-13 px-6 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold inline-flex items-center justify-center gap-2.5 shadow-lg shadow-[#E0246A]/25 transition-all active:scale-95 w-full sm:w-auto">
                 <UploadCloud className="w-4.5 h-4.5" />
-                <span>Upload from Device</span>
+                <span>Upload Hand Photo</span>
                 <input
                   type="file"
                   accept="image/*"
@@ -613,6 +604,15 @@ export function TryOnView({
                   }}
                 />
               </label>
+
+              <button
+                type="button"
+                onClick={() => setIsCameraModalOpen(true)}
+                className="cursor-pointer h-13 px-6 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-sm font-medium inline-flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto shadow-2xs"
+              >
+                <Camera className="w-4.5 h-4.5 text-[#E0246A]" />
+                <span>Camera</span>
+              </button>
             </div>
 
             {/* Quick Sample Hand Preset */}

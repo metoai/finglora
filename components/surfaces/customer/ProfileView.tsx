@@ -32,6 +32,7 @@ import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
 import { uploadUserHandPhoto } from '@/lib/services/storage';
+import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 interface ProfileViewProps {
   userName: string;
@@ -97,6 +98,7 @@ export function ProfileView({
   // Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
+  const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
 
@@ -210,6 +212,40 @@ export function ProfileView({
       }
     };
     reader.readAsDataURL(file);
+  };
+
+  const handleCameraHandCaptured = async (dataUrl: string) => {
+    if (setCustomTryOnHandUrl) {
+      setCustomTryOnHandUrl(dataUrl);
+    }
+    try {
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+        localStorage.setItem('finglora_user_hand_photo', dataUrl);
+      }
+    } catch {
+      // storage quota fallback
+    }
+    showToast('Hand photo saved — ready for 1-tap try-on');
+
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        const uploadedUrl = await uploadUserHandPhoto(dataUrl, user.id);
+        if (uploadedUrl && uploadedUrl.startsWith('http')) {
+          await updateUserProfile(user.id, { customHandUrl: uploadedUrl });
+          if (setCustomTryOnHandUrl) setCustomTryOnHandUrl(uploadedUrl);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
+              localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
+            } catch {}
+          }
+        }
+      }
+    } catch (err) {
+      console.warn('Profile camera hand sync skipped:', err);
+    }
   };
 
   const handleRemoveHandPhoto = async () => {
@@ -770,14 +806,23 @@ export function ProfileView({
                   </div>
                 </div>
 
+                {/* 1st Option: Upload Photo | 2nd Option: Camera | Remove */}
                 <div className="flex gap-2">
                   <button
                     type="button"
                     onClick={() => handFileInputRef.current?.click()}
+                    className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Upload Photo</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraCaptureOpen(true)}
                     className="flex-1 h-9 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-3.5 h-3.5" />
-                    <span>Change Photo</span>
+                    <span>Camera</span>
                   </button>
                   <button
                     type="button"
@@ -790,23 +835,45 @@ export function ProfileView({
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-4">
                 <div
                   onClick={() => handFileInputRef.current?.click()}
-                  className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-[#F0DFE4] bg-[#FFFAF8] hover:bg-[#FDE8EF]/30 transition cursor-pointer flex flex-col items-center justify-center p-5 text-center space-y-2"
+                  className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-[#F0DFE4] bg-[#FFFAF8] hover:bg-[#FDE8EF]/20 transition cursor-pointer flex flex-col items-center justify-center p-5 text-center space-y-2"
                 >
                   <div className="w-12 h-12 rounded-2xl bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center">
-                    <UploadCloud className="w-6 h-6" />
+                    <Hand className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#281720]">Upload Hand Photo</p>
+                    <p className="text-xs font-semibold text-[#281720]">Your Hand Photo</p>
                     <p className="text-[10px] text-[#806D76] mt-0.5">
-                      Clear flat hand photo on plain background
+                      Upload from gallery or take a quick photo
                     </p>
                   </div>
                 </div>
+
+                {/* Always 1st Option = Upload Photo, 2nd Option = Camera */}
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handFileInputRef.current?.click()}
+                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Upload Photo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraCaptureOpen(true)}
+                    className="h-10 rounded-xl border border-[#F0DFE4] bg-white text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Camera</span>
+                  </button>
+                </div>
+
                 <p className="text-[11px] text-[#806D76] text-center leading-relaxed">
-                  Saved securely on your device. Every design will instantly render on your hand!
+                  Saved securely to your account so every manicure instantly renders onto your own hand!
                 </p>
               </div>
             )}
@@ -963,6 +1030,14 @@ export function ProfileView({
           </div>
         </div>
       )}
+
+      {/* Live Hand Camera Capture Modal */}
+      <HandCameraCaptureModal
+        isOpen={isCameraCaptureOpen}
+        onClose={() => setIsCameraCaptureOpen(false)}
+        onCaptureHand={handleCameraHandCaptured}
+        onUploadFileFallback={(file) => handleHandPhotoSelected(file)}
+      />
     </div>
   );
 }

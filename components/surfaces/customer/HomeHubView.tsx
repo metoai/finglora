@@ -419,19 +419,19 @@ export function HomeHubView({
                   <div className="flex gap-2">
                     <button
                       type="button"
-                      onClick={() => setIsCameraCaptureOpen(true)}
-                      className="flex-1 h-9 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
-                    >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>Retake Camera</span>
-                    </button>
-                    <button
-                      type="button"
                       onClick={() => handFileInputRef.current?.click()}
                       className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <UploadCloud className="w-3.5 h-3.5" />
-                      <span>Upload File</span>
+                      <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
+                      <span>Upload Photo</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsCameraCaptureOpen(true)}
+                      className="flex-1 h-9 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Camera</span>
                     </button>
                     <button
                       type="button"
@@ -453,28 +453,29 @@ export function HomeHubView({
                   <div>
                     <p className="text-xs font-semibold text-[#281720]">Your Hand Photo</p>
                     <p className="text-[10px] text-[#806D76] mt-0.5">
-                      Capture with your camera or upload from files
+                      Upload from files or capture with your camera
                     </p>
                   </div>
                 </div>
 
+                {/* 1st Option: Upload Photo | 2nd Option: Camera */}
                 <div className="grid grid-cols-2 gap-2.5">
                   <button
                     type="button"
-                    onClick={() => setIsCameraCaptureOpen(true)}
+                    onClick={() => handFileInputRef.current?.click()}
                     className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
                   >
-                    <Camera className="w-3.5 h-3.5" />
-                    <span>Take Photo</span>
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Upload Photo</span>
                   </button>
 
                   <button
                     type="button"
-                    onClick={() => handFileInputRef.current?.click()}
-                    className="h-10 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                    onClick={() => setIsCameraCaptureOpen(true)}
+                    className="h-10 rounded-xl border border-[#F0DFE4] bg-white text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
-                    <UploadCloud className="w-3.5 h-3.5" />
-                    <span>Upload File</span>
+                    <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Camera</span>
                   </button>
                 </div>
 
