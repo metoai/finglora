@@ -18,7 +18,6 @@ export type CustomerRoute =
   | 'upload'
   | 'tryon'
   | 'ai-create'
-  | 'studio'
   | 'passport'
   | 'profile'
   | 'favorites'
@@ -46,7 +45,7 @@ export function CustomerSidebar({
   const isHomeActive = currentRoute === 'home';
   const isExploreActive = currentRoute === 'explore';
   const isTryOnActive = currentRoute === 'tryon' || currentRoute === 'upload';
-  const isStudioActive = currentRoute === 'ai-create' || (currentRoute as string) === 'studio';
+  const isStudioActive = currentRoute === 'ai-create';
   const isFavoritesActive = currentRoute === 'favorites';
   const isProfileActive = currentRoute === 'profile';
 

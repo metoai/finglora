@@ -13,7 +13,6 @@ import {
   Trash2,
   Sparkles,
   Compass,
-  SlidersHorizontal,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
@@ -414,21 +413,21 @@ export function HomeHubView({
           <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
         </div>
 
-        {/* Station 4: Bespoke Workbench */}
+        {/* Station 4: Explore Pins */}
         <div
-          onClick={onCustomizeClick}
+          onClick={() => onExploreClick?.()}
           className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
         >
           <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-              <SlidersHorizontal className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+              <Compass className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
             <div className="min-w-0">
               <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                Bespoke Nails
+                Explore Pins
               </h3>
               <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
-                5-finger designer
+                Trending gallery
               </p>
             </div>
           </div>

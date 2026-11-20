@@ -43,7 +43,6 @@ export function CustomerTopBar({
     explore: 'Explore',
     tryon: 'Try On',
     'ai-create': 'Studio',
-    studio: 'Studio',
     passport: 'Passport',
     upload: 'Try On',
     favorites: 'Saved',
@@ -121,7 +120,7 @@ export function CustomerTopBar({
             const active =
               currentRoute === id ||
               (id === 'tryon' && (currentRoute === 'tryon' || currentRoute === 'upload')) ||
-              (id === 'ai-create' && (currentRoute === 'ai-create' || (currentRoute as string) === 'studio'));
+              (id === 'ai-create' && currentRoute === 'ai-create');
 
             return (
               <button
@@ -243,7 +242,7 @@ export function CustomerTopBar({
             const active =
               currentRoute === id ||
               (id === 'tryon' && (currentRoute === 'tryon' || currentRoute === 'upload')) ||
-              (id === 'ai-create' && (currentRoute === 'ai-create' || (currentRoute as string) === 'studio'));
+              (id === 'ai-create' && currentRoute === 'ai-create');
 
             return (
               <button

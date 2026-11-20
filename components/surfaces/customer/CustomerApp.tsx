@@ -13,7 +13,6 @@ import { TryOnView } from './TryOnView';
 import { AiCreationView } from './AiCreationView';
 import { CustomerSignupView } from './CustomerSignupView';
 import { ProfileView } from './ProfileView';
-import { StudioView } from './StudioView';
 import { PassportView } from './PassportView';
 import { getUserCreditStatus, useTryOnCredit } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
@@ -254,7 +253,7 @@ export function CustomerApp({
                 setCustomerRoute('tryon');
               }}
               onTryOnClick={() => setCustomerRoute('tryon')}
-              onCustomizeClick={() => setCustomerRoute('studio')}
+              onCustomizeClick={() => setCustomerRoute('ai-create')}
               onUploadClick={() => setCustomerRoute('upload')}
               onExploreClick={(query?: string) => {
                 if (query) {
@@ -450,32 +449,6 @@ export function CustomerApp({
               customTryOnHandUrl={customTryOnHandUrl}
               setCustomTryOnHandUrl={setCustomTryOnHandUrl}
               onLogout={onBrandClick}
-            />
-          )}
-
-          {customerRoute === 'studio' && (
-            <StudioView
-              activeSample={activeSample}
-              activePhotoUrl={activePhotoUrl}
-              activeSetName={activeSetName}
-              setActiveSetName={setActiveSetName}
-              handOrientation={handOrientation}
-              setHandOrientation={setHandOrientation}
-              swapMode={swapMode}
-              setSwapMode={setSwapMode}
-              swapFirstFinger={swapFirstFinger}
-              orderedFingers={orderedFingers}
-              selectedFinger={selectedFinger}
-              nails={nails}
-              mobilePreview={mobilePreview}
-              onSelectFinger={onSelectFinger}
-              onUndoFingerEdit={onUndoFingerEdit}
-              onUpdateActiveFinger={onUpdateActiveFinger}
-              onOpenApplyAllModal={onOpenApplyAllModal}
-              onTryOnClick={() => setCustomerRoute('tryon')}
-              onPassportClick={() => setCustomerRoute('passport')}
-              exploreDesigns={exploreDesigns}
-              onSelectExploreDesign={onSelectExploreDesign}
             />
           )}
 
