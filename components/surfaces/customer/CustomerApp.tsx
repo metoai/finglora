@@ -450,6 +450,7 @@ export function CustomerApp({
               exploreDesigns={exploreDesigns}
               onSelectExploreDesign={onSelectExploreDesign}
               activeSample={activeSample}
+              activePhotoUrl={activePhotoUrl}
             />
           )}
 

@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import fs from 'fs';
+import path from 'path';
 
 interface GenerateRequestBody {
   prompt?: string;
@@ -23,8 +25,8 @@ export async function POST(request: Request) {
       nailShape = 'almond',
     } = body;
 
-    const key1 = process.env.VERTEX_API_KEY_2;
-    const key2 = process.env.GEMINI_API_KEY;
+    const key1 = process.env.GEMINI_API_KEY;
+    const key2 = process.env.VERTEX_API_KEY_2;
     const candidateKeys = Array.from(new Set([key1, key2].filter(Boolean))) as string[];
 
     if (candidateKeys.length === 0) {
@@ -36,15 +38,24 @@ export async function POST(request: Request) {
     let handMimeType = handImageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
     if (!finalHandBase64 && handImageUrl) {
-      try {
-        const hRes = await fetch(handImageUrl, { signal: AbortSignal.timeout(6000) });
-        if (hRes.ok) {
-          const buf = await hRes.arrayBuffer();
-          finalHandBase64 = Buffer.from(buf).toString('base64');
-          handMimeType = hRes.headers.get('content-type') || 'image/jpeg';
-        }
-      } catch {
-        // continue
+      if (handImageUrl.startsWith('/')) {
+        try {
+          const localPath = path.join(process.cwd(), 'public', handImageUrl);
+          if (fs.existsSync(localPath)) {
+            const buf = fs.readFileSync(localPath);
+            finalHandBase64 = buf.toString('base64');
+            handMimeType = handImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
+          }
+        } catch {}
+      } else if (handImageUrl.startsWith('http://') || handImageUrl.startsWith('https://')) {
+        try {
+          const hRes = await fetch(handImageUrl, { signal: AbortSignal.timeout(6000) });
+          if (hRes.ok) {
+            const buf = await hRes.arrayBuffer();
+            finalHandBase64 = Buffer.from(buf).toString('base64');
+            handMimeType = hRes.headers.get('content-type') || 'image/jpeg';
+          }
+        } catch {}
       }
     }
 
@@ -53,15 +64,24 @@ export async function POST(request: Request) {
     let referenceMimeType = referenceImageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
     if (!finalReferenceBase64 && referenceImageUrl) {
-      try {
-        const rRes = await fetch(referenceImageUrl, { signal: AbortSignal.timeout(6000) });
-        if (rRes.ok) {
-          const buf = await rRes.arrayBuffer();
-          finalReferenceBase64 = Buffer.from(buf).toString('base64');
-          referenceMimeType = rRes.headers.get('content-type') || 'image/jpeg';
-        }
-      } catch {
-        // continue
+      if (referenceImageUrl.startsWith('/')) {
+        try {
+          const localPath = path.join(process.cwd(), 'public', referenceImageUrl);
+          if (fs.existsSync(localPath)) {
+            const buf = fs.readFileSync(localPath);
+            finalReferenceBase64 = buf.toString('base64');
+            referenceMimeType = referenceImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
+          }
+        } catch {}
+      } else if (referenceImageUrl.startsWith('http://') || referenceImageUrl.startsWith('https://')) {
+        try {
+          const rRes = await fetch(referenceImageUrl, { signal: AbortSignal.timeout(6000) });
+          if (rRes.ok) {
+            const buf = await rRes.arrayBuffer();
+            finalReferenceBase64 = Buffer.from(buf).toString('base64');
+            referenceMimeType = rRes.headers.get('content-type') || 'image/jpeg';
+          }
+        } catch {}
       }
     }
 
@@ -117,6 +137,7 @@ export async function POST(request: Request) {
     const candidateImageModels = ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
     let generatedImageData: string | null = null;
     let lastError = 'Image generation failed';
+    let isRateLimited = false;
 
     keyLoop: for (const apiKey of candidateKeys) {
       for (const model of candidateImageModels) {
@@ -148,6 +169,9 @@ export async function POST(request: Request) {
           } else {
             const errJson = await res.json().catch(() => ({}));
             lastError = errJson?.error?.message || `HTTP ${res.status}`;
+            if (res.status === 429 || lastError.includes('RESOURCE_EXHAUSTED') || lastError.includes('Resource exhausted')) {
+              isRateLimited = true;
+            }
             console.warn(`[Finglora Vertex AI Image] ${model} unavailable (${res.status}: ${lastError}), trying next key...`);
           }
         } catch (err: unknown) {
@@ -163,7 +187,8 @@ export async function POST(request: Request) {
       });
     }
 
-    return NextResponse.json({ error: lastError }, { status: 502 });
+    const returnStatus = isRateLimited ? 429 : 502;
+    return NextResponse.json({ error: lastError, isRateLimit: isRateLimited }, { status: returnStatus });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Server error';
     return NextResponse.json({ error: message }, { status: 500 });

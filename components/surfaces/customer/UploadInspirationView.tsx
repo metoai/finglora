@@ -11,8 +11,10 @@ import {
   RefreshCw,
   Camera,
   Loader2,
+  AlertTriangle,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
+import { downscaleImageForVision } from '@/lib/services/storage';
 
 export function UploadInspirationView({
   isAnalyzing,
@@ -41,6 +43,7 @@ export function UploadInspirationView({
   const handFileInputRef = useRef<HTMLInputElement>(null);
 
   const [isGeneratingTryOn, setIsGeneratingTryOn] = useState(false);
+  const [generationError, setGenerationError] = useState<string | null>(null);
 
   // Retrieve user hand from storage if not provided in props
   const [localHandPhoto, setLocalHandPhoto] = useState<string | null>(() => {
@@ -65,6 +68,7 @@ export function UploadInspirationView({
   const handleInspoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setGenerationError(null);
       onImageSelected(file);
     }
   };
@@ -73,6 +77,7 @@ export function UploadInspirationView({
   const handleHandFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
+      setGenerationError(null);
       const reader = new FileReader();
       reader.onload = () => {
         const dataUrl = reader.result as string;
@@ -98,19 +103,36 @@ export function UploadInspirationView({
       return;
     }
 
-    const targetHand = localHandPhoto || '/assets/editorial_nail_hero.jpg';
+    setGenerationError(null);
     setIsGeneratingTryOn(true);
 
     try {
+      // Convert reference image to Base64
+      let refBase64 = '';
+      if (activePhotoUrl.startsWith('data:image/')) {
+        refBase64 = activePhotoUrl;
+      } else {
+        refBase64 = await downscaleImageForVision(activePhotoUrl, 1024, 0.88);
+      }
+
+      // Convert target hand to Base64
+      const targetHand = localHandPhoto || '/assets/editorial_nail_hero.jpg';
+      let handBase64 = '';
+      if (targetHand.startsWith('data:image/')) {
+        handBase64 = targetHand;
+      } else {
+        handBase64 = await downscaleImageForVision(targetHand, 1024, 0.88);
+      }
+
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'hand-tryon',
-          referenceImageUrl: activePhotoUrl.startsWith('http') ? activePhotoUrl : undefined,
-          referenceImageBase64: activePhotoUrl.startsWith('data:') ? activePhotoUrl : undefined,
-          handImageBase64: targetHand.startsWith('data:') ? targetHand : undefined,
-          handImageUrl: targetHand.startsWith('http') || targetHand.startsWith('/') ? targetHand : undefined,
+          referenceImageBase64: refBase64 || undefined,
+          handImageBase64: handBase64 || undefined,
+          referenceImageUrl: !refBase64 && activePhotoUrl.startsWith('http') && !activePhotoUrl.startsWith('blob:') ? activePhotoUrl : undefined,
+          handImageUrl: !handBase64 && (targetHand.startsWith('http') || targetHand.startsWith('/')) ? targetHand : undefined,
           prompt: 'Apply the reference manicure design from Image 1 onto the fingers and fingernails of the human hand in Image 2.',
         }),
       });
@@ -122,10 +144,17 @@ export function UploadInspirationView({
           return;
         }
       }
-      onComplete?.();
-    } catch (err) {
-      console.warn('Image-to-image synthesis error:', err);
-      onComplete?.();
+
+      const errJson = await res.json().catch(() => ({}));
+      const is429 = res.status === 429 || errJson?.isRateLimit || errJson?.error?.includes('RESOURCE_EXHAUSTED') || errJson?.error?.includes('Resource exhausted');
+      if (is429) {
+        setGenerationError('Vertex AI image generation quota is cooling down (429). Please wait a few moments and tap Retry.');
+      } else {
+        setGenerationError(errJson?.error || 'AI image synthesis could not be completed. Please tap Retry.');
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Connection error';
+      setGenerationError(`${msg}. Please tap Retry.`);
     } finally {
       setIsGeneratingTryOn(false);
     }
@@ -359,6 +388,35 @@ export function UploadInspirationView({
           </button>
         </div>
       </div>
+
+      {/* Error / Rate Limit Notification Banner */}
+      {generationError && (
+        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-2.5 animate-in fade-in duration-200">
+          <div className="flex items-start gap-2.5">
+            <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+            <div className="space-y-0.5 text-left">
+              <span className="font-semibold block">Generation Notification</span>
+              <p className="text-amber-800 leading-relaxed">{generationError}</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2 pt-1">
+            <button
+              type="button"
+              onClick={handleSeeOnMyHand}
+              className="px-4 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white font-semibold transition cursor-pointer shadow-xs active:scale-95"
+            >
+              Retry Generation
+            </button>
+            <button
+              type="button"
+              onClick={() => setGenerationError(null)}
+              className="px-3 py-1.5 rounded-full bg-white hover:bg-amber-100/50 border border-amber-200 text-amber-900 font-medium transition cursor-pointer active:scale-95"
+            >
+              Dismiss
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Primary Action Button: "See Reference Design on My Hand" */}
       <div className="pt-2 text-center space-y-2">
