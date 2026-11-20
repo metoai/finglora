@@ -920,88 +920,7 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* Card 2: Preferences */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-5">
-        {/* Default Nail Shape */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div>
-              <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                Default Nail Shape
-              </span>
-              <span className="text-[11px] text-stone-500">
-                Applied automatically when previewing manicures
-              </span>
-            </div>
-            <span className="text-xs font-medium text-[#E0246A] px-2.5 py-0.5 rounded-full bg-pink-50 border border-pink-100 capitalize">
-              {preferredShape || 'Almond'}
-            </span>
-          </div>
-
-          <div className="grid grid-cols-4 gap-2 pt-1">
-            {NAIL_SHAPES.map((s) => {
-              const isSelected = (preferredShape || 'almond') === s.id;
-              return (
-                <button
-                  key={s.id}
-                  type="button"
-                  onClick={() => {
-                    setPreferredShape?.(s.id);
-                    showToast(`Preferred shape updated to ${s.label}`);
-                  }}
-                  className={`h-10 rounded-xl text-xs font-medium transition cursor-pointer flex items-center justify-center active:scale-95 ${
-                    isSelected
-                      ? 'bg-stone-900 text-white font-semibold shadow-2xs'
-                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200/70 border border-stone-200/60'
-                  }`}
-                >
-                  {s.label}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-stone-100" />
-
-        {/* Notifications Toggle */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div>
-              <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                Notifications
-              </span>
-              <span className="text-[11px] text-stone-500">
-                Seasonal manicure drops & design updates
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setNotificationsEnabled(!notificationsEnabled);
-              showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
-            }}
-            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
-              notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
-            }`}
-            aria-label="Toggle notifications"
-          >
-            <span
-              className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
-                notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-      </div>
-
-      {/* Card 3: Studio, Support & Security */}
+      {/* Card 2: Settings, Support & Security */}
       <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
         {/* Saved Looks */}
         <button
@@ -1027,6 +946,41 @@ export function ProfileView({
             <ChevronRight className="w-4 h-4" />
           </div>
         </button>
+
+        {/* Notifications Toggle */}
+        <div className="w-full h-12 px-3.5 rounded-2xl flex items-center justify-between">
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                Notifications
+              </span>
+              <span className="text-[11px] text-stone-500 truncate block">
+                Seasonal manicure drops & design updates
+              </span>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setNotificationsEnabled(!notificationsEnabled);
+              showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
+            }}
+            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
+              notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
+            }`}
+            aria-label="Toggle notifications"
+          >
+            <span
+              className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
+                notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
 
         {/* Help & Support */}
         <button
