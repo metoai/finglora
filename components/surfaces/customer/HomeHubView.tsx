@@ -420,48 +420,48 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 3. Four Compact Action Tiles (2x2 on Mobile, 4-col on Desktop) */}
+      {/* 3. Four Tactile Action Tiles with a Real Good Height */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-2.5 sm:gap-3.5">
         {/* Station 1: Virtual Try-On */}
         <div
           onClick={onTryOnClick}
-          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
+          className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/90 border border-stone-200/80 hover:border-[#E0246A]/35 transition-all shadow-2xs hover:shadow-xs cursor-pointer group flex flex-col justify-between min-h-[105px] sm:min-h-[118px] active:scale-98"
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-              <Hand className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+          <div className="flex items-center justify-between">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
+              <Hand className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                Virtual Try-On
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
-                Live AR on hand
-              </p>
-            </div>
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div>
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
+              Virtual Try-On
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 truncate">
+              Live AR on your hand
+            </p>
+          </div>
         </div>
 
         {/* Station 2: Extract Inspo */}
         <div
           onClick={onUploadClick}
-          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
+          className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/90 border border-stone-200/80 hover:border-[#E0246A]/35 transition-all shadow-2xs hover:shadow-xs cursor-pointer group flex flex-col justify-between min-h-[105px] sm:min-h-[118px] active:scale-98"
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-              <ImagePlus className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+          <div className="flex items-center justify-between">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
+              <ImagePlus className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                Extract Inspo
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
-                From photo or IG
-              </p>
-            </div>
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div>
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
+              Extract Inspo
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 truncate">
+              From photo or Instagram
+            </p>
+          </div>
         </div>
 
         {/* Station 3: AI Studio */}
@@ -473,43 +473,43 @@ export function HomeHubView({
               onCustomizeClick();
             }
           }}
-          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
+          className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/90 border border-stone-200/80 hover:border-[#E0246A]/35 transition-all shadow-2xs hover:shadow-xs cursor-pointer group flex flex-col justify-between min-h-[105px] sm:min-h-[118px] active:scale-98"
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-              <Sparkles className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+          <div className="flex items-center justify-between">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
+              <Sparkles className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                AI Studio
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
-                Generate custom set
-              </p>
-            </div>
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div>
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
+              AI Studio
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 truncate">
+              Generate custom set
+            </p>
+          </div>
         </div>
 
         {/* Station 4: Explore Pins */}
         <div
           onClick={() => onExploreClick?.()}
-          className="p-3 sm:p-4 rounded-2xl bg-white hover:bg-stone-50/80 border border-stone-200/80 hover:border-[#E0246A]/40 transition-all shadow-2xs cursor-pointer group flex items-center justify-between gap-2.5 active:scale-98"
+          className="p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-stone-50/90 border border-stone-200/80 hover:border-[#E0246A]/35 transition-all shadow-2xs hover:shadow-xs cursor-pointer group flex flex-col justify-between min-h-[105px] sm:min-h-[118px] active:scale-98"
         >
-          <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-              <Compass className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={1.75} />
+          <div className="flex items-center justify-between">
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shadow-2xs">
+              <Compass className="w-4.5 h-4.5 sm:w-5 sm:h-5" strokeWidth={1.75} />
             </div>
-            <div className="min-w-0">
-              <h3 className="font-medium text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors truncate">
-                Explore Pins
-              </h3>
-              <p className="text-[10px] sm:text-[11px] text-stone-400 truncate">
-                Trending gallery
-              </p>
-            </div>
+            <ArrowUpRight className="w-4 h-4 text-stone-400 group-hover:text-[#E0246A] transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
           </div>
-          <ArrowUpRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-[#E0246A] shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+          <div>
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
+              Explore Pins
+            </h3>
+            <p className="text-[10px] sm:text-[11px] text-stone-400 mt-0.5 truncate">
+              Trending discovery
+            </p>
+          </div>
         </div>
       </div>
 
@@ -566,16 +566,16 @@ export function HomeHubView({
           })}
         </div>
 
-        {/* Featured Editorial Manicure Cards in a Responsive Full-Width Grid */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5 sm:gap-3.5">
-          {displayedLooks.map((look) => (
+        {/* Featured Editorial Manicure Cards - Strictly 1 Single Row */}
+        <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto scrollbar-none py-1 snap-x">
+          {displayedLooks.slice(0, 6).map((look) => (
             <div
               key={look.id}
               onClick={() => {
                 onSelectExploreDesign?.(look.id);
                 onTryOnClick();
               }}
-              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2]"
+              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2] w-[155px] sm:w-[185px] md:w-[205px] lg:w-auto lg:flex-1 shrink-0 lg:shrink snap-start"
             >
               <img
                 src={look.photoUrl}
