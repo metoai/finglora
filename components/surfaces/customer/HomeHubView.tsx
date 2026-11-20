@@ -17,15 +17,6 @@ import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES } from '@/constants/nail-data';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
-const PROMPT_SUGGESTIONS = [
-  'Glazed',
-  'French',
-  'Velvet',
-  'Chrome',
-  'Aura',
-  'Nude',
-];
-
 const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
 
 function createFallbackSet(
@@ -403,51 +394,32 @@ export function HomeHubView({
       {/* ------------------------------------------------------------------ */}
       {/* 3. SLEEK STUDIO PROMPT GENERATION BAR                              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="space-y-2">
-        <form
-          onSubmit={(e) => {
-            e.preventDefault();
-            handleGenerate();
-          }}
-          className="bg-white rounded-2xl border border-stone-200/80 pl-3.5 pr-2 py-2 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          handleGenerate();
+        }}
+        className="bg-white rounded-2xl border border-stone-200/80 pl-3.5 pr-2 py-2 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
+      >
+        <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0" />
+
+        <input
+          type="text"
+          value={promptText}
+          onChange={(e) => setPromptText(e.target.value)}
+          placeholder="Describe any look or aesthetic..."
+          className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0 leading-normal"
+        />
+
+        <button
+          type="submit"
+          className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+          title="Generate look"
         >
-          <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0" />
-
-          <input
-            type="text"
-            value={promptText}
-            onChange={(e) => setPromptText(e.target.value)}
-            placeholder="Describe any look or aesthetic..."
-            className="flex-1 bg-transparent border-none text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0 leading-normal"
-          />
-
-          <button
-            type="submit"
-            className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
-            title="Generate look"
-          >
-            <span>Create</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </button>
-        </form>
-
-        {/* 1-Word Aesthetic Suggestion Chips */}
-        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 -mx-1 px-1">
-          {PROMPT_SUGGESTIONS.map((suggestion) => (
-            <button
-              key={suggestion}
-              type="button"
-              onClick={() => {
-                setPromptText(suggestion);
-                handleGenerate(suggestion);
-              }}
-              className="px-2.5 py-1 rounded-full text-[11px] bg-white hover:bg-[#FDF2F8] hover:text-[#E0246A] border border-stone-200/80 text-stone-600 transition cursor-pointer shrink-0 font-medium shadow-2xs active:scale-95"
-            >
-              {suggestion}
-            </button>
-          ))}
-        </div>
-      </div>
+          <span>Create</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </button>
+      </form>
 
       {/* ------------------------------------------------------------------ */}
       {/* 4. CURATED INSPIRATION (HIGH CONVERSION & FAST ACTION)             */}
