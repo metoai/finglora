@@ -84,41 +84,56 @@ export async function POST(request: Request) {
     const rawBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '');
     const mimeType = imageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
-    // Google Gemini 3.8 Flash Vision API
-    const geminiRes = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-3.8-flash:generateContent?key=${geminiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                { text: MANICURE_PROMPT },
-                rawBase64
-                  ? { inlineData: { mimeType, data: rawBase64 } }
-                  : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.1,
-            responseMimeType: 'application/json',
-          },
-        }),
-      }
-    );
+    // Google Gemini Vision API (Primary: gemini-3.8-flash with resilient fallback to gemini-3.5-flash)
+    const candidateModels = ['gemini-3.8-flash', 'gemini-3.5-flash'];
+    let geminiData: Record<string, any> | null = null;
+    let activeModel = 'gemini-3.8-flash';
+    let lastErrorMsg = 'Google Gemini analysis request failed';
 
-    if (!geminiRes.ok) {
-      const errorData = await geminiRes.json();
-      console.error('[Finglora Gemini Vision Error]:', errorData);
-      return NextResponse.json(
-        { error: errorData?.error?.message || 'Google Gemini analysis request failed' },
-        { status: geminiRes.status }
-      );
+    for (const model of candidateModels) {
+      try {
+        const geminiRes = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  parts: [
+                    { text: MANICURE_PROMPT },
+                    rawBase64
+                      ? { inlineData: { mimeType, data: rawBase64 } }
+                      : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
+                  ],
+                },
+              ],
+              generationConfig: {
+                temperature: 0.1,
+                responseMimeType: 'application/json',
+              },
+            }),
+          }
+        );
+
+        if (geminiRes.ok) {
+          geminiData = await geminiRes.json();
+          activeModel = model;
+          break;
+        } else {
+          const errorData = await geminiRes.json().catch(() => ({}));
+          lastErrorMsg = errorData?.error?.message || `HTTP ${geminiRes.status}`;
+          console.warn(`[Finglora Gemini Vision] ${model} unavailable (${geminiRes.status}), attempting fallback...`);
+        }
+      } catch (err: unknown) {
+        lastErrorMsg = err instanceof Error ? err.message : 'Network error';
+      }
     }
 
-    const geminiData = await geminiRes.json();
+    if (!geminiData) {
+      return NextResponse.json({ error: lastErrorMsg }, { status: 503 });
+    }
+
     const rawText = geminiData?.candidates?.[0]?.content?.parts?.[0]?.text;
     const parsed = rawText ? extractJSON(rawText) : null;
 
@@ -131,7 +146,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      source: 'google-gemini-3.8-flash',
+      source: `google-${activeModel}`,
       data: parsed,
     });
   } catch (err: unknown) {
