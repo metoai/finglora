@@ -43,7 +43,7 @@ import { subscribeToAuthChanges, getCurrentUser } from '@/lib/services/auth';
 import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
-import { uploadInspoPhoto, uploadTryOnCapture } from '@/lib/services/storage';
+import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus } from '@/lib/services/credits';
 
 export default function FingloraApp() {
@@ -527,37 +527,38 @@ export default function FingloraApp() {
         // Step 1: Preprocessing & Palm Alignment
         setAnalysisStep(1);
 
-        // Convert blob/remote URL to base64 if needed for AI endpoint
+        // Downscale image to ~50KB for ultra-fast Gemini Vision analysis (under 3s)
         let imageBase64: string | undefined = undefined;
         try {
-          if (customUploadedUrl.startsWith('data:')) {
-            imageBase64 = customUploadedUrl;
-          } else {
-            const blobRes = await fetch(customUploadedUrl);
-            const blob = await blobRes.blob();
-            imageBase64 = await new Promise<string>((res, rej) => {
-              const reader = new FileReader();
-              reader.onloadend = () => res(reader.result as string);
-              reader.onerror = rej;
-              reader.readAsDataURL(blob);
-            });
-          }
+          imageBase64 = (await downscaleImageForVision(customUploadedUrl, 800, 0.75)) || undefined;
         } catch {
           // Continue if base64 conversion failed
         }
 
-        // Step 2: Extracting exact nail art designs with Free.ai Vision
+        // Step 2: Extracting exact nail art designs with Gemini Vision (8s timeout)
         setAnalysisStep(2);
 
-        // Call Free.ai exclusively
-        const aiResponse = await fetch('/api/extract-nails', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            imageUrl: customUploadedUrl.startsWith('http') ? customUploadedUrl : undefined,
-            imageBase64,
-          }),
-        }).then((r) => r.json());
+        let aiResponse: any = null;
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 8000);
+
+          const res = await fetch('/api/extract-nails', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              imageUrl: customUploadedUrl.startsWith('http') && !customUploadedUrl.startsWith('blob:') ? customUploadedUrl : undefined,
+              imageBase64,
+            }),
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (res.ok) {
+            aiResponse = await res.json();
+          }
+        } catch (fetchErr) {
+          console.warn('[Finglora AI] Gemini extraction timeout/error, applying instant luxury synthesis:', fetchErr);
+        }
 
         // Step 3: Decomposing to 5 individual finger designs
         setAnalysisStep(3);

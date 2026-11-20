@@ -39,6 +39,32 @@ export function UploadInspirationView({
 }) {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
+  // Safety fallback & auto-advancing progress so user is never frozen
+  const [visualPhase, setVisualPhase] = React.useState(0);
+
+  React.useEffect(() => {
+    if (!isAnalyzing) {
+      setVisualPhase(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setVisualPhase((prev) => Math.min(EDITORIAL_PHASES.length - 1, prev + 1));
+    }, 2200);
+
+    // Hard safety timeout: never stack longer than 9.5 seconds
+    const safetyTimer = setTimeout(() => {
+      if (onComplete) {
+        onComplete();
+      }
+    }, 9500);
+
+    return () => {
+      clearInterval(interval);
+      clearTimeout(safetyTimer);
+    };
+  }, [isAnalyzing, onComplete]);
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -48,9 +74,12 @@ export function UploadInspirationView({
 
   // State A: Analyzing Inspo Photo (Minimal, Non-AI-Slop, High Fashion)
   if (isAnalyzing) {
-    const currentPhaseIndex = Math.min(
-      EDITORIAL_PHASES.length - 1,
-      Math.floor((analysisStep - 1) / 1.5)
+    const currentPhaseIndex = Math.max(
+      visualPhase,
+      Math.min(
+        EDITORIAL_PHASES.length - 1,
+        Math.floor((analysisStep - 1) / 1.5)
+      )
     );
 
     return (
