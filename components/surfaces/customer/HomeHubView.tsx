@@ -100,6 +100,7 @@ export function HomeHubView({
       try {
         if (typeof window !== 'undefined') {
           localStorage.setItem('finglora_custom_hand_photo', result);
+          localStorage.setItem('finglora_user_hand_photo', result);
         }
       } catch {
         // quota safety
@@ -115,6 +116,7 @@ export function HomeHubView({
     }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('finglora_custom_hand_photo');
+      localStorage.removeItem('finglora_user_hand_photo');
     }
     showToast('Hand photo removed');
   };
@@ -509,6 +511,7 @@ export function HomeHubView({
           try {
             if (typeof window !== 'undefined') {
               localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+              localStorage.setItem('finglora_user_hand_photo', dataUrl);
             }
           } catch {}
           showToast('Hand photo saved — ready for 1-tap try-on');

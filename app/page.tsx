@@ -42,7 +42,7 @@ import { subscribeToAuthChanges, getCurrentUser } from '@/lib/services/auth';
 import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
-import { uploadInspoPhoto, uploadTryOnCapture, downscaleImageForVision } from '@/lib/services/storage';
+import { uploadInspoPhoto, uploadTryOnCapture, uploadUserHandPhoto, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
 import { slice5NailSetImage } from '@/lib/services/nail-image-processor';
 
@@ -160,6 +160,32 @@ export default function FingloraApp() {
         // ignore storage quota error
       }
     }
+
+    // Persist to Supabase Storage and public.profiles database table
+    if (url) {
+      if (supabaseUser?.id) {
+        uploadUserHandPhoto(url, supabaseUser.id)
+          .then(async (uploadedUrl) => {
+            if (uploadedUrl && uploadedUrl !== url) {
+              setCustomTryOnHandUrl(uploadedUrl);
+              if (typeof window !== 'undefined') {
+                try {
+                  localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
+                  localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
+                } catch {}
+              }
+            }
+            await updateUserProfile(supabaseUser.id, { customHandUrl: uploadedUrl });
+          })
+          .catch((err) => console.warn('Supabase profile hand photo sync failed:', err));
+      }
+    } else {
+      if (supabaseUser?.id) {
+        updateUserProfile(supabaseUser.id, { customHandUrl: null }).catch((err) =>
+          console.warn('Supabase profile hand removal failed:', err)
+        );
+      }
+    }
   };
   const [tryOnView, setTryOnView] = useState<'after' | 'before'>('after');
   const [tryOnZoom, setTryOnZoom] = useState(false);
@@ -219,7 +245,38 @@ export default function FingloraApp() {
         if (profile) {
           if (profile.displayName) setUserName(profile.displayName);
           if (profile.preferredShape) setPreferredShape(profile.preferredShape);
-          if (profile.customHandUrl) setCustomTryOnHandUrl(profile.customHandUrl);
+          if (profile.customHandUrl) {
+            setCustomTryOnHandUrl(profile.customHandUrl);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('finglora_user_hand_photo', profile.customHandUrl);
+                localStorage.setItem('finglora_custom_hand_photo', profile.customHandUrl);
+              } catch {}
+            }
+          } else {
+            // Profile exists in DB but custom_hand_url is null: auto-migrate local hand if present
+            if (typeof window !== 'undefined') {
+              try {
+                const localHand =
+                  localStorage.getItem('finglora_custom_hand_photo') ||
+                  localStorage.getItem('finglora_user_hand_photo');
+                if (localHand) {
+                  uploadUserHandPhoto(localHand, session.user.id)
+                    .then(async (uploadedUrl) => {
+                      if (uploadedUrl) {
+                        await updateUserProfile(session.user.id, { customHandUrl: uploadedUrl });
+                        setCustomTryOnHandUrl(uploadedUrl);
+                        try {
+                          localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
+                          localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
+                        } catch {}
+                      }
+                    })
+                    .catch((err) => console.warn('Auto-migration of local hand photo failed:', err));
+                }
+              } catch {}
+            }
+          }
         }
 
         // Re-fetch explore sets with user's specific favorites

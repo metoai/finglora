@@ -196,3 +196,73 @@ export async function uploadTryOnCapture(dataUrl: string, userId?: string): Prom
 
   return publicUrlData.publicUrl;
 }
+
+/**
+ * Uploads a user hand photo (File, Blob, or DataURL) to Supabase Storage bucket 'user-hands'.
+ * If the input is already a Supabase or remote HTTP URL, returns it immediately.
+ * Returns the permanent public CDN URL.
+ */
+export async function uploadUserHandPhoto(
+  input: File | Blob | string,
+  userId?: string
+): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+
+  // If already a remote HTTP/HTTPS URL or local static asset, no need to upload as a blob
+  if (typeof input === 'string') {
+    if (input.startsWith('http://') || input.startsWith('https://')) {
+      return input;
+    }
+    if (input.startsWith('/')) {
+      return input;
+    }
+  }
+
+  try {
+    let blob: Blob;
+
+    if (typeof input === 'string') {
+      // Base64 Data URL (e.g. from camera capture or FileReader)
+      const res = await fetch(input);
+      blob = await res.blob();
+    } else if (input instanceof File) {
+      blob = await optimizeImage(input, 1400, 0.88);
+    } else {
+      blob = input;
+    }
+
+    // Determine user ID from auth session if not passed
+    let effectiveUserId = userId;
+    if (!effectiveUserId) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        effectiveUserId = data.session?.user?.id;
+      } catch {
+        // ignore
+      }
+    }
+
+    const path = `${effectiveUserId || 'guest'}/${Date.now()}_hand.jpg`;
+
+    const { data, error } = await supabase.storage
+      .from('user-hands')
+      .upload(path, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn('User hand upload to user-hands bucket failed, using fallback:', error.message);
+      return typeof input === 'string' ? input : URL.createObjectURL(input);
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('user-hands')
+      .getPublicUrl(data.path);
+
+    return publicUrlData.publicUrl;
+  } catch (err) {
+    console.warn('Error in uploadUserHandPhoto:', err);
+    return typeof input === 'string' ? input : URL.createObjectURL(input);
+  }
+}

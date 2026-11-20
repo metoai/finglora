@@ -31,6 +31,7 @@ import {
 import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
+import { uploadUserHandPhoto } from '@/lib/services/storage';
 
 interface ProfileViewProps {
   userName: string;
@@ -171,9 +172,9 @@ export function ProfileView({
   };
 
   // Upload hand photo once
-  const handleHandPhotoSelected = (file: File) => {
+  const handleHandPhotoSelected = async (file: File) => {
     const reader = new FileReader();
-    reader.onload = () => {
+    reader.onload = async () => {
       const result = reader.result as string;
       if (setCustomTryOnHandUrl) {
         setCustomTryOnHandUrl(result);
@@ -181,23 +182,54 @@ export function ProfileView({
       try {
         if (typeof window !== 'undefined') {
           localStorage.setItem('finglora_custom_hand_photo', result);
+          localStorage.setItem('finglora_user_hand_photo', result);
         }
       } catch {
         // storage quota fallback
       }
       showToast('Hand photo saved — ready for 1-tap try-on');
+
+      // Upload to Supabase Storage and update profiles in DB
+      try {
+        const user = await getCurrentUser();
+        if (user?.id) {
+          const uploadedUrl = await uploadUserHandPhoto(file, user.id);
+          if (uploadedUrl && uploadedUrl.startsWith('http')) {
+            await updateUserProfile(user.id, { customHandUrl: uploadedUrl });
+            if (setCustomTryOnHandUrl) setCustomTryOnHandUrl(uploadedUrl);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
+                localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
+              } catch {}
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('Profile hand sync skipped:', err);
+      }
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveHandPhoto = () => {
+  const handleRemoveHandPhoto = async () => {
     if (setCustomTryOnHandUrl) {
       setCustomTryOnHandUrl(null);
     }
     if (typeof window !== 'undefined') {
       localStorage.removeItem('finglora_custom_hand_photo');
+      localStorage.removeItem('finglora_user_hand_photo');
     }
     showToast('Hand photo removed');
+
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        await updateUserProfile(user.id, { customHandUrl: null });
+      }
+    } catch (err) {
+      console.warn('Profile hand removal skipped:', err);
+    }
   };
 
   // Saved designs list
