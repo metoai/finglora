@@ -1045,12 +1045,18 @@ export default function FingloraApp() {
               setActiveSetName(sample.title);
             }}
             onSelectExploreDesign={(id) => {
-              const found = exploreDesigns.find((d) => d.id === id);
+              const allSets = exploreDesigns.length > 0 ? exploreDesigns : INITIAL_EXPLORE_DESIGNS;
+              const found = allSets.find((d) => d.id === id) || INITIAL_EXPLORE_DESIGNS.find((d) => d.id === id);
               if (found) {
                 setActiveSetId(found.id);
                 setActivePhotoUrl(found.photoUrl);
                 setActiveSetName(found.title);
-                navigateCustomer('upload');
+                setActivePassportCode(found.passportCode);
+                if (found.nails) {
+                  setNails(JSON.parse(JSON.stringify(found.nails)));
+                }
+                setSynthesizedHandUrl(null);
+                navigateCustomer('tryon');
               }
             }}
             onCopyShareLink={copyShareLink}

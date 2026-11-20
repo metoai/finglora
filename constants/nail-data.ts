@@ -134,5 +134,150 @@ export const DEFAULT_EMPTY_NAILS: Record<Finger, NailDesign> = {
   },
 };
 
-// All pre-seeded designs and sample inspo photos deleted
-export const INITIAL_EXPLORE_DESIGNS: ExploreDesignSet[] = [];
+function createCuratedSet(
+  id: string,
+  passportCode: string,
+  title: string,
+  category: string,
+  photoUrl: string,
+  baseColor: string,
+  accentColor: string,
+  pattern: any,
+  finish: any = 'glossy',
+  shape: NailShape = 'almond'
+): ExploreDesignSet {
+  const fingerNail = (finger: Finger): NailDesign => ({
+    finger,
+    title,
+    baseColor,
+    accentColor,
+    pattern,
+    shape,
+    length: 'medium',
+    finish,
+    clientNote: `${title} bespoke atelier look`,
+    status: 'detected',
+  });
+
+  return {
+    id,
+    passportCode,
+    title,
+    category,
+    subtitle: `${category} · ${shape.charAt(0).toUpperCase() + shape.slice(1)} · Atelier Finish`,
+    photoUrl,
+    likes: 128,
+    isSaved: false,
+    skinTone: HAND_SKIN_TONES[0],
+    backdrop: '#FAF7F2',
+    chairMinutes: 65,
+    nails: {
+      thumb: fingerNail('thumb'),
+      index: fingerNail('index'),
+      middle: fingerNail('middle'),
+      ring: fingerNail('ring'),
+      pinky: fingerNail('pinky'),
+    },
+  };
+}
+
+export const CURATED_EDITORIAL_DESIGNS: ExploreDesignSet[] = [
+  createCuratedSet(
+    'set-milky-gold',
+    'FGL-1001',
+    'Milky Glazed Gold',
+    'Glazed',
+    '/assets/milky_gold_tryon_result.jpg',
+    '#F5ECE3',
+    '#D4AF37',
+    'aura',
+    'chrome',
+    'almond'
+  ),
+  createCuratedSet(
+    'set-blush-heart',
+    'FGL-1002',
+    'Blush Heart French',
+    'French',
+    '/assets/pink_heart_tryon_result.jpg',
+    '#FCE7F3',
+    '#E0246A',
+    'heart-french',
+    'glossy',
+    'almond'
+  ),
+  createCuratedSet(
+    'set-burgundy-aura',
+    'FGL-1003',
+    'Burgundy Velvet Aura',
+    'Aura',
+    '/assets/burgundy_gold_virtual_tryon.jpg',
+    '#FAF0EA',
+    '#801A35',
+    'aura',
+    'glossy',
+    'almond'
+  ),
+  createCuratedSet(
+    'set-editorial-nude',
+    'FGL-1004',
+    'Atelier Nude Minimal',
+    'Minimal',
+    '/assets/editorial_nail_hero.jpg',
+    '#FAF0EA',
+    '#FFFFFF',
+    'solid',
+    'glossy',
+    'square'
+  ),
+  createCuratedSet(
+    'set-rose-glazed',
+    'FGL-1005',
+    'Rose Quartz Glaze',
+    'Glazed',
+    '/assets/pink_heart_tryon_result.jpg',
+    '#FCE7F3',
+    '#F5ECE3',
+    'aura',
+    'chrome',
+    'oval'
+  ),
+  createCuratedSet(
+    'set-french-chrome',
+    'FGL-1006',
+    'French Chrome Rose',
+    'French',
+    '/assets/milky_gold_tryon_result.jpg',
+    '#F5ECE3',
+    '#E0246A',
+    'classic-french',
+    'chrome',
+    'coffin'
+  ),
+  createCuratedSet(
+    'set-velvet-wine',
+    'FGL-1007',
+    'Mulberry Velvet Aura',
+    'Aura',
+    '/assets/burgundy_gold_virtual_tryon.jpg',
+    '#3B111D',
+    '#E0246A',
+    'aura',
+    'matte',
+    'coffin'
+  ),
+  createCuratedSet(
+    'set-quiet-linen',
+    'FGL-1008',
+    'Quiet Luxury Linen',
+    'Minimal',
+    '/assets/editorial_nail_hero.jpg',
+    '#FAF0EA',
+    '#8FA893',
+    'minimal-line',
+    'glossy',
+    'almond'
+  ),
+];
+
+export const INITIAL_EXPLORE_DESIGNS: ExploreDesignSet[] = CURATED_EDITORIAL_DESIGNS;

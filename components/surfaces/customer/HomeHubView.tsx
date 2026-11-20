@@ -14,147 +14,10 @@ import {
   Sparkles,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
-import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES } from '@/constants/nail-data';
+import { INITIAL_EXPLORE_DESIGNS, HAND_SKIN_TONES, CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
-
-function createFallbackSet(
-  id: string,
-  title: string,
-  category: string,
-  photoUrl: string,
-  baseColor: string,
-  accentColor: string,
-  pattern: any,
-  finish: any = 'glossy',
-  shape: NailShape = 'almond'
-): ExploreDesignSet {
-  const fingerNail = (finger: Finger): NailDesign => ({
-    finger,
-    title,
-    baseColor,
-    accentColor,
-    pattern,
-    shape,
-    length: 'medium',
-    finish,
-    clientNote: `${title} bespoke atelier look`,
-    status: 'detected',
-  });
-
-  return {
-    id,
-    passportCode: `FGL-${id.slice(-4).toUpperCase()}`,
-    title,
-    category,
-    subtitle: `${category} · ${shape.charAt(0).toUpperCase() + shape.slice(1)} · Atelier Finish`,
-    photoUrl,
-    likes: 128,
-    isSaved: false,
-    skinTone: HAND_SKIN_TONES[0],
-    backdrop: '#FAF7F2',
-    chairMinutes: 65,
-    nails: {
-      thumb: fingerNail('thumb'),
-      index: fingerNail('index'),
-      middle: fingerNail('middle'),
-      ring: fingerNail('ring'),
-      pinky: fingerNail('pinky'),
-    },
-  };
-}
-
-const FALLBACK_CURATED_DESIGNS: ExploreDesignSet[] = [
-  createFallbackSet(
-    'set-milky-gold',
-    'Milky Glazed Gold',
-    'Glazed',
-    '/assets/milky_gold_tryon_result.jpg',
-    '#F5ECE3',
-    '#D4AF37',
-    'aura',
-    'chrome',
-    'almond'
-  ),
-  createFallbackSet(
-    'set-blush-heart',
-    'Blush Heart French',
-    'French',
-    '/assets/pink_heart_tryon_result.jpg',
-    '#FCE7F3',
-    '#E0246A',
-    'heart-french',
-    'glossy',
-    'almond'
-  ),
-  createFallbackSet(
-    'set-burgundy-aura',
-    'Burgundy Velvet Aura',
-    'Aura',
-    '/assets/burgundy_gold_virtual_tryon.jpg',
-    '#FAF0EA',
-    '#801A35',
-    'aura',
-    'glossy',
-    'almond'
-  ),
-  createFallbackSet(
-    'set-editorial-nude',
-    'Atelier Nude Minimal',
-    'Minimal',
-    '/assets/editorial_nail_hero.jpg',
-    '#FAF0EA',
-    '#FFFFFF',
-    'solid',
-    'glossy',
-    'square'
-  ),
-  createFallbackSet(
-    'set-rose-glazed',
-    'Rose Quartz Glaze',
-    'Glazed',
-    '/assets/pink_heart_tryon_result.jpg',
-    '#FCE7F3',
-    '#F5ECE3',
-    'aura',
-    'chrome',
-    'oval'
-  ),
-  createFallbackSet(
-    'set-french-chrome',
-    'French Chrome Rose',
-    'French',
-    '/assets/milky_gold_tryon_result.jpg',
-    '#F5ECE3',
-    '#E0246A',
-    'classic-french',
-    'chrome',
-    'coffin'
-  ),
-  createFallbackSet(
-    'set-velvet-wine',
-    'Mulberry Velvet Aura',
-    'Aura',
-    '/assets/burgundy_gold_virtual_tryon.jpg',
-    '#3B111D',
-    '#E0246A',
-    'aura',
-    'matte',
-    'coffin'
-  ),
-  createFallbackSet(
-    'set-quiet-linen',
-    'Quiet Luxury Linen',
-    'Minimal',
-    '/assets/editorial_nail_hero.jpg',
-    '#FAF0EA',
-    '#8FA893',
-    'minimal-line',
-    'glossy',
-    'almond'
-  ),
-];
 
 export function HomeHubView({
   userName,
@@ -226,7 +89,7 @@ export function HomeHubView({
     });
 
     // If rawList has fewer than 8 designs, fallback to our curated 8-design luxury set
-    const list = rawList && rawList.length >= 8 ? rawList : FALLBACK_CURATED_DESIGNS;
+    const list = rawList && rawList.length >= 8 ? rawList : CURATED_EDITORIAL_DESIGNS;
 
     return list.map((d) => {
       let title = d.title || 'Atelier Set';
@@ -273,7 +136,11 @@ export function HomeHubView({
       } catch {
         // quota safety
       }
-      showToast('Hand photo saved for instant try-on');
+      setIsHandModalOpen(false);
+      setTimeout(() => {
+        document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
+      }, 150);
+      showToast('Hand saved! Select an inspiration look below to try on');
     };
     reader.readAsDataURL(file);
   };
@@ -405,9 +272,17 @@ export function HomeHubView({
       {/* ------------------------------------------------------------------ */}
       <section className="space-y-3">
         <div className="flex items-center justify-between px-0.5">
-          <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 tracking-tight">
-            Inspiration
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-serif text-lg sm:text-xl font-normal text-stone-900 tracking-tight">
+              Inspiration
+            </h2>
+            {customTryOnHandUrl && (
+              <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 text-[10px] font-medium inline-flex items-center gap-1">
+                <Check className="w-2.5 h-2.5" />
+                <span>Hand Ready</span>
+              </span>
+            )}
+          </div>
 
           {onExploreClick && (
             <button
@@ -442,18 +317,28 @@ export function HomeHubView({
           })}
         </div>
 
-        {/* Responsive Editorial Manicure Grid (2 Columns on Mobile, 3 on Tablet, 4 on Desktop) */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-8">
-          {filteredDesigns.map((design) => {
+        {/* Responsive Editorial Manicure Grid (Exactly 2 Rows: 4 on mobile, 6 on tablet, 8 on desktop) */}
+        <div
+          id="inspiration-feed"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-8 scroll-mt-4"
+        >
+          {filteredDesigns.slice(0, 8).map((design, index) => {
             const isActive = design.id === activeSample?.id;
             const primaryFinger = design.nails?.middle || design.nails?.index;
             const shapeLabel = primaryFinger?.shape || 'almond';
 
+            // 2 rows limit: 4 cards on mobile (<sm: 2 cols x 2 rows), 6 on tablet (sm-lg: 3 cols x 2 rows), 8 on desktop (>=lg: 4 cols x 2 rows)
+            const hideClass =
+              index >= 6 ? 'hidden lg:block' : index >= 4 ? 'hidden sm:block' : '';
+
             return (
               <div
                 key={design.id}
-                onClick={() => onSelectExploreDesign?.(design.id)}
-                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${
+                onClick={() => {
+                  onSelectExploreDesign?.(design.id);
+                  onTryOnClick();
+                }}
+                className={`group relative rounded-2xl overflow-hidden border transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${hideClass} ${
                   isActive
                     ? 'border-[#E0246A] ring-2 ring-[#E0246A]/25 shadow-sm'
                     : 'border-stone-200/80 hover:border-stone-300 shadow-2xs'
@@ -490,7 +375,7 @@ export function HomeHubView({
                     className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                   >
                     <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                    <span>Try On</span>
+                    <span>{customTryOnHandUrl ? 'Try on My Hand' : 'Try On'}</span>
                   </button>
                 </div>
               </div>
@@ -551,24 +436,41 @@ export function HomeHubView({
                 </div>
 
                 <div className="space-y-2">
+                  {/* Primary CTA: Choose Look from Inspiration */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsHandModalOpen(false);
+                      setTimeout(() => {
+                        document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
+                      }, 100);
+                      showToast('Select any manicure below to try on your hand');
+                    }}
+                    className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    <span>Choose Look from Inspiration</span>
+                  </button>
+
+                  {/* Secondary CTA: Direct Virtual Try-On */}
                   <button
                     type="button"
                     onClick={() => {
                       setIsHandModalOpen(false);
                       onTryOnClick();
                     }}
-                    className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
+                    className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-semibold shadow-2xs transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95"
                   >
-                    <Hand className="w-4 h-4" />
+                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Open Virtual Try-On</span>
                   </button>
 
                   {/* Symmetrical 2-Column: 1st Option = Upload, 2nd Option = Camera */}
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 gap-2 pt-1">
                     <button
                       type="button"
                       onClick={() => handFileInputRef.current?.click()}
-                      className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
+                      className="h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
                     >
                       <UploadCloud className="w-3.5 h-3.5 text-stone-600" />
                       <span>Upload New</span>
@@ -577,7 +479,7 @@ export function HomeHubView({
                     <button
                       type="button"
                       onClick={() => setIsCameraCaptureOpen(true)}
-                      className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
+                      className="h-9 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
                     >
                       <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
                       <span>Camera</span>
@@ -587,7 +489,7 @@ export function HomeHubView({
                   <button
                     type="button"
                     onClick={handleRemoveHandPhoto}
-                    className="w-full h-8 text-[11px] text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
+                    className="w-full h-7 text-[11px] text-red-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition cursor-pointer flex items-center justify-center gap-1"
                   >
                     <Trash2 className="w-3 h-3" />
                     <span>Remove hand photo</span>
@@ -661,7 +563,12 @@ export function HomeHubView({
               localStorage.setItem('finglora_user_hand_photo', dataUrl);
             }
           } catch {}
-          showToast('Hand photo saved for instant try-on');
+          setIsHandModalOpen(false);
+          setIsCameraCaptureOpen(false);
+          setTimeout(() => {
+            document.getElementById('inspiration-feed')?.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+          showToast('Hand saved! Select an inspiration look below to try on');
         }}
         onUploadFileFallback={(file) => {
           handleHandPhotoUpload(file);
