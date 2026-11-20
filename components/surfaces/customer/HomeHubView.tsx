@@ -312,27 +312,6 @@ export function HomeHubView({
         </div>
       )}
 
-      {/* ------------------------------------------------------------------ */}
-      {/* 1. ATELIER STATUS & REFINED GREETING BAR                           */}
-      {/* ------------------------------------------------------------------ */}
-      <div className="flex items-center justify-between px-0.5">
-        <h1 className="font-serif text-2xl text-stone-900 font-normal tracking-tight">
-          Atelier
-        </h1>
-
-        {/* Preferred Shape Calibration Pill */}
-        <button
-          type="button"
-          onClick={onTuneVibeClick}
-          className="h-8 px-3 rounded-full bg-white border border-stone-200/90 hover:border-stone-300 text-stone-700 text-xs font-medium inline-flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
-          title="Change preferred nail shape"
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A]" />
-          <span className="capitalize">{preferredShape || 'Almond'}</span>
-          <span className="text-stone-300">/</span>
-          <span className="text-[11px] text-stone-400 font-normal">Shape</span>
-        </button>
-      </div>
 
       {/* ------------------------------------------------------------------ */}
       {/* 2. SYMMETRICAL ACTION CARDS (MY HAND & EXTRACT INSPO)              */}
