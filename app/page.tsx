@@ -973,21 +973,28 @@ export default function FingloraApp() {
             onUpdateActiveFinger={updateActiveFinger}
             onOpenApplyAllModal={() => setShowApplyAllModal(true)}
             onImageSelectedForExtraction={async (file) => {
-              setSynthesizedHandUrl(null);
               try {
                 const cloudUrl = await uploadInspoPhoto(file, supabaseUser?.id);
-                runHandExtractionDemo('set-berry-aura', cloudUrl);
+                setActivePhotoUrl(cloudUrl || URL.createObjectURL(file));
               } catch {
-                runHandExtractionDemo('set-berry-aura', URL.createObjectURL(file));
+                setActivePhotoUrl(URL.createObjectURL(file));
               }
+              setActiveSetName(file.name.replace(/\.[^/.]+$/, '') || 'Custom Inspo Look');
             }}
             onSampleExtractionDemo={() => {
-              setSynthesizedHandUrl(null);
-              runHandExtractionDemo('set-blush-daisy');
+              const sample = exploreDesigns[0];
+              setActiveSetId(sample.id);
+              setActivePhotoUrl(sample.photoUrl);
+              setActiveSetName(sample.title);
             }}
             onSelectExploreDesign={(id) => {
-              setSynthesizedHandUrl(null);
-              extractFromInspirationHand(id, 'tryon');
+              const found = exploreDesigns.find((d) => d.id === id);
+              if (found) {
+                setActiveSetId(found.id);
+                setActivePhotoUrl(found.photoUrl);
+                setActiveSetName(found.title);
+                navigateCustomer('upload');
+              }
             }}
             onCopyShareLink={copyShareLink}
             onCustomerSignUpSubmit={() => {

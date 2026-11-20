@@ -161,11 +161,11 @@ export function UploadInspirationView({
   // State A: Generating / Analyzing State (Zero Fake Pills, Pure Photographic Visuals)
   if (isAnalyzing || isGeneratingTryOn) {
     return (
-      <div className="w-full max-w-xl mx-auto py-12 px-4 text-center space-y-8 animate-in fade-in duration-300">
-        {/* Dynamic Reference + Hand Composition Preview */}
-        <div className="flex items-center justify-center gap-4 sm:gap-6">
+      <div className="w-full max-w-4xl lg:max-w-5xl xl:max-w-6xl mx-auto py-12 lg:py-16 px-4 text-center space-y-10 lg:space-y-12 animate-in fade-in duration-300">
+        {/* Dynamic Reference + Hand Composition Preview - Large on Desktop */}
+        <div className="flex items-center justify-center gap-4 sm:gap-8 lg:gap-14">
           {/* Reference Inspo Photo */}
-          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-100 border-2 border-[#E0246A]/20 shadow-lg flex items-center justify-center">
+          <div className="relative w-36 h-48 sm:w-52 sm:h-70 md:w-64 md:h-84 lg:w-80 lg:h-[420px] xl:w-96 xl:h-[460px] rounded-3xl overflow-hidden bg-stone-100 border-2 sm:border-4 border-[#E0246A]/20 shadow-2xl flex items-center justify-center transition-all duration-300">
             {activePhotoUrl ? (
               <img
                 src={activePhotoUrl}
@@ -174,26 +174,26 @@ export function UploadInspirationView({
               />
             ) : (
               <div className="w-full h-full flex items-center justify-center text-stone-300">
-                <Hand className="w-7 h-7" />
+                <Hand className="w-12 h-12" />
               </div>
             )}
-            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
-              Nail Inspo
+            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-2 sm:py-2.5 text-xs sm:text-sm text-white font-medium tracking-wide">
+              Reference Inspo
             </div>
           </div>
 
           {/* Connecting Arrow */}
-          <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="w-9 h-9 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center border border-stone-200">
-              <ArrowRight className="w-4 h-4 text-stone-600" />
+          <div className="flex flex-col items-center justify-center gap-2">
+            <div className="w-12 h-12 sm:w-16 sm:h-16 lg:w-20 lg:h-20 rounded-full bg-white text-[#E0246A] flex items-center justify-center border border-stone-200 shadow-xl">
+              <ArrowRight className="w-6 h-6 sm:w-8 sm:h-8 lg:w-10 lg:h-10 text-[#E0246A]" />
             </div>
-            <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">
+            <span className="text-[11px] sm:text-xs font-mono text-stone-400 uppercase tracking-widest font-medium">
               Try-On
             </span>
           </div>
 
           {/* User's Hand Photo */}
-          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-100 border-2 border-[#E0246A]/20 shadow-lg">
+          <div className="relative w-36 h-48 sm:w-52 sm:h-70 md:w-64 md:h-84 lg:w-80 lg:h-[420px] xl:w-96 xl:h-[460px] rounded-3xl overflow-hidden bg-stone-100 border-2 sm:border-4 border-[#E0246A]/20 shadow-2xl transition-all duration-300">
             {localHandPhoto ? (
               <img
                 src={localHandPhoto}
@@ -207,32 +207,32 @@ export function UploadInspirationView({
                 className="w-full h-full object-cover"
               />
             )}
-            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
+            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-2 sm:py-2.5 text-xs sm:text-sm text-white font-medium tracking-wide">
               Your Hand
             </div>
           </div>
         </div>
 
         {/* Minimal Editorial Copy */}
-        <div className="space-y-1.5">
-          <span className="text-[11px] font-mono tracking-wider text-stone-500 uppercase flex items-center justify-center gap-1.5">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-700" />
+        <div className="space-y-2">
+          <span className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-pink-50 border border-pink-200 text-xs font-semibold text-[#E0246A]">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E0246A]" />
             <span>Processing</span>
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
+          <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-stone-900 tracking-tight">
             Applying Design to Hand
           </h2>
-          <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+          <p className="text-sm sm:text-base text-stone-500 max-w-lg mx-auto leading-relaxed">
             Fitting the reference colors, patterns, and shape to your fingernails.
           </p>
         </div>
 
         {onCancel && (
-          <div className="pt-1">
+          <div className="pt-2">
             <button
               type="button"
               onClick={onCancel}
-              className="text-xs text-stone-400 hover:text-stone-700 transition-colors cursor-pointer"
+              className="text-xs font-medium text-stone-400 hover:text-stone-700 transition-colors cursor-pointer py-1.5 px-4 rounded-full hover:bg-stone-100"
             >
               Cancel
             </button>
@@ -244,7 +244,7 @@ export function UploadInspirationView({
 
   // State B: Simple 2-Card Inspo + Hand Studio
   return (
-    <div className="w-full max-w-2xl mx-auto space-y-6 py-4 px-2">
+    <div className="w-full max-w-3xl lg:max-w-4xl xl:max-w-5xl mx-auto space-y-8 py-6 lg:py-10 px-4">
       {/* Hidden File Inputs */}
       <input
         ref={inspoFileInputRef}
@@ -262,24 +262,24 @@ export function UploadInspirationView({
       />
 
       {/* Header */}
-      <div className="text-center space-y-1.5">
-        <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
+      <div className="text-center space-y-2">
+        <span className="text-xs font-semibold tracking-widest text-[#E0246A] uppercase">
           Virtual Try-On
         </span>
-        <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
+        <h1 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-medium text-stone-900 tracking-tight">
           Try Any Nail Look On Your Hand
         </h1>
-        <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
+        <p className="text-xs sm:text-sm lg:text-base text-stone-500 max-w-lg mx-auto leading-relaxed">
           Upload a reference nail photo to preview it directly on your hand.
         </p>
       </div>
 
       {/* 2 Simple Cards: [1] Nail Inspo Design + [2] My Hand */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 lg:gap-8">
         {/* Card 1: Nail Inspo Picture */}
         <div
           onClick={() => inspoFileInputRef.current?.click()}
-          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-5 sm:p-6 text-center transition-all cursor-pointer shadow-2xs hover:shadow-md flex flex-col justify-between min-h-[260px]"
+          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-6 sm:p-8 text-center transition-all cursor-pointer shadow-2xs hover:shadow-lg flex flex-col justify-between min-h-[300px] sm:min-h-[380px] lg:min-h-[440px]"
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -334,7 +334,7 @@ export function UploadInspirationView({
         {/* Card 2: Your Hand Photo */}
         <div
           onClick={() => handFileInputRef.current?.click()}
-          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-5 sm:p-6 text-center transition-all cursor-pointer shadow-2xs hover:shadow-md flex flex-col justify-between min-h-[260px]"
+          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-6 sm:p-8 text-center transition-all cursor-pointer shadow-2xs hover:shadow-lg flex flex-col justify-between min-h-[300px] sm:min-h-[380px] lg:min-h-[440px]"
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -342,7 +342,7 @@ export function UploadInspirationView({
                 2. Your Hand Photo
               </span>
               {localHandPhoto && (
-                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2.5 py-0.5 rounded-full font-medium flex items-center gap-1">
                   <Check className="w-3 h-3 text-emerald-600" />
                   <span>My Hand Saved</span>
                 </span>
@@ -422,7 +422,7 @@ export function UploadInspirationView({
           type="button"
           disabled={isGeneratingTryOn}
           onClick={handleSeeOnMyHand}
-          className="w-full h-12 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-medium transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75 shadow-md shadow-[#E0246A]/20"
+          className="w-full h-14 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-base font-semibold transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75 shadow-lg shadow-[#E0246A]/25"
         >
           {isGeneratingTryOn ? (
             <>
