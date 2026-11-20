@@ -9,51 +9,119 @@ import {
   Hand,
   SlidersHorizontal,
   ChevronDown,
-  Sparkles,
   MoreHorizontal,
 } from 'lucide-react';
-import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
+import { ExploreDesignSet, NailShape } from '@/types/nail';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { getCurrentUser } from '@/lib/services/auth';
 
-// Pinterest Visual Filter Chips with Mini Icons / Color Swatches
+// Pinterest Category Filter Tag with Real Thumbnail Photos
 interface FilterTag {
   id: string;
   label: string;
-  icon?: string;
+  thumbnailUrl?: string;
   colorHex?: string;
   queryMatch: string;
 }
 
 const PINTEREST_FILTER_TAGS: FilterTag[] = [
-  { id: 'all', label: 'All Styles', queryMatch: '' },
-  { id: 'short', label: 'Short', icon: '💅', queryMatch: 'short' },
-  { id: 'simple', label: 'Simple', icon: '✨', queryMatch: 'simple' },
-  { id: 'french', label: 'French', icon: '🤍', queryMatch: 'french' },
-  { id: 'cat-eye', label: 'Cat Eye', icon: '💎', queryMatch: 'cat eye' },
-  { id: 'coquette', label: 'Coquette', icon: '🎀', queryMatch: 'coquette' },
-  { id: 'red', label: 'Red Wine', colorHex: '#801A35', queryMatch: 'red' },
-  { id: 'pink', label: 'Pink Blush', colorHex: '#FCE7F3', queryMatch: 'pink' },
-  { id: 'cherry-mocha', label: 'Cherry Mocha', colorHex: '#3B111D', queryMatch: 'mocha' },
-  { id: 'black', label: 'Black Minimal', colorHex: '#18181B', queryMatch: 'black' },
-  { id: 'chrome', label: 'Chrome Glaze', colorHex: '#E5C697', queryMatch: 'chrome' },
-  { id: 'brown', label: 'Espresso', colorHex: '#4A2E18', queryMatch: 'espresso' },
-  { id: 'almond', label: 'Almond', icon: '💅', queryMatch: 'almond' },
-  { id: 'coffin', label: 'Coffin', icon: '💅', queryMatch: 'coffin' },
+  {
+    id: 'less-ai',
+    label: 'Less AI',
+    queryMatch: '',
+  },
+  {
+    id: 'short',
+    label: 'Short',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=120&q=80',
+    queryMatch: 'short',
+  },
+  {
+    id: 'simple',
+    label: 'Simple',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=120&q=80',
+    queryMatch: 'simple',
+  },
+  {
+    id: 'easy',
+    label: 'Easy',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=120&q=80',
+    queryMatch: 'easy',
+  },
+  {
+    id: 'cat-eye',
+    label: 'Cat eye',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=120&q=80',
+    queryMatch: 'cat eye',
+  },
+  {
+    id: 'ideas',
+    label: 'Ideas',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=120&q=80',
+    queryMatch: 'ideas',
+  },
+  {
+    id: 'red',
+    label: 'Red',
+    colorHex: '#801A35',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=120&q=80',
+    queryMatch: 'red',
+  },
+  {
+    id: 'cute',
+    label: 'Cute',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=120&q=80',
+    queryMatch: 'cute',
+  },
+  {
+    id: 'pink',
+    label: 'Pink',
+    colorHex: '#FCE7F3',
+    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
+    queryMatch: 'pink',
+  },
+  {
+    id: 'black',
+    label: 'Black',
+    colorHex: '#18181B',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1583001809873-a128495da465?w=120&q=80',
+    queryMatch: 'black',
+  },
+  {
+    id: 'chrome',
+    label: 'Chrome',
+    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
+    queryMatch: 'chrome',
+  },
+  {
+    id: 'brown',
+    label: 'Brown',
+    colorHex: '#4A2E18',
+    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    queryMatch: 'brown',
+  },
+  {
+    id: 'short-square',
+    label: 'Short square',
+    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
+    queryMatch: 'square',
+  },
+  {
+    id: 'gel',
+    label: 'Gel',
+    thumbnailUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=120&q=80',
+    queryMatch: 'gel',
+  },
 ];
 
-// Rich, Authentic Pinterest Manicure Pins
+// Rich, 100% Unique Authentic Pinterest Nail Pins
 interface ManicurePin {
   id: string;
   title: string;
   photoUrl: string;
-  aspectClass: string; // for natural masonry height variation
+  aspectClass: string;
   tags: string[];
-  baseColor: string;
-  accentColor: string;
   shape: NailShape;
-  pattern: string;
-  likes: number;
 }
 
 const PINTEREST_MANICURE_PINS: ManicurePin[] = [
@@ -61,226 +129,197 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
     id: 'pin-french-bow',
     title: 'French Tip Nails Forever 🤍✨ with Coquette Ribbons',
     photoUrl: '/assets/pink_heart_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4.2]',
-    tags: ['french', 'coquette', 'pink', 'simple', 'almond'],
-    baseColor: '#FCE7F3',
-    accentColor: '#E0246A',
+    aspectClass: 'aspect-[3/4.3]',
+    tags: ['french', 'coquette', 'pink', 'simple', 'cute', 'ideas'],
     shape: 'almond',
-    pattern: 'heart-french',
-    likes: 2450,
-  },
-  {
-    id: 'pin-burgundy-marble',
-    title: 'Burgundy Marble Nails with 24K Gold Leaf Details',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    aspectClass: 'aspect-[3/4.6]',
-    tags: ['red', 'mocha', 'chrome', 'almond'],
-    baseColor: '#FAF0EA',
-    accentColor: '#801A35',
-    shape: 'almond',
-    pattern: 'aura',
-    likes: 3120,
-  },
-  {
-    id: 'pin-milky-glazed',
-    title: 'Milky Glazed Gold Donut Chrome Finish',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4]',
-    tags: ['chrome', 'simple', 'short', 'almond'],
-    baseColor: '#F5ECE3',
-    accentColor: '#D4AF37',
-    shape: 'almond',
-    pattern: 'aura',
-    likes: 1890,
   },
   {
     id: 'pin-cherry-mocha',
     title: 'Cherry Mocha French Nails ☕ Deep Glossy Tips',
     photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    aspectClass: 'aspect-[3/4.8]',
-    tags: ['french', 'red', 'mocha', 'coffin'],
-    baseColor: '#FAF0EA',
-    accentColor: '#3B111D',
+    aspectClass: 'aspect-[3/4.7]',
+    tags: ['french', 'red', 'brown', 'gel', 'ideas'],
     shape: 'coffin',
-    pattern: 'classic-french',
-    likes: 4210,
   },
   {
-    id: 'pin-atelier-nude',
-    title: 'Simple Yet Beautiful Clean Girl Nude Manicure',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
-    aspectClass: 'aspect-[3/4.1]',
-    tags: ['simple', 'short', 'almond', 'black'],
-    baseColor: '#FAF0EA',
-    accentColor: '#FFFFFF',
-    shape: 'almond',
-    pattern: 'solid',
-    likes: 1540,
-  },
-  {
-    id: 'pin-rose-quartz',
-    title: 'Rose Quartz & Pearl Glaze with Micro Bows 🎀',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4.4]',
-    tags: ['pink', 'coquette', 'chrome', 'almond'],
-    baseColor: '#FCE7F3',
-    accentColor: '#E0246A',
-    shape: 'almond',
-    pattern: 'aura',
-    likes: 2780,
-  },
-  {
-    id: 'pin-bordeaux-stiletto',
-    title: 'Deep Bordeaux Velvet Gloss with Gold Micro Line',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    aspectClass: 'aspect-[3/4.5]',
-    tags: ['red', 'cat eye', 'mocha', 'almond'],
-    baseColor: '#3B111D',
-    accentColor: '#D4AF37',
-    shape: 'almond',
-    pattern: 'minimal-line',
-    likes: 3670,
-  },
-  {
-    id: 'pin-french-micro',
-    title: 'Clean Girl Micro French on Natural Nail Bed',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
-    aspectClass: 'aspect-[3/3.9]',
-    tags: ['french', 'simple', 'short', 'short square'],
-    baseColor: '#FAF0EA',
-    accentColor: '#FFFFFF',
-    shape: 'square',
-    pattern: 'classic-french',
-    likes: 1980,
-  },
-  {
-    id: 'pin-glazed-pearl-tips',
-    title: 'Glazed Pearl Chrome French Tips on Sheer Pink',
+    id: 'pin-milky-glazed',
+    title: 'Milky Glazed Gold Donut Chrome Finish',
     photoUrl: '/assets/milky_gold_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4.3]',
-    tags: ['french', 'chrome', 'pink', 'almond'],
-    baseColor: '#FCE7F3',
-    accentColor: '#FAF0EA',
+    aspectClass: 'aspect-[3/4.1]',
+    tags: ['chrome', 'simple', 'short', 'gel'],
     shape: 'almond',
-    pattern: 'classic-french',
-    likes: 2840,
+  },
+  {
+    id: 'pin-nude-clean',
+    title: 'Simple Yet Beautiful Clean Girl Nude Manicure',
+    photoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=700&q=80',
+    aspectClass: 'aspect-[3/4]',
+    tags: ['simple', 'short', 'easy', 'gel'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-burgundy-marble',
+    title: 'Burgundy Marble Nails with 24K Gold Leaf Details',
+    photoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?w=700&q=80',
+    aspectClass: 'aspect-[3/4.5]',
+    tags: ['red', 'brown', 'chrome', 'ideas'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-pink-aura',
+    title: 'Rose Quartz & Pearl Glaze with Micro Bows 🎀',
+    photoUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?w=700&q=80',
+    aspectClass: 'aspect-[3/4.2]',
+    tags: ['pink', 'cute', 'chrome', 'coquette'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-classic-french',
+    title: 'Classic Almond French Smile Curve on Sheer Pink',
+    photoUrl: 'https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=700&q=80',
+    aspectClass: 'aspect-[3/4.4]',
+    tags: ['french', 'simple', 'easy', 'gel'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-short-minimal',
+    title: 'Clean Minimalist Sheer Lacquer with High Gloss',
+    photoUrl: 'https://images.unsplash.com/photo-1599940824399-b87987ceb72a?w=700&q=80',
+    aspectClass: 'aspect-[3/3.9]',
+    tags: ['short', 'simple', 'easy', 'square'],
+    shape: 'square',
+  },
+  {
+    id: 'pin-cat-eye-shimmer',
+    title: 'Velvet Cat Eye Magnetic Gel Polish with Halo Effect',
+    photoUrl: 'https://images.unsplash.com/photo-1506152983158-b4a74a01c721?w=700&q=80',
+    aspectClass: 'aspect-[3/4.6]',
+    tags: ['cat eye', 'chrome', 'gel', 'ideas'],
+    shape: 'almond',
   },
   {
     id: 'pin-black-coquette',
     title: 'Black Velvet French with Chrome Butterfly Art 🖤',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
-    aspectClass: 'aspect-[3/4.7]',
-    tags: ['black', 'coquette', 'french', 'coffin'],
-    baseColor: '#FAF0EA',
-    accentColor: '#18181B',
+    photoUrl: 'https://images.unsplash.com/photo-1583001809873-a128495da465?w=700&q=80',
+    aspectClass: 'aspect-[3/4.4]',
+    tags: ['black', 'coquette', 'french', 'ideas'],
     shape: 'coffin',
-    pattern: 'minimal-line',
-    likes: 3890,
   },
   {
-    id: 'pin-red-heart-minimal',
-    title: '30 Red Valentine Negative Space Heart Nails 💌',
+    id: 'pin-red-valentine',
+    title: "30 Red Valentine's Day Negative Space Heart Nails 💌",
     photoUrl: '/assets/pink_heart_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4.2]',
-    tags: ['red', 'pink', 'coquette', 'almond'],
-    baseColor: '#FCE7F3',
-    accentColor: '#E0246A',
+    aspectClass: 'aspect-[3/4.3]',
+    tags: ['red', 'pink', 'cute', 'coquette'],
     shape: 'almond',
-    pattern: 'heart-french',
-    likes: 5120,
   },
   {
-    id: 'pin-burgundy-polka',
+    id: 'pin-bordeaux-dots',
     title: 'Burgundy French with Micro Polka Dot Accent',
     photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    aspectClass: 'aspect-[3/4.4]',
-    tags: ['red', 'french', 'mocha', 'almond'],
-    baseColor: '#FAF0EA',
-    accentColor: '#801A35',
+    aspectClass: 'aspect-[3/4.5]',
+    tags: ['red', 'french', 'brown', 'ideas'],
     shape: 'almond',
-    pattern: 'classic-french',
-    likes: 2150,
+  },
+  {
+    id: 'pin-french-clean',
+    title: 'Clean Aesthetic French Tips on Long Almond',
+    photoUrl: 'https://images.unsplash.com/photo-1607779097040-26e80aa78e66?w=700&q=80',
+    aspectClass: 'aspect-[3/4.2]',
+    tags: ['french', 'simple', 'gel'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-mauve-nude',
+    title: 'Dusty Rose Petals on Sheer Mauve Almond',
+    photoUrl: 'https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=700&q=80',
+    aspectClass: 'aspect-[3/4.4]',
+    tags: ['pink', 'simple', 'cute'],
+    shape: 'almond',
   },
   {
     id: 'pin-champagne-dust',
-    title: 'Champagne Dust Fine Shimmer Gel Manicure',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    title: 'Champagne Gold Fine Shimmer Gel Manicure ✨',
+    photoUrl: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15?w=700&q=80',
     aspectClass: 'aspect-[3/4.1]',
-    tags: ['chrome', 'cat eye', 'simple', 'almond'],
-    baseColor: '#FAF0EA',
-    accentColor: '#E5C697',
+    tags: ['chrome', 'cat eye', 'gel'],
     shape: 'almond',
-    pattern: 'aura',
-    likes: 1720,
+  },
+  {
+    id: 'pin-atelier-hero',
+    title: 'Atelier Nude Minimal Square Daily Silhouette',
+    photoUrl: '/assets/editorial_nail_hero.jpg',
+    aspectClass: 'aspect-[3/4]',
+    tags: ['short', 'simple', 'square', 'easy'],
+    shape: 'square',
   },
   {
     id: 'pin-coffin-ribbon',
     title: 'Coffin Dusty Rose with 3D Miniature Bows',
     photoUrl: '/assets/pink_heart_tryon_result.jpg',
     aspectClass: 'aspect-[3/4.6]',
-    tags: ['coquette', 'pink', 'coffin'],
-    baseColor: '#FCE7F3',
-    accentColor: '#E0246A',
+    tags: ['pink', 'coquette', 'cute', 'ideas'],
     shape: 'coffin',
-    pattern: 'heart-french',
-    likes: 3410,
   },
   {
     id: 'pin-espresso-swirl',
-    title: 'Smoked Espresso Chrome Swirl Line Art',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
-    aspectClass: 'aspect-[3/4.3]',
-    tags: ['espresso', 'brown', 'black', 'almond'],
-    baseColor: '#FAF0EA',
-    accentColor: '#2A1B1F',
+    title: 'Smoked Espresso Chrome Swirl Line Art ☕',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    aspectClass: 'aspect-[3/4.5]',
+    tags: ['brown', 'black', 'ideas', 'gel'],
     shape: 'almond',
-    pattern: 'minimal-line',
-    likes: 2290,
   },
   {
-    id: 'pin-glazed-coffin',
-    title: 'High-Gloss Glazed Donut Coffin Shape Manicure',
+    id: 'pin-pearl-donut',
+    title: 'Glazed Donut Pearl Tips with Dewdrop Texture',
     photoUrl: '/assets/milky_gold_tryon_result.jpg',
-    aspectClass: 'aspect-[3/4.5]',
-    tags: ['chrome', 'coffin', 'simple'],
-    baseColor: '#F5ECE3',
-    accentColor: '#FAF0EA',
-    shape: 'coffin',
-    pattern: 'aura',
-    likes: 2980,
+    aspectClass: 'aspect-[3/4.2]',
+    tags: ['chrome', 'simple', 'french'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-red-velvet',
+    title: 'Deep Wine Bordeaux Velvet Stiletto Finish',
+    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    aspectClass: 'aspect-[3/4.8]',
+    tags: ['red', 'cat eye', 'gel'],
+    shape: 'almond',
+  },
+  {
+    id: 'pin-nude-french-clean',
+    title: 'Micro French Smile Line on Short Natural Nails',
+    photoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?w=700&q=80',
+    aspectClass: 'aspect-[3/4.1]',
+    tags: ['short', 'french', 'simple', 'easy'],
+    shape: 'almond',
   },
 ];
 
 export function ExploreGalleryView({
-  exploreDesigns,
-  setExploreDesigns,
-  exploreCategory,
-  setExploreCategory,
   exploreSearch,
   setExploreSearch,
-  mobilePreview,
   onUploadClick,
   onSelectDesign,
   onTryOnClick,
 }: {
-  exploreDesigns: ExploreDesignSet[];
-  setExploreDesigns: React.Dispatch<React.SetStateAction<ExploreDesignSet[]>>;
-  exploreCategory: string;
-  setExploreCategory: (category: string) => void;
+  exploreDesigns?: ExploreDesignSet[];
+  setExploreDesigns?: React.Dispatch<React.SetStateAction<ExploreDesignSet[]>>;
+  exploreCategory?: string;
+  setExploreCategory?: (category: string) => void;
   exploreSearch: string;
   setExploreSearch: (search: string) => void;
-  mobilePreview: boolean;
+  mobilePreview?: boolean;
   onUploadClick: () => void;
   onSelectDesign: (id: string) => void;
   onTryOnClick?: (designId?: string) => void;
 }) {
-  const [activeFilterId, setActiveFilterId] = useState<string>('all');
+  const [activeFilterId, setActiveFilterId] = useState<string>('less-ai');
   const [savedPins, setSavedPins] = useState<Record<string, boolean>>({});
 
   // Filter Pins based on search input and active visual tag
   const filteredPins = PINTEREST_MANICURE_PINS.filter((pin) => {
     // Tag filter
-    if (activeFilterId !== 'all') {
+    if (activeFilterId && activeFilterId !== 'less-ai') {
       const tagObj = PINTEREST_FILTER_TAGS.find((t) => t.id === activeFilterId);
       if (tagObj && tagObj.queryMatch) {
         const matchesTag = pin.tags.some((t) => t.includes(tagObj.queryMatch));
@@ -318,7 +357,6 @@ export function ExploreGalleryView({
   };
 
   const handleLaunchTryOn = (pin: ManicurePin) => {
-    // If it exists in exploreDesigns, select that ID; otherwise pass fallback
     onSelectDesign(pin.id);
     if (onTryOnClick) {
       onTryOnClick(pin.id);
@@ -326,22 +364,23 @@ export function ExploreGalleryView({
   };
 
   return (
-    <div className="w-full space-y-4 pb-16">
-      {/* 1. Pinterest-Style Top Search & Visual Action Bar */}
-      <div className="sticky top-0 z-30 bg-white/95 backdrop-blur-md pt-2 pb-3 px-2 sm:px-4 border-b border-stone-200/60 shadow-2xs">
-        <div className="max-w-7xl mx-auto flex items-center gap-3">
-          {/* Main Pinterest Rounded Search Bar */}
-          <div className="flex-1 relative flex items-center bg-[#EFEFEF] hover:bg-[#E7E7E7] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-300 rounded-full h-11 sm:h-12 px-4 transition-all border border-transparent focus-within:border-stone-300 shadow-2xs">
+    <div className="w-full space-y-3 pb-16">
+      {/* 1. Exactly Pinterest: 100% Full-Width Top Header */}
+      <div className="sticky top-0 z-30 bg-white pt-2.5 pb-2 px-3 sm:px-6 w-full border-b border-stone-200/50 shadow-2xs">
+        {/* Full-width Search Bar Row */}
+        <div className="w-full flex items-center gap-3">
+          {/* Main Pinterest Gray Search Bar */}
+          <div className="flex-1 h-12 bg-[#E9E9E9] hover:bg-[#E1E1E1] focus-within:bg-white focus-within:ring-2 focus-within:ring-stone-400 rounded-full px-4 flex items-center gap-2.5 transition-all">
             {/* Search Icon */}
-            <Search className="w-4.5 h-4.5 text-stone-500 shrink-0 mr-2.5" strokeWidth={2} />
+            <Search className="w-5 h-5 text-stone-500 shrink-0" strokeWidth={2} />
 
             {/* Input Field */}
             <input
               type="text"
               value={exploreSearch}
               onChange={(e) => setExploreSearch(e.target.value)}
-              placeholder="Search for nail designs, aesthetics, shapes..."
-              className="w-full bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none"
+              placeholder="nails design"
+              className="w-full bg-transparent text-sm text-stone-900 placeholder:text-stone-500 focus:outline-none"
             />
 
             {/* Clear Button */}
@@ -349,10 +388,10 @@ export function ExploreGalleryView({
               <button
                 type="button"
                 onClick={() => setExploreSearch('')}
-                className="w-6 h-6 rounded-full hover:bg-stone-300/60 flex items-center justify-center text-stone-500 shrink-0 mr-2 transition cursor-pointer"
+                className="w-6 h-6 rounded-full hover:bg-stone-300/60 flex items-center justify-center text-stone-500 shrink-0 transition cursor-pointer"
                 title="Clear search"
               >
-                <X className="w-3.5 h-3.5" strokeWidth={2} />
+                <X className="w-4 h-4" />
               </button>
             )}
 
@@ -361,62 +400,73 @@ export function ExploreGalleryView({
               type="button"
               onClick={onUploadClick}
               className="p-1.5 rounded-full hover:bg-stone-300/60 text-stone-700 hover:text-[#E0246A] transition cursor-pointer shrink-0"
-              title="Visual Search / Upload Inspo Photo"
+              title="Visual search / Upload photo"
             >
               <Camera className="w-5 h-5" strokeWidth={1.8} />
             </button>
           </div>
 
-          {/* Filter Dropdown Pill (Pinterest 'All Pins' dropdown) */}
-          <div className="hidden sm:flex items-center gap-1 px-3.5 h-11 rounded-full bg-stone-100 hover:bg-stone-200/80 border border-stone-200/70 text-xs font-semibold text-stone-800 transition cursor-pointer shrink-0 select-none">
+          {/* Pinterest 'All Pins ▾' Dropdown */}
+          <div className="hidden sm:flex items-center gap-1 px-3 py-2 rounded-full hover:bg-stone-100 text-xs font-semibold text-stone-800 transition cursor-pointer shrink-0 select-none">
             <span>All Pins</span>
             <ChevronDown className="w-3.5 h-3.5 text-stone-500" />
           </div>
 
-          {/* Direct Upload Button (Brand rose) */}
-          <button
-            type="button"
-            onClick={onUploadClick}
-            className="h-11 px-4 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition-all inline-flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+          {/* Pinterest User Avatar 'M' on far right */}
+          <div
+            onClick={() => onTryOnClick?.()}
+            className="w-8.5 h-8.5 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold text-xs flex items-center justify-center shrink-0 cursor-pointer select-none transition"
+            title="Profile"
           >
-            <Camera className="w-4 h-4" />
-            <span className="hidden md:inline">Upload Inspo</span>
-          </button>
+            M
+          </div>
         </div>
 
-        {/* 2. Pinterest Visual Filter Tag Carousel */}
-        <div className="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto pt-2.5 pb-1 scrollbar-none select-none">
-          {/* Sliders filter button */}
-          <div className="flex items-center justify-center w-8.5 h-8.5 rounded-full bg-stone-100 border border-stone-200/80 text-stone-700 shrink-0 shadow-2xs">
-            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.8} />
-          </div>
+        {/* 2. Exactly Pinterest: Horizontal Scrolling Visual Categories with Real Thumbnails */}
+        <div className="w-full flex items-center gap-2 overflow-x-auto pt-2.5 pb-1 scrollbar-none select-none">
+          {/* Far-left Filter Sliders Button */}
+          <button
+            type="button"
+            onClick={() => setActiveFilterId('less-ai')}
+            className="flex items-center justify-center w-8.5 h-8.5 rounded-xl bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-800 shrink-0 transition"
+            title="Filter options"
+          >
+            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.75} />
+          </button>
 
+          {/* Real Photo Thumbnail Pills */}
           {PINTEREST_FILTER_TAGS.map((tag) => {
             const isActive = activeFilterId === tag.id;
+
             return (
               <button
                 key={tag.id}
                 type="button"
                 onClick={() => {
                   setActiveFilterId(tag.id);
-                  if (tag.id === 'all') {
+                  if (tag.id === 'less-ai') {
                     setExploreSearch('');
                   }
                 }}
-                className={`h-8.5 px-3.5 rounded-full text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer active:scale-95 shrink-0 border ${
+                className={`h-9 px-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 border border-transparent ${
                   isActive
-                    ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                    : 'bg-stone-100 text-stone-800 border-stone-200/70 hover:bg-stone-200/80'
+                    ? 'bg-stone-900 text-white shadow-xs'
+                    : 'bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-850'
                 }`}
               >
-                {/* Optional mini color dot or emoji icon */}
-                {tag.colorHex && (
+                {/* Real Mini Thumbnail Photo or Color Swatch */}
+                {tag.thumbnailUrl ? (
+                  <img
+                    src={tag.thumbnailUrl}
+                    alt=""
+                    className="w-5.5 h-5.5 rounded-md object-cover shrink-0"
+                  />
+                ) : tag.colorHex ? (
                   <span
-                    className="w-3 h-3 rounded-full border border-black/10 shrink-0"
+                    className="w-5.5 h-5.5 rounded-md shrink-0 border border-black/10"
                     style={{ backgroundColor: tag.colorHex }}
                   />
-                )}
-                {tag.icon && <span className="text-[11px] leading-none">{tag.icon}</span>}
+                ) : null}
                 <span>{tag.label}</span>
               </button>
             );
@@ -424,8 +474,8 @@ export function ExploreGalleryView({
         </div>
       </div>
 
-      {/* 3. Pinterest Masonry Waterfall Feed */}
-      <div className="px-2 sm:px-4 max-w-[1600px] mx-auto">
+      {/* 3. Exactly Pinterest: Full-Width 7-Column Masonry Waterfall Grid */}
+      <div className="w-full px-3 sm:px-6">
         {filteredPins.length === 0 ? (
           <div className="py-20 px-6 max-w-md mx-auto text-center space-y-4 bg-white rounded-3xl border border-stone-200/80 shadow-2xs mt-8">
             <div className="w-12 h-12 rounded-full bg-stone-100 text-stone-700 mx-auto flex items-center justify-center">
@@ -443,7 +493,7 @@ export function ExploreGalleryView({
               type="button"
               onClick={() => {
                 setExploreSearch('');
-                setActiveFilterId('all');
+                setActiveFilterId('less-ai');
               }}
               className="h-9 px-4 rounded-full bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition active:scale-95 cursor-pointer"
             >
@@ -473,7 +523,7 @@ export function ExploreGalleryView({
                     {/* Dark gradient overlay on hover */}
                     <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3" />
 
-                    {/* Top Right: Pinterest-Style Save Button */}
+                    {/* Top Right: Pinterest-Style Red/Pink Save Button */}
                     <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                       <button
                         type="button"
