@@ -87,9 +87,30 @@ export async function saveUserManicureSet({
 }) {
   const supabase = getSupabaseBrowserClient();
 
+  let targetCode = passportCode;
+
+  // Check if passportCode belongs to another user or a curated set to avoid RLS 403
+  if (targetCode) {
+    try {
+      const { data: existing } = await supabase
+        .from('nail_sets')
+        .select('user_id')
+        .eq('passport_code', targetCode)
+        .maybeSingle();
+
+      if (existing && existing.user_id !== userId) {
+        targetCode = `FGL-${Math.floor(1000 + Math.random() * 9000)}`;
+      }
+    } catch {
+      // ignore
+    }
+  } else {
+    targetCode = `FGL-${Math.floor(1000 + Math.random() * 9000)}`;
+  }
+
   const record: any = {
     user_id: userId,
-    passport_code: passportCode,
+    passport_code: targetCode,
     title,
     category,
     subtitle,

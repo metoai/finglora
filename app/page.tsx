@@ -286,7 +286,13 @@ export default function FingloraApp() {
           photoUrl: activePhotoUrl,
           nails,
           skinToneId,
-        }).catch((err) => console.warn('Supabase auto-save skipped:', err.message));
+        })
+          .then((savedSet) => {
+            if (savedSet?.passportCode && savedSet.passportCode !== activePassportCode) {
+              setActivePassportCode(savedSet.passportCode);
+            }
+          })
+          .catch((err) => console.warn('Supabase auto-save skipped:', err.message));
       }, 1500);
       return () => clearTimeout(timer);
     }
@@ -557,7 +563,7 @@ export default function FingloraApp() {
         let aiResponse: any = null;
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 8000);
+          const timer = setTimeout(() => controller.abort(), 25000);
 
           const res = await fetch('/api/extract-nails', {
             method: 'POST',
