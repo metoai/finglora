@@ -389,6 +389,10 @@ export function CustomerApp({
               nails={nails}
               activePhotoUrl={activePhotoUrl}
               customTryOnHandUrl={customTryOnHandUrl}
+              onSelectHandDataUrl={(dataUrl) => {
+                setCustomTryOnHandUrl(dataUrl);
+                setSynthesizedHandUrl?.(null);
+              }}
               onUploadHandPhoto={(file) => {
                 const reader = new FileReader();
                 reader.onload = () => {

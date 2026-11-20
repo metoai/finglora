@@ -12,10 +12,13 @@ import {
   Sliders,
   AlertTriangle,
   Hand,
+  Camera,
+  UploadCloud,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
 import { downscaleImageForVision } from '@/lib/services/storage';
+import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 export function TryOnView({
   tryOnMode = 'upload',
@@ -93,6 +96,7 @@ export function TryOnView({
   const [sharedToast, setSharedToast] = useState(false);
   const changeHandInputRef = useRef<HTMLInputElement>(null);
   const changeRefInspoInputRef = useRef<HTMLInputElement>(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
 
   // AI Per-Finger & All-in-all Customization State
   const [showAiCustomizer, setShowAiCustomizer] = useState(false);
@@ -470,7 +474,7 @@ export function TryOnView({
                 <div className="pt-2 flex items-center justify-center gap-4 text-xs text-stone-500">
                   <button
                     type="button"
-                    onClick={() => changeHandInputRef.current?.click()}
+                    onClick={() => setIsCameraModalOpen(true)}
                     className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1.5 px-2.5 rounded-lg hover:bg-stone-100"
                   >
                     <Hand className="w-4 h-4 text-stone-400" />
@@ -569,36 +573,47 @@ export function TryOnView({
 
             <div className="space-y-1.5 max-w-xs sm:max-w-sm">
               <h3 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900">
-                Upload Hand Photo
+                Your Hand Photo
               </h3>
               <p className="text-xs sm:text-sm text-stone-500 leading-relaxed">
-                Take or upload a clean, well-lit photo of your hand facing flat to preview designs.
+                Take a quick photo with your camera or upload from files to preview any manicure on your hand.
               </p>
             </div>
 
-            <label className="cursor-pointer h-14 px-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm sm:text-base font-semibold inline-flex items-center gap-2.5 shadow-lg shadow-[#E0246A]/25 transition-all active:scale-95">
-              <Hand className="w-5 h-5" />
-              <span>Choose Hand Photo</span>
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const f = e.target.files?.[0];
-                  if (f) {
-                    const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
-                    const finalUrl = dataUrl || URL.createObjectURL(f);
-                    setCustomTryOnHandUrl(finalUrl);
-                    setInternalSynthesizedHandUrl(null);
-                    propSetSynthesizedHandUrl?.(null);
-                    try {
-                      localStorage.setItem('finglora_custom_hand_photo', finalUrl);
-                      localStorage.setItem('finglora_user_hand_photo', finalUrl);
-                    } catch {}
-                  }
-                }}
-              />
-            </label>
+            <div className="flex flex-col sm:flex-row items-center gap-3 w-full max-w-xs sm:max-w-md justify-center">
+              <button
+                type="button"
+                onClick={() => setIsCameraModalOpen(true)}
+                className="cursor-pointer h-13 px-6 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold inline-flex items-center justify-center gap-2.5 shadow-lg shadow-[#E0246A]/25 transition-all active:scale-95 w-full sm:w-auto"
+              >
+                <Camera className="w-4.5 h-4.5" />
+                <span>Take Photo with Camera</span>
+              </button>
+
+              <label className="cursor-pointer h-13 px-6 rounded-2xl bg-white hover:bg-stone-100 text-stone-800 border border-stone-200 text-sm font-medium inline-flex items-center justify-center gap-2 transition-all active:scale-95 w-full sm:w-auto shadow-2xs">
+                <UploadCloud className="w-4.5 h-4.5" />
+                <span>Upload from Device</span>
+                <input
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={async (e) => {
+                    const f = e.target.files?.[0];
+                    if (f) {
+                      const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
+                      const finalUrl = dataUrl || URL.createObjectURL(f);
+                      setCustomTryOnHandUrl(finalUrl);
+                      setInternalSynthesizedHandUrl(null);
+                      propSetSynthesizedHandUrl?.(null);
+                      try {
+                        localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+                        localStorage.setItem('finglora_user_hand_photo', finalUrl);
+                      } catch {}
+                    }
+                  }}
+                />
+              </label>
+            </div>
 
             {/* Quick Sample Hand Preset */}
             <div className="pt-2">
@@ -618,6 +633,34 @@ export function TryOnView({
           </div>
         </div>
       )}
+
+      {/* In-App Live Hand Camera Capture Modal */}
+      <HandCameraCaptureModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCaptureHand={(dataUrl) => {
+          setCustomTryOnHandUrl(dataUrl);
+          setInternalSynthesizedHandUrl(null);
+          propSetSynthesizedHandUrl?.(null);
+          try {
+            localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+            localStorage.setItem('finglora_user_hand_photo', dataUrl);
+          } catch {}
+          setTimeout(() => handleSynthesizeHand(), 60);
+        }}
+        onUploadFileFallback={async (file) => {
+          const dataUrl = await downscaleImageForVision(file, 1000, 0.85);
+          const finalUrl = dataUrl || URL.createObjectURL(file);
+          setCustomTryOnHandUrl(finalUrl);
+          setInternalSynthesizedHandUrl(null);
+          propSetSynthesizedHandUrl?.(null);
+          try {
+            localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+            localStorage.setItem('finglora_user_hand_photo', finalUrl);
+          } catch {}
+          setTimeout(() => handleSynthesizeHand(), 60);
+        }}
+      />
     </div>
   );
 }

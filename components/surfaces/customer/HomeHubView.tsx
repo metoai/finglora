@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { INITIAL_EXPLORE_DESIGNS } from '@/constants/nail-data';
+import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 const PROMPT_SUGGESTIONS = [
   'Glazed pearl',
@@ -70,6 +71,7 @@ export function HomeHubView({
   const designs = exploreDesigns?.length ? exploreDesigns : INITIAL_EXPLORE_DESIGNS;
   const [promptText, setPromptText] = useState(aiStudioPrompt || '');
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
+  const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -415,11 +417,19 @@ export function HomeHubView({
                   <div className="flex gap-2">
                     <button
                       type="button"
+                      onClick={() => setIsCameraCaptureOpen(true)}
+                      className="flex-1 h-9 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
+                    >
+                      <Camera className="w-3.5 h-3.5" />
+                      <span>Retake Camera</span>
+                    </button>
+                    <button
+                      type="button"
                       onClick={() => handFileInputRef.current?.click()}
                       className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
                     >
-                      <Camera className="w-3.5 h-3.5" />
-                      <span>Change Photo</span>
+                      <UploadCloud className="w-3.5 h-3.5" />
+                      <span>Upload File</span>
                     </button>
                     <button
                       type="button"
@@ -433,23 +443,41 @@ export function HomeHubView({
                 </div>
               </div>
             ) : (
-              <div className="space-y-3">
-                <div
-                  onClick={() => handFileInputRef.current?.click()}
-                  className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-[#F0DFE4] bg-[#FFFAF8] hover:bg-[#F9E8ED]/30 transition cursor-pointer flex flex-col items-center justify-center p-5 text-center space-y-2"
-                >
-                  <div className="w-12 h-12 rounded-2xl bg-[#F9E8ED] text-[#791D40] flex items-center justify-center">
-                    <UploadCloud className="w-6 h-6" />
+              <div className="space-y-4">
+                <div className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-[#F0DFE4] bg-[#FFFAF8] flex flex-col items-center justify-center p-5 text-center space-y-2">
+                  <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center">
+                    <Hand className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#281720]">Upload Hand Photo</p>
+                    <p className="text-xs font-semibold text-[#281720]">Your Hand Photo</p>
                     <p className="text-[10px] text-[#806D76] mt-0.5">
-                      Clear flat hand photo on plain background
+                      Capture with your camera or upload from files
                     </p>
                   </div>
                 </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraCaptureOpen(true)}
+                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                  >
+                    <Camera className="w-3.5 h-3.5" />
+                    <span>Take Photo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handFileInputRef.current?.click()}
+                    className="h-10 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5" />
+                    <span>Upload File</span>
+                  </button>
+                </div>
+
                 <p className="text-[11px] text-[#806D76] text-center leading-relaxed">
-                  Upload once and every look in the lookbook will instantly render onto your own hand!
+                  Saved once so every look in the atelier will instantly render onto your own hand!
                 </p>
               </div>
             )}
@@ -469,6 +497,26 @@ export function HomeHubView({
           </div>
         </div>
       )}
+
+      {/* Live Hand Camera Capture Modal */}
+      <HandCameraCaptureModal
+        isOpen={isCameraCaptureOpen}
+        onClose={() => setIsCameraCaptureOpen(false)}
+        onCaptureHand={(dataUrl) => {
+          if (setCustomTryOnHandUrl) {
+            setCustomTryOnHandUrl(dataUrl);
+          }
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+            }
+          } catch {}
+          showToast('Hand photo saved — ready for 1-tap try-on');
+        }}
+        onUploadFileFallback={(file) => {
+          handleHandPhotoUpload(file);
+        }}
+      />
     </div>
   );
 }

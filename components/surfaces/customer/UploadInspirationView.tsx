@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 import { downscaleImageForVision } from '@/lib/services/storage';
+import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 export function UploadInspirationView({
   isAnalyzing,
@@ -23,6 +24,7 @@ export function UploadInspirationView({
   customTryOnHandUrl,
   onImageSelected,
   onUploadHandPhoto,
+  onSelectHandDataUrl,
   onSampleDemoClick,
   onCancel,
   onComplete,
@@ -34,6 +36,7 @@ export function UploadInspirationView({
   customTryOnHandUrl?: string | null;
   onImageSelected: (file: File) => void;
   onUploadHandPhoto?: (file: File) => void;
+  onSelectHandDataUrl?: (dataUrl: string) => void;
   onSampleDemoClick: () => void;
   onCancel?: () => void;
   onComplete?: (synthesizedUrl?: string) => void;
@@ -43,6 +46,7 @@ export function UploadInspirationView({
 
   const [isGeneratingTryOn, setIsGeneratingTryOn] = useState(false);
   const [generationError, setGenerationError] = useState<string | null>(null);
+  const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
 
   // Retrieve user hand from storage if not provided in props
   const [localHandPhoto, setLocalHandPhoto] = useState<string | null>(() => {
@@ -333,8 +337,7 @@ export function UploadInspirationView({
 
         {/* Card 2: Your Hand Photo */}
         <div
-          onClick={() => handFileInputRef.current?.click()}
-          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-6 sm:p-8 text-center transition-all cursor-pointer shadow-2xs hover:shadow-lg flex flex-col justify-between min-h-[300px] sm:min-h-[380px] lg:min-h-[440px]"
+          className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-6 sm:p-8 text-center transition-all shadow-2xs hover:shadow-lg flex flex-col justify-between min-h-[300px] sm:min-h-[380px] lg:min-h-[440px]"
         >
           <div className="space-y-3">
             <div className="flex items-center justify-between">
@@ -356,9 +359,6 @@ export function UploadInspirationView({
                   alt="My Hand"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
-                <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
-                  Tap to change hand photo
-                </div>
               </div>
             ) : (
               <div className="py-6 flex flex-col items-center justify-center space-y-2.5">
@@ -367,23 +367,36 @@ export function UploadInspirationView({
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-stone-800">
-                    Upload Your Hand Photo
+                    Your Hand Photo
                   </div>
                   <div className="text-[11px] text-stone-400 mt-0.5">
-                    Or use our studio hand model
+                    Capture live with camera or upload from files
                   </div>
                 </div>
               </div>
             )}
           </div>
 
-          <button
-            type="button"
-            className="w-full h-10 mt-3 rounded-xl bg-stone-100 group-hover:bg-[#E0246A] text-stone-800 group-hover:text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5"
-          >
-            <Camera className="w-3.5 h-3.5" />
-            <span>{localHandPhoto ? 'Change Hand Photo' : 'Upload Hand Photo'}</span>
-          </button>
+          {/* Action Buttons: Take Photo (Camera) & Upload Photo */}
+          <div className="grid grid-cols-2 gap-2.5 mt-4">
+            <button
+              type="button"
+              onClick={() => setIsCameraModalOpen(true)}
+              className="h-10 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shadow-xs shadow-[#E0246A]/20"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>{localHandPhoto ? 'Retake Photo' : 'Take Photo'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handFileInputRef.current?.click()}
+              className="h-10 px-3 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+            >
+              <UploadCloud className="w-3.5 h-3.5" />
+              <span>Upload Photo</span>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -448,6 +461,26 @@ export function UploadInspirationView({
           </button>
         </div>
       </div>
+
+      {/* Live Hand Camera Capture Modal */}
+      <HandCameraCaptureModal
+        isOpen={isCameraModalOpen}
+        onClose={() => setIsCameraModalOpen(false)}
+        onCaptureHand={(dataUrl) => {
+          setGenerationError(null);
+          setLocalHandPhoto(dataUrl);
+          try {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('finglora_custom_hand_photo', dataUrl);
+              localStorage.setItem('finglora_user_hand_photo', dataUrl);
+            }
+          } catch {}
+          onSelectHandDataUrl?.(dataUrl);
+        }}
+        onUploadFileFallback={(file) => {
+          onUploadHandPhoto?.(file);
+        }}
+      />
     </div>
   );
 }
