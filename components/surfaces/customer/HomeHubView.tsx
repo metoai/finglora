@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Hand,
   ImagePlus,
@@ -192,6 +192,15 @@ const QUICK_PROMPT_CHIPS = [
   'Clean Nude',
 ];
 
+const TYPING_PROMPTS = [
+  'Hailey Bieber glazed chrome almond...',
+  'Cherry mocha french with micro glitter...',
+  'Blush pink velvet aura almond nails...',
+  'Milky nude with subtle 3D gold swirls...',
+  'Minimalist clean girl French tips...',
+  'Cat-eye velvet emerald on coffin shape...',
+];
+
 export function HomeHubView({
   userName = 'Flora',
   preferredShape = 'almond',
@@ -237,6 +246,41 @@ export function HomeHubView({
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
 
+  // Typewriter animation effect for Design with AI input
+  const [typingIndex, setTypingIndex] = useState(0);
+  const [typingText, setTypingText] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    if (promptText) return;
+
+    const currentPrompt = TYPING_PROMPTS[typingIndex % TYPING_PROMPTS.length];
+    let timeout: NodeJS.Timeout;
+
+    if (!isDeleting) {
+      if (typingText.length < currentPrompt.length) {
+        timeout = setTimeout(() => {
+          setTypingText(currentPrompt.slice(0, typingText.length + 1));
+        }, 50);
+      } else {
+        timeout = setTimeout(() => {
+          setIsDeleting(true);
+        }, 2200);
+      }
+    } else {
+      if (typingText.length > 0) {
+        timeout = setTimeout(() => {
+          setTypingText(currentPrompt.slice(0, typingText.length - 1));
+        }, 25);
+      } else {
+        setIsDeleting(false);
+        setTypingIndex((prev) => prev + 1);
+      }
+    }
+
+    return () => clearTimeout(timeout);
+  }, [typingText, isDeleting, typingIndex, promptText]);
+
   const getGreeting = () => {
     const hour = new Date().getHours();
     if (hour < 12) return 'Good morning';
@@ -255,7 +299,7 @@ export function HomeHubView({
   };
 
   const handleGenerate = (suggestion?: string) => {
-    const text = (suggestion || promptText || 'Glazed Pearl Chrome Almond').trim();
+    const text = (suggestion || promptText || typingText || 'Glazed Pearl Chrome Almond').trim();
     setAiStudioPrompt?.(text);
     if (onCreatePromptClick) {
       onCreatePromptClick(text);
@@ -303,7 +347,7 @@ export function HomeHubView({
   });
 
   return (
-    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-4 sm:space-y-6 pb-20 md:pb-8">
+    <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-4 sm:space-y-6 pb-24 md:pb-8">
       {/* Toast Notification */}
       {toastMsg && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -314,8 +358,8 @@ export function HomeHubView({
         </div>
       )}
 
-      {/* 1. Header: Greeting & Status Indicators */}
-      <div className="flex items-center justify-between gap-3 pt-0.5">
+      {/* 1. Header: Greeting & Status Indicators (Hidden on Mobile per user request) */}
+      <div className="hidden sm:flex items-center justify-between gap-3 pt-0.5">
         <div>
           <h1 className="font-serif text-xl sm:text-2xl lg:text-3xl font-medium text-stone-900 tracking-tight">
             {getGreeting()}, {cleanUserName}
@@ -356,7 +400,7 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 2. AI Creation Studio Box with Generous Height & No Word Repetitions */}
+      {/* 2. AI Creation Studio Box - 1 Row Design with Typing Animation & Fixed Generate Button */}
       <div className="space-y-2">
         <div className="flex items-center gap-1.5 px-1">
           <h2 className="text-xs sm:text-sm font-semibold text-stone-900 tracking-tight">
@@ -364,54 +408,55 @@ export function HomeHubView({
           </h2>
         </div>
 
-        <div className="w-full bg-white rounded-2xl sm:rounded-3xl border border-stone-200/90 hover:border-stone-300 focus-within:border-[#E0246A]/50 focus-within:ring-2 focus-within:ring-[#E0246A]/10 p-3 sm:p-4 transition-all shadow-2xs space-y-2.5">
-          {/* Top: Generous Input Area */}
-          <textarea
-            rows={2}
+        {/* 1 Row Input Dock */}
+        <div className="w-full bg-white rounded-2xl sm:rounded-full border border-stone-200/90 hover:border-stone-300 focus-within:border-[#E0246A]/60 focus-within:ring-2 focus-within:ring-[#E0246A]/10 p-1.5 sm:p-2 transition-all shadow-2xs flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0 ml-1">
+            <Sparkles className="w-4 h-4" />
+          </div>
+
+          <input
+            type="text"
             value={promptText}
             onChange={(e) => setPromptText(e.target.value)}
             onKeyDown={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
+              if (e.key === 'Enter') {
                 e.preventDefault();
-                handleGenerate();
+                handleGenerate(promptText || typingText);
               }
             }}
-            placeholder="Describe any look or aesthetic (e.g. Hailey Bieber glazed chrome, cherry mocha french, blush bows)..."
-            className="w-full bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none resize-none leading-relaxed"
+            placeholder={typingText || 'Describe any manicure look or aesthetic...'}
+            className="flex-1 bg-transparent text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none min-w-0 px-1"
           />
 
-          {/* Bottom Toolbar: Prompt Chips on Left, Generate on Right */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pt-2 border-t border-stone-100">
-            {/* Quick Suggestion Chips */}
-            <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 select-none">
-              <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 shrink-0">
-                Prompts:
-              </span>
-              {QUICK_PROMPT_CHIPS.map((chip) => (
-                <button
-                  key={chip}
-                  type="button"
-                  onClick={() => {
-                    setPromptText(chip);
-                    handleGenerate(chip);
-                  }}
-                  className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full bg-stone-100 hover:bg-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
-                >
-                  {chip}
-                </button>
-              ))}
-            </div>
+          {/* Fixed Generate Button */}
+          <button
+            type="button"
+            onClick={() => handleGenerate(promptText || typingText)}
+            className="h-9 sm:h-10 px-4 sm:px-5 rounded-xl sm:rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 active:scale-95 shadow-xs shrink-0 cursor-pointer transition"
+          >
+            <span>Generate</span>
+            <ArrowRight className="w-3.5 h-3.5" />
+          </button>
+        </div>
 
-            {/* Submit Action */}
+        {/* Quick Suggestion Chips - 1 Row horizontal scroll */}
+        <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-0.5 px-1 select-none">
+          <span className="text-[10px] sm:text-[11px] font-semibold text-stone-400 shrink-0">
+            Try:
+          </span>
+          {QUICK_PROMPT_CHIPS.map((chip) => (
             <button
+              key={chip}
               type="button"
-              onClick={() => handleGenerate()}
-              className="h-8.5 sm:h-9 px-4 sm:px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 active:scale-95 shadow-xs shrink-0 cursor-pointer transition self-end sm:self-auto"
+              onClick={() => {
+                setPromptText(chip);
+                handleGenerate(chip);
+              }}
+              className="h-6.5 sm:h-7 px-2.5 sm:px-3 rounded-full bg-stone-100 hover:bg-stone-200/80 text-[11px] font-medium text-stone-700 whitespace-nowrap transition cursor-pointer active:scale-95 shrink-0"
             >
-              <span>Generate</span>
-              <ArrowRight className="w-3.5 h-3.5" />
+              {chip}
             </button>
-          </div>
+          ))}
         </div>
       </div>
 
@@ -594,9 +639,6 @@ export function HomeHubView({
                   <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs truncate">
                     {look.title}
                   </h4>
-                  <p className="text-[10px] sm:text-[11px] text-white/70 mt-0.5 truncate">
-                    {look.finish} · <span className="capitalize">{look.shape}</span>
-                  </p>
                 </div>
 
                 <button

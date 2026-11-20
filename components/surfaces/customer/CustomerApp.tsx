@@ -471,69 +471,149 @@ export function CustomerApp({
       </main>
       </div>
 
-      {/* Mobile Bottom Navigation - 3-Tab Bar */}
+      {/* Mobile Bottom Navigation - Floating Curved Notched Bar */}
       {customerRoute !== 'ai-create' && (
         <nav
           className={`${
             mobilePreview ? 'flex' : 'flex md:hidden'
-          } fixed bottom-0 inset-x-0 z-30 bg-[#FFFFFF] border-t border-[#F0DFE4] px-6 py-1 justify-around items-center shadow-[0_-2px_12px_rgba(0,0,0,0.03)]`}
+          } fixed bottom-2.5 sm:bottom-3 inset-x-3 sm:inset-x-6 max-w-md mx-auto z-40 h-[64px] items-end justify-center select-none filter drop-shadow-[0_8px_24px_rgba(0,0,0,0.08)]`}
+          aria-label="Mobile Navigation"
         >
-          {(
-            [
-              { id: 'home' as const, label: 'Home', Icon: Home },
-              { id: 'tryon' as const, label: 'Try On', Icon: Hand, isCenter: true },
-              { id: 'explore' as const, label: 'Explore', Icon: Compass },
-            ]
-          ).map(({ id, label, Icon, isCenter }) => {
-            const active =
-              customerRoute === id ||
-              (id === 'tryon' && (customerRoute === 'tryon' || customerRoute === 'upload'));
-            if (isCenter) {
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  onClick={() => setCustomerRoute('tryon')}
-                  className="relative -top-2.5 flex flex-col items-center group cursor-pointer focus:outline-none"
-                  title="Virtual Try-On"
-                >
-                  <div
-                    className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
-                      active
-                        ? 'bg-[#E0246A] text-white scale-105 shadow-[#E0246A]/30'
-                        : 'bg-[#E0246A] text-white hover:bg-[#BE185D]'
-                    }`}
-                  >
-                    <Icon className="w-5 h-5 text-white" strokeWidth={1.75} />
-                  </div>
-                  <span
-                    className={`text-[9.5px] mt-0.5 font-medium transition-colors ${
-                      active ? 'text-[#E0246A] font-semibold' : 'text-[#8C8085]'
-                    }`}
-                  >
-                    {label}
-                  </span>
-                </button>
-              );
-            }
-            return (
-              <button
-                key={id}
-                type="button"
-                onClick={() => setCustomerRoute(id)}
-                className={`flex flex-col items-center gap-0.5 px-4 py-1 rounded-xl transition-all cursor-pointer ${
-                  active ? 'text-[#E0246A]' : 'text-[#8C8085] hover:text-[#18181B]'
+          {/* Background Shape with Center Concave Scoop */}
+          <div className="absolute inset-0 flex items-stretch pointer-events-none">
+            {/* Left Wing */}
+            <div className="flex-1 bg-white rounded-l-[28px] border-l border-t border-b border-stone-200/90" />
+
+            {/* Center Notched Scoop SVG */}
+            <div className="w-[94px] -mx-[1px] h-full relative shrink-0">
+              <svg
+                viewBox="0 0 94 64"
+                className="w-full h-full overflow-visible"
+                preserveAspectRatio="none"
+              >
+                {/* White filled background body */}
+                <path
+                  d="M 0,0 C 18,0 24,28 47,28 C 70,28 76,0 94,0 L 94,64 L 0,64 Z"
+                  fill="#FFFFFF"
+                />
+                {/* Scooped Top Border */}
+                <path
+                  d="M 0,0 C 18,0 24,28 47,28 C 70,28 76,0 94,0"
+                  fill="none"
+                  stroke="rgba(228, 228, 231, 0.9)"
+                  strokeWidth="1"
+                />
+                {/* Flat Bottom Border */}
+                <line
+                  x1="0"
+                  y1="64"
+                  x2="94"
+                  y2="64"
+                  stroke="rgba(228, 228, 231, 0.9)"
+                  strokeWidth="1"
+                />
+              </svg>
+            </div>
+
+            {/* Right Wing */}
+            <div className="flex-1 bg-white rounded-r-[28px] border-r border-t border-b border-stone-200/90" />
+          </div>
+
+          {/* Interactive Navigation Items Layer */}
+          <div className="relative w-full h-full flex items-center justify-between px-3">
+            {/* 1. Home Tab */}
+            <button
+              type="button"
+              onClick={() => setCustomerRoute('home')}
+              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 cursor-pointer py-1 group active:scale-95 transition"
+            >
+              <div className="relative">
+                <Home
+                  className={`w-5 h-5 transition-colors ${
+                    customerRoute === 'home'
+                      ? 'text-[#E0246A]'
+                      : 'text-stone-400 group-hover:text-stone-700'
+                  }`}
+                  strokeWidth={customerRoute === 'home' ? 2.25 : 1.75}
+                />
+                {customerRoute === 'home' && (
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E0246A] shadow-[0_0_6px_#E0246A]" />
+                )}
+              </div>
+              <span
+                className={`text-[10px] transition-colors ${
+                  customerRoute === 'home'
+                    ? 'font-semibold text-[#E0246A]'
+                    : 'font-medium text-stone-400 group-hover:text-stone-700'
                 }`}
               >
-                <div className="py-0.5">
-                  <Icon className="w-5 h-5" strokeWidth={active ? 2 : 1.5} />
+                Home
+              </span>
+            </button>
+
+            {/* 2. Elevated Center Try-On Button (Nestled in the Scoop) */}
+            <div className="w-[94px] h-full flex flex-col items-center justify-start shrink-0">
+              <button
+                type="button"
+                onClick={() => setCustomerRoute('tryon')}
+                className="relative -top-3.5 flex flex-col items-center group cursor-pointer focus:outline-none"
+                title="Virtual Try-On"
+              >
+                {/* Outer Glow Halo Rim */}
+                <div
+                  className={`p-1 rounded-full transition-all duration-300 ${
+                    customerRoute === 'tryon' || customerRoute === 'upload'
+                      ? 'bg-[#E0246A]/25 scale-105 shadow-[0_4px_20px_rgba(224,36,106,0.45)]'
+                      : 'bg-[#E0246A]/15 hover:bg-[#E0246A]/25 shadow-[0_4px_16px_rgba(224,36,106,0.3)]'
+                  }`}
+                >
+                  <div className="w-12 h-12 rounded-full bg-gradient-to-b from-[#E0246A] to-[#BE185D] flex items-center justify-center text-white active:scale-95 transition shadow-xs">
+                    <Hand className="w-5 h-5 text-white" strokeWidth={2} />
+                  </div>
                 </div>
-                <span className={`text-[10px] ${active ? 'font-semibold text-[#E0246A]' : 'font-medium'}`}>
-                  {label}
+
+                <span
+                  className={`text-[10px] mt-0.5 font-medium transition-colors ${
+                    customerRoute === 'tryon' || customerRoute === 'upload'
+                      ? 'text-[#E0246A] font-semibold'
+                      : 'text-stone-500 group-hover:text-stone-900'
+                  }`}
+                >
+                  Try On
                 </span>
               </button>
-            );
-          })}
+            </div>
+
+            {/* 3. Explore Tab */}
+            <button
+              type="button"
+              onClick={() => setCustomerRoute('explore')}
+              className="flex-1 h-full flex flex-col items-center justify-center gap-0.5 cursor-pointer py-1 group active:scale-95 transition"
+            >
+              <div className="relative">
+                <Compass
+                  className={`w-5 h-5 transition-colors ${
+                    customerRoute === 'explore'
+                      ? 'text-[#E0246A]'
+                      : 'text-stone-400 group-hover:text-stone-700'
+                  }`}
+                  strokeWidth={customerRoute === 'explore' ? 2.25 : 1.75}
+                />
+                {customerRoute === 'explore' && (
+                  <span className="absolute -top-0.5 -right-0.5 w-1.5 h-1.5 rounded-full bg-[#E0246A] shadow-[0_0_6px_#E0246A]" />
+                )}
+              </div>
+              <span
+                className={`text-[10px] transition-colors ${
+                  customerRoute === 'explore'
+                    ? 'font-semibold text-[#E0246A]'
+                    : 'font-medium text-stone-400 group-hover:text-stone-700'
+                }`}
+              >
+                Explore
+              </span>
+            </button>
+          </div>
         </nav>
       )}
 
