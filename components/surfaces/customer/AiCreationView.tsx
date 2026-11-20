@@ -220,9 +220,9 @@ export function AiCreationView({
   };
 
   return (
-    <div className="w-full max-w-5xl mx-auto py-2 sm:py-4 px-2 space-y-4">
+    <div className="w-full max-w-6xl xl:max-w-7xl mx-auto py-4 sm:py-6 px-4 sm:px-6 space-y-5">
       {/* Editorial Header */}
-      <div className="flex items-center justify-between gap-4 pb-2 border-b border-stone-200/60">
+      <div className="flex items-center justify-between gap-4 pb-3 border-b border-stone-200/80">
         <div className="flex items-center gap-3">
           {onBackToTryOn && (
             <button
@@ -244,17 +244,17 @@ export function AiCreationView({
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-xs font-medium text-stone-700">
-          <Sliders className="w-3.5 h-3.5 text-stone-500" />
-          <span>AI Studio</span>
+        <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-stone-100 border border-stone-200/60 text-xs font-medium text-stone-700 shadow-2xs">
+          <Sliders className="w-3.5 h-3.5 text-[#E0246A]" />
+          <span>Atelier Studio</span>
         </div>
       </div>
 
       {/* Main 2-Column Studio: Left = Hand Viewport, Right = AI Chat Stream */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
         {/* Left: Constant Hand Photo Viewport (7 Cols) */}
         <div className="lg:col-span-7 space-y-3">
-          <div className="relative aspect-[3/4] max-h-[480px] sm:max-h-[560px] lg:max-h-[640px] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200 flex items-center justify-center">
+          <div className="relative aspect-[3/4] max-h-[540px] sm:max-h-[620px] lg:max-h-[680px] w-full rounded-3xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200/90 flex items-center justify-center">
             {isIterating && (
               <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2.5 text-white text-center p-6">
                 <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
@@ -299,7 +299,7 @@ export function AiCreationView({
         </div>
 
         {/* Right: Conversational AI Prompt Stream (5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col h-[480px] sm:h-[560px] lg:h-[640px] rounded-2xl bg-white border border-stone-200 shadow-sm overflow-hidden">
+        <div className="lg:col-span-5 flex flex-col h-[540px] sm:h-[620px] lg:h-[680px] rounded-3xl bg-white border border-stone-200/90 shadow-sm overflow-hidden">
           {/* Stream Header */}
           <div className="p-3.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
             <div className="flex items-center gap-2">

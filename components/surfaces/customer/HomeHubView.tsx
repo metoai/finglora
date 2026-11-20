@@ -183,12 +183,12 @@ export function HomeHubView({
       {/* ------------------------------------------------------------------ */}
       {/* 2. SYMMETRICAL ACTION CARDS (MY HAND & EXTRACT INSPO)              */}
       {/* ------------------------------------------------------------------ */}
-      <div className="grid grid-cols-2 gap-2.5">
+      <div className="grid grid-cols-2 gap-3 max-w-2xl mx-auto sm:max-w-none">
         {/* Card 1: My Hand Photo (Rule: Always 1st Option = Upload, 2nd = Camera) */}
         <button
           type="button"
           onClick={() => setIsHandModalOpen(true)}
-          className="p-3 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
+          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
@@ -217,7 +217,7 @@ export function HomeHubView({
         <button
           type="button"
           onClick={onUploadClick}
-          className="p-3 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
+          className="p-3 sm:p-3.5 rounded-2xl bg-white hover:bg-stone-50/70 border border-stone-200/80 hover:border-[#E0246A]/40 text-left transition-all duration-200 shadow-2xs cursor-pointer group active:scale-[0.98] flex items-center justify-between"
         >
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="w-9 h-9 rounded-xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0 shadow-2xs">
@@ -245,9 +245,9 @@ export function HomeHubView({
           e.preventDefault();
           handleGenerate();
         }}
-        className="bg-white rounded-2xl border border-stone-200/80 pl-3.5 pr-2 py-2 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
+        className="bg-white rounded-2xl border border-stone-200/80 p-2 sm:p-2.5 shadow-2xs focus-within:border-[#E0246A] focus-within:ring-1 focus-within:ring-[#E0246A]/20 transition flex items-center gap-2.5"
       >
-        <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0" />
+        <Sparkles className="w-4 h-4 text-[#E0246A] shrink-0 ml-1.5" />
 
         <input
           type="text"
@@ -290,8 +290,7 @@ export function HomeHubView({
               onClick={onExploreClick}
               className="h-7 px-2.5 rounded-lg text-xs font-medium text-stone-600 hover:text-[#E0246A] hover:bg-stone-100 transition inline-flex items-center gap-1 cursor-pointer active:scale-95"
             >
-              <span>View All</span>
-              <ArrowRight className="w-3 h-3" />
+              <span>View All →</span>
             </button>
           )}
         </div>
@@ -320,7 +319,7 @@ export function HomeHubView({
         {/* Responsive Editorial Manicure Grid (Exactly 2 Rows: 4 on mobile, 6 on tablet, 8 on desktop) */}
         <div
           id="inspiration-feed"
-          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-8 scroll-mt-4"
+          className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-3.5 pb-6 scroll-mt-4"
         >
           {filteredDesigns.slice(0, 8).map((design, index) => {
             const primaryFinger = design.nails?.middle || design.nails?.index;
@@ -337,7 +336,7 @@ export function HomeHubView({
                   onSelectExploreDesign?.(design.id);
                   onTryOnClick();
                 }}
-                className={`group relative rounded-2xl overflow-hidden border border-stone-200/80 hover:border-stone-300 shadow-2xs transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[3/4] bg-stone-100 ${hideClass}`}
+                className={`group relative rounded-2xl overflow-hidden border border-stone-200/80 hover:border-stone-300 shadow-2xs transition-all duration-200 text-left cursor-pointer active:scale-[0.98] aspect-[4/4.5] max-h-[220px] lg:max-h-[200px] xl:max-h-[225px] bg-stone-100 ${hideClass}`}
               >
                 <img
                   src={design.photoUrl || '/assets/milky_gold_tryon_result.jpg'}
@@ -348,14 +347,14 @@ export function HomeHubView({
                 <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent pointer-events-none" />
 
                 {/* Top Shape Badge */}
-                <div className="absolute top-2.5 left-2.5">
+                <div className="absolute top-2 left-2">
                   <span className="px-2 py-0.5 rounded-full bg-black/40 text-white text-[10px] font-medium backdrop-blur-xs capitalize">
                     {shapeLabel}
                   </span>
                 </div>
 
                 {/* Bottom Card Scrim & Try-On Action */}
-                <div className="absolute inset-x-2.5 bottom-2.5 space-y-1.5 sm:space-y-2">
+                <div className="absolute inset-x-2 bottom-2 space-y-1">
                   <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
                     {design.title}
                   </div>
@@ -367,7 +366,7 @@ export function HomeHubView({
                       onSelectExploreDesign?.(design.id);
                       onTryOnClick();
                     }}
-                    className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    className="w-full h-7 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-[11px] font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                   >
                     <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
                     <span>{customTryOnHandUrl ? 'Try on My Hand' : 'Try On'}</span>

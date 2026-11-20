@@ -296,14 +296,14 @@ export function CustomerApp({
             ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
             : mobilePreview
             ? 'pb-24 px-4 pt-4'
-            : 'min-h-screen pb-24 lg:pb-12 px-4 sm:px-8 lg:px-10 pt-4 sm:pt-8'
+            : 'min-h-screen pb-24 lg:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-8'
         }`}
       >
         <div
           className={`w-full ${
             customerRoute === 'ai-create'
               ? 'h-full flex-1 flex flex-col min-h-0'
-              : 'max-w-[1400px] mx-auto'
+              : 'w-full'
           }`}
         >
           {customerRoute === 'signup' && (

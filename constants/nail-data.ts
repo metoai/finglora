@@ -281,3 +281,30 @@ export const CURATED_EDITORIAL_DESIGNS: ExploreDesignSet[] = [
 ];
 
 export const INITIAL_EXPLORE_DESIGNS: ExploreDesignSet[] = CURATED_EDITORIAL_DESIGNS;
+
+export const EDITORIAL_ASSET_PHOTOS = [
+  '/assets/milky_gold_tryon_result.jpg',
+  '/assets/pink_heart_tryon_result.jpg',
+  '/assets/burgundy_gold_virtual_tryon.jpg',
+  '/assets/editorial_nail_hero.jpg',
+] as const;
+
+export function sanitizeEditorialPhotoUrl(url?: string | null, index = 0): string {
+  if (!url) return EDITORIAL_ASSET_PHOTOS[index % EDITORIAL_ASSET_PHOTOS.length];
+  const lower = url.toLowerCase();
+  const isBanned =
+    lower.includes('drill') ||
+    lower.includes('table') ||
+    lower.includes('equipment') ||
+    lower.includes('gravel') ||
+    lower.includes('unsplash.com') ||
+    lower.includes('imagefes') ||
+    lower.includes('images22') ||
+    lower.includes('1795176925816') ||
+    lower.includes('1795127479510') ||
+    lower.includes('ar-nail-hero.jpg');
+  if (isBanned) {
+    return EDITORIAL_ASSET_PHOTOS[index % EDITORIAL_ASSET_PHOTOS.length];
+  }
+  return url;
+}

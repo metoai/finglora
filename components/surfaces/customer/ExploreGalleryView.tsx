@@ -5,6 +5,11 @@ import { Heart, Search, Upload, Hand, X } from 'lucide-react';
 import { ExploreDesignSet } from '@/types/nail';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { getCurrentUser } from '@/lib/services/auth';
+import {
+  EDITORIAL_ASSET_PHOTOS,
+  sanitizeEditorialPhotoUrl,
+  CURATED_EDITORIAL_DESIGNS,
+} from '@/constants/nail-data';
 
 const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'] as const;
 
@@ -31,7 +36,10 @@ export function ExploreGalleryView({
   onSelectDesign: (id: string) => void;
   onTryOnClick?: (designId?: string) => void;
 }) {
-  const filteredDesigns = exploreDesigns.filter((d) => {
+  const designsPool =
+    exploreDesigns && exploreDesigns.length > 0 ? exploreDesigns : CURATED_EDITORIAL_DESIGNS;
+
+  const filteredDesigns = designsPool.filter((d) => {
     const catOk = exploreCategory === 'All' || d.category === exploreCategory;
     const q = exploreSearch.trim().toLowerCase();
     const searchOk =
@@ -44,37 +52,26 @@ export function ExploreGalleryView({
 
   return (
     <div className="space-y-6 w-full max-w-[1400px] mx-auto pb-12">
-      {/* Editorial Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 pb-4 border-b border-stone-200/60">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2.5">
-            <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
-              Explore Manicures
-            </h1>
-            <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200/60">
-              {filteredDesigns.length}
-            </span>
-          </div>
-          <p className="text-xs sm:text-sm text-stone-500 font-normal">
-            Curated high-fashion manicures ready for instant virtual try-on.
-          </p>
+      {/* Symmetrical Elegant Editorial Header */}
+      <div className="text-center max-w-xl mx-auto space-y-1.5 pt-1">
+        <div className="inline-flex items-center justify-center gap-2.5">
+          <h1 className="font-serif text-2xl sm:text-3xl lg:text-4xl font-medium text-stone-900 tracking-tight">
+            Explore Manicures
+          </h1>
+          <span className="text-xs font-mono px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200/80 font-medium">
+            {filteredDesigns.length}
+          </span>
         </div>
-
-        <button
-          type="button"
-          onClick={onUploadClick}
-          className="h-9.5 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition-all inline-flex items-center gap-2 cursor-pointer active:scale-95 shrink-0 self-start sm:self-auto"
-        >
-          <Upload className="w-3.5 h-3.5" strokeWidth={1.75} />
-          <span>Upload Inspo Photo</span>
-        </button>
+        <p className="text-xs sm:text-sm text-stone-500 font-normal">
+          Curated high-fashion manicures ready for instant virtual try-on.
+        </p>
       </div>
 
-      {/* Search Bar & Category Filter Pills */}
-      <div className="space-y-3.5">
-        {/* Sleek container with nested radii (rounded-2xl container, rounded-xl input) */}
-        <div className="p-1 rounded-2xl bg-stone-100/80 border border-stone-200/60 shadow-2xs">
-          <div className="relative">
+      {/* Sleek Search & Action Bar (constrained max-w-xl mx-auto) */}
+      <div className="max-w-xl mx-auto w-full space-y-3">
+        <div className="flex items-center gap-2">
+          {/* Sleek Search Input */}
+          <div className="relative flex-1">
             <Search
               className="w-4 h-4 text-stone-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
               strokeWidth={1.75}
@@ -83,24 +80,35 @@ export function ExploreGalleryView({
               type="text"
               value={exploreSearch}
               onChange={(e) => setExploreSearch(e.target.value)}
-              placeholder="Search manicures by style, color, or shape..."
-              className="w-full pl-9.5 pr-9 h-10 rounded-xl bg-white border border-stone-200/60 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-1 focus:ring-stone-400/20 transition-all shadow-2xs"
+              placeholder="Search by style, color, or shape..."
+              className="w-full pl-9.5 pr-9 h-10 rounded-xl bg-white border border-stone-200/80 text-xs sm:text-sm text-stone-900 placeholder:text-stone-400 focus:outline-none focus:border-stone-400 focus:ring-1 focus:ring-stone-400/20 transition-all shadow-2xs"
             />
             {exploreSearch && (
               <button
                 type="button"
                 onClick={() => setExploreSearch('')}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5"
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-stone-400 hover:text-stone-700 p-0.5 cursor-pointer"
                 title="Clear search"
               >
                 <X className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
+
+          {/* Integrated Upload Inspo Button */}
+          <button
+            type="button"
+            onClick={onUploadClick}
+            className="h-10 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition-all inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95 shrink-0"
+          >
+            <Upload className="w-3.5 h-3.5" strokeWidth={1.75} />
+            <span className="hidden sm:inline">Upload Inspo</span>
+            <span className="sm:hidden">Upload</span>
+          </button>
         </div>
 
-        {/* Category Filter Pills: ['All', 'French', 'Glazed', 'Aura', 'Minimal'] with active black pill */}
-        <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+        {/* Category Filter Pills: Symmetrically centered */}
+        <div className="flex items-center justify-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
           {CATEGORY_TABS.map((cat) => {
             const isActive = exploreCategory === cat;
             return (
@@ -108,7 +116,7 @@ export function ExploreGalleryView({
                 key={cat}
                 type="button"
                 onClick={() => setExploreCategory(cat)}
-                className={`h-8 px-3.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
+                className={`h-8 px-4 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer active:scale-95 ${
                   isActive
                     ? 'bg-stone-900 text-white shadow-xs font-semibold'
                     : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-stone-50'
@@ -140,7 +148,7 @@ export function ExploreGalleryView({
               <button
                 type="button"
                 onClick={() => setExploreSearch('')}
-                className="h-8.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+                className="h-8.5 px-4 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold shadow-xs transition cursor-pointer active:scale-95"
               >
                 Clear Search
               </button>
@@ -149,7 +157,7 @@ export function ExploreGalleryView({
               <button
                 type="button"
                 onClick={() => setExploreCategory('All')}
-                className="h-8.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition cursor-pointer"
+                className="h-8.5 px-4 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-800 text-xs font-medium transition cursor-pointer active:scale-95"
               >
                 View All Designs
               </button>
@@ -157,7 +165,7 @@ export function ExploreGalleryView({
             <button
               type="button"
               onClick={onUploadClick}
-              className="h-8.5 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition cursor-pointer"
+              className="h-8.5 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs transition cursor-pointer active:scale-95"
             >
               Upload Inspo
             </button>
@@ -168,12 +176,13 @@ export function ExploreGalleryView({
           className={`grid ${
             mobilePreview
               ? 'grid-cols-2 gap-3'
-              : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4'
+              : 'grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-3.5 lg:grid-cols-4 lg:gap-4'
           }`}
         >
-          {filteredDesigns.map((item) => {
+          {filteredDesigns.map((item, index) => {
             const primaryFinger = item.nails?.middle || item.nails?.index;
             const shapeLabel = primaryFinger?.shape || item.category || 'Almond';
+            const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, index);
 
             return (
               <div
@@ -186,9 +195,13 @@ export function ExploreGalleryView({
               >
                 {/* 3:4 Portrait Image Container */}
                 <img
-                  src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                  src={photoSrc}
                   alt={item.title || 'Manicure Design'}
                   loading="lazy"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src =
+                      EDITORIAL_ASSET_PHOTOS[index % EDITORIAL_ASSET_PHOTOS.length];
+                  }}
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
                 />
 
@@ -246,7 +259,7 @@ export function ExploreGalleryView({
                       onSelectDesign(item.id);
                       onTryOnClick?.(item.id);
                     }}
-                    className="w-full h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 font-semibold text-xs shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
+                    className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs flex items-center justify-center gap-1.5 active:scale-95 transition-all cursor-pointer"
                   >
                     <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
                     <span>Try On</span>
