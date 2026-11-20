@@ -1,10 +1,11 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Home, Compass, Paintbrush, Hand, Share2, Menu, X, ChevronRight, User, Heart } from 'lucide-react';
+import { Home, Compass, Hand } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
-import { BrandLogo } from '@/components/common/BrandLogo';
-import { CustomerRoute, CustomerSidebar } from './CustomerSidebar';
+
+import { CustomerRoute } from './CustomerSidebar';
+import { CustomerTopBar } from './CustomerTopBar';
 import { HomeHubView } from './HomeHubView';
 import { ExploreGalleryView } from './ExploreGalleryView';
 import { UploadInspirationView } from './UploadInspirationView';
@@ -165,140 +166,40 @@ export function CustomerApp({
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
   const [aiCreationBaseImage, setAiCreationBaseImage] = useState<string | null>(null);
 
-  const routeBreadcrumbs: Record<CustomerRoute, string> = {
-    home: 'Home',
-    explore: 'Explore',
-    tryon: 'Try On',
-    'ai-create': 'Studio',
-    studio: 'Studio',
-    passport: 'Passport',
-    upload: 'Try On',
-    favorites: 'Saved',
-    profile: 'Profile',
-    signup: 'Create Account',
-  };
-
   const favoritesCount = exploreDesigns.filter((d) => d.isSaved).length;
-
-  const customerNavItems: {
-    id: CustomerRoute;
-    label: string;
-    icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
-  }[] = [
-    { id: 'home', label: 'Home', icon: Home },
-    { id: 'explore', label: 'Explore', icon: Compass },
-    { id: 'tryon', label: 'Try On', icon: Hand },
-    { id: 'ai-create', label: 'Studio', icon: Paintbrush },
-    { id: 'favorites', label: 'Saved', icon: Heart },
-    { id: 'profile', label: 'Profile', icon: User },
-  ];
 
   return (
     <div
-      className={`min-h-screen flex flex-col ${mobilePreview ? '' : 'lg:flex-row'} ${
+      className={`min-h-screen flex flex-col bg-[#FAF9F6] ${
         customerRoute === 'ai-create' ? 'h-[100dvh] overflow-hidden' : ''
       }`}
     >
-      {!mobilePreview && (
-        <CustomerSidebar
-          currentRoute={customerRoute}
-          onNavigate={setCustomerRoute}
-          activeSetName={activeSetName}
-          activePhotoUrl={activePhotoUrl}
-          nails={nails}
-          onBrandClick={onBrandClick}
-          favoritesCount={favoritesCount}
-        />
-      )}
+      <CustomerTopBar
+        currentRoute={customerRoute}
+        onNavigate={setCustomerRoute}
+        onBrandClick={onBrandClick}
+        favoritesCount={favoritesCount}
+        userName={userName}
+        preferredShape={preferredShape}
+        mobileMenuOpen={mobileMenuOpen}
+        setMobileMenuOpen={setMobileMenuOpen}
+      />
 
-      {/* Mobile Header with Clean Breadcrumb and Hamburger Navigation */}
-      {customerRoute !== 'ai-create' && (
-        <header
-          className={`${
-            mobilePreview ? 'flex flex-col' : 'flex flex-col lg:hidden'
-          } sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[rgba(31,26,28,0.06)] shadow-2xs`}
-        >
-          <div className="px-4 py-2.5 flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onBrandClick}
-                className="text-left focus:outline-none cursor-pointer flex items-center"
-                aria-label="Finglora Home"
-              >
-                <BrandLogo size="sm" />
-              </button>
-              <span className="text-[#8C8085]/60 text-xs font-mono">/</span>
-              <span className="text-xs font-semibold text-[#18181B]">
-                {routeBreadcrumbs[customerRoute] || 'Home'}
-              </span>
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setMobileMenuOpen((v) => !v)}
-              className="w-9 h-9 rounded-full bg-white border border-[#F0DFE4] text-[#18181B] hover:text-[#E0246A] hover:border-[#E0246A] flex items-center justify-center transition shadow-2xs cursor-pointer active:scale-95"
-              aria-label="Toggle navigation menu"
-            >
-              {mobileMenuOpen ? (
-                <X className="w-4 h-4 text-[#18181B]" />
-              ) : (
-                <Menu className="w-4 h-4 text-[#18181B]" />
-              )}
-            </button>
-          </div>
-
-          {/* Mobile Dropdown Drawer (Simple Normal Words) */}
-          {mobileMenuOpen && (
-            <div className="bg-[#FFFFFF] border-b border-[#F0DFE4] px-4 py-2.5 space-y-1 shadow-lg animate-in fade-in slide-in-from-top-1 duration-150">
-              {customerNavItems.map(({ id, label, icon: Icon }) => {
-                const active =
-                  customerRoute === id ||
-                  (id === 'tryon' && (customerRoute === 'tryon' || customerRoute === 'upload'));
-                return (
-                  <button
-                    key={id}
-                    type="button"
-                    onClick={() => {
-                      setCustomerRoute(id);
-                      setMobileMenuOpen(false);
-                    }}
-                    className={`w-full h-10 px-3 rounded-xl text-xs font-medium transition flex items-center justify-between cursor-pointer ${
-                      active
-                        ? 'bg-[#FDE8EF] text-[#E0246A] font-semibold'
-                        : 'text-[#18181B] hover:text-[#E0246A] hover:bg-[#FAFAFA]'
-                    }`}
-                  >
-                    <div className="flex items-center gap-2.5">
-                      <Icon className="w-4 h-4" strokeWidth={active ? 2 : 1.75} />
-                      <span>{label}</span>
-                    </div>
-                    <ChevronRight className={`w-3.5 h-3.5 ${active ? 'text-[#E0246A]' : 'text-[#8C8085]'}`} />
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </header>
-      )}
-
-      {/* Main Content Area with Desktop Header */}
+      {/* Main Content Area */}
       <div
-        className={`flex-1 flex flex-col min-w-0 ${mobilePreview ? '' : 'lg:ml-64'} ${
-          customerRoute === 'ai-create' ? 'h-full overflow-hidden' : ''
+        className={`flex-1 flex flex-col min-w-0 w-full ${
+          customerRoute === 'ai-create' ? 'h-[calc(100dvh-3.5rem)] sm:h-[calc(100dvh-4rem)] overflow-hidden' : ''
         }`}
       >
-
-
-      <main
-        className={`flex-1 ${
-          customerRoute === 'ai-create'
-            ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
-            : mobilePreview
-            ? 'pb-24 px-4 pt-4'
-            : 'min-h-screen pb-24 lg:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-8'
-        }`}
-      >
+        <main
+          className={`flex-1 w-full ${
+            customerRoute === 'ai-create'
+              ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
+              : mobilePreview
+              ? 'pb-24 px-4 pt-4'
+              : 'min-h-[calc(100vh-4rem)] pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-6'
+          }`}
+        >
         <div
           className={`w-full ${
             customerRoute === 'ai-create'
@@ -574,7 +475,7 @@ export function CustomerApp({
       {customerRoute !== 'ai-create' && (
         <nav
           className={`${
-            mobilePreview ? 'flex' : 'flex lg:hidden'
+            mobilePreview ? 'flex' : 'flex md:hidden'
           } fixed bottom-0 inset-x-0 z-30 bg-[#FFFFFF] border-t border-[#F0DFE4] px-6 py-1 justify-around items-center shadow-[0_-2px_12px_rgba(0,0,0,0.03)]`}
         >
           {(
