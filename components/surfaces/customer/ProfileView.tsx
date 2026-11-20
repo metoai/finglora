@@ -733,11 +733,11 @@ export function ProfileView({
   // VIEW: MAIN PROFILE VIEW (Clean Profile Card + Account Settings)
   // -------------------------------------------------------------------------
   return (
-    <div className="max-w-xl lg:max-w-5xl mx-auto w-full px-4 sm:px-6 py-4 sm:py-6 space-y-6 text-[#281720]">
+    <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 space-y-5 text-stone-900">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
-          <div className="bg-[#281720] text-white text-xs font-medium px-4 py-2 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <div className="bg-stone-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-xl border border-stone-800 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
             <Check className="w-3.5 h-3.5 text-[#E0246A]" />
             <span>{toastMessage}</span>
           </div>
@@ -745,427 +745,355 @@ export function ProfileView({
       )}
 
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-3 border-b border-[#F0DFE4]">
+      <div className="flex items-center justify-between pb-4 border-b border-stone-200/80">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBackClick}
-            className="w-9 h-9 rounded-full bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-[#281720] flex items-center justify-center transition cursor-pointer active:scale-95"
-            title="Return to Atelier"
+            className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
+            title="Return to Home"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="font-serif text-xl sm:text-2xl font-medium text-[#281720]">
+          <h1 className="font-serif text-2xl font-normal text-stone-900">
             Profile & Settings
           </h1>
         </div>
       </div>
 
-      {/* Main Grid: Balanced 2-column layout on desktop (lg), stacked on mobile */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-6 items-start">
-        {/* Left Column: Cohesive Full Card (Profile Details + Hand Photo Status + Saved Looks Summary) */}
-        <div className="space-y-4">
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0DFE4] shadow-2xs space-y-5">
-            {/* 1. Profile Silhouette & Identity with Default Profile Pic Giver */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5 min-w-0">
-                {/* Avatar with Default Profile Pic Giver (Dice roll) & Custom Upload */}
-                <div className="relative shrink-0 group">
-                  <div
-                    onClick={() => profilePicFileInputRef.current?.click()}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-[#E0246A]/25 bg-[#FDE8EF] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-                    title="Click to upload custom picture, or use dice to roll random avatar"
-                  >
-                    <img
-                      src={avatarUrl}
-                      alt={userName}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
-                  </div>
-
-                  {/* The Profile Pic Giver Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      randomizeAvatar();
-                    }}
-                    title="Roll new default profile picture"
-                    className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-[#F0DFE4] shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-[#FDE8EF] transition active:scale-90 cursor-pointer"
-                  >
-                    <Dices className="w-3.5 h-3.5" />
-                  </button>
-
-                  <input
-                    ref={profilePicFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleCustomAvatarSelected(f);
-                    }}
-                  />
-                </div>
-
-                <div className="min-w-0">
-                  <h2 className="text-base sm:text-lg font-semibold text-[#281720] truncate leading-tight">
-                    {userName}
-                  </h2>
-                  <p className="text-xs text-[#806D76] truncate mt-0.5">{userEmail}</p>
-                  <div className="mt-1 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#FDE8EF] text-[#801A35] border border-[#801A35]/15">
-                      Atelier Client
-                    </span>
-                    <button
-                      type="button"
-                      onClick={randomizeAvatar}
-                      className="text-[10px] text-[#E0246A] hover:underline font-medium cursor-pointer inline-flex items-center gap-1"
-                      title="Roll a new default profile avatar"
-                    >
-                      <Dices className="w-3 h-3" />
-                      <span>Roll Avatar</span>
-                    </button>
-                  </div>
-                </div>
+      {/* Card 1: Account & Hand Photo */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-5">
+        {/* Profile Avatar & Details */}
+        <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3.5 min-w-0">
+            {/* Avatar with Default Profile Pic Giver (Dice roll) & Custom Upload */}
+            <div className="relative shrink-0 group">
+              <div
+                onClick={() => profilePicFileInputRef.current?.click()}
+                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                title="Click to upload custom picture, or use dice to roll random avatar"
+              >
+                <img
+                  src={avatarUrl}
+                  alt={userName}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    (e.target as HTMLElement).style.display = 'none';
+                  }}
+                />
               </div>
 
+              {/* The Profile Pic Giver Button */}
               <button
                 type="button"
-                onClick={() => {
-                  setNameInput(userName);
-                  setEmailInput(userEmail);
-                  setIsEditProfileOpen(true);
+                onClick={(e) => {
+                  e.stopPropagation();
+                  randomizeAvatar();
                 }}
-                className="min-h-[44px] h-11 px-3.5 rounded-xl bg-transparent hover:bg-[#FDE8EF] border border-[#F0DFE4] hover:border-[#801A35]/30 text-xs font-semibold text-[#281720] hover:text-[#801A35] transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95"
+                title="Roll new default profile picture"
+                className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-stone-200 shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-pink-50 transition active:scale-90 cursor-pointer"
               >
-                Edit
+                <Dices className="w-3.5 h-3.5" />
               </button>
+
+              <input
+                ref={profilePicFileInputRef}
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleCustomAvatarSelected(f);
+                }}
+              />
             </div>
 
-            {/* 2. Hand Photo Status & Blueprint */}
-            <div className="pt-4 border-t border-[#F0DFE4] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FDE8EF] text-[#801A35] flex items-center justify-center shrink-0">
-                    <Hand className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#281720] block">
-                      My Hand Blueprint
-                    </span>
-                    <span className="text-[10px] text-[#806D76]">
-                      Calibrated for 1-tap try-on
-                    </span>
-                  </div>
-                </div>
-
-                {customTryOnHandUrl ? (
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#E8F5E9] text-[#2E7D32] border border-[#C8E6C9] inline-flex items-center gap-1">
-                    <Check className="w-3 h-3 text-[#2E7D32]" />
-                    <span>Ready</span>
-                  </span>
-                ) : (
-                  <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FFF3E0] text-[#E65100] border border-[#FFE0B2]">
-                    Photo Needed
-                  </span>
-                )}
-              </div>
-
-              {customTryOnHandUrl ? (
-                <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF7F2] border border-[#F0DFE4]/80">
-                  <div className="flex items-center gap-3 min-w-0">
-                    <div className="relative w-11 h-11 rounded-lg overflow-hidden border border-stone-200 bg-stone-100 shrink-0">
-                      <img
-                        src={customTryOnHandUrl}
-                        alt="My Hand"
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="text-xs font-semibold text-[#281720] truncate">Custom Hand Photo</p>
-                      <p className="text-[10px] text-[#806D76]">Saved to account</p>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsHandModalOpen(true)}
-                    className="min-h-[44px] h-11 px-3.5 rounded-xl bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-xs font-semibold text-[#281720] hover:text-[#801A35] transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
-                  >
-                    Manage
-                  </button>
-                </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => handFileInputRef.current?.click()}
-                    className="min-h-[44px] h-11 rounded-xl bg-[#801A35] hover:bg-[#681329] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
-                  >
-                    <UploadCloud className="w-4 h-4" />
-                    <span>Upload Photo</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setIsCameraCaptureOpen(true)}
-                    className="min-h-[44px] h-11 rounded-xl bg-white hover:bg-stone-50 border border-[#F0DFE4] text-[#281720] text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
-                  >
-                    <Camera className="w-4 h-4 text-[#801A35]" />
-                    <span>Camera</span>
-                  </button>
-                </div>
-              )}
-            </div>
-
-            {/* 3. Saved Look Summary */}
-            <div className="pt-4 border-t border-[#F0DFE4] space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-xl bg-[#FDE8EF] text-[#801A35] flex items-center justify-center shrink-0">
-                    <Heart className="w-4 h-4 fill-[#801A35]" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#281720] block">
-                      Saved Atelier Looks
-                    </span>
-                    <span className="text-[10px] text-[#806D76]">
-                      Bookmarked inspirations
-                    </span>
-                  </div>
-                </div>
-
-                <span className="text-xs font-mono font-bold text-[#801A35] px-2.5 py-0.5 rounded-full bg-[#FDE8EF]">
-                  {savedDesigns.length} {savedDesigns.length === 1 ? 'Look' : 'Looks'}
-                </span>
-              </div>
-
-              <div className="flex items-center justify-between p-2.5 rounded-xl bg-[#FAF7F2] border border-[#F0DFE4]/80">
-                <div className="flex items-center gap-2.5 min-w-0">
-                  {savedDesigns.length > 0 ? (
-                    <div className="flex -space-x-2 overflow-hidden shrink-0">
-                      {savedDesigns.slice(0, 3).map((item) => (
-                        <img
-                          key={item.id}
-                          src={item.photoUrl || '/assets/editorial_nail_hero.jpg'}
-                          alt=""
-                          className="inline-block w-9 h-9 rounded-full ring-2 ring-white object-cover"
-                        />
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="w-9 h-9 rounded-full bg-[#FDE8EF]/60 flex items-center justify-center shrink-0">
-                      <Heart className="w-4 h-4 text-[#801A35]" />
-                    </div>
-                  )}
-                  <div className="min-w-0 pl-1">
-                    <p className="text-xs font-medium text-[#281720] truncate">
-                      {savedDesigns.length > 0
-                        ? `${savedDesigns.length} Saved Design${savedDesigns.length > 1 ? 's' : ''}`
-                        : 'No saved looks yet'}
-                    </p>
-                    <p className="text-[10px] text-[#806D76] truncate">
-                      {savedDesigns.length > 0 ? 'Ready for virtual try-on' : 'Bookmark looks to try on'}
-                    </p>
-                  </div>
-                </div>
-
+            <div className="min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
+                {userName}
+              </h2>
+              <p className="text-xs text-stone-500 font-mono truncate mt-0.5">{userEmail}</p>
+              <div className="mt-1.5 flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={() => setCurrentView('favorites')}
-                  className="min-h-[44px] h-11 px-3.5 rounded-xl bg-white hover:bg-[#FDE8EF] border border-[#F0DFE4] text-xs font-semibold text-[#801A35] transition cursor-pointer flex items-center gap-1 shadow-2xs shrink-0 active:scale-95"
+                  onClick={randomizeAvatar}
+                  className="text-xs text-[#E0246A] hover:text-[#BE185D] font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
+                  title="Roll a new default profile avatar"
                 >
-                  <span>View All</span>
-                  <ChevronRight className="w-3.5 h-3.5" />
+                  <Dices className="w-3.5 h-3.5" />
+                  <span>Roll Avatar</span>
                 </button>
               </div>
             </div>
           </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              setNameInput(userName);
+              setEmailInput(userEmail);
+              setIsEditProfileOpen(true);
+            }}
+            className="h-9 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
+          >
+            Edit
+          </button>
         </div>
 
-        {/* Right Column: Account Details, Preferred Silhouette Selector, and Support/Privacy */}
-        <div className="space-y-4">
-          {/* Card 1: Account Details & Preferred Silhouette */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0DFE4] shadow-2xs space-y-4">
-            {/* Account Details Item */}
-            <button
-              type="button"
-              onClick={() => {
-                setNameInput(userName);
-                setEmailInput(userEmail);
-                setIsEditProfileOpen(true);
-              }}
-              className="w-full min-h-[44px] h-11 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#FDE8EF]/40 border border-[#F0DFE4] transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <User className="w-4 h-4" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#801A35] transition-colors block leading-tight truncate">
-                    Account Details
-                  </span>
-                  <span className="text-[10px] text-[#806D76] truncate block">
-                    {userName} · {userEmail}
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors shrink-0" />
-            </button>
+        {/* Divider */}
+        <div className="border-t border-stone-100" />
 
-            {/* Preferred Silhouette Selector */}
-            <div className="pt-3 border-t border-[#F0DFE4] space-y-2.5">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-lg bg-[#FDE8EF] text-[#801A35] flex items-center justify-center shrink-0">
-                    <Sparkles className="w-4 h-4" />
-                  </div>
-                  <div>
-                    <span className="text-xs font-semibold text-[#281720] block">
-                      Preferred Silhouette
-                    </span>
-                    <span className="text-[10px] text-[#806D76]">
-                      Default shape across try-on
-                    </span>
-                  </div>
-                </div>
-                <span className="text-xs font-mono font-medium text-[#801A35] px-2 py-0.5 rounded-md bg-[#FDE8EF] capitalize">
-                  {preferredShape || 'Almond'}
+        {/* Hand Photo for Try-On */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+                <Hand className="w-4 h-4" />
+              </div>
+              <div>
+                <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                  Hand Photo
                 </span>
-              </div>
-
-              <div className="grid grid-cols-4 gap-2 pt-0.5">
-                {NAIL_SHAPES.map((s) => {
-                  const isSelected = (preferredShape || 'almond') === s.id;
-                  return (
-                    <button
-                      key={s.id}
-                      type="button"
-                      onClick={() => {
-                        setPreferredShape?.(s.id);
-                        showToast(`Preferred shape updated to ${s.label}`);
-                      }}
-                      className={`min-h-[44px] h-11 rounded-xl text-xs font-medium transition cursor-pointer flex items-center justify-center active:scale-95 ${
-                        isSelected
-                          ? 'bg-[#801A35] text-white shadow-2xs font-semibold'
-                          : 'bg-[#FAF7F2] text-[#806D76] hover:bg-stone-100 hover:text-[#281720] border border-[#F0DFE4]'
-                      }`}
-                    >
-                      {s.label}
-                    </button>
-                  );
-                })}
+                <span className="text-[11px] text-stone-500">
+                  Used to render manicures directly onto your hand
+                </span>
               </div>
             </div>
 
-            {/* Notifications Toggle */}
-            <div className="pt-3 border-t border-[#F0DFE4] flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <Bell className="w-4 h-4" />
+            {customTryOnHandUrl ? (
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-flex items-center gap-1">
+                <Check className="w-3 h-3 text-emerald-600" />
+                <span>Ready</span>
+              </span>
+            ) : (
+              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
+                Not Added
+              </span>
+            )}
+          </div>
+
+          {customTryOnHandUrl ? (
+            <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-stone-200 bg-stone-100 shrink-0">
+                  <img
+                    src={customTryOnHandUrl}
+                    alt="My Hand"
+                    className="w-full h-full object-cover"
+                  />
                 </div>
-                <div>
-                  <span className="text-xs font-semibold text-[#281720] block">Notifications</span>
-                  <span className="text-[10px] text-[#806D76]">
-                    Seasonal look drops & updates
-                  </span>
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-stone-900 truncate">Saved Hand Photo</p>
+                  <p className="text-[11px] text-stone-500">Active for 1-tap try-on</p>
                 </div>
               </div>
 
               <button
                 type="button"
-                onClick={() => {
-                  setNotificationsEnabled(!notificationsEnabled);
-                  showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
-                }}
-                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
-                  notificationsEnabled ? 'bg-[#801A35]' : 'bg-stone-300'
-                }`}
-                aria-label="Toggle notifications"
+                onClick={() => setIsHandModalOpen(true)}
+                className="h-9 px-3.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
               >
-                <span
-                  className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
-                    notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                Manage
               </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2.5">
+              <button
+                type="button"
+                onClick={() => handFileInputRef.current?.click()}
+                className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+              >
+                <UploadCloud className="w-4 h-4" />
+                <span>Upload Photo</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setIsCameraCaptureOpen(true)}
+                className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+              >
+                <Camera className="w-4 h-4 text-[#E0246A]" />
+                <span>Live Camera</span>
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Card 2: Preferences */}
+      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-5">
+        {/* Default Nail Shape */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                Default Nail Shape
+              </span>
+              <span className="text-[11px] text-stone-500">
+                Applied automatically when previewing manicures
+              </span>
+            </div>
+            <span className="text-xs font-medium text-[#E0246A] px-2.5 py-0.5 rounded-full bg-pink-50 border border-pink-100 capitalize">
+              {preferredShape || 'Almond'}
+            </span>
+          </div>
+
+          <div className="grid grid-cols-4 gap-2 pt-1">
+            {NAIL_SHAPES.map((s) => {
+              const isSelected = (preferredShape || 'almond') === s.id;
+              return (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => {
+                    setPreferredShape?.(s.id);
+                    showToast(`Preferred shape updated to ${s.label}`);
+                  }}
+                  className={`h-10 rounded-xl text-xs font-medium transition cursor-pointer flex items-center justify-center active:scale-95 ${
+                    isSelected
+                      ? 'bg-stone-900 text-white font-semibold shadow-2xs'
+                      : 'bg-stone-100 text-stone-700 hover:bg-stone-200/70 border border-stone-200/60'
+                  }`}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Divider */}
+        <div className="border-t border-stone-100" />
+
+        {/* Notifications Toggle */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+              <Bell className="w-4 h-4" />
+            </div>
+            <div>
+              <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                Notifications
+              </span>
+              <span className="text-[11px] text-stone-500">
+                Seasonal manicure drops & design updates
+              </span>
             </div>
           </div>
 
-          {/* Card 2: Support, Privacy & Session */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0DFE4] shadow-2xs space-y-2.5">
-            {/* Atelier Support */}
-            <button
-              type="button"
-              onClick={() => setIsSupportModalOpen(true)}
-              className="w-full min-h-[44px] h-11 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#FDE8EF]/40 border border-[#F0DFE4] transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#801A35] transition-colors block leading-tight">
-                    Atelier Support
-                  </span>
-                  <span className="text-[10px] text-[#806D76] truncate block">
-                    Concierge styling & virtual try-on help
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors shrink-0" />
-            </button>
-
-            {/* Camera & Data Privacy */}
-            <button
-              type="button"
-              onClick={() => setIsPrivacyModalOpen(true)}
-              className="w-full min-h-[44px] h-11 px-3.5 rounded-xl bg-[#FAF7F2] hover:bg-[#FDE8EF]/40 border border-[#F0DFE4] transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5 min-w-0">
-                <div className="w-8 h-8 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-[#281720] group-hover:text-[#801A35] transition-colors block leading-tight">
-                    Camera & Data Privacy
-                  </span>
-                  <span className="text-[10px] text-[#806D76] truncate block">
-                    Private on-device hand processing
-                  </span>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-[#806D76] group-hover:text-[#281720] transition-colors shrink-0" />
-            </button>
-
-            {/* Sign Out */}
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await signOutUser();
-                } catch (e) {
-                  console.warn('Sign out error:', e);
-                }
-                showToast('Signed out successfully');
-                if (onLogout) onLogout();
-              }}
-              className="w-full min-h-[44px] h-11 px-3.5 rounded-xl bg-white hover:bg-red-50/60 border border-red-200/60 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                  <LogOut className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-semibold text-red-600">Sign Out</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setNotificationsEnabled(!notificationsEnabled);
+              showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
+            }}
+            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
+              notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
+            }`}
+            aria-label="Toggle notifications"
+          >
+            <span
+              className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
+                notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
+      </div>
+
+      {/* Card 3: Studio, Support & Security */}
+      <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
+        {/* Saved Looks */}
+        <button
+          type="button"
+          onClick={() => setCurrentView('favorites')}
+          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+              <Heart className="w-4 h-4 fill-[#E0246A]" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                Saved Looks
+              </span>
+              <span className="text-[11px] text-stone-500 truncate block">
+                {savedDesigns.length} bookmarked manicure{savedDesigns.length === 1 ? '' : 's'}
+              </span>
+            </div>
+          </div>
+          <div className="flex items-center gap-1.5 text-xs text-stone-500 group-hover:text-stone-900 transition-colors">
+            <span className="text-xs font-semibold text-[#E0246A]">View All</span>
+            <ChevronRight className="w-4 h-4" />
+          </div>
+        </button>
+
+        {/* Help & Support */}
+        <button
+          type="button"
+          onClick={() => setIsSupportModalOpen(true)}
+          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+              <HelpCircle className="w-4 h-4" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                Help & Support
+              </span>
+              <span className="text-[11px] text-stone-500 truncate block">
+                support@finglora.com
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+        </button>
+
+        {/* Camera & Data Privacy */}
+        <button
+          type="button"
+          onClick={() => setIsPrivacyModalOpen(true)}
+          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+              <ShieldCheck className="w-4 h-4" />
+            </div>
+            <div className="text-left min-w-0">
+              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                Camera & Data Privacy
+              </span>
+              <span className="text-[11px] text-stone-500 truncate block">
+                Private on-device processing
+              </span>
+            </div>
+          </div>
+          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+        </button>
+
+        {/* Sign Out */}
+        <button
+          type="button"
+          onClick={async () => {
+            try {
+              await signOutUser();
+            } catch (e) {
+              console.warn('Sign out error:', e);
+            }
+            showToast('Signed out successfully');
+            if (onLogout) onLogout();
+          }}
+          className="w-full h-12 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+              <LogOut className="w-4 h-4" />
+            </div>
+            <span className="text-xs font-semibold text-red-600">Sign Out</span>
+          </div>
+          <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
+        </button>
       </div>
 
       {/* ---------------------------------------------------------------------
@@ -1173,18 +1101,18 @@ export function ProfileView({
           --------------------------------------------------------------------- */}
       {isHandModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-stone-200/80 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="font-serif text-lg font-semibold text-[#281720]">My Hand Photo</h3>
-                <p className="text-[11px] text-[#806D76]">
-                  Upload once to try on designs anytime
+                <h3 className="font-serif text-lg font-semibold text-stone-900">Hand Photo</h3>
+                <p className="text-[11px] text-stone-500">
+                  Upload once to try on manicures anytime
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => setIsHandModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1192,14 +1120,14 @@ export function ProfileView({
 
             {customTryOnHandUrl ? (
               <div className="space-y-3">
-                <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-[#F0DFE4] bg-stone-100">
+                <div className="relative aspect-[3/4] w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100">
                   <img
                     src={customTryOnHandUrl}
                     alt="My Hand"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1">
-                    <Check className="w-3 h-3 text-[#E8F5E9]" />
+                    <Check className="w-3 h-3 text-emerald-400" />
                     <span>Saved for 1-Tap Try-On</span>
                   </div>
                 </div>
@@ -1208,7 +1136,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => handFileInputRef.current?.click()}
-                    className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 h-9 rounded-xl border border-stone-200 text-stone-800 hover:bg-stone-50 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Upload New</span>
@@ -1216,7 +1144,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => setIsCameraCaptureOpen(true)}
-                    className="flex-1 h-9 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                    className="flex-1 h-9 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-3.5 h-3.5" />
                     <span>Camera</span>
@@ -1224,7 +1152,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={handleRemoveHandPhoto}
-                    className="h-9 px-3 rounded-xl border border-[#F0DFE4] hover:bg-red-50 text-red-600 text-xs font-medium transition cursor-pointer flex items-center justify-center"
+                    className="h-9 px-3 rounded-xl border border-stone-200 hover:bg-red-50 text-red-600 text-xs font-medium transition cursor-pointer flex items-center justify-center"
                     title="Remove Photo"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -1235,14 +1163,14 @@ export function ProfileView({
               <div className="space-y-4">
                 <div
                   onClick={() => handFileInputRef.current?.click()}
-                  className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-[#F0DFE4] bg-[#FFFAF8] hover:bg-[#FDE8EF]/20 transition cursor-pointer flex flex-col items-center justify-center p-5 text-center space-y-2"
+                  className="aspect-[4/3] w-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 hover:bg-pink-50/20 transition cursor-pointer flex flex-col items-center justify-center p-5 text-center space-y-2"
                 >
-                  <div className="w-12 h-12 rounded-2xl bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center">
+                  <div className="w-12 h-12 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center">
                     <Hand className="w-6 h-6" />
                   </div>
                   <div>
-                    <p className="text-xs font-semibold text-[#281720]">Your Hand Photo</p>
-                    <p className="text-[10px] text-[#806D76] mt-0.5">
+                    <p className="text-xs font-semibold text-stone-900">Your Hand Photo</p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
                       Upload from gallery or take a quick photo
                     </p>
                   </div>
@@ -1252,7 +1180,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => handFileInputRef.current?.click()}
-                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs"
+                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs"
                   >
                     <UploadCloud className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
@@ -1261,15 +1189,15 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => setIsCameraCaptureOpen(true)}
-                    className="h-10 rounded-xl border border-[#F0DFE4] bg-white text-[#281720] hover:bg-stone-50 text-xs font-medium transition cursor-pointer flex items-center justify-center gap-1.5"
+                    className="h-10 rounded-xl border border-stone-200 bg-white text-stone-800 hover:bg-stone-50 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5"
                   >
                     <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Camera</span>
                   </button>
                 </div>
 
-                <p className="text-[11px] text-[#806D76] text-center leading-relaxed">
-                  Saved securely to your account so every manicure instantly renders onto your own hand!
+                <p className="text-[11px] text-stone-500 text-center leading-relaxed">
+                  Saved securely so every manicure instantly renders onto your own hand.
                 </p>
               </div>
             )}
@@ -1295,13 +1223,13 @@ export function ProfileView({
           --------------------------------------------------------------------- */}
       {isEditProfileOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-stone-200/80 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Account Details</h3>
+              <h3 className="font-serif text-lg font-semibold text-stone-900">Account Details</h3>
               <button
                 type="button"
                 onClick={() => setIsEditProfileOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
@@ -1309,35 +1237,35 @@ export function ProfileView({
 
             <form onSubmit={handleSaveProfile} className="space-y-3.5">
               <div>
-                <label className="block text-[11px] font-semibold text-[#806D76] uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-1">
                   Name
                 </label>
                 <div className="relative">
-                  <User className="w-4 h-4 text-[#806D76] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <User className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="text"
                     value={nameInput}
                     onChange={(e) => setNameInput(e.target.value)}
                     required
                     placeholder="Your name"
-                    className="w-full pl-9 pr-3 h-10 rounded-xl border border-[#F0DFE4] text-xs sm:text-sm text-[#281720] focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
+                    className="w-full pl-9 pr-3 h-10 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
                   />
                 </div>
               </div>
 
               <div>
-                <label className="block text-[11px] font-semibold text-[#806D76] uppercase tracking-wider mb-1">
+                <label className="block text-[11px] font-semibold text-stone-500 uppercase tracking-wider mb-1">
                   Email
                 </label>
                 <div className="relative">
-                  <Mail className="w-4 h-4 text-[#806D76] absolute left-3 top-1/2 -translate-y-1/2" />
+                  <Mail className="w-4 h-4 text-stone-400 absolute left-3 top-1/2 -translate-y-1/2" />
                   <input
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
                     required
                     placeholder="your.email@example.com"
-                    className="w-full pl-9 pr-3 h-10 rounded-xl border border-[#F0DFE4] text-xs sm:text-sm text-[#281720] focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
+                    className="w-full pl-9 pr-3 h-10 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
                   />
                 </div>
               </div>
@@ -1346,7 +1274,7 @@ export function ProfileView({
                 <button
                   type="button"
                   onClick={() => setIsEditProfileOpen(false)}
-                  className="flex-1 h-9 rounded-xl border border-[#F0DFE4] text-xs font-semibold text-[#806D76] hover:bg-stone-50 transition cursor-pointer"
+                  className="flex-1 h-9 rounded-xl border border-stone-200 text-xs font-semibold text-stone-600 hover:bg-stone-50 transition cursor-pointer"
                 >
                   Cancel
                 </button>
@@ -1367,24 +1295,24 @@ export function ProfileView({
           --------------------------------------------------------------------- */}
       {isSupportModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4 text-center">
-            <div className="w-12 h-12 rounded-full bg-[#FDE8EF] text-[#E0246A] flex items-center justify-center mx-auto">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-stone-200/80 space-y-4 text-center">
+            <div className="w-12 h-12 rounded-full bg-pink-50 text-[#E0246A] flex items-center justify-center mx-auto">
               <HelpCircle className="w-6 h-6" />
             </div>
             <div>
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Atelier Support</h3>
-              <p className="text-xs text-[#806D76] mt-1">
-                Need bespoke nail styling advice, custom fitting, or assistance with Virtual Try-On?
+              <h3 className="font-serif text-lg font-semibold text-stone-900">Help & Support</h3>
+              <p className="text-xs text-stone-500 mt-1">
+                Need styling advice, custom fitting, or assistance with Virtual Try-On?
               </p>
             </div>
-            <div className="bg-[#FFFAF8] rounded-2xl p-3.5 border border-[#F0DFE4] text-xs text-[#281720] space-y-1">
-              <p className="font-semibold text-sm">Finglora Concierge</p>
-              <p className="text-[#806D76]">support@finglora.com</p>
+            <div className="bg-stone-50 rounded-2xl p-3.5 border border-stone-200/70 text-xs text-stone-900 space-y-1">
+              <p className="font-semibold text-sm">Finglora Support</p>
+              <p className="text-stone-500">support@finglora.com</p>
             </div>
             <button
               type="button"
               onClick={() => setIsSupportModalOpen(false)}
-              className="w-full h-10 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-semibold cursor-pointer transition active:scale-95"
+              className="w-full h-10 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold cursor-pointer transition active:scale-95"
             >
               Done
             </button>
@@ -1397,18 +1325,18 @@ export function ProfileView({
           --------------------------------------------------------------------- */}
       {isPrivacyModalOpen && (
         <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-[#F0DFE4] space-y-4">
+          <div className="bg-white rounded-3xl max-w-sm w-full p-5 sm:p-6 shadow-2xl border border-stone-200/80 space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="font-serif text-lg font-semibold text-[#281720]">Privacy & Security</h3>
+              <h3 className="font-serif text-lg font-semibold text-stone-900">Privacy & Security</h3>
               <button
                 type="button"
                 onClick={() => setIsPrivacyModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer"
+                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
-            <div className="space-y-2.5 text-xs text-[#806D76] leading-relaxed">
+            <div className="space-y-2.5 text-xs text-stone-600 leading-relaxed">
               <p>
                 Camera frames and hand photos used for Virtual Try-On are processed securely on your device and are never shared with third parties.
               </p>
@@ -1419,7 +1347,7 @@ export function ProfileView({
             <button
               type="button"
               onClick={() => setIsPrivacyModalOpen(false)}
-              className="w-full h-10 rounded-xl bg-[#281720] hover:bg-[#3d2732] text-white text-xs font-semibold cursor-pointer transition active:scale-95"
+              className="w-full h-10 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold cursor-pointer transition active:scale-95"
             >
               Close
             </button>
