@@ -87,11 +87,6 @@ const SHAPES: { id: NailShape; name: string; desc: string }[] = [
     name: 'Square',
     desc: 'Parallel straight side walls with a precise horizontal tip',
   },
-  {
-    id: 'stiletto',
-    name: 'Stiletto',
-    desc: 'Dramatic architectural silhouette tapering to a razor point',
-  },
 ];
 
 export function LandingSurface({

@@ -24,7 +24,6 @@ export const NAIL_SHAPES: { id: NailShape; label: string }[] = [
   { id: 'coffin', label: 'Coffin' },
   { id: 'oval', label: 'Oval' },
   { id: 'square', label: 'Square' },
-  { id: 'stiletto', label: 'Stiletto' },
 ];
 
 export const NAIL_LENGTHS: { id: NailLength; label: string }[] = [

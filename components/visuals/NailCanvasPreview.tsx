@@ -66,10 +66,9 @@ export function NailCanvasPreview({
       clipPath: 'polygon(16% 0%, 84% 0%, 100% 74%, 100% 90%, 90% 100%, 10% 100%, 0% 90%, 0% 74%)',
     };
   } else if (isStiletto) {
-    // Stiletto: Sleek, continuous editorial taper converging at sharp apex
+    // Graceful organic taper fallback
     nailRadiusStyle = {
-      borderRadius: '0 0 20px 20px',
-      clipPath: 'polygon(50% 0%, 94% 75%, 88% 100%, 12% 100%, 6% 75%)',
+      borderRadius: '48% 48% 22px 22px / 64% 64% 20px 20px',
     };
   } else if (isSquare) {
     // Square: Parallel sidewalls with softened 90° corners
