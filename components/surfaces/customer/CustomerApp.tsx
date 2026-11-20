@@ -404,6 +404,11 @@ export function CustomerApp({
               nails={nails}
               activePhotoUrl={activePhotoUrl}
               customTryOnHandUrl={customTryOnHandUrl}
+              exploreDesigns={exploreDesigns}
+              onSelectExploreDesign={(id) => {
+                onSelectExploreDesign(id);
+                setCustomerRoute('tryon');
+              }}
               onSelectHandDataUrl={(dataUrl) => {
                 setCustomTryOnHandUrl(dataUrl);
                 setSynthesizedHandUrl?.(null);

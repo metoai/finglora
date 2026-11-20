@@ -11,10 +11,12 @@ import {
   Loader2,
   X,
 } from 'lucide-react';
-import { Finger, NailDesign } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
+import { Finger, NailDesign, ExploreDesignSet } from '@/types/nail';
+import { FINGER_KEYS, FINGER_LABELS, CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
+
+const CATEGORY_TABS = ['All', 'French', 'Glazed', 'Aura', 'Minimal'];
 
 const ANALYSIS_STEPS = [
   {
@@ -50,6 +52,8 @@ export function UploadInspirationView({
   nails,
   activePhotoUrl,
   customTryOnHandUrl,
+  exploreDesigns = CURATED_EDITORIAL_DESIGNS,
+  onSelectExploreDesign,
   onImageSelected,
   onUploadHandPhoto,
   onSelectHandDataUrl,
@@ -62,6 +66,8 @@ export function UploadInspirationView({
   nails: Record<Finger, NailDesign>;
   activePhotoUrl?: string;
   customTryOnHandUrl?: string | null;
+  exploreDesigns?: ExploreDesignSet[];
+  onSelectExploreDesign?: (id: string) => void;
   onImageSelected: (file: File) => void;
   onUploadHandPhoto?: (file: File) => void;
   onSelectHandDataUrl?: (dataUrl: string) => void;
@@ -72,6 +78,19 @@ export function UploadInspirationView({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [selectedCategory, setSelectedCategory] = useState('All');
+
+  const designs = exploreDesigns && exploreDesigns.length > 0 ? exploreDesigns : CURATED_EDITORIAL_DESIGNS;
+
+  const filteredDesigns = React.useMemo(() => {
+    if (selectedCategory === 'All') return designs;
+    const target = selectedCategory.toLowerCase();
+    return designs.filter(
+      (d) =>
+        d.category?.toLowerCase() === target ||
+        d.title?.toLowerCase().includes(target)
+    );
+  }, [designs, selectedCategory]);
 
   // Safe index within 1..5 range
   const currentStepIndex = Math.max(0, Math.min(ANALYSIS_STEPS.length - 1, (analysisStep || 1) - 1));
@@ -379,88 +398,99 @@ export function UploadInspirationView({
         </div>
       </div>
 
-      {/* Extraction Results if a Photo is Loaded: 5 Standalone Finger Preview Cards + Primary CTA */}
-      {activePhotoUrl && (
-        <div className="pt-6 border-t border-stone-200/60 space-y-5 animate-in fade-in duration-300">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-            <div>
-              <h3 className="font-serif text-lg font-medium text-stone-900">
-                Extracted Manicure Architecture
-              </h3>
-              <p className="text-xs text-stone-500">
-                Five calibrated designs formulated from your reference photo
-              </p>
-            </div>
-            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200/60 self-start sm:self-auto">
-              <Check className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Ready for Try-On</span>
-            </div>
+      {/* Curated Inspirations ("Inspos"): Exactly 2 Rows Across Breakpoints */}
+      <div className="pt-8 border-t border-stone-200/60 space-y-4 animate-in fade-in duration-300">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <div>
+            <h3 className="font-serif text-xl sm:text-2xl font-medium text-stone-900">
+              Popular Inspiration
+            </h3>
+            <p className="text-xs text-stone-500">
+              Or pick from curated salon designs ready to try on instantly
+            </p>
           </div>
 
-          {/* 5 Standalone Finger Nail Preview Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
-            {FINGER_KEYS.map((fk) => {
-              const nail = nails[fk];
+          {/* Category Filter Pills: All, French, Glazed, Aura, Minimal */}
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none">
+            {CATEGORY_TABS.map((cat) => {
+              const active = selectedCategory === cat;
               return (
-                <div
-                  key={fk}
-                  className="bg-white rounded-2xl p-3 border border-stone-200/80 shadow-2xs transition-all flex flex-col items-center text-center space-y-2"
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setSelectedCategory(cat)}
+                  className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 ${
+                    active
+                      ? 'bg-stone-900 text-white font-semibold shadow-xs'
+                      : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-stone-50'
+                  }`}
                 >
-                  <span className="font-semibold text-stone-700 uppercase tracking-wider text-[10px]">
-                    {FINGER_LABELS[fk]}
-                  </span>
-
-                  <div className="w-full aspect-[3/4] max-h-32 bg-stone-50 rounded-xl flex items-center justify-center overflow-hidden border border-stone-100 p-2 relative">
-                    {nail?.artImageUrl ? (
-                      <img
-                        src={nail.artImageUrl}
-                        alt={nail.title || FINGER_LABELS[fk]}
-                        className="w-full h-full object-cover rounded-lg"
-                      />
-                    ) : (
-                      <NailCanvasPreview
-                        nail={nail}
-                        width={42}
-                        height={68}
-                        showCuticle={false}
-                        interactive={false}
-                      />
-                    )}
-                  </div>
-
-                  <div className="w-full space-y-0.5 text-center">
-                    <p className="text-xs font-medium text-stone-900 truncate">
-                      {nail?.title || 'Natural'}
-                    </p>
-                    <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-500 capitalize">
-                      <span
-                        className="w-2 h-2 rounded-full border border-stone-300 shrink-0"
-                        style={{ backgroundColor: nail?.baseColor || '#FAF0EA' }}
-                      />
-                      <span className="truncate">{nail?.shape || 'almond'}</span>
-                      <span>•</span>
-                      <span className="truncate">{nail?.finish || 'glossy'}</span>
-                    </div>
-                  </div>
-                </div>
+                  {cat}
+                </button>
               );
             })}
           </div>
-
-          {/* Primary CTA: "Try On on My Hand" */}
-          <div className="pt-2 max-w-sm sm:max-w-md mx-auto w-full">
-            <button
-              type="button"
-              onClick={() => onComplete?.()}
-              className="w-full h-12 sm:h-13 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm sm:text-base font-semibold shadow-lg shadow-[#E0246A]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95"
-            >
-              <Hand className="w-4 h-4" />
-              <span>Try On on My Hand</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
         </div>
-      )}
+
+        {/* 2-Row Responsive Inspiration Grid: 4 on mobile (<sm), 6 on tablet (sm-lg), 8 on desktop (>=lg) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
+          {filteredDesigns.slice(0, 8).map((design, index) => {
+            const primaryFinger = design.nails?.middle || design.nails?.index;
+            const shapeLabel = primaryFinger?.shape || design.category || 'Almond';
+
+            const hideClass =
+              index >= 6 ? 'hidden lg:block' : index >= 4 ? 'hidden sm:block' : '';
+
+            return (
+              <div
+                key={design.id}
+                onClick={() => {
+                  onSelectExploreDesign?.(design.id);
+                  onComplete?.();
+                }}
+                className={`group relative aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 text-left cursor-pointer active:scale-[0.98] ${hideClass}`}
+              >
+                <img
+                  src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                  alt={design.title || 'Manicure Design'}
+                  loading="lazy"
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                />
+
+                {/* Scrim Gradient */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                {/* Top Shape Badge */}
+                <div className="absolute top-2.5 left-2.5 z-10">
+                  <span className="px-2.5 py-0.5 rounded-full bg-black/45 text-white text-[10px] font-medium backdrop-blur-xs capitalize tracking-wide">
+                    {shapeLabel}
+                  </span>
+                </div>
+
+                {/* Bottom Title & 1-Tap Try On CTA */}
+                <div className="absolute inset-x-2.5 bottom-2.5 space-y-1.5 sm:space-y-2 z-10">
+                  <div className="text-white text-xs font-medium leading-tight truncate drop-shadow-xs">
+                    {design.title}
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onSelectExploreDesign?.(design.id);
+                      onComplete?.();
+                    }}
+                    className="w-full h-8 sm:h-8.5 rounded-xl bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-xs backdrop-blur-xs flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                  >
+                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Try On</span>
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </div>
 
       {/* Live Hand Camera Capture Modal */}
       <HandCameraCaptureModal
