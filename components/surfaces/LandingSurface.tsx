@@ -206,18 +206,6 @@ export function LandingSurface({
             <span className="absolute top-5 right-5 w-6 h-6 border-t-2 border-r-2 border-[#E0246A] rounded-tr-md pointer-events-none" />
             <span className="absolute bottom-10 left-5 w-6 h-6 border-b-2 border-l-2 border-[#E0246A] rounded-bl-md pointer-events-none" />
             <span className="absolute bottom-10 right-5 w-6 h-6 border-b-2 border-r-2 border-[#E0246A] rounded-br-md pointer-events-none" />
-
-            {/* Top Pill Button: Live preview with Camera icon */}
-            <button
-              type="button"
-              onClick={onSignUpClick || handleLaunchTryOn}
-              className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-white hover:bg-stone-50 border border-stone-200/90 hover:border-[#E0246A]/60 shadow-xs hover:shadow-sm text-xs font-medium text-stone-800 hover:text-[#E0246A] flex items-center gap-1.5 whitespace-nowrap z-20 transition-all cursor-pointer group active:scale-95"
-              title="Start live nail try-on"
-            >
-              <Camera className="w-3.5 h-3.5 text-[#E0246A] group-hover:scale-110 transition-transform" />
-              <span>Try on live</span>
-            </button>
-
             {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
             <div className="absolute inset-4 rounded-full overflow-hidden pointer-events-none z-10">
               <div className="absolute left-4 right-4 animate-scan-periodic">
@@ -296,18 +284,6 @@ export function LandingSurface({
           <span className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-[#E0246A] rounded-tr-sm pointer-events-none" />
           <span className="absolute bottom-8 left-4 w-5 h-5 border-b-2 border-l-2 border-[#E0246A] rounded-bl-sm pointer-events-none" />
           <span className="absolute bottom-8 right-4 w-5 h-5 border-b-2 border-r-2 border-[#E0246A] rounded-br-sm pointer-events-none" />
-
-          {/* Top Pill Button: Live preview with Camera icon */}
-          <button
-            type="button"
-            onClick={onSignUpClick || handleLaunchTryOn}
-            className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3.5 py-1 rounded-full bg-white hover:bg-stone-50 border border-stone-200/90 hover:border-[#E0246A]/60 shadow-xs hover:shadow-sm text-[11px] font-medium text-stone-800 hover:text-[#E0246A] flex items-center gap-1.5 whitespace-nowrap z-20 transition-all cursor-pointer group active:scale-95"
-            title="Start live nail try-on"
-          >
-            <Camera className="w-3 h-3 text-[#E0246A] group-hover:scale-110 transition-transform" />
-            <span>Try on live</span>
-          </button>
-
           {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
           <div className="absolute inset-3 rounded-full overflow-hidden pointer-events-none z-10">
             <div className="absolute left-3 right-3 animate-scan-periodic">
