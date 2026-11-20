@@ -4,7 +4,6 @@ import React, { useState, useRef } from 'react';
 import {
   Upload,
   ArrowRight,
-  Sparkles,
   Camera,
   Check,
   ChevronRight,
@@ -333,7 +332,7 @@ export function OnboardingSurface({
                 onClick={() => startReveal()}
                 className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
               >
-                <Sparkles className="w-4 h-4 text-white" />
+                <Hand className="w-4 h-4 text-white" />
                 <span>See It On My Hand (1 Free Try-On)</span>
               </button>
             </div>
@@ -357,7 +356,7 @@ export function OnboardingSurface({
               <div className="space-y-6">
                 <div className="space-y-1.5">
                   <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-[11px] font-semibold tracking-wide">
-                    ✨ 1st Try-On Complete • Value Unlocked!
+                    1st Try-On Complete • Ready to Style
                   </span>
                   <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
                     Your Personalized Virtual Manicure

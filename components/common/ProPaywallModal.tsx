@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Sparkles, Check, Crown, ShieldCheck } from 'lucide-react';
+import { X, Check, Crown, ShieldCheck, ArrowRight, Hand } from 'lucide-react';
 import { activateProSubscription } from '@/lib/services/credits';
 
 export function ProPaywallModal({
@@ -45,19 +45,19 @@ export function ProPaywallModal({
             <X className="w-4 h-4" />
           </button>
 
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#E0246A]/10 border border-[#E0246A]/20 flex items-center justify-center text-2xl shadow-inner">
-            💅
+          <div className="w-14 h-14 mx-auto rounded-2xl bg-[#E0246A]/10 border border-[#E0246A]/20 flex items-center justify-center text-[#E0246A] shadow-inner">
+            <Hand className="w-7 h-7" />
           </div>
 
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full bg-[#E0246A]/10 text-[#E0246A] text-xs font-semibold tracking-wide">
-              1st Try-On Completed!
+              1st Try-On Completed
             </span>
             <h2 className="font-serif text-2xl font-medium text-stone-900 tracking-tight">
               Unlock 1 More Free Try-On
             </h2>
             <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
-              Create a free account to save your bespoke manicure recipe and get another complimentary Gemini photorealistic try-on credit.
+              Create a free account to save your manicure recipe and receive an additional try-on credit.
             </p>
           </div>
 
@@ -70,8 +70,8 @@ export function ProPaywallModal({
               }}
               className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
             >
-              <Sparkles className="w-4 h-4 text-white" />
               <span>Create Free Account (+1 Credit)</span>
+              <ArrowRight className="w-4 h-4 text-white" />
             </button>
 
             <button
@@ -178,7 +178,7 @@ export function ProPaywallModal({
               <span>Activating Pro Access...</span>
             ) : (
               <>
-                <Sparkles className="w-4 h-4 text-white" />
+                <Crown className="w-4 h-4 text-white" />
                 <span>Upgrade to Pro — Unlimited Access</span>
               </>
             )}

@@ -3,10 +3,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Smartphone,
-  Wand2,
   Menu,
   X,
-  Sparkles,
+  Compass,
   SlidersHorizontal,
   Home,
   Monitor,
@@ -479,7 +478,7 @@ export default function FingloraApp() {
     setUserName(chosenName);
     if (isVipEmail(email)) {
       activateProSubscription();
-      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active ✨`);
+      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
     } else {
       grantSignupCreditBonus();
       showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
@@ -492,7 +491,7 @@ export default function FingloraApp() {
     if (email && isVipEmail(email)) {
       activateProSubscription();
       setUserName('VIP Creator');
-      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active ✨`);
+      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
     } else {
       showToast(`Welcome back, ${userName}! Opening your dashboard...`);
     }
@@ -714,7 +713,7 @@ export default function FingloraApp() {
     }));
 
     setIsAnalyzing(false);
-    showToast('Reference manicure applied to your hand! Opening Virtual Try-On ✨');
+    showToast('Reference manicure applied to your hand! Opening Virtual Try-On');
     navigateCustomer('tryon');
   };
 
@@ -1047,7 +1046,7 @@ export default function FingloraApp() {
                       id: 'landing' as const,
                       label: 'Landing',
                       desc: 'Camera try-on, photo upload & featured styles',
-                      icon: Sparkles,
+                      icon: Compass,
                     },
                     {
                       id: 'onboarding' as const,

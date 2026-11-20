@@ -4,7 +4,7 @@ import React from 'react';
 import {
   Home,
   Compass,
-  ImagePlus,
+  Hand,
   Heart,
   Paintbrush,
   User,
@@ -56,7 +56,7 @@ export function CustomerSidebar({
       title: 'ATELIER',
       items: [
         { id: 'home', label: 'Home', Icon: Home },
-        { id: 'upload', label: 'Upload photo (try on)', Icon: ImagePlus },
+        { id: 'upload', label: 'Try On', Icon: Hand },
         { id: 'explore', label: 'Explore', Icon: Compass },
       ],
     },

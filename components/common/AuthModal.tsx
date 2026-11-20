@@ -250,7 +250,7 @@ export function AuthModal({
                 }}
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] text-[11px] font-semibold transition cursor-pointer"
               >
-                <span>✨ Use VIP Pro Account (Unlimited)</span>
+                <span>Use VIP Pro Account (Unlimited)</span>
               </button>
             </div>
           </div>

@@ -4,7 +4,6 @@ import React, { useRef, useState, useEffect } from 'react';
 import {
   UploadCloud,
   ArrowRight,
-  Sparkles,
   Check,
   Hand,
   ImagePlus,
@@ -148,13 +147,12 @@ export function UploadInspirationView({
       const errJson = await res.json().catch(() => ({}));
       const is429 = res.status === 429 || errJson?.isRateLimit || errJson?.error?.includes('RESOURCE_EXHAUSTED') || errJson?.error?.includes('Resource exhausted');
       if (is429) {
-        setGenerationError('Vertex AI image generation quota is cooling down (429). Please wait a few moments and tap Retry.');
+        setGenerationError('Service is currently experiencing high demand. Please try again in a moment.');
       } else {
-        setGenerationError(errJson?.error || 'AI image synthesis could not be completed. Please tap Retry.');
+        setGenerationError(errJson?.error || 'Could not generate manicure. Please try again.');
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Connection error';
-      setGenerationError(`${msg}. Please tap Retry.`);
+      setGenerationError('Connection error. Please try again.');
     } finally {
       setIsGeneratingTryOn(false);
     }
@@ -167,7 +165,7 @@ export function UploadInspirationView({
         {/* Dynamic Reference + Hand Composition Preview */}
         <div className="flex items-center justify-center gap-4 sm:gap-6">
           {/* Reference Inspo Photo */}
-          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-900 border-2 border-white shadow-lg">
+          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-100 border-2 border-[#E0246A]/20 shadow-lg flex items-center justify-center">
             {activePhotoUrl ? (
               <img
                 src={activePhotoUrl}
@@ -175,27 +173,27 @@ export function UploadInspirationView({
                 className="w-full h-full object-cover"
               />
             ) : (
-              <div className="w-full h-full flex items-center justify-center text-2xl text-stone-300">
-                💅
+              <div className="w-full h-full flex items-center justify-center text-stone-300">
+                <Hand className="w-7 h-7" />
               </div>
             )}
-            <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
-              Reference
+            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
+              Nail Inspo
             </div>
           </div>
 
-          {/* Animated Connecting Pulse */}
+          {/* Connecting Arrow */}
           <div className="flex flex-col items-center justify-center gap-1.5">
-            <div className="w-10 h-10 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-md animate-pulse">
-              <Sparkles className="w-5 h-5 animate-spin [animation-duration:6s]" />
+            <div className="w-9 h-9 rounded-full bg-stone-100 text-stone-500 flex items-center justify-center border border-stone-200">
+              <ArrowRight className="w-4 h-4 text-stone-600" />
             </div>
-            <span className="text-[10px] font-mono text-[#E0246A] uppercase tracking-wider font-semibold">
-              Image-to-Image
+            <span className="text-[10px] font-mono text-stone-400 uppercase tracking-wider">
+              Try-On
             </span>
           </div>
 
           {/* User's Hand Photo */}
-          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-900 border-2 border-white shadow-lg">
+          <div className="relative w-28 h-36 sm:w-32 sm:h-40 rounded-2xl overflow-hidden bg-stone-100 border-2 border-[#E0246A]/20 shadow-lg">
             {localHandPhoto ? (
               <img
                 src={localHandPhoto}
@@ -209,23 +207,23 @@ export function UploadInspirationView({
                 className="w-full h-full object-cover"
               />
             )}
-            <div className="absolute bottom-0 inset-x-0 bg-black/60 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
+            <div className="absolute bottom-0 inset-x-0 bg-[#E0246A]/90 backdrop-blur-xs py-1 text-[10px] text-white font-medium">
               Your Hand
             </div>
           </div>
         </div>
 
         {/* Minimal Editorial Copy */}
-        <div className="space-y-2">
-          <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase flex items-center justify-center gap-1.5">
-            <Loader2 className="w-3.5 h-3.5 animate-spin text-[#E0246A]" />
-            <span>Vertex AI Image-to-Image Model</span>
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-mono tracking-wider text-stone-500 uppercase flex items-center justify-center gap-1.5">
+            <Loader2 className="w-3.5 h-3.5 animate-spin text-stone-700" />
+            <span>Processing</span>
           </span>
-          <h2 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-            Generating Reference Design On Your Hand
+          <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
+            Applying Design to Hand
           </h2>
           <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-            Synthesizing the reference manicure colors, patterns, and shape seamlessly onto your hand in a photorealistic studio finish.
+            Fitting the reference colors, patterns, and shape to your fingernails.
           </p>
         </div>
 
@@ -266,19 +264,19 @@ export function UploadInspirationView({
       {/* Header */}
       <div className="text-center space-y-1.5">
         <span className="text-[11px] font-semibold tracking-widest text-[#E0246A] uppercase">
-          Virtual Atelier Try-On
+          Virtual Try-On
         </span>
         <h1 className="font-serif text-3xl sm:text-4xl font-medium text-stone-900 tracking-tight">
-          Try Any Nail Design On Your Hand
+          Try Any Nail Look On Your Hand
         </h1>
         <p className="text-xs sm:text-sm text-stone-500 max-w-md mx-auto leading-relaxed">
-          Provide your reference nail picture from Pinterest or Instagram, and see it fitted directly on your hand.
+          Upload a reference nail photo to preview it directly on your hand.
         </p>
       </div>
 
-      {/* 2 Simple Cards: [1] Reference Nail Design + [2] My Hand */}
+      {/* 2 Simple Cards: [1] Nail Inspo Design + [2] My Hand */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* Card 1: Reference Nail Design Picture */}
+        {/* Card 1: Nail Inspo Picture */}
         <div
           onClick={() => inspoFileInputRef.current?.click()}
           className="group relative rounded-3xl border-2 border-dashed border-stone-200 hover:border-[#E0246A] bg-white p-5 sm:p-6 text-center transition-all cursor-pointer shadow-2xs hover:shadow-md flex flex-col justify-between min-h-[260px]"
@@ -286,7 +284,7 @@ export function UploadInspirationView({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono uppercase tracking-wider text-[#E0246A] font-semibold">
-                1. Reference Picture
+                1. Nail Inspo Picture
               </span>
               {activePhotoUrl && (
                 <span className="text-[10px] bg-pink-100 text-[#E0246A] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
@@ -300,11 +298,11 @@ export function UploadInspirationView({
               <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-xs">
                 <img
                   src={activePhotoUrl}
-                  alt="Reference nail design"
+                  alt="Nail inspo design"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                 />
                 <div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-medium">
-                  Tap to change reference
+                  Tap to change inspo
                 </div>
               </div>
             ) : (
@@ -314,10 +312,10 @@ export function UploadInspirationView({
                 </div>
                 <div>
                   <div className="text-xs font-semibold text-stone-800">
-                    Upload Reference Design
+                    Upload Nail Inspo
                   </div>
                   <div className="text-[11px] text-stone-400 mt-0.5">
-                    Pinterest, Instagram, or Camera
+                    Pinterest, Instagram, or Photos
                   </div>
                 </div>
               </div>
@@ -329,7 +327,7 @@ export function UploadInspirationView({
             className="w-full h-10 mt-3 rounded-xl bg-stone-100 group-hover:bg-[#E0246A] text-stone-800 group-hover:text-white text-xs font-medium transition-colors inline-flex items-center justify-center gap-1.5"
           >
             <UploadCloud className="w-3.5 h-3.5" />
-            <span>{activePhotoUrl ? 'Change Reference Photo' : 'Choose Reference Photo'}</span>
+            <span>{activePhotoUrl ? 'Change Inspo Photo' : 'Choose Inspo Photo'}</span>
           </button>
         </div>
 
@@ -341,7 +339,7 @@ export function UploadInspirationView({
           <div className="space-y-3">
             <div className="flex items-center justify-between">
               <span className="text-[11px] font-mono uppercase tracking-wider text-[#E0246A] font-semibold">
-                2. Your Hand
+                2. Your Hand Photo
               </span>
               {localHandPhoto && (
                 <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
@@ -391,11 +389,11 @@ export function UploadInspirationView({
 
       {/* Error / Rate Limit Notification Banner */}
       {generationError && (
-        <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-2.5 animate-in fade-in duration-200">
+        <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2 animate-in fade-in duration-200">
           <div className="flex items-start gap-2.5">
             <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
             <div className="space-y-0.5 text-left">
-              <span className="font-semibold block">Generation Notification</span>
+              <span className="font-medium block">Notice</span>
               <p className="text-amber-800 leading-relaxed">{generationError}</p>
             </div>
           </div>
@@ -403,14 +401,14 @@ export function UploadInspirationView({
             <button
               type="button"
               onClick={handleSeeOnMyHand}
-              className="px-4 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white font-semibold transition cursor-pointer shadow-xs active:scale-95"
+              className="px-3.5 py-1 rounded-lg bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium transition cursor-pointer shadow-xs active:scale-95 text-xs"
             >
-              Retry Generation
+              Retry
             </button>
             <button
               type="button"
               onClick={() => setGenerationError(null)}
-              className="px-3 py-1.5 rounded-full bg-white hover:bg-amber-100/50 border border-amber-200 text-amber-900 font-medium transition cursor-pointer active:scale-95"
+              className="px-3 py-1 rounded-lg bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 font-medium transition cursor-pointer active:scale-95 text-xs"
             >
               Dismiss
             </button>
@@ -418,23 +416,22 @@ export function UploadInspirationView({
         </div>
       )}
 
-      {/* Primary Action Button: "See Reference Design on My Hand" */}
+      {/* Primary Action Button: "Apply Design to Hand" */}
       <div className="pt-2 text-center space-y-2">
         <button
           type="button"
           disabled={isGeneratingTryOn}
           onClick={handleSeeOnMyHand}
-          className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75"
+          className="w-full h-12 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-medium transition flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75 shadow-md shadow-[#E0246A]/20"
         >
           {isGeneratingTryOn ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin text-white" />
-              <span>Generating with Vertex AI Image-to-Image...</span>
+              <span>Applying design...</span>
             </>
           ) : (
             <>
-              <Sparkles className="w-4 h-4 text-white" />
-              <span>{activePhotoUrl ? 'See Reference Design on My Hand' : 'Choose Reference Photo & Try On'}</span>
+              <span>{activePhotoUrl ? 'Apply Design to Hand' : 'Select Photo & Try On'}</span>
               <ArrowRight className="w-4 h-4 text-white" />
             </>
           )}
@@ -445,9 +442,9 @@ export function UploadInspirationView({
           <button
             type="button"
             onClick={onSampleDemoClick}
-            className="text-xs font-medium text-stone-500 hover:text-[#E0246A] transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 underline-offset-4 hover:decoration-[#E0246A] cursor-pointer"
+            className="text-xs font-medium text-stone-500 hover:text-stone-900 transition-colors inline-flex items-center gap-1.5 underline decoration-stone-300 underline-offset-4 hover:decoration-stone-700 cursor-pointer"
           >
-            <span>Or test with trending sample reference design</span>
+            <span>Or test with a sample manicure design</span>
           </button>
         </div>
       </div>

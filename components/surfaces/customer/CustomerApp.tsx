@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Home, Compass, ImagePlus, Paintbrush, Hand, Share2, Menu, X, ChevronRight, Wand2, User, Heart } from 'lucide-react';
+import { Home, Compass, Paintbrush, Hand, Share2, Menu, X, ChevronRight, User, Heart } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { CustomerRoute, CustomerSidebar } from './CustomerSidebar';
@@ -166,9 +166,9 @@ export function CustomerApp({
   const routeBreadcrumbs: Record<CustomerRoute, string> = {
     home: 'Home',
     explore: 'Explore',
-    tryon: 'Upload photo (try on)',
+    tryon: 'Try On',
     'ai-create': 'Create with AI',
-    upload: 'Upload photo (try on)',
+    upload: 'Try On',
     favorites: 'Favorites',
     profile: 'Profile',
     signup: 'Create Account',
@@ -182,7 +182,7 @@ export function CustomerApp({
     icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   }[] = [
     { id: 'home', label: 'Home', icon: Home },
-    { id: 'upload', label: 'Upload photo (try on)', icon: ImagePlus },
+    { id: 'upload', label: 'Try On', icon: Hand },
     { id: 'explore', label: 'Explore', icon: Compass },
     { id: 'ai-create', label: 'Create with AI', icon: Paintbrush },
     { id: 'favorites', label: 'Favorites', icon: Heart },
@@ -517,7 +517,7 @@ export function CustomerApp({
           {(
             [
               { id: 'home' as const, label: 'Home', Icon: Home },
-              { id: 'upload' as const, label: 'Try On', Icon: ImagePlus, isCenter: true },
+              { id: 'upload' as const, label: 'Try On', Icon: Hand, isCenter: true },
               { id: 'explore' as const, label: 'Explore', Icon: Compass },
             ]
           ).map(({ id, label, Icon, isCenter }) => {

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Camera, X, Check, ArrowRight, Sparkles, SlidersHorizontal, Info, Scan, Palette, CheckCircle2, UploadCloud, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
+import { Camera, X, Check, ArrowRight, SlidersHorizontal, Info, Scan, Palette, CheckCircle2, UploadCloud, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
 import { ExploreDesignSet, NailShape, Finger } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';

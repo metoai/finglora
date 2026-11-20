@@ -9,9 +9,9 @@ export function ToastContainer({ toasts }: { toasts: ToastItem[] }) {
       {toasts.map((t) => (
         <div
           key={t.id}
-          className="bg-[#18181B] text-white px-4 py-3 rounded-2xl shadow-xl border border-white/10 flex items-center gap-2.5 text-xs sm:text-sm font-medium"
+          className="bg-[#E0246A] text-white px-4 py-3 rounded-2xl shadow-xl shadow-[#E0246A]/20 border border-white/20 flex items-center gap-2.5 text-xs sm:text-sm font-medium"
         >
-          <span className="w-2 h-2 rounded-full bg-[#FFB6C1] shrink-0" />
+          <span className="w-2 h-2 rounded-full bg-white shrink-0" />
           <span>{t.text}</span>
         </div>
       ))}

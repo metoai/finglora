@@ -58,7 +58,7 @@ export function InspirationPhotoCard({
                 key={p.num}
                 style={{ top: p.top, left: p.left }}
                 className={`-translate-x-1/2 -translate-y-1/2 absolute flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold shadow-md border border-white transition-all ${
-                  active ? 'bg-[#E0246A] text-white scale-100' : 'bg-[#18181B]/80 text-white/70 scale-90'
+                  active ? 'bg-[#E0246A] text-white scale-100' : 'bg-stone-500/80 text-white/80 scale-90'
                 }`}
               >
                 <span>{p.num}</span>

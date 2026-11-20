@@ -5,10 +5,13 @@ import {
   ArrowLeft,
   Share2,
   Bookmark,
+  Heart,
   Check,
   Paintbrush,
-  Sparkles,
+  RefreshCw,
+  Sliders,
   AlertTriangle,
+  Hand,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
@@ -194,13 +197,12 @@ export function TryOnView({
       const errJson = await res.json().catch(() => ({}));
       const is429 = res.status === 429 || errJson?.isRateLimit || errJson?.error?.includes('RESOURCE_EXHAUSTED') || errJson?.error?.includes('Resource exhausted');
       if (is429) {
-        setSynthesisError('Vertex AI image generation quota is cooling down (429). Please wait a moment and tap Retry.');
+        setSynthesisError('Service is currently experiencing high demand. Please try again in a moment.');
       } else {
-        setSynthesisError(errJson?.error || 'AI hand synthesis could not be completed. Please tap Retry.');
+        setSynthesisError(errJson?.error || 'Could not generate manicure. Please try again.');
       }
     } catch (err: unknown) {
-      const msg = err instanceof Error ? err.message : 'Synthesis error';
-      setSynthesisError(`${msg}. Please tap Retry.`);
+      setSynthesisError('Connection error. Please try again.');
     } finally {
       setIsSynthesizingHand(false);
     }
@@ -236,9 +238,9 @@ export function TryOnView({
       {/* Toast Notification */}
       {customizedToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
-          <div className="bg-stone-900 text-white text-xs font-medium px-4 py-2 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            <Paintbrush className="w-3.5 h-3.5 text-[#E0246A]" />
-            <span>AI customization applied to your manicure!</span>
+          <div className="bg-[#E0246A] text-white text-xs font-medium px-4 py-2 rounded-full shadow-lg border border-white/20 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+            <Check className="w-3.5 h-3.5 text-white" />
+            <span>Manicure updated</span>
           </div>
         </div>
       )}
@@ -253,31 +255,31 @@ export function TryOnView({
             <button
               type="button"
               onClick={handleRetake}
-              className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200/80 flex items-center justify-center text-stone-700 transition-all cursor-pointer active:scale-95"
+              className="w-9 h-9 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-700 transition cursor-pointer active:scale-95"
               title="Retake or change photo"
             >
-              <ArrowLeft className="w-4.5 h-4.5" />
+              <ArrowLeft className="w-4 h-4" />
             </button>
 
             <div className="text-center">
               <h1 className="font-serif text-xl sm:text-2xl font-normal text-[#18181B] tracking-tight">
-                Your Try-On Result
+                Try-On Result
               </h1>
             </div>
 
             <div className="w-9 h-9" />
           </div>
 
-          {/* Pill Toggle: [Natural Hand] [AI Manicure] */}
+          {/* Pill Toggle: [Natural Hand] [Manicure] */}
           {synthesizedHandUrl && (
             <div className="flex justify-center">
-              <div className="inline-flex rounded-full bg-stone-100 p-1 border border-stone-200/80">
+              <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80">
                 <button
                   type="button"
                   onClick={() => setTryOnView('before')}
-                  className={`px-5 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                  className={`px-4 py-1.5 rounded-full text-xs transition cursor-pointer ${
                     tryOnView === 'before'
-                      ? 'bg-[#18181B] text-white shadow-xs font-semibold'
+                      ? 'bg-[#E0246A] text-white shadow-xs font-medium'
                       : 'text-stone-600 hover:text-stone-900 font-medium'
                   }`}
                 >
@@ -286,20 +288,20 @@ export function TryOnView({
                 <button
                   type="button"
                   onClick={() => setTryOnView('after')}
-                  className={`px-5 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
+                  className={`px-4 py-1.5 rounded-full text-xs transition cursor-pointer ${
                     tryOnView === 'after'
-                      ? 'bg-[#18181B] text-white shadow-xs font-semibold'
+                      ? 'bg-[#E0246A] text-white shadow-xs font-medium'
                       : 'text-stone-600 hover:text-stone-900 font-medium'
                   }`}
                 >
-                  AI Manicure
+                  Manicure
                 </button>
               </div>
             </div>
           )}
 
-          {/* Hand Result Photo Viewport - Pure Photographic Studio Quality */}
-          <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-900 shadow-md border border-stone-200/80 flex items-center justify-center mx-auto">
+          {/* Hand Result Photo Viewport */}
+          <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200 flex items-center justify-center mx-auto">
             <img
               src={
                 (tryOnView === 'after' && synthesizedHandUrl)
@@ -307,32 +309,32 @@ export function TryOnView({
                   : (resultImageUrl || '/assets/editorial_nail_hero.jpg')
               }
               alt="Try-On Hand"
-              className="w-full h-full object-cover transition-all duration-300"
+              className="w-full h-full object-cover transition duration-200"
             />
 
-            {/* AI Synthesizing Spinner Overlay */}
+            {/* Spinner Overlay */}
             {isSynthesizingHand && (
-              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2.5 text-white p-4 text-center">
-                <div className="w-10 h-10 rounded-full border-2 border-pink-200 border-t-[#E0246A] animate-spin" />
-                <span className="text-xs font-medium">Vertex AI synthesizing manicure on your hand...</span>
+              <div className="absolute inset-0 z-30 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white p-4 text-center">
+                <div className="w-7 h-7 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+                <span className="text-xs font-medium">Applying manicure...</span>
               </div>
             )}
 
-            {/* Subtle before/after indicator pill */}
+            {/* Subtle before/after indicator */}
             <div className="absolute top-3 left-3 z-20">
               <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
-                {synthesizedHandUrl && tryOnView === 'after' ? 'AI Manicure' : 'Natural Hand'}
+                {synthesizedHandUrl && tryOnView === 'after' ? 'Manicure' : 'Natural Hand'}
               </span>
             </div>
           </div>
 
-          {/* Error / Rate Limit Notification Banner */}
+          {/* Error Banner */}
           {synthesisError && (
-            <div className="p-3.5 rounded-2xl bg-amber-50 border border-amber-200/80 text-amber-900 text-xs space-y-2 animate-in fade-in duration-200">
+            <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-xs space-y-2 animate-in fade-in duration-200">
               <div className="flex items-start gap-2.5">
                 <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
                 <div className="space-y-0.5 text-left">
-                  <span className="font-semibold block">Generation Notification</span>
+                  <span className="font-medium block">Notice</span>
                   <p className="text-amber-800 leading-relaxed">{synthesisError}</p>
                 </div>
               </div>
@@ -341,14 +343,14 @@ export function TryOnView({
                   type="button"
                   disabled={isSynthesizingHand}
                   onClick={handleSynthesizeHand}
-                  className="px-4 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white font-semibold transition cursor-pointer shadow-xs active:scale-95 disabled:opacity-60"
+                  className="px-3.5 py-1 rounded-lg bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium transition cursor-pointer shadow-xs active:scale-95 disabled:opacity-60 text-xs"
                 >
-                  Retry Generation
+                  Retry
                 </button>
                 <button
                   type="button"
                   onClick={() => setSynthesisError(null)}
-                  className="px-3 py-1.5 rounded-full bg-white hover:bg-amber-100/50 border border-amber-200 text-amber-900 font-medium transition cursor-pointer active:scale-95"
+                  className="px-3 py-1 rounded-lg bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 font-medium transition cursor-pointer active:scale-95 text-xs"
                 >
                   Dismiss
                 </button>
@@ -356,86 +358,148 @@ export function TryOnView({
             </div>
           )}
 
-          {/* AI Generation State or CTA */}
+          {/* Action Panels */}
           {!synthesizedHandUrl ? (
-            <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200/80 text-center space-y-3">
-              <div className="space-y-1">
-                <h3 className="font-serif text-base font-medium text-stone-900">
-                  Ready to Generate Your Manicure
-                </h3>
-                <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
-                  Apply the reference design directly onto your hand photo using Vertex AI image-to-image.
-                </p>
-              </div>
-
-              <button
-                type="button"
-                disabled={isSynthesizingHand}
-                onClick={handleSynthesizeHand}
-                className="w-full h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/25 transition-all inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75"
-              >
-                {isSynthesizingHand ? (
-                  <>
-                    <div className="w-4 h-4 rounded-full border-2 border-white/40 border-t-white animate-spin" />
-                    <span>Synthesizing Hand with AI...</span>
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 text-white" />
-                    <span>Generate Manicure on My Hand with AI</span>
-                  </>
-                )}
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-                <span className="text-[11px] text-stone-500 font-medium">
-                  AI Manicure synthesized onto your hand
-                </span>
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    disabled={isSynthesizingHand}
-                    onClick={handleSynthesizeHand}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-60"
-                  >
-                    <Sparkles className="w-3.5 h-3.5 text-white" />
-                    <span>{isSynthesizingHand ? 'Synthesizing...' : 'Regenerate Hand'}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const handImg = (tryOnView === 'after' && synthesizedHandUrl)
-                        ? synthesizedHandUrl
-                        : (customTryOnHandUrl || resultImageUrl || '/assets/editorial_nail_hero.jpg');
-                      onCustomizeWithAi?.(handImg);
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
-                  >
-                    <Paintbrush className="w-3.5 h-3.5 text-pink-400" />
-                    <span>Customize with AI</span>
-                  </button>
+            <div className="space-y-3 pt-1">
+              <div className="bg-stone-50 rounded-2xl p-4 border border-stone-200 text-center space-y-3">
+                <div className="space-y-0.5">
+                  <h3 className="font-serif text-base font-normal text-stone-900">
+                    Apply Reference to Hand
+                  </h3>
+                  <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
+                    Preview this manicure fitted directly onto your hand photo.
+                  </p>
                 </div>
+
+                <button
+                  type="button"
+                  disabled={isSynthesizingHand}
+                  onClick={handleSynthesizeHand}
+                  className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-medium transition inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-75 shadow-md shadow-[#E0246A]/20"
+                >
+                  {isSynthesizingHand ? (
+                    <>
+                      <div className="w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
+                      <span>Applying...</span>
+                    </>
+                  ) : (
+                    <span>Apply Manicure</span>
+                  )}
+                </button>
               </div>
 
-              {/* Quick Change Reference or Hand Bar */}
-              <div className="flex items-center justify-center gap-3 pt-1 text-xs">
+              {/* Photo Switchers */}
+              <div className="flex items-center justify-center gap-4 pt-1 text-xs text-stone-500">
                 <button
                   type="button"
                   onClick={() => changeHandInputRef.current?.click()}
-                  className="text-stone-500 hover:text-[#E0246A] font-medium inline-flex items-center gap-1 cursor-pointer transition"
+                  className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1 px-2 rounded-md hover:bg-stone-100"
                 >
-                  <ImagePlus className="w-3.5 h-3.5" />
+                  <ImagePlus className="w-3.5 h-3.5 text-stone-400" />
                   <span>Change Hand</span>
                 </button>
                 <span className="text-stone-300">•</span>
                 <button
                   type="button"
                   onClick={() => changeRefInspoInputRef.current?.click()}
-                  className="text-stone-500 hover:text-[#E0246A] font-medium inline-flex items-center gap-1 cursor-pointer transition"
+                  className="hover:text-stone-900 font-medium inline-flex items-center gap-1.5 cursor-pointer transition py-1 px-2 rounded-md hover:bg-stone-100"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+                  <RotateCcw className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Change Reference</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-2.5 pt-1">
+              {/* Row 1: Primary Actions */}
+              <div className="grid grid-cols-2 gap-2.5 w-full">
+                <button
+                  type="button"
+                  disabled={isSynthesizingHand}
+                  onClick={handleSynthesizeHand}
+                  className="h-11 px-3 rounded-xl bg-white border border-stone-200 hover:border-stone-400 text-stone-900 text-xs sm:text-sm font-medium transition shadow-2xs hover:shadow-xs inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-60"
+                >
+                  <RefreshCw className={`w-3.5 h-3.5 text-stone-600 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
+                  <span>{isSynthesizingHand ? 'Updating...' : 'Regenerate'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    const handImg = (tryOnView === 'after' && synthesizedHandUrl)
+                      ? synthesizedHandUrl
+                      : (customTryOnHandUrl || resultImageUrl || '/assets/editorial_nail_hero.jpg');
+                    onCustomizeWithAi?.(handImg);
+                  }}
+                  className="h-11 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-medium transition shadow-md shadow-[#E0246A]/20 inline-flex items-center justify-center gap-2 cursor-pointer active:scale-95"
+                >
+                  <Sliders className="w-3.5 h-3.5 text-white" />
+                  <span>Customize</span>
+                </button>
+              </div>
+
+              {/* Row 2: Secondary Utilities */}
+              <div className="grid grid-cols-2 gap-2.5 w-full">
+                <button
+                  type="button"
+                  onClick={handleSaveLook}
+                  className="h-10 px-3 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  {savedToast ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Saved</span>
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="w-3.5 h-3.5 text-stone-600" />
+                      <span>Save</span>
+                    </>
+                  )}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (typeof window !== 'undefined' && navigator.clipboard) {
+                      navigator.clipboard.writeText(window.location.href);
+                    }
+                    setSharedToast(true);
+                    setTimeout(() => setSharedToast(false), 2200);
+                  }}
+                  className="h-10 px-3 rounded-xl bg-stone-100 hover:bg-stone-200/80 text-stone-800 text-xs font-medium transition inline-flex items-center justify-center gap-1.5 cursor-pointer active:scale-95"
+                >
+                  {sharedToast ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-stone-900" strokeWidth={2} />
+                      <span>Copied</span>
+                    </>
+                  ) : (
+                    <>
+                      <Share2 className="w-3.5 h-3.5 text-stone-600" />
+                      <span>Share</span>
+                    </>
+                  )}
+                </button>
+              </div>
+
+              {/* Row 3: Photo Switchers */}
+              <div className="flex items-center justify-center gap-4 pt-0.5 text-xs text-stone-500">
+                <button
+                  type="button"
+                  onClick={() => changeHandInputRef.current?.click()}
+                  className="hover:text-stone-900 font-medium inline-flex items-center gap-1 cursor-pointer transition py-0.5 px-2 rounded-md hover:bg-stone-100"
+                >
+                  <ImagePlus className="w-3.5 h-3.5 text-stone-400" />
+                  <span>Change Hand</span>
+                </button>
+                <span className="text-stone-300">•</span>
+                <button
+                  type="button"
+                  onClick={() => changeRefInspoInputRef.current?.click()}
+                  className="hover:text-stone-900 font-medium inline-flex items-center gap-1 cursor-pointer transition py-0.5 px-2 rounded-md hover:bg-stone-100"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-stone-400" />
                   <span>Change Reference</span>
                 </button>
               </div>
@@ -479,51 +543,6 @@ export function TryOnView({
               }
             }}
           />
-
-          {/* Bottom Action Bar */}
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1 w-full">
-            <button
-              type="button"
-              onClick={handleSaveLook}
-              className="w-full h-11 sm:h-12 px-3 rounded-2xl bg-white border border-stone-200 text-stone-800 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-2xs hover:bg-stone-50 transition-all cursor-pointer active:scale-95 min-w-0"
-            >
-              {savedToast ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-600 shrink-0" />
-                  <span className="text-emerald-700 truncate">Saved</span>
-                </>
-              ) : (
-                <>
-                  <Bookmark className="w-4 h-4 text-stone-600 shrink-0" />
-                  <span className="truncate">Save</span>
-                </>
-              )}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                if (typeof window !== 'undefined' && navigator.clipboard) {
-                  navigator.clipboard.writeText(window.location.href);
-                }
-                setSharedToast(true);
-                setTimeout(() => setSharedToast(false), 2200);
-              }}
-              className="w-full h-11 sm:h-12 px-3 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-md transition-all cursor-pointer active:scale-95 min-w-0"
-            >
-              {sharedToast ? (
-                <>
-                  <Check className="w-4 h-4 text-white shrink-0" strokeWidth={2} />
-                  <span className="truncate">Link Copied!</span>
-                </>
-              ) : (
-                <>
-                  <Share2 className="w-4 h-4 shrink-0" />
-                  <span className="truncate">Share Look</span>
-                </>
-              )}
-            </button>
-          </div>
         </div>
       ) : (
         /* ============================================================== */
@@ -546,7 +565,7 @@ export function TryOnView({
                 Photo Try-On
               </h1>
               <p className="text-[11px] text-stone-500">
-                Upload your hand photo to see manicure designs
+                Upload your hand photo to preview any manicure.
               </p>
             </div>
 
@@ -563,7 +582,7 @@ export function TryOnView({
           {/* Photo Upload Viewfinder */}
           <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center p-6 text-center space-y-4 mx-auto hover:border-[#E0246A]/50 transition-colors">
             <div className="w-16 h-16 rounded-2xl bg-[#FDF2F8] border border-[#E0246A]/20 text-[#E0246A] flex items-center justify-center shadow-xs">
-              <ImagePlus className="w-8 h-8" strokeWidth={1.5} />
+              <Hand className="w-8 h-8" strokeWidth={1.5} />
             </div>
 
             <div className="space-y-1 max-w-xs">
@@ -571,12 +590,12 @@ export function TryOnView({
                 Upload Hand Photo
               </h3>
               <p className="text-xs text-stone-500 leading-relaxed">
-                Take or upload a clean, well-lit photo of your hand facing flat. Vertex AI will apply the nail design directly to your fingers.
+                Take or upload a clean, well-lit photo of your hand facing flat to preview designs.
               </p>
             </div>
 
             <label className="cursor-pointer h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-md shadow-[#E0246A]/25 transition-all active:scale-95">
-              <ImagePlus className="w-4 h-4" />
+              <Hand className="w-4 h-4" />
               <span>Choose Hand Photo</span>
               <input
                 type="file"
