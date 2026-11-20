@@ -23,6 +23,7 @@ import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 import { downscaleImageForVision } from '@/lib/services/storage';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
+import { BrandLogoIcon } from '@/components/common/BrandLogo';
 
 interface ChatMessage {
   id: string;
@@ -554,10 +555,8 @@ export function AiCreationView({
             {/* If no messages yet: Show ChatGPT-Style Welcome Hero with 4 Suggestion Cards */}
             {messages.length === 0 ? (
               <div className="h-full flex flex-col items-center justify-center text-center max-w-xl mx-auto py-8 sm:py-12 space-y-6 animate-in fade-in duration-300">
-                {/* Brand Monogram */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-3xl bg-stone-900 text-white flex items-center justify-center shadow-2xs font-serif text-2xl sm:text-3xl font-bold">
-                  F
-                </div>
+                {/* Finglora Floral Brand Icon */}
+                <BrandLogoIcon size="lg" className="w-14 h-14 sm:w-16 sm:h-16" />
 
                 <div className="space-y-1.5">
                   <h2 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
@@ -611,10 +610,8 @@ export function AiCreationView({
                   // Gemini / Assistant Message
                   return (
                     <div key={msg.id} className="flex gap-3 sm:gap-4 items-start animate-in fade-in duration-200">
-                      {/* Avatar */}
-                      <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-stone-900 text-white flex items-center justify-center shrink-0 mt-0.5 shadow-2xs text-[10px] sm:text-[11px] font-bold">
-                        AI
-                      </div>
+                      {/* Finglora Avatar */}
+                      <BrandLogoIcon size="sm" className="w-7 h-7 sm:w-8 sm:h-8 shrink-0 mt-0.5" />
 
                       {/* Content */}
                       <div className="flex-1 space-y-3">
