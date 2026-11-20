@@ -80,7 +80,7 @@ export async function POST(request: Request) {
 
     if (!finalBase64 && imageUrl) {
       try {
-        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(6000) });
+        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(12000) });
         if (imgRes.ok) {
           const buffer = await imgRes.arrayBuffer();
           finalBase64 = Buffer.from(buffer).toString('base64');
@@ -137,7 +137,7 @@ export async function POST(request: Request) {
                 responseMimeType: 'application/json',
               },
             }),
-            signal: AbortSignal.timeout(10000),
+            signal: AbortSignal.timeout(20000),
           });
 
           if (geminiRes.ok) {

@@ -11,6 +11,8 @@ export interface UserProfile {
   skinToneId: string;
   handOrientation: 'left' | 'right';
   customHandUrl: string | null;
+  isPro?: boolean;
+  credits?: number;
 }
 
 export async function fetchUserProfile(userId: string): Promise<UserProfile | null> {
@@ -24,6 +26,11 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
   if (error || !data) return null;
   const row = data as any;
 
+  if (row.is_pro && typeof window !== 'undefined') {
+    localStorage.setItem('finglora_is_pro_subscriber', 'true');
+    localStorage.setItem('finglora_tryon_credits', (row.credits || 999999).toString());
+  }
+
   return {
     id: row.id,
     displayName: row.display_name,
@@ -34,6 +41,8 @@ export async function fetchUserProfile(userId: string): Promise<UserProfile | nu
     skinToneId: row.skin_tone_id || 'warm-ivory',
     handOrientation: (row.hand_orientation || 'right') as 'left' | 'right',
     customHandUrl: row.custom_hand_url,
+    isPro: Boolean(row.is_pro),
+    credits: typeof row.credits === 'number' ? row.credits : undefined,
   };
 }
 
