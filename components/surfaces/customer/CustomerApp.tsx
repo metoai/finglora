@@ -4,7 +4,7 @@ import React, { useState } from 'react';
 import { Home, Compass, Hand } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 
-import { CustomerRoute } from './CustomerSidebar';
+import { CustomerRoute, CustomerSidebar } from './CustomerSidebar';
 import { CustomerTopBar } from './CustomerTopBar';
 import { HomeHubView } from './HomeHubView';
 import { ExploreGalleryView } from './ExploreGalleryView';
@@ -174,20 +174,37 @@ export function CustomerApp({
         customerRoute === 'ai-create' ? 'h-[100dvh] overflow-hidden' : ''
       }`}
     >
-      <CustomerTopBar
-        currentRoute={customerRoute}
-        onNavigate={setCustomerRoute}
-        onBrandClick={onBrandClick}
-        favoritesCount={favoritesCount}
-        userName={userName}
-        preferredShape={preferredShape}
-        mobileMenuOpen={mobileMenuOpen}
-        setMobileMenuOpen={setMobileMenuOpen}
-      />
+      {/* Pinterest-Style Slim Left Rail for Desktop */}
+      {!mobilePreview && (
+        <CustomerSidebar
+          currentRoute={customerRoute}
+          onNavigate={setCustomerRoute}
+          onBrandClick={onBrandClick}
+          favoritesCount={favoritesCount}
+          userName={userName}
+          preferredShape={preferredShape}
+        />
+      )}
+
+      {/* Mobile Top Header (hidden on desktop where left rail is present) */}
+      <div className={mobilePreview ? 'block' : 'md:hidden'}>
+        <CustomerTopBar
+          currentRoute={customerRoute}
+          onNavigate={setCustomerRoute}
+          onBrandClick={onBrandClick}
+          favoritesCount={favoritesCount}
+          userName={userName}
+          preferredShape={preferredShape}
+          mobileMenuOpen={mobileMenuOpen}
+          setMobileMenuOpen={setMobileMenuOpen}
+        />
+      </div>
 
       {/* Main Content Area */}
       <div
         className={`flex-1 flex flex-col min-w-0 w-full ${
+          mobilePreview ? '' : 'md:pl-16'
+        } ${
           customerRoute === 'ai-create' ? 'h-[calc(100dvh-3.5rem)] sm:h-[calc(100dvh-4rem)] overflow-hidden' : ''
         }`}
       >
@@ -195,6 +212,8 @@ export function CustomerApp({
           className={`flex-1 w-full ${
             customerRoute === 'ai-create'
               ? 'h-full p-0 bg-[#FAF9F6] overflow-hidden flex flex-col'
+              : customerRoute === 'explore'
+              ? 'min-h-[calc(100vh-4rem)] pb-24 md:pb-12 max-w-[1700px] mx-auto w-full'
               : mobilePreview
               ? 'pb-24 px-4 pt-4'
               : 'min-h-[calc(100vh-4rem)] pb-24 md:pb-12 px-4 sm:px-6 lg:px-8 max-w-6xl xl:max-w-7xl mx-auto pt-4 sm:pt-6'
