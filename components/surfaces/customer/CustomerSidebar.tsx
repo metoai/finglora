@@ -5,10 +5,9 @@ import {
   Home,
   Compass,
   ImagePlus,
-  Hand,
-  ChevronRight,
   Heart,
   Paintbrush,
+  User,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -54,19 +53,19 @@ export function CustomerSidebar({
 }) {
   const sections: NavSection[] = [
     {
-      title: 'DISCOVER',
+      title: 'ATELIER',
       items: [
         { id: 'home', label: 'Home', Icon: Home },
+        { id: 'upload', label: 'Upload photo (try on)', Icon: ImagePlus },
         { id: 'explore', label: 'Explore', Icon: Compass },
-        { id: 'favorites', label: 'Favorites', Icon: Heart, badge: favoritesCount > 0 ? favoritesCount : undefined },
       ],
     },
     {
-      title: 'STUDIO',
+      title: 'STUDIO & PROFILE',
       items: [
-        { id: 'tryon', label: 'Try On', Icon: Hand },
         { id: 'ai-create', label: 'Create with AI', Icon: Paintbrush },
-        { id: 'upload', label: 'Upload Photo', Icon: ImagePlus },
+        { id: 'favorites', label: 'Favorites', Icon: Heart, badge: favoritesCount > 0 ? favoritesCount : undefined },
+        { id: 'profile', label: 'Profile', Icon: User },
       ],
     },
   ];
@@ -74,7 +73,6 @@ export function CustomerSidebar({
   // Derive predominant shape and finish from nails
   const sampleNail = nails.index || nails.thumb;
   const currentShape = sampleNail?.shape || 'almond';
-  const currentFinish = sampleNail?.finish || 'glossy';
 
   return (
     <aside className="hidden lg:flex lg:w-64 lg:flex-col lg:fixed lg:inset-y-0 bg-[#FAFAFA] border-r border-[rgba(31,26,28,0.08)] px-3.5 py-5 justify-between z-20 select-none">
@@ -102,7 +100,7 @@ export function CustomerSidebar({
 
               <div className="flex flex-col gap-[2px]">
                 {section.items.map(({ id, label, Icon, badge }) => {
-                  const active = currentRoute === id;
+                  const active = currentRoute === id || (id === 'upload' && currentRoute === 'tryon');
                   return (
                     <button
                       key={id}
@@ -150,13 +148,12 @@ export function CustomerSidebar({
         </nav>
       </div>
 
-      {/* Bottom Section: Active Set Reference Card & Client Profile */}
+      {/* Bottom Section: Active Set Reference Card */}
       <div className="space-y-3 pt-4 border-t border-[rgba(31,26,28,0.08)]">
-        {/* Active Set Reference Card */}
         <div
-          onClick={() => onNavigate('tryon')}
+          onClick={() => onNavigate('upload')}
           className="cursor-pointer bg-[#FFFFFF] rounded-2xl p-3 border border-[rgba(31,26,28,0.08)] shadow-2xs hover:border-[#E0246A]/40 transition-all group"
-          title="Click to view on your hand in Virtual Try-On"
+          title="Click to view or upload hand in Virtual Try-On"
         >
           <div className="flex items-center justify-between mb-1.5">
             <span className="text-[10px] font-mono tracking-wider uppercase text-[#8C8085]">
@@ -190,49 +187,6 @@ export function CustomerSidebar({
             </div>
           )}
         </div>
-
-        {/* Profile / Account Link */}
-        <button
-          type="button"
-          onClick={() => onNavigate('profile')}
-          className={`w-full h-10 px-2.5 rounded-xl border transition-all flex items-center justify-between text-left group cursor-pointer ${
-            currentRoute === 'profile'
-              ? 'bg-[#FDE8EF] border-[#E0246A]/20 text-[#E0246A]'
-              : 'bg-transparent hover:bg-[#F4F4F5] border-transparent hover:border-[rgba(31,26,28,0.06)]'
-          }`}
-        >
-          <div className="flex items-center gap-2.5">
-            <div className="w-7 h-7 rounded-full overflow-hidden border border-[#E0246A]/30 ring-1 ring-[#FAFAFA] shrink-0 bg-[#FDE8EF]">
-              <img
-                src="https://api.dicebear.com/9.x/lorelei/svg?seed=Elise&backgroundColor=fde8ef"
-                alt="Profile"
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <div className="min-w-0">
-              <p
-                className={`text-xs font-medium truncate transition-colors ${
-                  currentRoute === 'profile'
-                    ? 'text-[#E0246A] font-semibold'
-                    : 'text-[#18181B] group-hover:text-[#E0246A]'
-                }`}
-              >
-                Profile
-              </p>
-              <p className="text-[10px] text-[#8C8085] truncate capitalize">
-                {currentShape} shape
-              </p>
-            </div>
-          </div>
-          <ChevronRight
-            className={`w-3.5 h-3.5 transition-colors ${
-              currentRoute === 'profile'
-                ? 'text-[#E0246A]'
-                : 'text-[#8C8085] group-hover:text-[#18181B]'
-            }`}
-            strokeWidth={1.5}
-          />
-        </button>
       </div>
     </aside>
   );

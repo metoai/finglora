@@ -1,30 +1,15 @@
-'use client';
-
 import React, { useState, useRef, useEffect } from 'react';
 import {
   Sparkles,
   Send,
   RotateCcw,
-  Camera,
-  Check,
-  ChevronRight,
-  Hand,
-  Paintbrush,
+  ArrowLeft,
   Loader2,
 } from 'lucide-react';
-import { Finger, NailDesign, NailShape, NailPattern, NailFinish } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
+import { Finger, NailDesign } from '@/types/nail';
 import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-
-const AI_STUDIO_FINGERTIP_ANCHORS: Record<Finger, { tipX: number; tipY: number; angleDeg: number; scale: number }> = {
-  thumb: { tipX: 0.22, tipY: 0.60, angleDeg: -28, scale: 0.95 },
-  index: { tipX: 0.36, tipY: 0.30, angleDeg: -10, scale: 1.0 },
-  middle: { tipX: 0.50, tipY: 0.23, angleDeg: 0, scale: 1.05 },
-  ring: { tipX: 0.64, tipY: 0.29, angleDeg: 10, scale: 1.0 },
-  pinky: { tipX: 0.78, tipY: 0.44, angleDeg: 22, scale: 0.88 },
-};
+import { downscaleImageForVision } from '@/lib/services/storage';
 
 interface ChatMessage {
   id: string;
@@ -36,33 +21,47 @@ interface ChatMessage {
 
 export function AiCreationView({
   customTryOnHandUrl,
+  initialHandDesignUrl,
   nails,
   setNails,
   onSignUpClick,
+  onBackToTryOn,
 }: {
   customTryOnHandUrl?: string | null;
+  initialHandDesignUrl?: string | null;
   nails: Record<Finger, NailDesign>;
   setNails?: React.Dispatch<React.SetStateAction<Record<Finger, NailDesign>>>;
   onSignUpClick?: () => void;
+  onBackToTryOn?: () => void;
 }) {
   const [promptText, setPromptText] = useState('');
   const [isIterating, setIsIterating] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
 
-  // Persistent Hand Photo
-  const handPhoto =
+  // Persistent Bare Hand Photo
+  const originalBareHandPhoto =
     customTryOnHandUrl ||
     (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_hand_photo') : null) ||
     '/assets/editorial_nail_hero.jpg';
 
-  // Active Displayed Try-On Image (Constant hand, mutating nails)
+  // Active Displayed AI-Generated Try-On Hand Image
   const [currentTryOnImage, setCurrentTryOnImage] = useState<string>(() => {
-    if (nails.middle?.pattern === 'heart-french' || nails.index?.pattern === 'heart-french') {
-      return '/assets/pink_heart_tryon_result.jpg';
-    }
-    return '/assets/milky_gold_tryon_result.jpg';
+    return (
+      initialHandDesignUrl ||
+      (typeof window !== 'undefined' ? localStorage.getItem('finglora_ai_base_hand_image') : null) ||
+      customTryOnHandUrl ||
+      (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_hand_photo') : null) ||
+      '/assets/editorial_nail_hero.jpg'
+    );
   });
+
+  useEffect(() => {
+    if (initialHandDesignUrl) {
+      setCurrentTryOnImage(initialHandDesignUrl);
+      setCompareMode('after');
+    }
+  }, [initialHandDesignUrl]);
 
   const [compareMode, setCompareMode] = useState<'after' | 'before'>('after');
 
@@ -71,7 +70,7 @@ export function AiCreationView({
     {
       id: '1',
       sender: 'gemini',
-      text: 'I have your hand calibrated. Describe any manicure you imagine—I will mutate the nail design while keeping your exact hand, pose, and skin constant.',
+      text: "I've calibrated your hand with your active manicure! Describe any mutation or customization (e.g. 'change shape to almond', 'make them deep velvet bordeaux with gold chrome tips', 'add delicate floral accents') and I will regenerate your hand image with AI.",
       timestamp: 'Just now',
     },
   ]);
@@ -94,7 +93,6 @@ export function AiCreationView({
       return;
     }
 
-    // Deduct credit
     useTryOnCredit();
 
     const userMsg: ChatMessage = {
@@ -109,108 +107,71 @@ export function AiCreationView({
     setIsIterating(true);
 
     try {
-      // Mutate nail design according to user's text iteration while keeping constant hand
-      setTimeout(() => {
-        let nextImage = '/assets/milky_gold_tryon_result.jpg';
-        const lower = text.toLowerCase();
+      // 1. Downscale current hand image for image-to-image
+      let handBase64 = '';
+      const baseSource = currentTryOnImage || originalBareHandPhoto;
+      if (baseSource.startsWith('data:image/')) {
+        handBase64 = baseSource;
+      } else {
+        handBase64 = await downscaleImageForVision(baseSource, 1024, 0.88);
+      }
 
-        let newColor = '#FAF0EA';
-        let newAccent = '#FFFFFF';
-        let newPattern: NailPattern = 'solid';
-        let newFinish: NailFinish = 'glossy';
+      // 2. Call /api/generate-nail-art in image-to-image mode
+      const res = await fetch('/api/generate-nail-art', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          mode: 'hand-tryon',
+          handImageBase64: handBase64 || undefined,
+          prompt: `On this human hand with manicure, update and customize the manicure according to this request: "${text}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails with high-gloss salon gel clearcoat.`,
+        }),
+      });
 
-        if (lower.includes('pink') || lower.includes('rose') || lower.includes('blush')) {
-          newColor = '#D4A5A5';
-          newAccent = '#F7D1D1';
-          nextImage = '/assets/pink_heart_tryon_result.jpg';
-        } else if (lower.includes('bordeaux') || lower.includes('burgundy') || lower.includes('velvet') || lower.includes('wine')) {
-          newColor = '#801A35';
-          newAccent = '#C59B27';
-          nextImage = '/assets/burgundy_gold_virtual_tryon.jpg';
-        } else if (lower.includes('emerald') || lower.includes('green') || lower.includes('sage')) {
-          newColor = '#2D5A43';
-          newAccent = '#D4AF37';
-        } else if (lower.includes('espresso') || lower.includes('brown') || lower.includes('coffee')) {
-          newColor = '#3D2817';
-          newAccent = '#C8A182';
-        } else if (lower.includes('chrome') || lower.includes('glazed') || lower.includes('silver')) {
-          newColor = '#FDFCF7';
-          newAccent = '#E5E7EB';
-          newFinish = 'chrome';
-        } else if (lower.includes('gold') || lower.includes('shimmer') || lower.includes('glitter')) {
-          newColor = '#C59B27';
-          newAccent = '#FAF0EA';
-          newFinish = 'glitter';
+      if (res.ok) {
+        const data = await res.json();
+        if (data?.imageUrl) {
+          setCurrentTryOnImage(data.imageUrl);
+          setCompareMode('after');
+          try {
+            localStorage.setItem('finglora_ai_base_hand_image', data.imageUrl);
+            localStorage.setItem('finglora_custom_hand_photo', data.imageUrl);
+          } catch {}
+
+          const geminiMsg: ChatMessage = {
+            id: (Date.now() + 1).toString(),
+            sender: 'gemini',
+            text: `Applied "${text}" directly onto your hand in photorealistic detail. What else would you like to customize?`,
+            timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+            appliedDesignTitle: text,
+          };
+          setMessages((prev) => [...prev, geminiMsg]);
+          setIsIterating(false);
+          return;
         }
+      }
 
-        if (lower.includes('heart')) {
-          newPattern = 'heart-french';
-        } else if (lower.includes('french') || lower.includes('tip')) {
-          newPattern = 'classic-french';
-        } else if (lower.includes('aura')) {
-          newPattern = 'aura';
-        } else if (lower.includes('floral') || lower.includes('flower')) {
-          newPattern = 'floral';
-        } else if (lower.includes('swirl') || lower.includes('marble')) {
-          newPattern = 'chrome-swirl';
-        }
+      const errJson = await res.json().catch(() => ({}));
+      const is429 = res.status === 429 || errJson?.isRateLimit;
+      const errorMsg = is429
+        ? 'Vertex AI image generation quota is cooling down (429). Please wait a moment and tap Retry.'
+        : `Could not apply "${text}". Please tap retry or describe differently.`;
 
-        if (lower.includes('matte') || lower.includes('velvet')) {
-          newFinish = 'matte';
-        }
-
-        if (setNails) {
-          setNails((prev) => {
-            const next = { ...prev };
-            FINGER_KEYS.forEach((fk) => {
-              next[fk] = {
-                ...next[fk],
-                baseColor: newColor,
-                accentColor: newAccent,
-                pattern: newPattern,
-                finish: newFinish,
-                title: text,
-              };
-            });
-            return next;
-          });
-        }
-
-        // Trigger Vertex AI gemini-3.1-flash-image generation
-        try {
-          fetch('/api/generate-nail-art', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              prompt: text,
-              handImageBase64: handPhoto?.startsWith('data:') ? handPhoto : undefined,
-            }),
-          })
-            .then((res) => (res.ok ? res.json() : null))
-            .then((data) => {
-              if (data?.imageUrl) {
-                setCurrentTryOnImage(data.imageUrl);
-              }
-            })
-            .catch(() => {});
-        } catch {
-          // ignore
-        }
-
-        setCurrentTryOnImage(nextImage);
-
-        const geminiMsg: ChatMessage = {
-          id: (Date.now() + 1).toString(),
-          sender: 'gemini',
-          text: `Applied "${text}" onto all five fingernails. Conformed to your hand curvature with high-gloss topcoat.`,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-          appliedDesignTitle: text,
-        };
-
-        setMessages((prev) => [...prev, geminiMsg]);
-        setIsIterating(false);
-      }, 1200);
-    } catch {
+      const geminiErr: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'gemini',
+        text: errorMsg,
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, geminiErr]);
+    } catch (err: unknown) {
+      const geminiErr: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        sender: 'gemini',
+        text: 'Connection error while communicating with AI image generator. Please tap Retry.',
+        timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      };
+      setMessages((prev) => [...prev, geminiErr]);
+    } finally {
       setIsIterating(false);
     }
   };
@@ -219,18 +180,30 @@ export function AiCreationView({
     <div className="w-full max-w-5xl mx-auto py-2 sm:py-4 px-2 space-y-4">
       {/* Editorial Header */}
       <div className="flex items-center justify-between gap-4 pb-2 border-b border-stone-200/60">
-        <div>
-          <span className="text-[10px] font-semibold tracking-wider text-[#E0246A] uppercase">
-            Constant-Hand Engine
-          </span>
-          <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
-            Create with AI Chat
-          </h1>
+        <div className="flex items-center gap-3">
+          {onBackToTryOn && (
+            <button
+              type="button"
+              onClick={onBackToTryOn}
+              className="w-9 h-9 rounded-full bg-white border border-stone-200 hover:border-[#E0246A] flex items-center justify-center text-stone-700 hover:text-[#E0246A] transition cursor-pointer active:scale-95 shadow-2xs"
+              title="Back to Virtual Try-On"
+            >
+              <ArrowLeft className="w-4 h-4" />
+            </button>
+          )}
+          <div>
+            <span className="text-[10px] font-semibold tracking-wider text-[#E0246A] uppercase">
+              Image-to-Image Chat Studio
+            </span>
+            <h1 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
+              Create with AI Chat
+            </h1>
+          </div>
         </div>
 
         <div className="flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-xs font-medium text-[#E0246A]">
           <Sparkles className="w-3.5 h-3.5" />
-          <span>Gemini 3.8 Flash Iterative</span>
+          <span>Vertex AI Diffusion</span>
         </div>
       </div>
 
@@ -240,53 +213,25 @@ export function AiCreationView({
         <div className="lg:col-span-7 space-y-3">
           <div className="relative aspect-[3/4] max-h-[460px] w-full rounded-3xl overflow-hidden bg-stone-950 shadow-xl border border-stone-200/80 flex items-center justify-center">
             {isIterating && (
-              <div className="absolute inset-0 z-30 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white">
+              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white text-center p-4">
                 <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
                 <span className="text-xs font-medium tracking-wide">
-                  Mutating nails on your hand...
+                  Vertex AI mutating manicure on your hand...
                 </span>
               </div>
             )}
 
-            {/* The constant hand photo: ALWAYS the user's authentic uploaded hand */}
+            {/* Photorealistic Hand: Either original bare hand or AI-customized manicure */}
             <img
-              src={handPhoto || '/assets/editorial_nail_hero.jpg'}
-              alt="Constant Hand Try-On"
-              className="w-full h-full object-cover transition-opacity duration-200"
+              src={compareMode === 'before' ? originalBareHandPhoto : currentTryOnImage}
+              alt="Hand Try-On"
+              className="w-full h-full object-cover transition-all duration-300"
             />
-
-            {/* Overlaid Manicure Nails directly on user's hand */}
-            {compareMode === 'after' && (
-              <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                {(['thumb', 'index', 'middle', 'ring', 'pinky'] as const).map((fk) => {
-                  const anchor = AI_STUDIO_FINGERTIP_ANCHORS[fk];
-                  return (
-                    <div
-                      key={fk}
-                      className="absolute transition-transform duration-200"
-                      style={{
-                        left: `${anchor.tipX * 100}%`,
-                        top: `${anchor.tipY * 100}%`,
-                        transform: `translate(-50%, -75%) rotate(${anchor.angleDeg}deg) scale(${anchor.scale})`,
-                        transformOrigin: 'center 80%',
-                      }}
-                    >
-                      <NailCanvasPreview
-                        nail={nails[fk]}
-                        width={52}
-                        height={78}
-                        showCuticle={false}
-                      />
-                    </div>
-                  );
-                })}
-              </div>
-            )}
 
             {/* Badges */}
             <div className="absolute top-3 left-3 z-20">
               <span className="px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide">
-                {compareMode === 'after' ? 'AI Manicure' : 'Original Hand'}
+                {compareMode === 'after' ? 'AI Manicure' : 'Bare Hand'}
               </span>
             </div>
 
@@ -294,16 +239,16 @@ export function AiCreationView({
               <button
                 type="button"
                 onClick={() => setCompareMode((m) => (m === 'after' ? 'before' : 'after'))}
-                className="px-2.5 py-0.5 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-sm flex items-center gap-1 cursor-pointer transition-transform active:scale-95"
+                className="px-2.5 py-1 rounded-full bg-white/90 hover:bg-white text-stone-800 text-[10px] font-medium tracking-wide shadow-sm flex items-center gap-1.5 cursor-pointer transition-transform active:scale-95"
               >
-                <RotateCcw className="w-2.5 h-2.5" />
-                <span>{compareMode === 'after' ? 'Hold for Bare Hand' : 'View AI Design'}</span>
+                <RotateCcw className="w-3 h-3" />
+                <span>{compareMode === 'after' ? 'Hold for Bare Hand' : 'View AI Manicure'}</span>
               </button>
             </div>
           </div>
 
           <div className="text-center text-[11px] text-stone-400">
-            Hand anatomy, fingers, and background remain 100% constant across all prompts.
+            Hand anatomy, skin tone, fingers, and lighting remain constant across all chat prompts.
           </div>
         </div>
 

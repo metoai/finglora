@@ -490,6 +490,7 @@ export default function FingloraApp() {
     setActivePassportCode(cached.passportCode);
     setActiveSetName(cached.title);
     setActivePhotoUrl(cached.photoUrl);
+    setSynthesizedHandUrl(null);
     setNails(JSON.parse(JSON.stringify(cached.nails)));
     setFingerHistory({});
     setSelectedFinger('ring');
@@ -514,6 +515,7 @@ export default function FingloraApp() {
       setActivePassportCode(cached.passportCode);
       setActiveSetName(cached.title);
       setActivePhotoUrl(cached.photoUrl);
+      setSynthesizedHandUrl(null);
       setNails(JSON.parse(JSON.stringify(cached.nails)));
       setIsAnalyzingCached(true);
       setIsAnalyzing(true);
@@ -535,6 +537,7 @@ export default function FingloraApp() {
     setActivePassportCode(newPassport);
     setActiveSetName(newTitle);
     setActivePhotoUrl(newPhotoUrl);
+    setSynthesizedHandUrl(null);
     setNails(initialNails);
 
     setIsAnalyzingCached(false);
@@ -702,6 +705,7 @@ export default function FingloraApp() {
     setActivePassportCode(found.passportCode);
     setActiveSetName(customUrl ? 'Custom Inspo Look' : found.title);
     setActivePhotoUrl(customUrl || found.photoUrl);
+    setSynthesizedHandUrl(null);
     const cloned = JSON.parse(JSON.stringify(found.nails)) as Record<Finger, NailDesign>;
     FINGER_KEYS.forEach((fk) => {
       cloned[fk].shape = preferredShape;
@@ -733,6 +737,7 @@ export default function FingloraApp() {
     setActivePassportCode(matched.passportCode);
     setActiveSetName(matched.title);
     setActivePhotoUrl(matched.photoUrl);
+    setSynthesizedHandUrl(null);
     const cloned = JSON.parse(JSON.stringify(matched.nails)) as Record<Finger, NailDesign>;
     FINGER_KEYS.forEach((fk) => {
       cloned[fk].shape = preferredShape;
@@ -950,6 +955,7 @@ export default function FingloraApp() {
             onUpdateActiveFinger={updateActiveFinger}
             onOpenApplyAllModal={() => setShowApplyAllModal(true)}
             onImageSelectedForExtraction={async (file) => {
+              setSynthesizedHandUrl(null);
               try {
                 const cloudUrl = await uploadInspoPhoto(file, supabaseUser?.id);
                 runHandExtractionDemo('set-berry-aura', cloudUrl);
@@ -957,8 +963,14 @@ export default function FingloraApp() {
                 runHandExtractionDemo('set-berry-aura', URL.createObjectURL(file));
               }
             }}
-            onSampleExtractionDemo={() => runHandExtractionDemo('set-blush-daisy')}
-            onSelectExploreDesign={(id) => extractFromInspirationHand(id, 'tryon')}
+            onSampleExtractionDemo={() => {
+              setSynthesizedHandUrl(null);
+              runHandExtractionDemo('set-blush-daisy');
+            }}
+            onSelectExploreDesign={(id) => {
+              setSynthesizedHandUrl(null);
+              extractFromInspirationHand(id, 'tryon');
+            }}
             onCopyShareLink={copyShareLink}
             onCustomerSignUpSubmit={() => {
               setOnboardingStep(1);

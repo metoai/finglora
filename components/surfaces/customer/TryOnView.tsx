@@ -1,54 +1,21 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Camera,
   ImagePlus,
   RotateCcw,
-  Video,
   ArrowLeft,
   Share2,
   Bookmark,
-  Sliders,
   Check,
   Paintbrush,
-  Wand2,
-  X,
-  SlidersHorizontal,
   Sparkles,
   AlertTriangle,
 } from 'lucide-react';
-import { ExploreDesignSet, Finger, NailDesign, NailFinish, NailPattern, SkinTonePreset } from '@/types/nail';
+import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { FINGER_KEYS, FINGER_LABELS } from '@/constants/nail-data';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
-import { getVideoHandLandmarker, extractFingertipAnchors, detectHandInImage, FingertipAnchor } from '@/lib/vision/hand-tracker';
 import { downscaleImageForVision } from '@/lib/services/storage';
 
-const AI_PRESET_MODIFIERS: {
-  label: string;
-  pattern: NailPattern;
-  finish: NailFinish;
-  color: string;
-}[] = [
-  { label: 'Glazed Chrome', pattern: 'chrome-swirl', finish: 'chrome', color: '#FDFCF7' },
-  { label: 'Micro French Tip', pattern: 'classic-french', finish: 'glossy', color: '#FFFFFF' },
-  { label: 'Velvet Bordeaux', pattern: 'solid', finish: 'matte', color: '#801A35' },
-  { label: 'Botanical Floral', pattern: 'floral', finish: 'glossy', color: '#E8A598' },
-  { label: 'Fine Shimmer Dust', pattern: 'glitter-ombre', finish: 'glitter', color: '#C59B27' },
-  { label: 'Twilight Aura', pattern: 'aura', finish: 'glossy', color: '#E0246A' },
-];
-
-const DEFAULT_PHOTO_ANCHORS: Record<Finger, FingertipAnchor> = {
-  thumb: { finger: 'thumb', tipX: 0.22, tipY: 0.60, dipX: 0.26, dipY: 0.70, angleDeg: -28, scale: 0.95, confidence: 0.7 },
-  index: { finger: 'index', tipX: 0.36, tipY: 0.30, dipX: 0.38, dipY: 0.44, angleDeg: -10, scale: 1.0, confidence: 0.7 },
-  middle: { finger: 'middle', tipX: 0.50, tipY: 0.23, dipX: 0.50, dipY: 0.38, angleDeg: 0, scale: 1.05, confidence: 0.7 },
-  ring: { finger: 'ring', tipX: 0.64, tipY: 0.29, dipX: 0.62, dipY: 0.43, angleDeg: 10, scale: 1.0, confidence: 0.7 },
-  pinky: { finger: 'pinky', tipX: 0.78, tipY: 0.44, dipX: 0.74, dipY: 0.56, angleDeg: 22, scale: 0.88, confidence: 0.7 },
-};
-
 export function TryOnView({
-  tryOnMode,
+  tryOnMode = 'upload',
   setTryOnMode,
   cameraStatus,
   cameraErrorNote,
@@ -77,16 +44,18 @@ export function TryOnView({
   onBackToHomeClick,
   activeSample,
   activePhotoUrl,
+  onCustomizeWithAi,
+  onSelectExploreDesign,
 }: {
-  tryOnMode: 'camera' | 'upload' | 'sample';
-  setTryOnMode: (mode: 'camera' | 'upload' | 'sample') => void;
-  cameraStatus: 'idle' | 'starting' | 'live' | 'simulated' | 'captured';
-  cameraErrorNote: string;
-  capturedFrameUrl: string | null;
-  videoRef: React.RefObject<HTMLVideoElement | null>;
-  onStartLiveCamera: () => void;
-  onCaptureCameraFrame: () => void;
-  onCancelCamera: () => void;
+  tryOnMode?: 'camera' | 'upload' | 'sample';
+  setTryOnMode?: (mode: 'camera' | 'upload' | 'sample') => void;
+  cameraStatus?: 'idle' | 'starting' | 'live' | 'simulated' | 'captured';
+  cameraErrorNote?: string;
+  capturedFrameUrl?: string | null;
+  videoRef?: React.RefObject<HTMLVideoElement | null>;
+  onStartLiveCamera?: () => void;
+  onCaptureCameraFrame?: () => void;
+  onCancelCamera?: () => void;
   tryOnView: 'after' | 'before';
   setTryOnView: (view: 'after' | 'before') => void;
   synthesizedHandUrl?: string | null;
@@ -95,16 +64,16 @@ export function TryOnView({
   setHandOrientation: React.Dispatch<React.SetStateAction<'left' | 'right'>>;
   customTryOnHandUrl: string | null;
   setCustomTryOnHandUrl: (url: string | null) => void;
-  overlayScale: number;
-  setOverlayScale: (scale: number) => void;
-  overlayOffsetY: number;
-  setOverlayOffsetY: (offset: number) => void;
+  overlayScale?: number;
+  setOverlayScale?: (scale: number) => void;
+  overlayOffsetY?: number;
+  setOverlayOffsetY?: (offset: number) => void;
   tryOnZoom?: boolean;
   setTryOnZoom?: React.Dispatch<React.SetStateAction<boolean>>;
   skinToneId?: string;
   setSkinToneId?: (id: string) => void;
-  activeSkinTone: SkinTonePreset;
-  orderedFingers: Finger[];
+  activeSkinTone?: SkinTonePreset;
+  orderedFingers?: Finger[];
   nails: Record<Finger, NailDesign>;
   setNails?: React.Dispatch<React.SetStateAction<Record<Finger, NailDesign>>>;
   mobilePreview?: boolean;
@@ -115,63 +84,12 @@ export function TryOnView({
   onSelectExploreDesign?: (id: string) => void;
   activeSample?: ExploreDesignSet;
   activePhotoUrl?: string;
+  onCustomizeWithAi?: (handUrl: string) => void;
 }) {
-  const [showAdjustSliders, setShowAdjustSliders] = useState(false);
   const [savedToast, setSavedToast] = useState(false);
   const [sharedToast, setSharedToast] = useState(false);
-
-  // Real-Time MediaPipe Hand Landmark Tracking
-  const [liveAnchors, setLiveAnchors] = useState<Record<Finger, FingertipAnchor> | null>(null);
-  const [isTrackingHand, setIsTrackingHand] = useState(false);
-
-  useEffect(() => {
-    if (cameraStatus !== 'live' || !videoRef.current) {
-      setLiveAnchors(null);
-      setIsTrackingHand(false);
-      return;
-    }
-
-    let isCancelled = false;
-    let animId: number;
-    let lastTime = -1;
-
-    async function runLiveDetection() {
-      const landmarker = await getVideoHandLandmarker();
-      if (isCancelled || !landmarker) return;
-      const activeLandmarker = landmarker;
-
-      function detectFrame() {
-        if (isCancelled) return;
-        const video = videoRef.current;
-        if (video && video.readyState >= 2 && video.currentTime !== lastTime) {
-          lastTime = video.currentTime;
-          try {
-            const result = activeLandmarker.detectForVideo(video, performance.now());
-            const anchors = extractFingertipAnchors(result);
-            if (anchors) {
-              setLiveAnchors(anchors);
-              setIsTrackingHand(true);
-            } else {
-              setLiveAnchors(null);
-              setIsTrackingHand(false);
-            }
-          } catch {
-            // Frame skip
-          }
-        }
-        animId = requestAnimationFrame(detectFrame);
-      }
-
-      detectFrame();
-    }
-
-    runLiveDetection();
-
-    return () => {
-      isCancelled = true;
-      if (animId) cancelAnimationFrame(animId);
-    };
-  }, [cameraStatus, videoRef]);
+  const changeHandInputRef = useRef<HTMLInputElement>(null);
+  const changeRefInspoInputRef = useRef<HTMLInputElement>(null);
 
   // AI Per-Finger & All-in-all Customization State
   const [showAiCustomizer, setShowAiCustomizer] = useState(false);
@@ -190,11 +108,21 @@ export function TryOnView({
   const [isSynthesizingHand, setIsSynthesizingHand] = useState(false);
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
 
+  // When reference photo or active sample changes, clear previous synthesized hand so old look is never retained
+  useEffect(() => {
+    setInternalSynthesizedHandUrl(null);
+    propSetSynthesizedHandUrl?.(null);
+    setSynthesisError(null);
+  }, [activePhotoUrl, activeSample?.id, propSetSynthesizedHandUrl]);
+
   const handleSynthesizeHand = async () => {
-    const sourceHand = customTryOnHandUrl || capturedFrameUrl;
+    const sourceHand = customTryOnHandUrl || capturedFrameUrl || activeSample?.photoUrl || '/assets/editorial_nail_hero.jpg';
     if (!sourceHand) return;
     setIsSynthesizingHand(true);
     setSynthesisError(null);
+    // Explicitly reset the previous synthesized image immediately so old look is not shown
+    setInternalSynthesizedHandUrl(null);
+    propSetSynthesizedHandUrl?.(null);
 
     try {
       // Convert source hand to Base64
@@ -263,127 +191,19 @@ export function TryOnView({
     (tryOnView === 'before' && activeSample?.id === 'set-berry-aura' ? '/assets/editorial_nail_hero.jpg' : activeSample?.photoUrl) ||
     '/assets/editorial_nail_hero.jpg';
 
-  // Real-Time Static Photo MediaPipe Hand Landmark Fitting
-  const [photoAnchors, setPhotoAnchors] = useState<Record<Finger, FingertipAnchor> | null>(null);
-  const [isDetectingPhotoHand, setIsDetectingPhotoHand] = useState(false);
-
-  useEffect(() => {
-    if (!resultImageUrl || resultImageUrl === '/assets/editorial_nail_hero.jpg') {
-      setPhotoAnchors(null);
-      return;
-    }
-
-    let isMounted = true;
-    setIsDetectingPhotoHand(true);
-
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = resultImageUrl;
-    img.onload = async () => {
-      try {
-        const anchors = await detectHandInImage(img);
-        if (isMounted) {
-          setPhotoAnchors(anchors);
-        }
-      } catch {
-        if (isMounted) setPhotoAnchors(null);
-      } finally {
-        if (isMounted) setIsDetectingPhotoHand(false);
-      }
-    };
-    img.onerror = () => {
-      if (isMounted) {
-        setPhotoAnchors(null);
-        setIsDetectingPhotoHand(false);
-      }
-    };
-
-    return () => {
-      isMounted = false;
-    };
-  }, [resultImageUrl]);
-
   const handleSaveLook = () => {
     setSavedToast(true);
     setTimeout(() => setSavedToast(false), 2200);
   };
 
   const handleRetake = () => {
-    if (customTryOnHandUrl) {
-      setCustomTryOnHandUrl(null);
-    }
-    onStartLiveCamera();
-  };
-
-  const handleApplyAi = (presetModifier?: typeof AI_PRESET_MODIFIERS[number]) => {
-    setIsApplyingAi(true);
-
-    setTimeout(() => {
-      if (setNails) {
-        setNails((prev) => {
-          const next = { ...prev };
-          const p = presetModifier;
-          const text = aiCustomPrompt.toLowerCase();
-
-          const newPattern: NailPattern | undefined =
-            p?.pattern ||
-            (text.includes('french')
-              ? 'classic-french'
-              : text.includes('floral')
-              ? 'floral'
-              : text.includes('swirl') || text.includes('chrome')
-              ? 'chrome-swirl'
-              : text.includes('aura')
-              ? 'aura'
-              : undefined);
-          const newFinish: NailFinish | undefined =
-            p?.finish ||
-            (text.includes('matte')
-              ? 'matte'
-              : text.includes('chrome')
-              ? 'chrome'
-              : text.includes('glitter')
-              ? 'glitter'
-              : undefined);
-          const newColor =
-            p?.color ||
-            (text.includes('bordeaux') || text.includes('burgundy')
-              ? '#801A35'
-              : text.includes('pearl') || text.includes('white')
-              ? '#FDFCF7'
-              : text.includes('gold')
-              ? '#C59B27'
-              : undefined);
-
-          if (customizerScope === 'all') {
-            FINGER_KEYS.forEach((fk) => {
-              next[fk] = {
-                ...next[fk],
-                pattern: newPattern || next[fk].pattern,
-                finish: newFinish || next[fk].finish,
-                baseColor: newColor || next[fk].baseColor,
-                status: 'edited',
-              };
-            });
-          } else {
-            next[targetFinger] = {
-              ...next[targetFinger],
-              pattern: newPattern || next[targetFinger].pattern,
-              finish: newFinish || next[targetFinger].finish,
-              baseColor: newColor || next[targetFinger].baseColor,
-              status: 'edited',
-            };
-          }
-          return next;
-        });
-      }
-
-      setIsApplyingAi(false);
-      setShowAiCustomizer(false);
-      setAiCustomPrompt('');
-      setCustomizedToast(true);
-      setTimeout(() => setCustomizedToast(false), 2400);
-    }, 600);
+    setCustomTryOnHandUrl(null);
+    setInternalSynthesizedHandUrl(null);
+    propSetSynthesizedHandUrl?.(null);
+    try {
+      localStorage.removeItem('finglora_custom_hand_photo');
+      localStorage.removeItem('finglora_user_hand_photo');
+    } catch {}
   };
 
   return (
@@ -455,28 +275,15 @@ export function TryOnView({
 
           {/* Hand Result Photo Viewport - Pure Photographic Studio Quality */}
           <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-900 shadow-md border border-stone-200/80 flex items-center justify-center mx-auto">
-            {capturedFrameUrl || customTryOnHandUrl ? (
-              <img
-                src={
-                  (tryOnView === 'after' && synthesizedHandUrl)
-                    ? synthesizedHandUrl
-                    : (resultImageUrl || '/assets/editorial_nail_hero.jpg')
-                }
-                alt="Try-On Hand"
-                className="w-full h-full object-cover transition-all duration-300"
-              />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center bg-stone-900">
-                <EditorialHandVisual
-                  nails={nails}
-                  skinTone={activeSkinTone}
-                  width={300}
-                  height={350}
-                  isRight={handOrientation === 'right'}
-                  naturalOnly={tryOnView === 'before'}
-                />
-              </div>
-            )}
+            <img
+              src={
+                (tryOnView === 'after' && synthesizedHandUrl)
+                  ? synthesizedHandUrl
+                  : (resultImageUrl || '/assets/editorial_nail_hero.jpg')
+              }
+              alt="Try-On Hand"
+              className="w-full h-full object-cover transition-all duration-300"
+            />
 
             {/* AI Synthesizing Spinner Overlay */}
             {isSynthesizingHand && (
@@ -556,31 +363,97 @@ export function TryOnView({
               </button>
             </div>
           ) : (
-            <div className="flex flex-wrap items-center justify-between gap-2 px-1">
-              <span className="text-[11px] text-stone-500 font-medium">
-                AI Manicure synthesized onto your hand
-              </span>
-              <div className="flex items-center gap-2">
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 px-1">
+                <span className="text-[11px] text-stone-500 font-medium">
+                  AI Manicure synthesized onto your hand
+                </span>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={isSynthesizingHand}
+                    onClick={handleSynthesizeHand}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-60"
+                  >
+                    <Sparkles className="w-3.5 h-3.5 text-white" />
+                    <span>{isSynthesizingHand ? 'Synthesizing...' : 'Regenerate Hand'}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const handImg = (tryOnView === 'after' && synthesizedHandUrl)
+                        ? synthesizedHandUrl
+                        : (customTryOnHandUrl || resultImageUrl || '/assets/editorial_nail_hero.jpg');
+                      onCustomizeWithAi?.(handImg);
+                    }}
+                    className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-stone-900 hover:bg-black text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    <Paintbrush className="w-3.5 h-3.5 text-pink-400" />
+                    <span>Customize with AI</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Quick Change Reference or Hand Bar */}
+              <div className="flex items-center justify-center gap-3 pt-1 text-xs">
                 <button
                   type="button"
-                  disabled={isSynthesizingHand}
-                  onClick={handleSynthesizeHand}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition-all shadow-xs active:scale-95 cursor-pointer disabled:opacity-60"
+                  onClick={() => changeHandInputRef.current?.click()}
+                  className="text-stone-500 hover:text-[#E0246A] font-medium inline-flex items-center gap-1 cursor-pointer transition"
                 >
-                  <Sparkles className="w-3.5 h-3.5 text-white" />
-                  <span>{isSynthesizingHand ? 'Synthesizing...' : 'Regenerate Hand with AI'}</span>
+                  <ImagePlus className="w-3.5 h-3.5" />
+                  <span>Change Hand</span>
                 </button>
+                <span className="text-stone-300">•</span>
                 <button
                   type="button"
-                  onClick={() => setShowAiCustomizer(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white hover:bg-[#FDF2F8] border border-stone-200 hover:border-[#E0246A]/40 text-stone-800 hover:text-[#E0246A] text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
+                  onClick={() => changeRefInspoInputRef.current?.click()}
+                  className="text-stone-500 hover:text-[#E0246A] font-medium inline-flex items-center gap-1 cursor-pointer transition"
                 >
-                  <Paintbrush className="w-3.5 h-3.5 text-[#E0246A]" />
-                  <span>Customize Colors</span>
+                  <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+                  <span>Change Reference</span>
                 </button>
               </div>
             </div>
           )}
+
+          {/* Hidden File Inputs for Changing Hand and Reference */}
+          <input
+            ref={changeHandInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
+                const finalUrl = dataUrl || URL.createObjectURL(f);
+                setCustomTryOnHandUrl(finalUrl);
+                setInternalSynthesizedHandUrl(null);
+                propSetSynthesizedHandUrl?.(null);
+                try {
+                  localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+                  localStorage.setItem('finglora_user_hand_photo', finalUrl);
+                } catch {}
+              }
+            }}
+          />
+          <input
+            ref={changeRefInspoInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={async (e) => {
+              const f = e.target.files?.[0];
+              if (f) {
+                const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
+                const finalUrl = dataUrl || URL.createObjectURL(f);
+                setInternalSynthesizedHandUrl(null);
+                propSetSynthesizedHandUrl?.(null);
+                onSelectExploreDesign?.(finalUrl);
+              }
+            }}
+          />
 
           {/* Bottom Action Bar */}
           <div className="grid grid-cols-2 gap-2.5 sm:gap-3 pt-1 w-full">
@@ -629,9 +502,9 @@ export function TryOnView({
         </div>
       ) : (
         /* ============================================================== */
-        /* SCREEN 6: VIRTUAL TRY-ON (CAPTURE / UPLOAD)                    */
+        /* SCREEN 6: PHOTO TRY-ON (UPLOAD / SELECT HAND)                 */
         /* ============================================================== */
-        <div className="space-y-3">
+        <div className="space-y-4">
           {/* Top Bar */}
           <div className="flex items-center justify-between pb-1">
             <button
@@ -645,8 +518,11 @@ export function TryOnView({
 
             <div className="text-center">
               <h1 className="font-serif text-xl sm:text-2xl font-normal text-[#18181B] tracking-tight">
-                Virtual Try-On
+                Photo Try-On
               </h1>
+              <p className="text-[11px] text-stone-500">
+                Upload your hand photo to see manicure designs
+              </p>
             </div>
 
             <button
@@ -659,387 +535,58 @@ export function TryOnView({
             </button>
           </div>
 
-          {/* Pill Mode Toggle: [Camera] [Photo] */}
-          <div className="flex justify-center">
-            <div className="inline-flex rounded-full bg-stone-100 p-1 border border-stone-200/80">
-              <button
-                type="button"
-                onClick={() => setTryOnMode('camera')}
-                className={`px-6 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
-                  tryOnMode === 'camera' || tryOnMode === 'sample'
-                    ? 'bg-[#18181B] text-white shadow-xs font-semibold'
-                    : 'text-stone-600 hover:text-stone-900 font-medium'
-                }`}
-              >
-                Camera
-              </button>
-              <button
-                type="button"
-                onClick={() => setTryOnMode('upload')}
-                className={`px-6 py-1.5 rounded-full text-xs transition-all cursor-pointer ${
-                  tryOnMode === 'upload'
-                    ? 'bg-[#18181B] text-white shadow-xs font-semibold'
-                    : 'text-stone-600 hover:text-stone-900 font-medium'
-                }`}
-              >
-                Photo
-              </button>
-            </div>
-          </div>
-
-          {/* Camera Viewfinder - Sized properly to fit in 1 view */}
-          {(tryOnMode === 'camera' || tryOnMode === 'sample') && (
-            <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-950 shadow-md border border-stone-200/80 flex items-center justify-center mx-auto">
-              {/* Idle or Starting state */}
-              {cameraStatus === 'idle' || cameraStatus === 'starting' ? (
-                <div className="relative w-full h-full flex flex-col items-center justify-center p-6 text-center space-y-4 bg-gradient-to-b from-stone-900 to-black">
-                  {/* Subtle Corner Focus Guides - Symmetrical 4 corners */}
-                  <div className="absolute top-6 left-6 w-8 h-8 border-t-2 border-l-2 border-white/60 rounded-tl-xl pointer-events-none" />
-                  <div className="absolute top-6 right-6 w-8 h-8 border-t-2 border-r-2 border-white/60 rounded-tr-xl pointer-events-none" />
-                  <div className="absolute bottom-6 left-6 w-8 h-8 border-b-2 border-l-2 border-white/60 rounded-bl-xl pointer-events-none" />
-                  <div className="absolute bottom-6 right-6 w-8 h-8 border-b-2 border-r-2 border-white/60 rounded-br-xl pointer-events-none" />
-
-                  <div className="w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white flex items-center justify-center shadow-lg">
-                    <Camera className="w-7 h-7" strokeWidth={1.5} />
-                  </div>
-
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium text-white tracking-wide">
-                      Position your hand in the frame
-                    </p>
-                    <p className="text-xs text-stone-400 max-w-xs">
-                      Hold your hand flat in natural light facing the camera lens
-                    </p>
-                  </div>
-
-                  <div className="flex flex-col items-center gap-2 pt-1">
-                    <button
-                      type="button"
-                      onClick={onStartLiveCamera}
-                      disabled={cameraStatus === 'starting'}
-                      className="h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-md transition-all cursor-pointer active:scale-95"
-                    >
-                      <Video className="w-4 h-4" />
-                      <span>{cameraStatus === 'starting' ? 'Starting Camera...' : 'Open Live Camera'}</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => setTryOnMode('upload')}
-                      className="text-xs text-stone-400 hover:text-stone-200 transition-colors cursor-pointer py-1"
-                    >
-                      or choose a photo from library
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                /* Live WebRTC Stream */
-                <div className="relative w-full h-full flex items-center justify-center overflow-hidden">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    className="w-full h-full object-cover"
-                  />
-
-                  {/* Real-Time MediaPipe AR Fingertip Anchors */}
-                  {liveAnchors && (
-                    <div className="absolute inset-0 pointer-events-none overflow-hidden z-10">
-                      {orderedFingers.map((fk) => {
-                        const anchor = liveAnchors[fk];
-                        if (!anchor) return null;
-                        return (
-                          <div
-                            key={fk}
-                            className="absolute transition-transform duration-75"
-                            style={{
-                              left: `${anchor.tipX * 100}%`,
-                              top: `${anchor.tipY * 100}%`,
-                              transform: `translate(-50%, -75%) rotate(${anchor.angleDeg}deg) scale(${anchor.scale * (overlayScale / 100)})`,
-                            }}
-                          >
-                            <NailCanvasPreview
-                              nail={nails[fk]}
-                              width={50}
-                              height={75}
-                              showCuticle={false}
-                            />
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Corner Registration Frame - Hand Placement Target Area */}
-                  <div
-                    className={`absolute top-12 bottom-24 inset-x-6 pointer-events-none rounded-2xl border transition-opacity duration-300 ${
-                      isTrackingHand ? 'border-white/10 opacity-30' : 'border-white/25 opacity-100'
-                    }`}
-                  >
-                    <div className="absolute -top-1 -left-1 w-6 h-6 border-t-2 border-l-2 border-white rounded-tl-lg" />
-                    <div className="absolute -top-1 -right-1 w-6 h-6 border-t-2 border-r-2 border-white rounded-tr-lg" />
-                    <div className="absolute -bottom-1 -left-1 w-6 h-6 border-b-2 border-l-2 border-white rounded-bl-lg" />
-                    <div className="absolute -bottom-1 -right-1 w-6 h-6 border-b-2 border-r-2 border-white rounded-br-lg" />
-                  </div>
-
-                  {/* Top Guide Text / Live AR Status Indicator */}
-                  <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none z-20">
-                    <span
-                      className={`px-3.5 py-1 rounded-full backdrop-blur-md text-white text-[11px] font-medium tracking-wide flex items-center gap-1.5 transition-all ${
-                        isTrackingHand
-                          ? 'bg-[#E0246A]/90 shadow-md border border-white/20'
-                          : 'bg-black/60'
-                      }`}
-                    >
-                      <span
-                        className={`w-2 h-2 rounded-full ${
-                          isTrackingHand ? 'bg-white animate-pulse' : 'bg-amber-400'
-                        }`}
-                      />
-                      <span>
-                        {isTrackingHand
-                          ? 'Live AR: 5 Fingertips Locked'
-                          : 'Position your hand in the frame'}
-                      </span>
-                    </span>
-                  </div>
-
-                  {/* Bottom Controls Bar with subtle vignette */}
-                  <div className="absolute bottom-0 inset-x-0 pt-6 pb-4 px-6 flex items-center justify-between z-20 bg-gradient-to-t from-black/80 via-black/40 to-transparent">
-                    {/* Gallery / Photo Upload Icon */}
-                    <button
-                      type="button"
-                      onClick={() => setTryOnMode('upload')}
-                      className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all cursor-pointer active:scale-95"
-                      title="Upload hand photo"
-                    >
-                      <ImagePlus className="w-5 h-5" strokeWidth={1.5} />
-                    </button>
-
-                    {/* Shutter Button */}
-                    <button
-                      type="button"
-                      onClick={onCaptureCameraFrame}
-                      className="w-15 h-15 rounded-full border-4 border-white bg-white/20 backdrop-blur-xs p-1 flex items-center justify-center hover:scale-105 active:scale-95 transition-all shadow-xl cursor-pointer"
-                      title="Capture photo"
-                    >
-                      <span className="w-full h-full rounded-full bg-white flex items-center justify-center" />
-                    </button>
-
-                    {/* Switch Hand Orientation */}
-                    <button
-                      type="button"
-                      onClick={() => setHandOrientation((h) => (h === 'right' ? 'left' : 'right'))}
-                      className="w-11 h-11 rounded-full bg-white/20 backdrop-blur-md border border-white/30 flex items-center justify-center text-white hover:bg-white/30 transition-all cursor-pointer active:scale-95 text-[11px] font-semibold"
-                      title="Toggle Left/Right Hand"
-                    >
-                      {handOrientation === 'right' ? 'R' : 'L'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Photo Upload Viewfinder - Sized properly to fit in 1 view */}
-          {tryOnMode === 'upload' && (
-            <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center p-6 text-center space-y-4 mx-auto">
-              <div className="w-14 h-14 rounded-2xl bg-[#FDF2F8] border border-[#E0246A]/20 text-[#E0246A] flex items-center justify-center shadow-xs">
-                <ImagePlus className="w-7 h-7" strokeWidth={1.5} />
-              </div>
-
-              <div className="space-y-1 max-w-xs">
-                <h3 className="font-serif text-xl font-normal text-stone-900">
-                  Upload hand photo
-                </h3>
-                <p className="text-xs text-stone-500">
-                  Select a clean top-down photograph of your bare fingers to try on this manicure.
-                </p>
-              </div>
-
-              <label className="cursor-pointer h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-md transition-all active:scale-95">
-                <ImagePlus className="w-4 h-4" />
-                <span>Select Hand Image</span>
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={async (e) => {
-                    const f = e.target.files?.[0];
-                    if (f) {
-                      const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
-                      setCustomTryOnHandUrl(dataUrl || URL.createObjectURL(f));
-                    }
-                  }}
-                />
-              </label>
-            </div>
-          )}
-
-          {/* AI Customization Pill */}
-          <div className="flex justify-center pt-1">
-            <button
-              type="button"
-              onClick={() => setShowAiCustomizer(true)}
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-white hover:bg-[#FDF2F8] border border-stone-200 hover:border-[#E0246A]/40 text-stone-700 hover:text-[#E0246A] text-xs font-semibold transition-all shadow-2xs active:scale-95 cursor-pointer"
-            >
-              <Paintbrush className="w-3.5 h-3.5 text-[#E0246A]" />
-              <span>Customize Nails with AI</span>
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* ============================================================== */}
-      {/* AI CUSTOMIZER MODAL (ALL-IN-ALL OR PER-FINGER)                 */}
-      {/* ============================================================== */}
-      {showAiCustomizer && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl w-full max-w-md p-5 sm:p-6 shadow-2xl border border-stone-200 space-y-4 max-h-[90vh] overflow-y-auto">
-            {/* Modal Header */}
-            <div className="flex items-center justify-between pb-2 border-b border-stone-100">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-full bg-[#FDF2F8] border border-[#E0246A]/20 flex items-center justify-center text-[#E0246A]">
-                  <Paintbrush className="w-4 h-4" />
-                </div>
-                <div>
-                  <h3 className="font-serif text-lg font-semibold text-stone-900 leading-tight">
-                    Customize with AI
-                  </h3>
-                  <p className="text-[11px] text-stone-500">
-                    Transform all nails together or customize specific fingers
-                  </p>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setShowAiCustomizer(false)}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 transition cursor-pointer"
-              >
-                <X className="w-4 h-4" />
-              </button>
+          {/* Photo Upload Viewfinder */}
+          <div className="relative aspect-[3/4] max-h-[380px] sm:max-h-[420px] w-full rounded-3xl overflow-hidden bg-stone-50 border-2 border-dashed border-stone-200 flex flex-col items-center justify-center p-6 text-center space-y-4 mx-auto hover:border-[#E0246A]/50 transition-colors">
+            <div className="w-16 h-16 rounded-2xl bg-[#FDF2F8] border border-[#E0246A]/20 text-[#E0246A] flex items-center justify-center shadow-xs">
+              <ImagePlus className="w-8 h-8" strokeWidth={1.5} />
             </div>
 
-            {/* Scope Selection: All Fingers vs Specific Finger */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">
-                Customization Scope
-              </span>
-              <div className="grid grid-cols-2 gap-1.5 p-1 bg-stone-100 rounded-2xl">
-                <button
-                  type="button"
-                  onClick={() => setCustomizerScope('all')}
-                  className={`py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    customizerScope === 'all'
-                      ? 'bg-white text-stone-900 shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  All Fingers Together
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setCustomizerScope('single')}
-                  className={`py-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-                    customizerScope === 'single'
-                      ? 'bg-white text-stone-900 shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900'
-                  }`}
-                >
-                  Specific Finger
-                </button>
-              </div>
+            <div className="space-y-1 max-w-xs">
+              <h3 className="font-serif text-xl font-normal text-stone-900">
+                Upload Hand Photo
+              </h3>
+              <p className="text-xs text-stone-500 leading-relaxed">
+                Take or upload a clean, well-lit photo of your hand facing flat. Vertex AI will apply the nail design directly to your fingers.
+              </p>
             </div>
 
-            {/* If Specific Finger: Finger Selector */}
-            {customizerScope === 'single' && (
-              <div className="space-y-1.5 animate-in fade-in duration-200">
-                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">
-                  Select Target Finger
-                </span>
-                <div className="grid grid-cols-5 gap-1.5">
-                  {FINGER_KEYS.map((fk) => {
-                    const isSelected = targetFinger === fk;
-                    return (
-                      <button
-                        key={fk}
-                        type="button"
-                        onClick={() => setTargetFinger(fk)}
-                        className={`p-2 rounded-2xl border text-center transition-all cursor-pointer flex flex-col items-center gap-1 ${
-                          isSelected
-                            ? 'bg-[#FDF2F8] border-[#E0246A] ring-2 ring-[#E0246A]/20'
-                            : 'bg-stone-50 border-stone-200 hover:bg-stone-100'
-                        }`}
-                      >
-                        <NailCanvasPreview
-                          nail={nails[fk]}
-                          width={20}
-                          height={30}
-                          showCuticle={false}
-                        />
-                        <span className="text-[9.5px] font-semibold text-stone-800 capitalize truncate">
-                          {FINGER_LABELS[fk]}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Quick AI Presets */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">
-                Quick AI Styles
-              </span>
-              <div className="flex flex-wrap gap-1.5">
-                {AI_PRESET_MODIFIERS.map((preset) => (
-                  <button
-                    key={preset.label}
-                    type="button"
-                    onClick={() => handleApplyAi(preset)}
-                    className="px-2.5 py-1 rounded-full bg-stone-50 hover:bg-[#FDF2F8] hover:text-[#E0246A] border border-stone-200/80 text-[11px] font-medium text-stone-700 transition cursor-pointer active:scale-95"
-                  >
-                    + {preset.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Prompt Input */}
-            <div className="space-y-1.5">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500">
-                Custom AI Prompt
-              </span>
-              <textarea
-                value={aiCustomPrompt}
-                onChange={(e) => setAiCustomPrompt(e.target.value)}
-                placeholder="e.g. Add subtle chrome swirls, make ring finger a floral accent, switch to glossy almond..."
-                rows={2}
-                className="w-full p-3 rounded-2xl bg-stone-50 border border-stone-200 text-xs text-stone-900 placeholder:text-stone-400 focus:outline-none focus:ring-2 focus:ring-[#E0246A]/20 focus:border-[#E0246A] resize-none"
+            <label className="cursor-pointer h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 shadow-md shadow-[#E0246A]/25 transition-all active:scale-95">
+              <ImagePlus className="w-4 h-4" />
+              <span>Choose Hand Photo</span>
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const f = e.target.files?.[0];
+                  if (f) {
+                    const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
+                    const finalUrl = dataUrl || URL.createObjectURL(f);
+                    setCustomTryOnHandUrl(finalUrl);
+                    setInternalSynthesizedHandUrl(null);
+                    propSetSynthesizedHandUrl?.(null);
+                    try {
+                      localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+                      localStorage.setItem('finglora_user_hand_photo', finalUrl);
+                    } catch {}
+                  }
+                }}
               />
-            </div>
+            </label>
 
-            {/* Action Buttons */}
-            <div className="flex items-center gap-2 pt-2 border-t border-stone-100">
+            {/* Quick Sample Hand Preset */}
+            <div className="pt-2">
               <button
                 type="button"
-                onClick={() => setShowAiCustomizer(false)}
-                className="flex-1 h-11 rounded-2xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold transition cursor-pointer"
+                onClick={() => {
+                  const sampleUrl = '/assets/editorial_nail_hero.jpg';
+                  setCustomTryOnHandUrl(sampleUrl);
+                  setInternalSynthesizedHandUrl(null);
+                  propSetSynthesizedHandUrl?.(null);
+                }}
+                className="text-[11px] text-stone-500 hover:text-[#E0246A] underline transition cursor-pointer"
               >
-                Cancel
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleApplyAi()}
-                disabled={isApplyingAi || !aiCustomPrompt.trim()}
-                className="flex-2 h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] disabled:opacity-40 text-white text-xs font-semibold inline-flex items-center justify-center gap-1.5 shadow-md transition cursor-pointer active:scale-95"
-              >
-                <Wand2 className="w-3.5 h-3.5" />
-                <span>{isApplyingAi ? 'Applying AI...' : 'Apply with AI'}</span>
+                or try with studio sample hand photo
               </button>
             </div>
           </div>

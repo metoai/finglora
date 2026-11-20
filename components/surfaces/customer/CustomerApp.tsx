@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Home, Compass, ImagePlus, Paintbrush, Hand, Share2, Menu, X, ChevronRight, Wand2, User } from 'lucide-react';
+import { Home, Compass, ImagePlus, Paintbrush, Hand, Share2, Menu, X, ChevronRight, Wand2, User, Heart } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { CustomerRoute, CustomerSidebar } from './CustomerSidebar';
@@ -161,13 +161,14 @@ export function CustomerApp({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
+  const [aiCreationBaseImage, setAiCreationBaseImage] = useState<string | null>(null);
 
   const routeBreadcrumbs: Record<CustomerRoute, string> = {
     home: 'Home',
     explore: 'Explore',
-    tryon: 'Try On',
+    tryon: 'Upload photo (try on)',
     'ai-create': 'Create with AI',
-    upload: 'Upload',
+    upload: 'Upload photo (try on)',
     favorites: 'Favorites',
     profile: 'Profile',
     signup: 'Create Account',
@@ -181,9 +182,10 @@ export function CustomerApp({
     icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   }[] = [
     { id: 'home', label: 'Home', icon: Home },
+    { id: 'upload', label: 'Upload photo (try on)', icon: ImagePlus },
     { id: 'explore', label: 'Explore', icon: Compass },
-    { id: 'upload', label: 'Upload', icon: ImagePlus },
-    { id: 'tryon', label: 'Try On', icon: Hand },
+    { id: 'ai-create', label: 'Create with AI', icon: Paintbrush },
+    { id: 'favorites', label: 'Favorites', icon: Heart },
     { id: 'profile', label: 'Profile', icon: User },
   ];
 
@@ -346,9 +348,11 @@ export function CustomerApp({
           {customerRoute === 'ai-create' && (
             <AiCreationView
               customTryOnHandUrl={customTryOnHandUrl}
+              initialHandDesignUrl={aiCreationBaseImage || synthesizedHandUrl || customTryOnHandUrl}
               nails={nails}
               setNails={setNails}
               onSignUpClick={() => setCustomerRoute('signup')}
+              onBackToTryOn={() => setCustomerRoute('tryon')}
             />
           )}
 
@@ -390,6 +394,7 @@ export function CustomerApp({
                 reader.onload = () => {
                   const dataUrl = reader.result as string;
                   setCustomTryOnHandUrl(dataUrl);
+                  setSynthesizedHandUrl?.(null);
                   try {
                     localStorage.setItem('finglora_custom_hand_photo', dataUrl);
                     localStorage.setItem('finglora_user_hand_photo', dataUrl);
@@ -397,8 +402,14 @@ export function CustomerApp({
                 };
                 reader.readAsDataURL(file);
               }}
-              onImageSelected={onImageSelectedForExtraction}
-              onSampleDemoClick={onSampleExtractionDemo}
+              onImageSelected={(file) => {
+                setSynthesizedHandUrl?.(null);
+                onImageSelectedForExtraction(file);
+              }}
+              onSampleDemoClick={() => {
+                setSynthesizedHandUrl?.(null);
+                onSampleExtractionDemo();
+              }}
               onCancel={() => {
                 setIsAnalyzing?.(false);
                 setCustomerRoute('home');
@@ -451,6 +462,13 @@ export function CustomerApp({
               onSelectExploreDesign={onSelectExploreDesign}
               activeSample={activeSample}
               activePhotoUrl={activePhotoUrl}
+              onCustomizeWithAi={(handUrl: string) => {
+                setAiCreationBaseImage(handUrl);
+                try {
+                  localStorage.setItem('finglora_ai_base_hand_image', handUrl);
+                } catch {}
+                setCustomerRoute('ai-create');
+              }}
             />
           )}
 
@@ -498,19 +516,19 @@ export function CustomerApp({
           {(
             [
               { id: 'home' as const, label: 'Home', Icon: Home },
-              { id: 'tryon' as const, label: 'Try On', Icon: Hand, isCenter: true },
+              { id: 'upload' as const, label: 'Try On', Icon: ImagePlus, isCenter: true },
               { id: 'explore' as const, label: 'Explore', Icon: Compass },
             ]
           ).map(({ id, label, Icon, isCenter }) => {
-            const active = customerRoute === id;
+            const active = customerRoute === id || (id === 'upload' && customerRoute === 'tryon');
             if (isCenter) {
               return (
                 <button
                   key={id}
                   type="button"
-                  onClick={() => setCustomerRoute(id)}
+                  onClick={() => setCustomerRoute(customTryOnHandUrl || synthesizedHandUrl ? 'tryon' : 'upload')}
                   className="relative -top-2.5 flex flex-col items-center group cursor-pointer focus:outline-none"
-                  title="Try On"
+                  title="Photo Try-On"
                 >
                   <div
                     className={`w-12 h-12 rounded-full flex items-center justify-center transition-all duration-200 shadow-md ${
