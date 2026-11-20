@@ -418,6 +418,7 @@ export function CustomerApp({
                 if (synthesizedUrl && setSynthesizedHandUrl) {
                   setSynthesizedHandUrl(synthesizedUrl);
                 }
+                setTryOnView?.('after');
                 setIsAnalyzing?.(false);
                 setCustomerRoute('tryon');
               }}

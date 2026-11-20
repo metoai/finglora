@@ -124,10 +124,29 @@ export default function FingloraApp() {
     }
     return null;
   });
-  const [synthesizedHandUrl, setSynthesizedHandUrl] = useState<string | null>(null);
+  const [synthesizedHandUrl, setSynthesizedHandUrlState] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finglora_synthesized_hand_url') || null;
+    }
+    return null;
+  });
+
+  const setSynthesizedHandUrl = (url: string | null) => {
+    setSynthesizedHandUrlState(url);
+    if (typeof window !== 'undefined') {
+      try {
+        if (url) {
+          localStorage.setItem('finglora_synthesized_hand_url', url);
+        } else {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        }
+      } catch {}
+    }
+  };
 
   const handleUpdateCustomHandPhoto = (url: string | null) => {
     setCustomTryOnHandUrl(url);
+    setSynthesizedHandUrl(null);
     if (typeof window !== 'undefined') {
       try {
         if (url) {

@@ -109,11 +109,36 @@ export function TryOnView({
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
 
   // When reference photo or active sample changes, clear previous synthesized hand so old look is never retained
+  const prevRefPhotoRef = useRef(activePhotoUrl);
+  const prevSampleIdRef = useRef(activeSample?.id);
+  const isMountedRef = useRef(false);
+
   useEffect(() => {
-    setInternalSynthesizedHandUrl(null);
-    propSetSynthesizedHandUrl?.(null);
-    setSynthesisError(null);
-  }, [activePhotoUrl, activeSample?.id, propSetSynthesizedHandUrl]);
+    if (!isMountedRef.current) {
+      isMountedRef.current = true;
+      if (synthesizedHandUrl) {
+        setTryOnView('after');
+      }
+      return;
+    }
+
+    if (prevRefPhotoRef.current !== activePhotoUrl || prevSampleIdRef.current !== activeSample?.id) {
+      prevRefPhotoRef.current = activePhotoUrl;
+      prevSampleIdRef.current = activeSample?.id;
+      setInternalSynthesizedHandUrl(null);
+      propSetSynthesizedHandUrl?.(null);
+      setSynthesisError(null);
+      try {
+        localStorage.removeItem('finglora_synthesized_hand_url');
+      } catch {}
+    }
+  }, [activePhotoUrl, activeSample?.id, propSetSynthesizedHandUrl, synthesizedHandUrl, setTryOnView]);
+
+  useEffect(() => {
+    if (synthesizedHandUrl) {
+      setTryOnView('after');
+    }
+  }, [synthesizedHandUrl, setTryOnView]);
 
   const handleSynthesizeHand = async () => {
     const sourceHand = customTryOnHandUrl || capturedFrameUrl || activeSample?.photoUrl || '/assets/editorial_nail_hero.jpg';
@@ -181,8 +206,8 @@ export function TryOnView({
     }
   };
 
-  // Screen 7 is active when a frame has been captured or a personal photo is uploaded
-  const isShowingResult = cameraStatus === 'captured' || Boolean(customTryOnHandUrl);
+  // Screen 7 is active when a frame has been captured, a personal photo is uploaded, or an AI manicure is synthesized
+  const isShowingResult = cameraStatus === 'captured' || Boolean(customTryOnHandUrl) || Boolean(synthesizedHandUrl);
 
   // The base image is ALWAYS the user's authentic uploaded hand (NEVER swapped with stock photos)
   const resultImageUrl =
