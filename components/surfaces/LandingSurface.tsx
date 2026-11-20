@@ -11,38 +11,58 @@ interface ShadeOption {
   name: string;
   hex: string;
   gradient: { base: string; mid: string; tip: string };
+  finish?: 'glossy' | 'matte' | 'chrome' | 'glitter';
+  pattern?: 'solid' | 'classic-french';
+  accentColor?: string;
+  hasTip?: boolean;
 }
 
 const SHADES: ShadeOption[] = [
   {
     id: 'milk-glaze',
     name: 'Milk Glaze',
-    hex: '#FCEEF2',
-    gradient: { base: '#FFF5F8', mid: '#FDE8EF', tip: '#F7CCD9' },
+    hex: '#FDF6F8',
+    gradient: { base: '#FFFFFF', mid: '#FBF0F5', tip: '#F2D3DF' },
+    finish: 'chrome',
+    pattern: 'solid',
+    hasTip: false,
   },
   {
     id: 'petal',
     name: 'Petal',
     hex: '#E892A8',
-    gradient: { base: '#FCEEF2', mid: '#EFA2B7', tip: '#E0246A' },
+    gradient: { base: '#FFF0F5', mid: '#F4A7BD', tip: '#E0246A' },
+    finish: 'glossy',
+    pattern: 'solid',
+    hasTip: false,
   },
   {
     id: 'french-rose',
     name: 'French Rose',
     hex: '#DF6A89',
-    gradient: { base: '#F7CAD7', mid: '#E886A2', tip: '#D84274' },
+    gradient: { base: '#FDF0F4', mid: '#F2AFC4', tip: '#DF6A89' },
+    finish: 'glossy',
+    pattern: 'classic-french',
+    accentColor: '#FFFFFF',
+    hasTip: true,
   },
   {
     id: 'berry-rouge',
     name: 'Berry Rouge',
     hex: '#CF3168',
-    gradient: { base: '#F2A7C3', mid: '#D8286A', tip: '#B5124E' },
+    gradient: { base: '#F78DB0', mid: '#DF2466', tip: '#A81144' },
+    finish: 'glossy',
+    pattern: 'solid',
+    hasTip: false,
   },
   {
     id: 'deep-wine',
     name: 'Deep Wine',
     hex: '#851838',
-    gradient: { base: '#B84566', mid: '#851838', tip: '#520C21' },
+    gradient: { base: '#A3294C', mid: '#73142F', tip: '#420818' },
+    finish: 'glossy',
+    pattern: 'solid',
+    hasTip: false,
   },
 ];
 
@@ -100,6 +120,7 @@ export function LandingSurface({
   const [activeShadeIndex, setActiveShadeIndex] = useState(1); // default 'Petal'
   const [activeShapeIndex, setActiveShapeIndex] = useState(0); // default 'Almond'
   const [activeLength] = useState('Medium');
+  const [frenchTipActive, setFrenchTipActive] = useState<boolean | null>(null);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
   const [shapesModalOpen, setShapesModalOpen] = useState(false);
   const [shadesModalOpen, setShadesModalOpen] = useState(false);
@@ -107,6 +128,7 @@ export function LandingSurface({
 
   const activeShade = SHADES[activeShadeIndex];
   const activeShape = SHAPES[activeShapeIndex];
+  const isFrenchTip = frenchTipActive !== null ? frenchTipActive : Boolean(activeShade.hasTip);
 
   const handleLaunchTryOn = () => {
     if (onSignUpClick) {
@@ -209,11 +231,11 @@ export function LandingSurface({
               </div>
             </div>
 
-            {/* 3D Glass Nail Silhouette (Pure CSS Micro-Geometry, ZERO SVG) */}
+            {/* 3D Glass Nail Silhouette on Real Finger (Pure CSS Micro-Geometry, ZERO SVG) */}
             <div
               onClick={handleToggleShape}
-              className="relative w-[150px] h-[270px] xl:w-[170px] xl:h-[300px] flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95"
-              title="Click to cycle nail shape"
+              className="relative w-[180px] h-[310px] xl:w-[200px] xl:h-[340px] flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95 group"
+              title="Click nail to cycle shape: Almond · Coffin · Oval · Square · Stiletto"
             >
               <NailCanvasPreview
                 nail={{
@@ -221,27 +243,33 @@ export function LandingSurface({
                   title: 'Editorial Hero Nail',
                   shape: activeShape.id,
                   length: 'long',
-                  finish: 'glossy',
+                  finish: activeShade.finish || 'glossy',
                   baseColor: activeShade.hex,
-                  accentColor: activeShade.gradient.tip,
-                  pattern: 'solid',
+                  accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
+                  pattern: isFrenchTip ? 'classic-french' : 'solid',
                   clientNote: 'Pure CSS Micro-Geometry',
                   status: 'detected',
                 }}
-                width={170}
-                height={280}
-                showCuticle={false}
+                gradient={activeShade.gradient}
+                glowColor={activeShade.gradient.tip}
+                width={190}
+                height={320}
+                showFinger={true}
               />
             </div>
 
-            {/* Label Below Viewfinder: Shape · Length · Shade */}
+            {/* Label Below Viewfinder: Shape · Finish · Shade */}
             <button
               type="button"
-              onClick={handleToggleShape}
-              className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 text-xs font-medium text-stone-700 tracking-wide whitespace-nowrap bg-white/90 hover:bg-white border border-stone-200/60 shadow-2xs rounded-full transition cursor-pointer"
-              title="Click to change nail shape"
+              onClick={() => setShapesModalOpen(true)}
+              className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-medium text-stone-700 hover:text-[#E0246A] tracking-wide whitespace-nowrap bg-white/95 hover:bg-white border border-stone-200/80 hover:border-[#E0246A]/50 shadow-xs rounded-full transition cursor-pointer flex items-center gap-1.5 active:scale-95 z-20 group"
+              title="Click to select nail silhouette"
             >
-              {activeShape.name} · {activeLength} · {activeShade.name}
+              <span className="font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors">{activeShape.name}</span>
+              <span className="text-stone-300">·</span>
+              <span className="text-stone-500">{isFrenchTip ? 'French Tip' : activeShade.finish === 'chrome' ? 'Glazed' : 'Glossy'}</span>
+              <span className="text-stone-300">·</span>
+              <span className="text-stone-600">{activeShade.name}</span>
             </button>
           </div>
         </div>
@@ -293,10 +321,10 @@ export function LandingSurface({
             </div>
           </div>
 
-          {/* 3D Glass Nail Silhouette (Pure CSS Micro-Geometry, ZERO SVG) */}
+          {/* 3D Glass Nail Silhouette on Real Finger (Pure CSS Micro-Geometry, ZERO SVG) */}
           <div
             onClick={handleToggleShape}
-            className="relative w-[125px] h-[225px] sm:w-[145px] sm:h-[260px] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
+            className="relative w-[145px] h-[250px] sm:w-[165px] sm:h-[285px] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
             title="Click to cycle nail shape"
           >
             <NailCanvasPreview
@@ -305,23 +333,32 @@ export function LandingSurface({
                 title: 'Editorial Hero Nail',
                 shape: activeShape.id,
                 length: 'long',
-                finish: 'glossy',
+                finish: activeShade.finish || 'glossy',
                 baseColor: activeShade.hex,
-                accentColor: activeShade.gradient.tip,
-                pattern: 'solid',
+                accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
+                pattern: isFrenchTip ? 'classic-french' : 'solid',
                 clientNote: 'Pure CSS Micro-Geometry',
                 status: 'detected',
               }}
-              width={140}
-              height={240}
-              showCuticle={false}
+              gradient={activeShade.gradient}
+              glowColor={activeShade.gradient.tip}
+              width={150}
+              height={260}
+              showFinger={true}
             />
           </div>
 
-          {/* Bottom Label: Almond · Medium */}
-          <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3 py-0.5 text-xs font-medium text-stone-700 tracking-wide whitespace-nowrap bg-white/90 border border-stone-200/60 shadow-2xs rounded-full">
-            {activeShape.name} · {activeLength}
-          </div>
+          {/* Bottom Label: Almond · Finish */}
+          <button
+            type="button"
+            onClick={() => setShapesModalOpen(true)}
+            className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 text-xs font-medium text-stone-700 tracking-wide whitespace-nowrap bg-white/95 border border-stone-200/80 shadow-2xs rounded-full active:scale-95 flex items-center gap-1.5"
+            title="Choose nail shape"
+          >
+            <span className="font-semibold text-stone-900">{activeShape.name}</span>
+            <span className="text-stone-300">·</span>
+            <span className="text-stone-500">{isFrenchTip ? 'French' : activeShade.finish === 'chrome' ? 'Glazed' : 'Glossy'}</span>
+          </button>
         </div>
       </div>
 
@@ -338,7 +375,7 @@ export function LandingSurface({
             </p>
           </div>
 
-          {/* Center: Interactive Shade Selector Pill */}
+          {/* Center: Interactive Shade Selector Pill with French Tip Toggle */}
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
               {SHADES.map((shade, idx) => {
@@ -347,7 +384,12 @@ export function LandingSurface({
                   <button
                     key={shade.id}
                     type="button"
-                    onClick={() => setActiveShadeIndex(idx)}
+                    onClick={() => {
+                      setActiveShadeIndex(idx);
+                      if (frenchTipActive !== null) {
+                        setFrenchTipActive(null);
+                      }
+                    }}
                     className={`w-7 h-7 rounded-full transition-all duration-200 cursor-pointer ${
                       active
                         ? 'ring-2 ring-offset-2 ring-[#E0246A] scale-110 shadow-xs'
@@ -358,6 +400,22 @@ export function LandingSurface({
                   />
                 );
               })}
+
+              <div className="w-[1px] h-4 bg-stone-200 mx-0.5" />
+
+              {/* French Tip Quick Toggle */}
+              <button
+                type="button"
+                onClick={() => setFrenchTipActive((prev) => (prev === null ? !activeShade.hasTip : !prev))}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
+                  isFrenchTip
+                    ? 'bg-[#E0246A] text-white shadow-xs'
+                    : 'bg-stone-100 hover:bg-stone-200/70 text-stone-600'
+                }`}
+                title="Toggle French smile-line tip"
+              >
+                French tip
+              </button>
             </div>
           </div>
 
@@ -389,16 +447,21 @@ export function LandingSurface({
           Customize each finger, design with AI, and try on real polish colors and shapes on your own hand live.
         </p>
 
-        {/* Swatch Pill with Shade Name on Mobile */}
+        {/* Swatch Pill with Shade Name & French Tip Toggle on Mobile */}
         <div className="w-full max-w-sm mx-auto flex items-center justify-between px-3.5 py-2 rounded-full bg-white border border-stone-200/80 shadow-xs">
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2">
             {SHADES.map((shade, idx) => {
               const active = idx === activeShadeIndex;
               return (
                 <button
                   key={shade.id}
                   type="button"
-                  onClick={() => setActiveShadeIndex(idx)}
+                  onClick={() => {
+                    setActiveShadeIndex(idx);
+                    if (frenchTipActive !== null) {
+                      setFrenchTipActive(null);
+                    }
+                  }}
                   className={`w-6 h-6 rounded-full transition-all duration-200 cursor-pointer ${
                     active
                       ? 'ring-2 ring-offset-2 ring-[#E0246A] scale-110 shadow-xs'
@@ -410,9 +473,23 @@ export function LandingSurface({
               );
             })}
           </div>
-          <span className="font-semibold text-stone-900 text-xs pr-1">
-            {activeShade.name}
-          </span>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setFrenchTipActive((prev) => (prev === null ? !activeShade.hasTip : !prev))}
+              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition cursor-pointer ${
+                isFrenchTip
+                  ? 'bg-[#E0246A] text-white'
+                  : 'bg-stone-100 text-stone-600'
+              }`}
+            >
+              French
+            </button>
+            <span className="font-semibold text-stone-900 text-xs pr-1">
+              {activeShade.name}
+            </span>
+          </div>
         </div>
 
         {/* Primary Full-Width CTA Button */}
@@ -566,9 +643,32 @@ export function LandingSurface({
                         : 'bg-white border-stone-200/80 hover:bg-stone-50 text-stone-700'
                     }`}
                   >
-                    <div>
-                      <div className="text-xs font-semibold">{shape.name}</div>
-                      <div className="text-[11px] text-stone-500 mt-0.5">{shape.desc}</div>
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-11 flex items-center justify-center shrink-0">
+                        <NailCanvasPreview
+                          nail={{
+                            finger: 'middle',
+                            title: shape.name,
+                            shape: shape.id,
+                            length: 'medium',
+                            finish: activeShade.finish || 'glossy',
+                            baseColor: activeShade.hex,
+                            accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
+                            pattern: isFrenchTip ? 'classic-french' : 'solid',
+                            clientNote: '',
+                            status: 'detected',
+                          }}
+                          gradient={activeShade.gradient}
+                          glowColor={activeShade.gradient.tip}
+                          width={28}
+                          height={42}
+                          showFinger={true}
+                        />
+                      </div>
+                      <div>
+                        <div className="text-xs font-semibold text-stone-900">{shape.name}</div>
+                        <div className="text-[11px] text-stone-500 mt-0.5">{shape.desc}</div>
+                      </div>
                     </div>
                     {active && <Check className="w-4 h-4 text-[#E0246A]" />}
                   </button>
