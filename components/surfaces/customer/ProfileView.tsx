@@ -20,6 +20,7 @@ import {
   Trash2,
   Sparkles,
   Search,
+  Dices,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -100,6 +101,62 @@ export function ProfileView({
     }
     return parts[0].slice(0, 2).toUpperCase();
   }, [userName]);
+
+  // Open-source Default Profile Avatar Seed & Giver
+  const [avatarSeed, setAvatarSeed] = useState(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('finglora_avatar_seed');
+      if (saved) return saved;
+    }
+    return 'Vivian';
+  });
+
+  const [customAvatarPhoto, setCustomAvatarPhoto] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finglora_custom_avatar_photo');
+    }
+    return null;
+  });
+
+  const avatarUrl = useMemo(() => {
+    if (customAvatarPhoto) return customAvatarPhoto;
+    return `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=fde8ef`;
+  }, [avatarSeed, customAvatarPhoto]);
+
+  const profilePicFileInputRef = useRef<HTMLInputElement>(null);
+
+  const randomizeAvatar = () => {
+    const seeds = [
+      'Vivian', 'Elise', 'Chloe', 'Amelie', 'Camille', 'Juliette',
+      'Margaux', 'Giselle', 'Helene', 'Ines', 'Adele', 'Colette',
+      'Claire', 'Sasha', 'Nadia', 'Zoe', 'Leona', 'Celeste', 'Flora'
+    ];
+    const next = seeds[Math.floor(Math.random() * seeds.length)] + '-' + Math.floor(Math.random() * 999);
+    setAvatarSeed(next);
+    setCustomAvatarPhoto(null);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('finglora_avatar_seed', next);
+      localStorage.removeItem('finglora_custom_avatar_photo');
+      localStorage.setItem('finglora_avatar_url', `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(next)}&backgroundColor=fde8ef`);
+    }
+    showToast('New profile avatar rolled ✿');
+  };
+
+  const handleCustomAvatarSelected = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = reader.result as string;
+      setCustomAvatarPhoto(dataUrl);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('finglora_custom_avatar_photo', dataUrl);
+          localStorage.setItem('finglora_avatar_url', dataUrl);
+        } catch {}
+      }
+      showToast('Custom profile picture updated');
+    };
+    reader.readAsDataURL(file);
+  };
 
   // User Email state
   const [userEmail, setUserEmail] = useState(() => {
@@ -709,12 +766,49 @@ export function ProfileView({
         {/* Left Column: Cohesive Full Card (Profile Details + Hand Photo Status + Saved Looks Summary) */}
         <div className="space-y-4">
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-[#F0DFE4] shadow-2xs space-y-5">
-            {/* 1. Profile Silhouette & Identity with Editorial Monogram */}
+            {/* 1. Profile Silhouette & Identity with Default Profile Pic Giver */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                {/* Luxury Editorial Monogram Avatar */}
-                <div className="w-14 h-14 sm:w-16 sm:h-16 rounded-full bg-[#801A35] text-[#FDE8EF] border border-[#801A35]/25 shadow-xs flex items-center justify-center font-serif text-lg sm:text-xl font-medium tracking-wider shrink-0 select-none">
-                  {userInitials}
+                {/* Avatar with Default Profile Pic Giver (Dice roll) & Custom Upload */}
+                <div className="relative shrink-0 group">
+                  <div
+                    onClick={() => profilePicFileInputRef.current?.click()}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-[#E0246A]/25 bg-[#FDE8EF] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                    title="Click to upload custom picture, or use dice to roll random avatar"
+                  >
+                    <img
+                      src={avatarUrl}
+                      alt={userName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+
+                  {/* The Profile Pic Giver Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      randomizeAvatar();
+                    }}
+                    title="Roll new default profile picture"
+                    className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-[#F0DFE4] shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-[#FDE8EF] transition active:scale-90 cursor-pointer"
+                  >
+                    <Dices className="w-3.5 h-3.5" />
+                  </button>
+
+                  <input
+                    ref={profilePicFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleCustomAvatarSelected(f);
+                    }}
+                  />
                 </div>
 
                 <div className="min-w-0">
@@ -722,10 +816,19 @@ export function ProfileView({
                     {userName}
                   </h2>
                   <p className="text-xs text-[#806D76] truncate mt-0.5">{userEmail}</p>
-                  <div className="mt-1">
+                  <div className="mt-1 flex items-center gap-2">
                     <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-mono font-medium bg-[#FDE8EF] text-[#801A35] border border-[#801A35]/15">
                       Atelier Client
                     </span>
+                    <button
+                      type="button"
+                      onClick={randomizeAvatar}
+                      className="text-[10px] text-[#E0246A] hover:underline font-medium cursor-pointer inline-flex items-center gap-1"
+                      title="Roll a new default profile avatar"
+                    >
+                      <Dices className="w-3 h-3" />
+                      <span>Roll Avatar</span>
+                    </button>
                   </div>
                 </div>
               </div>

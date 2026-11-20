@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   Home,
   Compass,
@@ -90,6 +90,20 @@ export function CustomerTopBar({
   const userInitials = userName && userName.trim()
     ? userName.trim().slice(0, 2).toUpperCase()
     : 'FL';
+
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const url =
+        localStorage.getItem('finglora_custom_avatar_photo') ||
+        localStorage.getItem('finglora_avatar_url') ||
+        (localStorage.getItem('finglora_avatar_seed')
+          ? `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(localStorage.getItem('finglora_avatar_seed')!)}&backgroundColor=fde8ef`
+          : 'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian&backgroundColor=fde8ef');
+      setAvatarUrl(url);
+    }
+  }, [currentRoute]);
 
   return (
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[rgba(31,26,28,0.06)] shadow-2xs select-none">
@@ -186,18 +200,29 @@ export function CustomerTopBar({
             </button>
           )}
 
-          {/* Monogram Avatar / Profile Button (Desktop) */}
+          {/* Avatar / Profile Button (Desktop) */}
           <button
             type="button"
             onClick={() => onNavigate('profile')}
-            className={`hidden md:flex w-8.5 h-8.5 rounded-full items-center justify-center text-xs font-semibold transition cursor-pointer border ${
+            className={`hidden md:flex w-8.5 h-8.5 rounded-full overflow-hidden items-center justify-center text-xs font-semibold transition cursor-pointer border ${
               currentRoute === 'profile'
                 ? 'border-[#E0246A] ring-2 ring-[#E0246A]/20 bg-[#FDE8EF] text-[#E0246A]'
                 : 'border-stone-200/80 bg-white text-stone-700 hover:border-stone-300 hover:bg-stone-50'
             }`}
             title="Profile & Settings"
           >
-            {userInitials}
+            {avatarUrl ? (
+              <img
+                src={avatarUrl}
+                alt={userName}
+                className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.target as HTMLElement).style.display = 'none';
+                }}
+              />
+            ) : (
+              userInitials
+            )}
           </button>
 
           {/* Mobile Right Controls */}
