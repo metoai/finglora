@@ -22,6 +22,8 @@ interface ChatMessage {
 export function AiCreationView({
   customTryOnHandUrl,
   initialHandDesignUrl,
+  initialPrompt,
+  onClearInitialPrompt,
   nails,
   setNails,
   onSignUpClick,
@@ -29,6 +31,8 @@ export function AiCreationView({
 }: {
   customTryOnHandUrl?: string | null;
   initialHandDesignUrl?: string | null;
+  initialPrompt?: string;
+  onClearInitialPrompt?: () => void;
   nails: Record<Finger, NailDesign>;
   setNails?: React.Dispatch<React.SetStateAction<Record<Finger, NailDesign>>>;
   onSignUpClick?: () => void;
@@ -39,51 +43,69 @@ export function AiCreationView({
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
 
-  // Persistent Bare Hand Photo
+  // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
   const originalBareHandPhoto =
     customTryOnHandUrl ||
-    (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_hand_photo') : null) ||
+    (typeof window !== 'undefined'
+      ? localStorage.getItem('finglora_custom_hand_photo') ||
+        localStorage.getItem('finglora_user_hand_photo')
+      : null) ||
     '/assets/editorial_nail_hero.jpg';
 
   // Active Displayed AI-Generated Try-On Hand Image
   const [currentTryOnImage, setCurrentTryOnImage] = useState<string>(() => {
+    if (initialPrompt && initialPrompt.trim()) {
+      return originalBareHandPhoto;
+    }
     return (
       initialHandDesignUrl ||
       (typeof window !== 'undefined' ? localStorage.getItem('finglora_ai_base_hand_image') : null) ||
-      customTryOnHandUrl ||
-      (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_hand_photo') : null) ||
-      '/assets/editorial_nail_hero.jpg'
+      originalBareHandPhoto
     );
   });
 
   useEffect(() => {
-    if (initialHandDesignUrl) {
+    if (initialHandDesignUrl && (!initialPrompt || !initialPrompt.trim())) {
       setCurrentTryOnImage(initialHandDesignUrl);
       setCompareMode('after');
     }
-  }, [initialHandDesignUrl]);
+  }, [initialHandDesignUrl, initialPrompt]);
 
   const [compareMode, setCompareMode] = useState<'after' | 'before'>('after');
 
   // Conversational History
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: '1',
-      sender: 'gemini',
-      text: "Your manicure is ready on your hand. Describe any adjustment you'd like to make, such as nail shape, finish, or tip style.",
-      timestamp: 'Just now',
-    },
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>(() => {
+    if (initialPrompt && initialPrompt.trim()) {
+      return [
+        {
+          id: 'initial-user',
+          sender: 'user',
+          text: initialPrompt.trim(),
+          timestamp: 'Just now',
+        },
+      ];
+    }
+    return [
+      {
+        id: '1',
+        sender: 'gemini',
+        text: "Your hand is ready. Describe any design or adjustment you'd like to create, such as nail shape, color, finish, or artistry.",
+        timestamp: 'Just now',
+      },
+    ];
+  });
 
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const executedInitialPromptRef = useRef<string | null>(null);
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
-  const handleSendPrompt = async () => {
-    const text = promptText.trim();
-    if (!text || isIterating) return;
+  // Main Prompt Execution Function
+  const executePrompt = async (text: string, isInitialCreation = false) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
 
     // Check credits
     const creditStatus = getUserCreditStatus();
@@ -94,36 +116,31 @@ export function AiCreationView({
     }
 
     useTryOnCredit();
-
-    const userMsg: ChatMessage = {
-      id: Date.now().toString(),
-      sender: 'user',
-      text,
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    };
-
-    setMessages((prev) => [...prev, userMsg]);
-    setPromptText('');
     setIsIterating(true);
 
     try {
-      // 1. Downscale current hand image for image-to-image
+      // 1. Downscale hand image for vision model
+      // If initial creation, always anchor directly to the user's natural bare hand photo
+      const baseSource = isInitialCreation ? originalBareHandPhoto : (currentTryOnImage || originalBareHandPhoto);
       let handBase64 = '';
-      const baseSource = currentTryOnImage || originalBareHandPhoto;
       if (baseSource.startsWith('data:image/')) {
         handBase64 = baseSource;
       } else {
         handBase64 = await downscaleImageForVision(baseSource, 1024, 0.88);
       }
 
-      // 2. Call /api/generate-nail-art in image-to-image mode
+      // 2. Call /api/generate-nail-art in hand-tryon mode
+      const promptInstruction = isInitialCreation
+        ? `On this human hand, generate and apply this custom manicure design: "${trimmed}". Preserve the natural hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto each fingernail with glossy salon gel clearcoat.`
+        : `On this human hand with manicure, update and customize the manicure according to this request: "${trimmed}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails with high-gloss salon gel clearcoat.`;
+
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'hand-tryon',
           handImageBase64: handBase64 || undefined,
-          prompt: `On this human hand with manicure, update and customize the manicure according to this request: "${text}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails with high-gloss salon gel clearcoat.`,
+          prompt: promptInstruction,
         }),
       });
 
@@ -134,15 +151,16 @@ export function AiCreationView({
           setCompareMode('after');
           try {
             localStorage.setItem('finglora_ai_base_hand_image', data.imageUrl);
-            localStorage.setItem('finglora_custom_hand_photo', data.imageUrl);
           } catch {}
 
           const geminiMsg: ChatMessage = {
             id: (Date.now() + 1).toString(),
             sender: 'gemini',
-            text: `Applied "${text}" directly onto your hand in photorealistic detail. What else would you like to customize?`,
+            text: isInitialCreation
+              ? `Created "${trimmed}" directly on your hand! Describe any adjustments or details you'd like to refine.`
+              : `Applied "${trimmed}" directly onto your hand in photorealistic detail. What else would you like to customize?`,
             timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-            appliedDesignTitle: text,
+            appliedDesignTitle: trimmed,
           };
           setMessages((prev) => [...prev, geminiMsg]);
           setIsIterating(false);
@@ -154,7 +172,7 @@ export function AiCreationView({
       const is429 = res.status === 429 || errJson?.isRateLimit;
       const errorMsg = is429
         ? 'Service is experiencing high demand. Please wait a moment and try again.'
-        : `Could not apply "${text}". Please try describing the change differently.`;
+        : `Could not apply "${trimmed}". Please try describing the change differently.`;
 
       const geminiErr: ChatMessage = {
         id: (Date.now() + 1).toString(),
@@ -174,6 +192,31 @@ export function AiCreationView({
     } finally {
       setIsIterating(false);
     }
+  };
+
+  // Automatically trigger creation when arriving from homepage with initialPrompt
+  useEffect(() => {
+    if (initialPrompt && initialPrompt.trim() && executedInitialPromptRef.current !== initialPrompt.trim()) {
+      executedInitialPromptRef.current = initialPrompt.trim();
+      executePrompt(initialPrompt.trim(), true);
+      onClearInitialPrompt?.();
+    }
+  }, [initialPrompt]);
+
+  const handleSendPrompt = async () => {
+    const text = promptText.trim();
+    if (!text || isIterating) return;
+
+    const userMsg: ChatMessage = {
+      id: Date.now().toString(),
+      sender: 'user',
+      text,
+      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+    };
+
+    setMessages((prev) => [...prev, userMsg]);
+    setPromptText('');
+    executePrompt(text, false);
   };
 
   return (
@@ -196,14 +239,14 @@ export function AiCreationView({
               Virtual Studio
             </span>
             <h1 className="font-serif text-2xl sm:text-3xl font-normal text-stone-900 tracking-tight">
-              Edit Manicure
+              Create with AI
             </h1>
           </div>
         </div>
 
         <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-md bg-stone-100 text-xs font-medium text-stone-700">
           <Sliders className="w-3.5 h-3.5 text-stone-500" />
-          <span>AI Editor</span>
+          <span>AI Studio</span>
         </div>
       </div>
 
@@ -211,12 +254,15 @@ export function AiCreationView({
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
         {/* Left: Constant Hand Photo Viewport (7 Cols) */}
         <div className="lg:col-span-7 space-y-3">
-          <div className="relative aspect-[3/4] max-h-[460px] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200 flex items-center justify-center">
+          <div className="relative aspect-[3/4] max-h-[480px] sm:max-h-[560px] lg:max-h-[640px] w-full rounded-2xl overflow-hidden bg-stone-100 shadow-sm border border-stone-200 flex items-center justify-center">
             {isIterating && (
-              <div className="absolute inset-0 z-30 bg-black/50 backdrop-blur-xs flex flex-col items-center justify-center gap-2 text-white text-center p-4">
-                <Loader2 className="w-7 h-7 animate-spin text-white" />
-                <span className="text-xs font-medium tracking-wide">
-                  Updating manicure...
+              <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-2.5 text-white text-center p-6">
+                <Loader2 className="w-8 h-8 animate-spin text-[#E0246A]" />
+                <span className="text-sm font-semibold tracking-wide">
+                  Creating manicure on your hand...
+                </span>
+                <span className="text-xs text-stone-300">
+                  Fitting requested nail art to your fingernails
                 </span>
               </div>
             )}
@@ -253,7 +299,7 @@ export function AiCreationView({
         </div>
 
         {/* Right: Conversational AI Prompt Stream (5 Cols) */}
-        <div className="lg:col-span-5 flex flex-col h-[460px] rounded-2xl bg-white border border-stone-200 shadow-sm overflow-hidden">
+        <div className="lg:col-span-5 flex flex-col h-[480px] sm:h-[560px] lg:h-[640px] rounded-2xl bg-white border border-stone-200 shadow-sm overflow-hidden">
           {/* Stream Header */}
           <div className="p-3.5 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
             <div className="flex items-center gap-2">

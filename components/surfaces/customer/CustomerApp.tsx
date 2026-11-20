@@ -334,6 +334,17 @@ export function CustomerApp({
               onCreatePromptClick={(prompt) => {
                 setAiStudioPrompt(prompt);
                 setActiveSetName(prompt.slice(0, 32) || 'Custom AI Set');
+                const savedHand =
+                  customTryOnHandUrl ||
+                  (typeof window !== 'undefined'
+                    ? localStorage.getItem('finglora_custom_hand_photo') ||
+                      localStorage.getItem('finglora_user_hand_photo')
+                    : null);
+                if (savedHand) {
+                  setAiCreationBaseImage(savedHand);
+                } else {
+                  setAiCreationBaseImage('/assets/editorial_nail_hero.jpg');
+                }
                 setCustomerRoute('ai-create');
               }}
               customTryOnHandUrl={customTryOnHandUrl}
@@ -344,11 +355,13 @@ export function CustomerApp({
           {customerRoute === 'ai-create' && (
             <AiCreationView
               customTryOnHandUrl={customTryOnHandUrl}
-              initialHandDesignUrl={aiCreationBaseImage || synthesizedHandUrl || customTryOnHandUrl}
+              initialHandDesignUrl={aiCreationBaseImage || customTryOnHandUrl}
+              initialPrompt={aiStudioPrompt}
+              onClearInitialPrompt={() => setAiStudioPrompt('')}
               nails={nails}
               setNails={setNails}
               onSignUpClick={() => setCustomerRoute('signup')}
-              onBackToTryOn={() => setCustomerRoute('tryon')}
+              onBackToTryOn={() => setCustomerRoute('home')}
             />
           )}
 
