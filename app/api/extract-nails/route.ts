@@ -100,48 +100,59 @@ export async function POST(request: Request) {
       }
     }
 
-    // Google Gemini Vision API (Primary: gemini-3.5-flash-lite for instant <1s analysis, fallback to 3.8-flash)
-    const candidateModels = ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'];
+    // Dual Provider Engine: Vertex AI Express Mode (Projectless) + Google AI Studio fallback
+    const endpointProviders = [
+      ...(primaryKey ? [{
+        name: 'vertex-express',
+        url: (m: string) => `https://aiplatform.googleapis.com/v1/publishers/google/models/${m}:generateContent?key=${primaryKey}`,
+        models: ['gemini-3-flash-preview', 'gemini-3.1-pro-preview'],
+      }] : []),
+      {
+        name: 'gemini-studio',
+        url: (m: string) => `https://generativelanguage.googleapis.com/v1beta/models/${m}:generateContent?key=${fallbackKey || primaryKey}`,
+        models: ['gemini-3.5-flash-lite', 'gemini-3.8-flash', 'gemini-3.5-flash'],
+      },
+    ];
+
     let geminiData: Record<string, any> | null = null;
     let activeModel = 'gemini-3.5-flash-lite';
     let lastErrorMsg = 'Google Gemini analysis request failed';
 
-    keyLoop: for (const key of candidateKeys) {
-      for (const model of candidateModels) {
+    providerLoop: for (const provider of endpointProviders) {
+      for (const model of provider.models) {
         try {
-          const geminiRes = await fetch(
-            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [
-                  {
-                    parts: [
-                      { text: MANICURE_PROMPT },
-                      finalBase64
-                        ? { inlineData: { mimeType: finalMimeType, data: finalBase64 } }
-                        : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
-                    ],
-                  },
-                ],
-                generationConfig: {
-                  temperature: 0.1,
-                  responseMimeType: 'application/json',
+          const endpointUrl = provider.url(model);
+          const geminiRes = await fetch(endpointUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [
+                {
+                  role: 'user',
+                  parts: [
+                    { text: MANICURE_PROMPT },
+                    finalBase64
+                      ? { inlineData: { mimeType: finalMimeType, data: finalBase64 } }
+                      : { text: `Analyze the manicure at this image URL: ${imageUrl}` },
+                  ],
                 },
-              }),
-              signal: AbortSignal.timeout(8000),
-            }
-          );
+              ],
+              generationConfig: {
+                temperature: 0.1,
+                responseMimeType: 'application/json',
+              },
+            }),
+            signal: AbortSignal.timeout(8000),
+          });
 
           if (geminiRes.ok) {
             geminiData = await geminiRes.json();
-            activeModel = model;
-            break keyLoop;
+            activeModel = `${provider.name}/${model}`;
+            break providerLoop;
           } else {
             const errorData = await geminiRes.json().catch(() => ({}));
             lastErrorMsg = errorData?.error?.message || `HTTP ${geminiRes.status}`;
-            console.warn(`[Finglora Gemini Vision] ${model} unavailable (${geminiRes.status}: ${lastErrorMsg}), attempting fallback...`);
+            console.warn(`[Finglora Gemini Vision] ${provider.name}/${model} unavailable (${geminiRes.status}: ${lastErrorMsg}), attempting fallback...`);
           }
         } catch (err: unknown) {
           lastErrorMsg = err instanceof Error ? err.message : 'Network error';

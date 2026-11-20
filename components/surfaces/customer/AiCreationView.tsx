@@ -176,6 +176,27 @@ export function AiCreationView({
           });
         }
 
+        // Trigger Vertex AI gemini-3.1-flash-image generation
+        try {
+          fetch('/api/generate-nail-art', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              prompt: text,
+              handImageBase64: handPhoto?.startsWith('data:') ? handPhoto : undefined,
+            }),
+          })
+            .then((res) => (res.ok ? res.json() : null))
+            .then((data) => {
+              if (data?.imageUrl) {
+                setCurrentTryOnImage(data.imageUrl);
+              }
+            })
+            .catch(() => {});
+        } catch {
+          // ignore
+        }
+
         setCurrentTryOnImage(nextImage);
 
         const geminiMsg: ChatMessage = {
