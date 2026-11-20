@@ -12,7 +12,6 @@ import {
   Camera,
   UploadCloud,
   Download,
-  Sparkles,
   Loader2,
   Maximize2,
   X,
@@ -20,7 +19,7 @@ import {
   ChevronRight,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
-import { FINGER_KEYS, FINGER_LABELS, CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
+import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { downscaleImageForVision } from '@/lib/services/storage';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
@@ -313,7 +312,7 @@ export function TryOnView({
       {exportToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
           <div className="bg-[#181416] text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
-            <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+            <Check className="w-3.5 h-3.5 text-[#E0246A]" />
             <span>{exportToast}</span>
           </div>
         </div>
@@ -590,7 +589,6 @@ export function TryOnView({
                 }}
                 className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
               >
-                <Sparkles className="w-4 h-4" />
                 <span>Customize in AI Studio →</span>
               </button>
 
@@ -673,45 +671,15 @@ export function TryOnView({
             </div>
 
             {/* Upload Custom Inspo Button */}
-            <div className="pt-1">
+            <div className="pt-2">
               <button
                 type="button"
                 onClick={() => changeRefInspoInputRef.current?.click()}
-                className="w-full h-8.5 rounded-xl border border-dashed border-stone-300 hover:border-[#E0246A]/50 hover:bg-rose-50/40 text-stone-600 hover:text-[#E0246A] text-xs font-medium flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95"
+                className="w-full h-10 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200/80 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 shadow-2xs"
               >
-                <ImagePlus className="w-3.5 h-3.5" />
-                <span>Upload Custom Pinterest / IG Photo</span>
+                <ImagePlus className="w-4 h-4 text-stone-600" />
+                <span>Upload Inspo Photo</span>
               </button>
-            </div>
-          </div>
-
-          {/* Station Card 3: Technical 5-Finger Formula Matrix */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3">
-            <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
-              Atelier Formula Breakdown
-            </span>
-
-            <div className="grid grid-cols-5 gap-1.5 pt-1">
-              {FINGER_KEYS.map((fk) => {
-                const item = nails[fk];
-                return (
-                  <div
-                    key={fk}
-                    className="p-2 rounded-xl bg-stone-50 border border-stone-200/60 text-center space-y-1"
-                  >
-                    <div
-                      className="w-4 h-4 rounded-full mx-auto shadow-2xs border border-white"
-                      style={{ backgroundColor: item.baseColor || '#F5E6E0' }}
-                    />
-                    <span className="text-[9px] font-mono uppercase text-stone-400 block truncate">
-                      {FINGER_LABELS[fk].slice(0, 3)}
-                    </span>
-                    <span className="text-[10px] font-semibold text-stone-800 block truncate">
-                      {item.shape || 'Almond'}
-                    </span>
-                  </div>
-                );
-              })}
             </div>
           </div>
         </div>
