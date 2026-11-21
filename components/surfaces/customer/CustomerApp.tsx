@@ -27,6 +27,9 @@ export function CustomerApp({
   preferredShape,
   setPreferredShape,
   activeSample,
+  activeSetId,
+  setActiveSetId,
+  onResetInspo,
   activePhotoUrl,
   activeSetName,
   setActiveSetName,
@@ -97,7 +100,10 @@ export function CustomerApp({
   setUserName: (name: string) => void;
   preferredShape: NailShape;
   setPreferredShape?: (shape: NailShape) => void;
-  activeSample: ExploreDesignSet;
+  activeSample?: ExploreDesignSet;
+  activeSetId?: string;
+  setActiveSetId?: (id: string) => void;
+  onResetInspo?: () => void;
   activePhotoUrl: string;
   activeSetName: string;
   setActiveSetName: (name: string) => void;
@@ -183,6 +189,21 @@ export function CustomerApp({
     prevCustomerRouteRef.current = customerRoute;
   }, [customerRoute, setSynthesizedHandUrl, setTryOnView]);
 
+  // Unified route navigation that resets inspo when entering tryon without explicit card selection
+  const handleNavToRoute = (route: CustomerRoute) => {
+    if (route === 'tryon') {
+      setActivePhotoUrl?.('');
+      setSynthesizedHandUrl?.(null);
+      setTryOnView?.('before');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+    }
+    setCustomerRoute(route);
+  };
+
   return (
     <div
       className={`min-h-screen flex flex-col bg-[#FAF9F6] ${
@@ -193,7 +214,7 @@ export function CustomerApp({
       {!mobilePreview && (
         <CustomerSidebar
           currentRoute={customerRoute}
-          onNavigate={setCustomerRoute}
+          onNavigate={handleNavToRoute}
           onBrandClick={onBrandClick}
           favoritesCount={favoritesCount}
           userName={userName}
@@ -205,7 +226,7 @@ export function CustomerApp({
       <div className={mobilePreview ? 'block' : 'md:hidden'}>
         <CustomerTopBar
           currentRoute={customerRoute}
-          onNavigate={setCustomerRoute}
+          onNavigate={handleNavToRoute}
           onBrandClick={onBrandClick}
           favoritesCount={favoritesCount}
           userName={userName}
@@ -268,9 +289,9 @@ export function CustomerApp({
               onSelectExploreDesign={onSelectExploreDesign}
               onTuneVibeClick={onTuneVibeClick}
               onSelectFinger={() => {
-                setCustomerRoute('tryon');
+                handleNavToRoute('tryon');
               }}
-              onTryOnClick={() => setCustomerRoute('tryon')}
+              onTryOnClick={() => handleNavToRoute('tryon')}
               onCustomizeClick={() => setCustomerRoute('ai-create')}
               onUploadClick={() => setCustomerRoute('upload')}
               onExploreClick={(query?: string) => {
@@ -292,7 +313,7 @@ export function CustomerApp({
                 if (savedHand) {
                   setAiCreationBaseImage(savedHand);
                 } else {
-                  setAiCreationBaseImage('/assets/editorial_nail_hero.jpg');
+                  setAiCreationBaseImage('https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg');
                 }
                 setCustomerRoute('ai-create');
               }}
@@ -430,6 +451,19 @@ export function CustomerApp({
               onSelectExploreDesign={onSelectExploreDesign}
               activeSample={activeSample}
               activePhotoUrl={activePhotoUrl}
+              onResetInspo={() => {
+                setActivePhotoUrl?.('');
+                setActiveSetId?.('');
+                setSynthesizedHandUrl?.(null);
+                setTryOnView?.('before');
+                if (typeof window !== 'undefined') {
+                  try {
+                    localStorage.removeItem('finglora_synthesized_hand_url');
+                  } catch {}
+                }
+                onResetInspo?.();
+              }}
+              onExploreClick={() => setCustomerRoute('explore')}
               onCustomizeWithAi={(handUrl: string) => {
                 setAiCreationBaseImage(handUrl);
                 try {
@@ -525,7 +559,7 @@ export function CustomerApp({
                   <button
                     key={tab.id}
                     type="button"
-                    onClick={() => setCustomerRoute(tab.route)}
+                    onClick={() => handleNavToRoute(tab.route)}
                     className="relative flex-1 h-full flex flex-col items-center justify-center cursor-pointer select-none rounded-full py-1 group active:scale-95 transition-transform"
                   >
                     {/* Modern Active Shape that Smoothly Glides with Spring Physics */}

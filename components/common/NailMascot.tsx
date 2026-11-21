@@ -160,7 +160,7 @@ export function NailMascot({
             <div className="relative group">
               <div className="relative w-52 h-52 sm:w-64 sm:h-64 rounded-3xl overflow-hidden border border-[#E0246A]/20 ring-8 ring-[#FAFAFA] shadow-[0_8px_24px_-4px_rgba(31,26,28,0.1)] transition-transform duration-300 group-hover:scale-[1.02]">
                 <Image
-                  src="/assets/finglora_mascot.jpg"
+                  src="https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/brand/finglora_mascot.jpg"
                   alt="Flora, Finglora Assistant"
                   width={256}
                   height={256}
@@ -220,7 +220,7 @@ export function NailMascot({
       >
         <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#C59B27]/40 ring-2 ring-[#FAFAFA] shrink-0">
           <Image
-            src="/assets/finglora_mascot.jpg"
+            src="https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/brand/finglora_mascot.jpg"
             alt="Flora, Finglora Nail Muse"
             width={48}
             height={48}
@@ -257,7 +257,7 @@ export function NailMascot({
       >
         <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#C59B27]/40 ring-2 ring-[#FAFAFA] shrink-0">
           <Image
-            src="/assets/finglora_mascot.jpg"
+            src="https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/brand/finglora_mascot.jpg"
             alt="Flora, Finglora Nail Muse"
             width={40}
             height={40}
@@ -287,7 +287,7 @@ export function NailMascot({
         <div className="flex items-center gap-3.5">
           <div className="relative w-11 h-11 sm:w-12 sm:h-12 rounded-full overflow-hidden border border-[#C59B27]/40 ring-2 ring-[#FAFAFA] shrink-0">
             <Image
-              src="/assets/finglora_mascot.jpg"
+              src="https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/brand/finglora_mascot.jpg"
               alt="Flora, Finglora Nail Muse"
               width={48}
               height={48}
@@ -336,7 +336,7 @@ export function NailMascot({
           className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-[#C59B27]/45 ring-4 ring-[#FAFAFA] shrink-0 transition-transform duration-200 hover:scale-[1.03] cursor-pointer"
         >
           <Image
-            src="/assets/finglora_mascot.jpg"
+            src="https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/brand/finglora_mascot.jpg"
             alt="Flora, Finglora Nail Muse"
             width={64}
             height={64}

@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Heart,
   Search,
@@ -37,20 +37,16 @@ interface FilterTag {
 
 const CATEGORY_TAGS: FilterTag[] = [
   { id: 'all', label: 'All Styles', Icon: Sparkles, queryMatch: '' },
-  { id: 'short', label: 'Short', Icon: Scissors, queryMatch: 'short' },
-  { id: 'simple', label: 'Simple', Icon: Circle, queryMatch: 'simple' },
-  { id: 'french', label: 'French', Icon: Palette, queryMatch: 'french' },
-  { id: 'cat-eye', label: 'Cat Eye', Icon: Eye, queryMatch: 'cat eye' },
-  { id: 'coquette', label: 'Coquette', Icon: Heart, queryMatch: 'coquette' },
-  { id: 'red', label: 'Red Wine', Icon: Wine, queryMatch: 'red' },
-  { id: 'pink', label: 'Pink Blush', Icon: Sparkle, queryMatch: 'pink' },
-  { id: 'cherry-mocha', label: 'Cherry Mocha', Icon: Coffee, queryMatch: 'mocha' },
-  { id: 'black', label: 'Black Minimal', Icon: Square, queryMatch: 'black' },
-  { id: 'chrome', label: 'Chrome Glaze', Icon: Wand2, queryMatch: 'chrome' },
-  { id: 'espresso', label: 'Espresso', Icon: Flame, queryMatch: 'espresso' },
-  { id: 'almond', label: 'Almond', Icon: Gem, queryMatch: 'almond' },
-  { id: 'coffin', label: 'Coffin', Icon: Layers, queryMatch: 'coffin' },
-  { id: 'gel', label: 'Gel Gloss', Icon: Droplets, queryMatch: 'gel' },
+  { id: 'glazed', label: 'Glazed & Chrome', Icon: Wand2, queryMatch: 'glazed' },
+  { id: 'french', label: 'French Tips', Icon: Palette, queryMatch: 'french' },
+  { id: 'coquette', label: 'Coquette & Ribbons', Icon: Heart, queryMatch: 'coquette' },
+  { id: 'velvet', label: 'Velvet & Aura', Icon: Wine, queryMatch: 'velvet' },
+  { id: 'minimal', label: 'Clean Girl Minimal', Icon: Circle, queryMatch: 'minimal' },
+  { id: 'cat-eye', label: 'Cat-Eye & 3D', Icon: Eye, queryMatch: 'cat-eye' },
+  { id: 'cherry-mocha', label: 'Cherry Mocha', Icon: Coffee, queryMatch: 'cherry-mocha' },
+  { id: 'black-minimal', label: 'Noir & Black', Icon: Square, queryMatch: 'black-minimal' },
+  { id: 'short-natural', label: 'Short & Natural', Icon: Scissors, queryMatch: 'short-natural' },
+  { id: 'almond-coffin', label: 'Sculpted Extensions', Icon: Gem, queryMatch: 'almond-coffin' },
 ];
 
 interface ManicurePin {
@@ -66,7 +62,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-french-bow',
     title: 'French Tip Nails Forever 🤍✨ with Coquette Ribbons',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     aspectClass: 'aspect-[3/4.3]',
     tags: ['french', 'coquette', 'pink', 'simple', 'cute'],
     shape: 'almond',
@@ -74,7 +70,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-cherry-mocha',
     title: 'Cherry Mocha French Nails ☕ Deep Glossy Tips',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg',
     aspectClass: 'aspect-[3/4.7]',
     tags: ['french', 'red', 'mocha', 'gel'],
     shape: 'coffin',
@@ -82,7 +78,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-milky-glazed',
     title: 'Milky Glazed Gold Donut Chrome Finish',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['chrome', 'simple', 'short', 'gel'],
     shape: 'almond',
@@ -90,7 +86,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-nude-clean',
     title: 'Simple Yet Beautiful Clean Girl Nude Manicure',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
     aspectClass: 'aspect-[3/4]',
     tags: ['simple', 'short', 'gel'],
     shape: 'almond',
@@ -98,7 +94,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-burgundy-marble',
     title: 'Burgundy Marble Nails with 24K Gold Leaf Details',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_bronze_gold_07.jpg',
     aspectClass: 'aspect-[3/4.5]',
     tags: ['red', 'mocha', 'chrome'],
     shape: 'almond',
@@ -106,7 +102,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-pink-aura',
     title: 'Rose Quartz & Pearl Glaze with Micro Bows 🎀',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_french_bow_03.jpg',
     aspectClass: 'aspect-[3/4.2]',
     tags: ['pink', 'chrome', 'coquette'],
     shape: 'almond',
@@ -114,7 +110,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-classic-french',
     title: 'Classic Almond French Smile Curve on Sheer Pink',
-    photoUrl: '/images/ar-nail-hero-pearl.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['french', 'simple', 'gel'],
     shape: 'almond',
@@ -122,7 +118,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-short-minimal',
     title: 'Clean Minimalist Sheer Lacquer with High Gloss',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
     aspectClass: 'aspect-[3/3.9]',
     tags: ['short', 'simple', 'square'],
     shape: 'square',
@@ -130,7 +126,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-cat-eye-shimmer',
     title: 'Velvet Cat Eye Magnetic Gel Polish with Halo Effect',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_liquid_silver_03.jpg',
     aspectClass: 'aspect-[3/4.6]',
     tags: ['cat eye', 'chrome', 'gel'],
     shape: 'almond',
@@ -138,7 +134,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-black-coquette',
     title: 'Black Velvet French with Chrome Butterfly Art 🖤',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_noir_classic_03.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['black', 'coquette', 'french'],
     shape: 'coffin',
@@ -146,7 +142,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-red-valentine',
     title: "30 Red Valentine's Day Negative Space Heart Nails 💌",
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_baby_blue_square_07.jpg',
     aspectClass: 'aspect-[3/4.3]',
     tags: ['red', 'pink', 'coquette'],
     shape: 'almond',
@@ -154,7 +150,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-bordeaux-dots',
     title: 'Burgundy French with Micro Polka Dot Accent',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_double_arch_05.jpg',
     aspectClass: 'aspect-[3/4.5]',
     tags: ['red', 'french', 'mocha'],
     shape: 'almond',
@@ -162,7 +158,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-french-clean',
     title: 'Clean Aesthetic French Tips on Long Almond',
-    photoUrl: '/images/ar-nail-hero-pearl.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_espresso_coffin_06.jpg',
     aspectClass: 'aspect-[3/4.2]',
     tags: ['french', 'simple', 'gel'],
     shape: 'almond',
@@ -170,7 +166,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-mauve-nude',
     title: 'Dusty Rose Petals on Sheer Mauve Almond',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_sage_almond_08.jpg',
     aspectClass: 'aspect-[3/4.4]',
     tags: ['pink', 'simple'],
     shape: 'almond',
@@ -178,7 +174,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-champagne-dust',
     title: 'Champagne Gold Fine Shimmer Gel Manicure ✨',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_lavender_coffin_06.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['chrome', 'cat eye', 'gel'],
     shape: 'almond',
@@ -186,7 +182,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-atelier-hero',
     title: 'Atelier Nude Minimal Square Daily Silhouette',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_chrome_french_08.jpg',
     aspectClass: 'aspect-[3/4]',
     tags: ['short', 'simple', 'square'],
     shape: 'square',
@@ -194,7 +190,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-coffin-ribbon',
     title: 'Coffin Dusty Rose with 3D Miniature Bows',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_cherry_ribbon_02.jpg',
     aspectClass: 'aspect-[3/4.6]',
     tags: ['pink', 'coquette'],
     shape: 'coffin',
@@ -202,7 +198,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-espresso-swirl',
     title: 'Smoked Espresso Chrome Swirl Line Art ☕',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_strawberry_oval_09.jpg',
     aspectClass: 'aspect-[3/4.5]',
     tags: ['espresso', 'black', 'gel'],
     shape: 'almond',
@@ -210,7 +206,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-pearl-donut',
     title: 'Glazed Donut Pearl Tips with Dewdrop Texture',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_holo_stiletto_10.jpg',
     aspectClass: 'aspect-[3/4.2]',
     tags: ['chrome', 'simple', 'french'],
     shape: 'almond',
@@ -218,7 +214,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-red-velvet',
     title: 'Deep Wine Bordeaux Velvet Stiletto Finish',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_gold_foil_09.jpg',
     aspectClass: 'aspect-[3/4.8]',
     tags: ['red', 'cat eye', 'gel'],
     shape: 'almond',
@@ -226,7 +222,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-nude-french-clean',
     title: 'Micro French Smile Line on Short Natural Nails',
-    photoUrl: '/images/ar-nail-hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_v_cut_chevron_10.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['short', 'french', 'simple'],
     shape: 'almond',
@@ -234,6 +230,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
 ];
 
 export function ExploreGalleryView({
+  exploreDesigns = [],
   exploreSearch,
   setExploreSearch,
   onSelectDesign,
@@ -253,27 +250,63 @@ export function ExploreGalleryView({
   const [activeFilterId, setActiveFilterId] = useState<string>('all');
   const [savedPins, setSavedPins] = useState<Record<string, boolean>>({});
 
+  // Transform exploreDesigns from Supabase into display pins, fallback to curated pins
+  const allPins = useMemo(() => {
+    if (exploreDesigns && exploreDesigns.length > 0) {
+      return exploreDesigns.map((d, idx) => ({
+        id: d.id,
+        passportCode: d.passportCode || `FGL-${1000 + idx}`,
+        title: d.title,
+        photoUrl: d.photoUrl,
+        aspectClass:
+          idx % 5 === 0
+            ? 'aspect-[3/4.4]'
+            : idx % 3 === 0
+            ? 'aspect-[3/4.2]'
+            : idx % 2 === 0
+            ? 'aspect-[3/4]'
+            : 'aspect-[3/4.3]',
+        category: (d.category || 'curated').toLowerCase(),
+        shape: (d.nails?.middle?.shape || d.nails?.thumb?.shape || 'almond') as NailShape,
+      }));
+    }
+
+    return PINTEREST_MANICURE_PINS.map((pin, idx) => ({
+      id: pin.id,
+      passportCode: `FGL-${1000 + idx}`,
+      title: pin.title,
+      photoUrl: pin.photoUrl,
+      aspectClass: pin.aspectClass,
+      category: (pin.tags[0] || 'curated').toLowerCase(),
+      shape: pin.shape,
+    }));
+  }, [exploreDesigns]);
+
   // Filter Pins based on search input and active category
-  const filteredPins = PINTEREST_MANICURE_PINS.filter((pin) => {
-    // Tag filter
-    if (activeFilterId && activeFilterId !== 'all') {
-      const tagObj = CATEGORY_TAGS.find((t) => t.id === activeFilterId);
-      if (tagObj && tagObj.queryMatch) {
-        const matchesTag = pin.tags.some((t) => t.includes(tagObj.queryMatch));
-        if (!matchesTag) return false;
+  const filteredPins = useMemo(() => {
+    return allPins.filter((pin) => {
+      // Category filter
+      if (activeFilterId && activeFilterId !== 'all') {
+        const pinCat = pin.category.toLowerCase();
+        const tagObj = CATEGORY_TAGS.find((t) => t.id === activeFilterId);
+        const target = (tagObj?.queryMatch || activeFilterId).toLowerCase();
+        const matchesCat = pinCat === target || pinCat.includes(target) || target.includes(pinCat);
+        if (!matchesCat) return false;
       }
-    }
 
-    // Text search query
-    const query = exploreSearch.trim().toLowerCase();
-    if (query) {
-      const matchTitle = pin.title.toLowerCase().includes(query);
-      const matchTag = pin.tags.some((t) => t.includes(query));
-      if (!matchTitle && !matchTag) return false;
-    }
+      // Text search query
+      const query = exploreSearch.trim().toLowerCase();
+      if (query) {
+        const matchTitle = pin.title.toLowerCase().includes(query);
+        const matchCat = pin.category.toLowerCase().includes(query);
+        const matchCode = pin.passportCode.toLowerCase().includes(query);
+        const matchShape = (pin.shape || '').toLowerCase().includes(query);
+        if (!matchTitle && !matchCat && !matchCode && !matchShape) return false;
+      }
 
-    return true;
-  });
+      return true;
+    });
+  }, [allPins, activeFilterId, exploreSearch]);
 
   const handleToggleSave = async (e: React.MouseEvent, pinId: string) => {
     e.stopPropagation();
@@ -293,7 +326,7 @@ export function ExploreGalleryView({
     }
   };
 
-  const handleLaunchTryOn = (pin: ManicurePin) => {
+  const handleLaunchTryOn = (pin: { id: string }) => {
     onSelectDesign(pin.id);
     if (onTryOnClick) {
       onTryOnClick(pin.id);
@@ -351,13 +384,13 @@ export function ExploreGalleryView({
               setActiveFilterId('all');
               setExploreSearch('');
             }}
-            className="flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 shrink-0 transition cursor-pointer active:scale-95 border border-stone-200/60"
+            className="flex items-center justify-center w-9 sm:w-9.5 h-9 sm:h-9.5 rounded-xl sm:rounded-2xl bg-white hover:bg-stone-50 text-stone-700 shrink-0 transition cursor-pointer active:scale-95 border border-stone-200/80 shadow-2xs"
             title="Reset Filters"
           >
             <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.8} />
           </button>
 
-          {/* Minimal Icon + Label Category Buttons */}
+          {/* Minimal Icon + Label Category Buttons - Modern Rounded Squircle */}
           {CATEGORY_TAGS.map((tag) => {
             const isActive = activeFilterId === tag.id;
 
@@ -371,10 +404,10 @@ export function ExploreGalleryView({
                     setExploreSearch('');
                   }
                 }}
-                className={`h-8.5 sm:h-9 px-3.5 sm:px-4 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer active:scale-95 shrink-0 border text-xs sm:text-[13px] font-medium whitespace-nowrap ${
+                className={`h-9 sm:h-9.5 px-3.5 sm:px-4 rounded-xl sm:rounded-2xl flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer active:scale-95 shrink-0 border text-xs sm:text-[13px] font-semibold whitespace-nowrap shadow-2xs ${
                   isActive
-                    ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                    : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border-stone-200/50'
+                    ? 'bg-[#E0246A] text-white border-[#E0246A] shadow-[0_3px_12px_rgba(224,36,106,0.28)]'
+                    : 'bg-white hover:bg-stone-50 text-stone-700 hover:text-stone-900 border-stone-200/80'
                 }`}
               >
                 <tag.Icon
@@ -436,15 +469,22 @@ export function ExploreGalleryView({
                       className={`w-full object-cover group-hover:scale-102 transition-transform duration-300 ${pin.aspectClass}`}
                     />
 
-                    {/* Dark gradient overlay on hover */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-transparent to-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3" />
+                    {/* Gradient Scrim on hover */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-transparent to-black/35 opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex flex-col justify-between p-3" />
+
+                    {/* Top Left: Passport Code Pill */}
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-bold backdrop-blur-xs uppercase border border-white/10 shadow-2xs">
+                        {pin.passportCode}
+                      </span>
+                    </div>
 
                     {/* Top Right: Pinterest-Style Save Button */}
                     <div className="absolute top-2.5 right-2.5 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10">
                       <button
                         type="button"
                         onClick={(e) => handleToggleSave(e, pin.id)}
-                        className={`h-8 px-3.5 rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-1 active:scale-90 cursor-pointer ${
+                        className={`h-8 px-3 rounded-full text-xs font-bold shadow-md transition-all flex items-center gap-1 active:scale-90 cursor-pointer ${
                           isSaved
                             ? 'bg-stone-900 text-white'
                             : 'bg-[#E0246A] hover:bg-[#BE185D] text-white'
@@ -475,11 +515,16 @@ export function ExploreGalleryView({
                     </div>
                   </div>
 
-                  {/* Below Image: Pinterest Title & Options */}
-                  <div className="pt-1.5 px-1 flex items-start justify-between gap-1.5">
-                    <p className="text-[12px] font-medium text-stone-850 line-clamp-2 leading-snug group-hover:text-stone-950">
-                      {pin.title}
-                    </p>
+                  {/* Below Image: Pinterest Title, Shape & Options */}
+                  <div className="pt-2 px-1 flex items-start justify-between gap-1.5">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[12.5px] font-semibold text-stone-900 line-clamp-1 leading-snug group-hover:text-[#E0246A] transition-colors">
+                        {pin.title}
+                      </p>
+                      <p className="text-[10.5px] text-stone-500 capitalize mt-0.5">
+                        {pin.shape} shape · {pin.category.replace('-', ' ')}
+                      </p>
+                    </div>
 
                     <button
                       type="button"

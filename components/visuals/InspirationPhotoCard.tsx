@@ -16,7 +16,7 @@ export function InspirationPhotoCard({
   detectedCount?: number;
 }) {
   const [imgFailed, setImgFailed] = useState(false);
-  const activeUrl = (photoOverride || item.photoUrl || '').trim() || '/assets/editorial_nail_hero.jpg';
+  const activeUrl = (photoOverride || item.photoUrl || '').trim() || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
 
   useEffect(() => {
     setImgFailed(false);
@@ -37,7 +37,7 @@ export function InspirationPhotoCard({
     >
       {!imgFailed ? (
         <img
-          src={activeUrl || '/assets/editorial_nail_hero.jpg'}
+          src={activeUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'}
           alt={item.title}
           loading="lazy"
           onError={() => setImgFailed(true)}

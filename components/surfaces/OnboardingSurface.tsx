@@ -29,7 +29,7 @@ const TRENDING_INSPO_PRESETS = [
     id: 'inspo-milky-gold',
     title: 'Milky Rose Gold',
     shape: 'coffin',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     inspoUrl: 'https://images.unsplash.com/photo-1604654894610-df63bc536371?q=80&w=800&auto=format&fit=crop',
     tag: 'Trending',
   },
@@ -37,7 +37,7 @@ const TRENDING_INSPO_PRESETS = [
     id: 'inspo-pink-heart',
     title: 'Pink Heart French',
     shape: 'coffin',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     inspoUrl: 'https://images.unsplash.com/photo-1632345031435-8727f6897d53?q=80&w=800&auto=format&fit=crop',
     tag: 'Most Loved',
   },
@@ -45,7 +45,7 @@ const TRENDING_INSPO_PRESETS = [
     id: 'inspo-bordeaux-gold',
     title: 'Velvet Bordeaux',
     shape: 'almond',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg',
     inspoUrl: 'https://images.unsplash.com/photo-1519014816548-bf5fe059798b?q=80&w=800&auto=format&fit=crop',
     tag: 'Classic',
   },
@@ -102,7 +102,7 @@ export function OnboardingSurface({
   });
   const [selectedInspo, setSelectedInspo] = useState(TRENDING_INSPO_PRESETS[0]);
   const [isRevealing, setIsRevealing] = useState(false);
-  const [revealTryOnUrl, setRevealTryOnUrl] = useState<string>('/assets/milky_gold_tryon_result.jpg');
+  const [revealTryOnUrl, setRevealTryOnUrl] = useState<string>('https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg');
   const [revealMode, setRevealMode] = useState<'after' | 'before'>('after');
 
   const handInputRef = useRef<HTMLInputElement>(null);
@@ -149,7 +149,7 @@ export function OnboardingSurface({
       id: 'custom-upload',
       title: 'Custom Upload',
       shape: 'coffin',
-      photoUrl: '/assets/milky_gold_tryon_result.jpg',
+      photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
       inspoUrl: url,
       tag: 'Custom',
     };
@@ -165,13 +165,13 @@ export function OnboardingSurface({
     useTryOnCredit();
 
     // Map to highest fidelity render
-    let result = '/assets/milky_gold_tryon_result.jpg';
+    let result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
     if (inspo.id.includes('pink-heart')) {
-      result = '/assets/pink_heart_tryon_result.jpg';
+      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg';
     } else if (inspo.id.includes('bordeaux')) {
-      result = '/assets/burgundy_gold_virtual_tryon.jpg';
+      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg';
     } else {
-      result = '/assets/milky_gold_tryon_result.jpg';
+      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
     }
     setRevealTryOnUrl(result);
 
@@ -255,7 +255,7 @@ export function OnboardingSurface({
                     className="p-2 rounded-2xl bg-white border border-stone-200/80 hover:border-[#E0246A] text-left transition-all group cursor-pointer"
                   >
                     <div className="aspect-square rounded-xl overflow-hidden bg-stone-100 mb-1.5">
-                      <img src={h.url || '/assets/editorial_nail_hero.jpg'} alt={h.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                      <img src={h.url || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'} alt={h.label} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
                     </div>
                     <div className="text-[11px] font-medium text-stone-800 text-center truncate">{h.label}</div>
                   </button>
@@ -298,7 +298,7 @@ export function OnboardingSurface({
                       {p.tag}
                     </span>
                     <div className="aspect-[3/4] rounded-xl overflow-hidden bg-stone-100 mb-2">
-                      <img src={p.photoUrl || '/assets/editorial_nail_hero.jpg'} alt={p.title} className="w-full h-full object-cover" />
+                      <img src={p.photoUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'} alt={p.title} className="w-full h-full object-cover" />
                     </div>
                     <div className="px-1 pb-1">
                       <div className="text-xs font-semibold text-stone-900 truncate">{p.title}</div>
@@ -369,7 +369,7 @@ export function OnboardingSurface({
                 {/* Photorealistic Viewport */}
                 <div className="relative aspect-[3/4] max-h-[380px] w-full max-w-sm mx-auto rounded-3xl overflow-hidden bg-stone-900 shadow-xl border border-stone-200">
                   <img
-                    src={(revealMode === 'after' ? (revealTryOnUrl || handPhotoUrl) : handPhotoUrl) || '/assets/editorial_nail_hero.jpg'}
+                    src={(revealMode === 'after' ? (revealTryOnUrl || handPhotoUrl) : handPhotoUrl) || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'}
                     alt="Virtual Manicure Try-On"
                     className="w-full h-full object-cover transition-all duration-300"
                   />

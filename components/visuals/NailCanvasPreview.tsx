@@ -222,7 +222,7 @@ export function NailCanvasPreview({
         {/* Authentic AI Generated Nail Art Image Layer */}
         {(nail.artImageUrl || nail.extractedTextureUrl) ? (
           <img
-            src={nail.artImageUrl || nail.extractedTextureUrl || '/assets/editorial_nail_hero.jpg'}
+            src={nail.artImageUrl || nail.extractedTextureUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'}
             alt={nail.title || 'Nail Art Design'}
             className="absolute inset-0 w-full h-full object-cover scale-105 pointer-events-none"
           />

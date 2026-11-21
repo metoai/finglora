@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import {
   Hand,
   ImagePlus,
@@ -18,6 +18,13 @@ import {
   Wand2,
   Wine,
   Circle,
+  Eye,
+  Coffee,
+  Square,
+  Scissors,
+  Gem,
+  ChevronLeft,
+  ChevronRight,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
@@ -41,36 +48,17 @@ interface InspirationCategory {
 }
 
 const INSPIRATION_CATEGORIES: InspirationCategory[] = [
-  {
-    id: 'all',
-    label: 'All Styles',
-    Icon: Sparkles,
-  },
-  {
-    id: 'glazed',
-    label: 'Glazed & Chrome',
-    Icon: Wand2,
-  },
-  {
-    id: 'french',
-    label: 'French Tips',
-    Icon: Palette,
-  },
-  {
-    id: 'coquette',
-    label: 'Coquette & Ribbons',
-    Icon: Heart,
-  },
-  {
-    id: 'velvet',
-    label: 'Velvet Wine',
-    Icon: Wine,
-  },
-  {
-    id: 'minimal',
-    label: 'Minimal Nude',
-    Icon: Circle,
-  },
+  { id: 'all', label: 'All 100 Styles', Icon: Sparkles },
+  { id: 'glazed', label: 'Glazed & Chrome', Icon: Wand2 },
+  { id: 'french', label: 'French Tips', Icon: Palette },
+  { id: 'coquette', label: 'Coquette & Ribbons', Icon: Heart },
+  { id: 'velvet', label: 'Velvet & Aura', Icon: Wine },
+  { id: 'minimal', label: 'Clean Girl Minimal', Icon: Circle },
+  { id: 'cat-eye', label: 'Cat-Eye & 3D', Icon: Eye },
+  { id: 'cherry-mocha', label: 'Cherry Mocha', Icon: Coffee },
+  { id: 'black-minimal', label: 'Noir & Black', Icon: Square },
+  { id: 'short-natural', label: 'Short & Natural', Icon: Scissors },
+  { id: 'almond-coffin', label: 'Sculpted Extensions', Icon: Gem },
 ];
 
 const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
@@ -79,7 +67,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'French Tip Ribbons',
     category: 'coquette',
     displayCategory: 'Coquette',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     shape: 'almond',
     finish: 'Glossy Gel',
     baseColor: '#FCE7F3',
@@ -90,7 +78,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Cherry Mocha French',
     category: 'velvet',
     displayCategory: 'Velvet',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg',
     shape: 'coffin',
     finish: 'Velvet Gloss',
     baseColor: '#FAF0EA',
@@ -101,7 +89,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Milky Glazed Gold',
     category: 'glazed',
     displayCategory: 'Glazed',
-    photoUrl: '/assets/milky_gold_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     shape: 'almond',
     finish: 'Chrome Powder',
     baseColor: '#F5ECE3',
@@ -112,7 +100,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Atelier Nude Minimal',
     category: 'minimal',
     displayCategory: 'Minimal',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
     shape: 'square',
     finish: 'High-Gloss',
     baseColor: '#FAF0EA',
@@ -123,7 +111,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Clean Micro-French',
     category: 'french',
     displayCategory: 'French',
-    photoUrl: '/images/ar-nail-hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
     shape: 'almond',
     finish: 'Sheer Glaze',
     baseColor: '#FAF0EA',
@@ -134,7 +122,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Luminous Pearl Sheen',
     category: 'glazed',
     displayCategory: 'Glazed',
-    photoUrl: '/images/ar-nail-hero-pearl.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_chrome_classic_02.jpg',
     shape: 'oval',
     finish: 'Pearl Glaze',
     baseColor: '#FAF4EF',
@@ -145,7 +133,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Deep Bordeaux Velvet',
     category: 'velvet',
     displayCategory: 'Velvet',
-    photoUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_bronze_gold_07.jpg',
     shape: 'almond',
     finish: 'Cat Eye Velvet',
     baseColor: '#3B111D',
@@ -156,7 +144,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Blush Micro French',
     category: 'french',
     displayCategory: 'French',
-    photoUrl: '/images/ar-nail-hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_noir_classic_03.jpg',
     shape: 'almond',
     finish: 'Glossy Clearcoat',
     baseColor: '#FAF0EA',
@@ -167,7 +155,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Dusty Rose Ribbon Bows',
     category: 'coquette',
     displayCategory: 'Coquette',
-    photoUrl: '/assets/pink_heart_tryon_result.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_french_bow_03.jpg',
     shape: 'coffin',
     finish: 'Glossy 3D',
     baseColor: '#FCE7F3',
@@ -178,7 +166,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
     title: 'Sheer Linen Minimalist',
     category: 'minimal',
     displayCategory: 'Minimal',
-    photoUrl: '/assets/editorial_nail_hero.jpg',
+    photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_liquid_silver_03.jpg',
     shape: 'oval',
     finish: 'Natural Sheen',
     baseColor: '#F7F3EE',
@@ -210,6 +198,7 @@ export function HomeHubView({
   preferredShape = 'almond',
   aiStudioPrompt,
   setAiStudioPrompt,
+  exploreDesigns = [],
   onSelectExploreDesign,
   onTryOnClick,
   onCustomizeClick,
@@ -244,11 +233,18 @@ export function HomeHubView({
   setCustomTryOnHandUrl?: (url: string | null) => void;
 }) {
   const [promptText, setPromptText] = useState(aiStudioPrompt || '');
-  const [activeCategory, setActiveCategory] = useState<string>('all');
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [toastMsg, setToastMsg] = useState<string | null>(null);
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
+  const carouselRef = useRef<HTMLDivElement | null>(null);
+
+  const scrollCarousel = (direction: 'left' | 'right') => {
+    if (carouselRef.current) {
+      const scrollAmount = direction === 'left' ? -340 : 340;
+      carouselRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
 
   // Typewriter animation effect for Design with AI input
   const [typingIndex, setTypingIndex] = useState(0);
@@ -344,11 +340,62 @@ export function HomeHubView({
     showToast('Hand photo removed');
   };
 
-  // Filter curated looks by active category
-  const displayedLooks = FEATURED_ATELIER_LOOKS.filter((look) => {
-    if (activeCategory === 'all') return true;
-    return look.category === activeCategory;
-  });
+  // Mixed 10 curated looks representing diverse categories on homepage
+  const displayedLooks = useMemo(() => {
+    if (exploreDesigns && exploreDesigns.length > 0) {
+      const mapped = exploreDesigns.map((d) => ({
+        id: d.id,
+        title: d.title,
+        category: (d.category || 'curated').toLowerCase(),
+        displayCategory: d.category ? d.category.replace('-', ' ') : 'Curated',
+        photoUrl: d.photoUrl,
+        shape: (d.nails?.middle?.shape || d.nails?.thumb?.shape || 'almond') as NailShape,
+        finish: d.nails?.middle?.finish || 'glossy',
+        baseColor: d.nails?.middle?.baseColor || '#FAF0EA',
+        accentColor: d.nails?.middle?.accentColor || '#FFFFFF',
+      }));
+
+      const categoryOrder = [
+        'glazed',
+        'french',
+        'coquette',
+        'velvet',
+        'minimal',
+        'cat-eye',
+        'cherry-mocha',
+        'black-minimal',
+        'short-natural',
+        'almond-coffin',
+      ];
+
+      const mixed: typeof mapped = [];
+      const usedIds = new Set<string>();
+
+      for (const cat of categoryOrder) {
+        const found = mapped.find(
+          (m) =>
+            !usedIds.has(m.id) &&
+            (m.category === cat || m.category.includes(cat) || cat.includes(m.category))
+        );
+        if (found) {
+          mixed.push(found);
+          usedIds.add(found.id);
+        }
+      }
+
+      for (const m of mapped) {
+        if (mixed.length >= 10) break;
+        if (!usedIds.has(m.id)) {
+          mixed.push(m);
+          usedIds.add(m.id);
+        }
+      }
+
+      return mixed;
+    }
+
+    return FEATURED_ATELIER_LOOKS.slice(0, 10);
+  }, [exploreDesigns]);
 
   return (
     <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-10 py-3 sm:py-5 space-y-4 sm:space-y-6 pb-24 md:pb-8">
@@ -571,86 +618,88 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 4. Curated Inspiration with Normal Category Navigation Above */}
-      <div className="space-y-3.5">
+      {/* 4. Curated Inspiration - Mixed 10 Showcase */}
+      <div className="space-y-4">
         <div className="flex items-center justify-between">
-          <h2 className="font-serif text-base sm:text-lg lg:text-xl font-medium text-stone-900 tracking-tight">
-            Curated Inspiration
-          </h2>
+          <div>
+            <h2 className="font-serif text-lg sm:text-xl lg:text-2xl font-medium text-stone-900 tracking-tight">
+              Curated Inspiration
+            </h2>
+            <p className="text-xs sm:text-sm text-stone-500 font-normal">
+              10 handpicked aesthetics ready to try on
+            </p>
+          </div>
 
-          {onExploreClick && (
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
-              onClick={() => onExploreClick()}
-              className="text-xs font-semibold text-[#E0246A] hover:underline inline-flex items-center gap-1 cursor-pointer"
+              onClick={() => scrollCarousel('left')}
+              className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+              title="Previous look"
             >
-              <span>Explore All Pins</span>
-              <Compass className="w-3.5 h-3.5" />
+              <ChevronLeft className="w-4 h-4" />
             </button>
-          )}
-        </div>
+            <button
+              type="button"
+              onClick={() => scrollCarousel('right')}
+              className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+              title="Next look"
+            >
+              <ChevronRight className="w-4 h-4" />
+            </button>
 
-        {/* Standard Minimal Category Navigation Pills */}
-        <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none">
-          {INSPIRATION_CATEGORIES.map((cat) => {
-            const isActive = activeCategory === cat.id;
-
-            return (
+            {onExploreClick && (
               <button
-                key={cat.id}
                 type="button"
-                onClick={() => setActiveCategory(cat.id)}
-                className={`h-8.5 sm:h-9 px-3.5 sm:px-4 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer active:scale-95 shrink-0 border text-xs sm:text-[13px] font-medium whitespace-nowrap ${
-                  isActive
-                    ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                    : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border-stone-200/50'
-                }`}
+                onClick={() => onExploreClick()}
+                className="text-xs sm:text-sm font-semibold text-[#E0246A] hover:text-[#BE185D] hover:underline inline-flex items-center gap-1 cursor-pointer transition active:scale-95 py-1 px-2.5 rounded-xl hover:bg-pink-50 ml-1"
               >
-                <cat.Icon
-                  className={`w-3.5 h-3.5 transition-colors ${
-                    isActive ? 'text-white' : 'text-stone-500'
-                  }`}
-                  strokeWidth={isActive ? 2 : 1.75}
-                />
-                <span>{cat.label}</span>
+                <span>See All</span>
+                <Compass className="w-3.5 h-3.5" />
               </button>
-            );
-          })}
+            )}
+          </div>
         </div>
 
-        {/* Featured Editorial Manicure Cards - Strictly 1 Single Row */}
-        <div className="flex gap-2.5 sm:gap-3.5 overflow-x-auto scrollbar-none py-1 snap-x">
-          {displayedLooks.slice(0, 6).map((look) => (
+        {/* Featured Editorial Manicure Cards - Generous Large Cards */}
+        <div
+          ref={carouselRef}
+          className="flex gap-3.5 sm:gap-5 overflow-x-auto scrollbar-none py-2 px-1 snap-x snap-mandatory scroll-smooth"
+        >
+          {displayedLooks.map((look) => (
             <div
               key={look.id}
               onClick={() => {
                 onSelectExploreDesign?.(look.id);
                 onTryOnClick();
               }}
-              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2] w-[155px] sm:w-[185px] md:w-[205px] lg:w-auto lg:flex-1 shrink-0 lg:shrink snap-start"
+              className="group relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-sm hover:shadow-xl transition-all duration-300 cursor-pointer flex flex-col justify-end aspect-[3/4.2] w-[230px] xs:w-[250px] sm:w-[280px] lg:w-[320px] shrink-0 snap-start"
             >
               <img
                 src={look.photoUrl}
                 alt={look.title}
-                className="absolute inset-0 w-full h-full object-cover group-hover:scale-104 transition-transform duration-500"
+                className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
 
               {/* Gradient Scrim */}
-              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent" />
 
               {/* Top Category Badge */}
-              <div className="absolute top-2.5 left-2.5 sm:top-3 sm:left-3 z-10">
-                <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-black/40 text-white text-[9px] sm:text-[10px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+              <div className="absolute top-3 left-3 sm:top-3.5 sm:left-3.5 z-10">
+                <span className="px-2.5 sm:px-3 py-1 rounded-full bg-black/55 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-semibold capitalize border border-white/15 shadow-2xs">
                   {look.displayCategory}
                 </span>
               </div>
 
               {/* Bottom Details & 1-Tap Try On */}
-              <div className="relative z-10 p-2.5 sm:p-3.5 space-y-1.5 sm:space-y-2">
+              <div className="relative z-10 p-3 sm:p-4 space-y-2 sm:space-y-2.5">
                 <div>
-                  <h4 className="text-white text-xs sm:text-sm font-semibold leading-tight drop-shadow-xs truncate">
+                  <h4 className="text-white text-sm sm:text-base font-semibold leading-tight drop-shadow-md line-clamp-1 group-hover:text-pink-100 transition-colors">
                     {look.title}
                   </h4>
+                  <p className="text-[11px] sm:text-xs text-stone-200 mt-0.5 capitalize">
+                    {look.shape} · {look.finish}
+                  </p>
                 </div>
 
                 <button
@@ -660,9 +709,9 @@ export function HomeHubView({
                     onSelectExploreDesign?.(look.id);
                     onTryOnClick();
                   }}
-                  className="w-full h-8 sm:h-8.5 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] sm:text-xs font-bold shadow-md flex items-center justify-center gap-1 sm:gap-1.5 transition active:scale-95 cursor-pointer"
+                  className="w-full h-9 sm:h-10 rounded-xl sm:rounded-2xl bg-white hover:bg-stone-50 text-stone-900 text-xs sm:text-[13px] font-bold shadow-md hover:shadow-lg flex items-center justify-center gap-1.5 sm:gap-2 transition active:scale-95 cursor-pointer"
                 >
-                  <Hand className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-[#E0246A]" strokeWidth={2} />
+                  <Hand className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E0246A]" strokeWidth={2} />
                   <span>{customTryOnHandUrl ? 'Try on Hand' : 'Try On'}</span>
                 </button>
               </div>

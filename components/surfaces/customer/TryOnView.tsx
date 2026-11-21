@@ -17,6 +17,7 @@ import {
   X,
   Compass,
   ChevronRight,
+  Sparkles,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
@@ -57,6 +58,8 @@ export function TryOnView({
   activePhotoUrl,
   onCustomizeWithAi,
   onSelectExploreDesign,
+  onResetInspo,
+  onExploreClick,
 }: {
   tryOnMode?: 'camera' | 'upload' | 'sample';
   setTryOnMode?: (mode: 'camera' | 'upload' | 'sample') => void;
@@ -96,6 +99,8 @@ export function TryOnView({
   activeSample?: ExploreDesignSet;
   activePhotoUrl?: string;
   onCustomizeWithAi?: (handUrl: string) => void;
+  onResetInspo?: () => void;
+  onExploreClick?: () => void;
 }) {
   const [savedToast, setSavedToast] = useState(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
@@ -118,6 +123,33 @@ export function TryOnView({
 
   const [isSynthesizingHand, setIsSynthesizingHand] = useState(false);
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
+  const [isLocallyCleared, setIsLocallyCleared] = useState(false);
+
+  // Derived effective inspiration details
+  const effectiveInspoUrl = !isLocallyCleared ? (activePhotoUrl || activeSample?.photoUrl || '') : '';
+  const effectiveInspoTitle = !isLocallyCleared ? (activeSample?.title || (activePhotoUrl ? 'Custom Inspo Look' : '')) : '';
+  const effectiveInspoCategory = !isLocallyCleared ? (activeSample?.category || 'Manicure') : '';
+  const hasActiveInspo = Boolean(effectiveInspoUrl);
+
+  // Whenever a new inspiration look is provided from props, re-enable inspo display
+  useEffect(() => {
+    if (activePhotoUrl || activeSample?.id) {
+      setIsLocallyCleared(false);
+    }
+  }, [activePhotoUrl, activeSample?.id]);
+
+  const handleResetInspoClick = () => {
+    setIsLocallyCleared(true);
+    setInternalSynthesizedHandUrl(null);
+    propSetSynthesizedHandUrl?.(null);
+    setTryOnView('before');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('finglora_synthesized_hand_url');
+      } catch {}
+    }
+    onResetInspo?.();
+  };
 
   // Synchronize favorite status
   useEffect(() => {
@@ -156,7 +188,7 @@ export function TryOnView({
   }, [synthesizedHandUrl, setTryOnView]);
 
   const handleSynthesizeHand = async () => {
-    const sourceHand = customTryOnHandUrl || capturedFrameUrl || '/assets/editorial_nail_hero.jpg';
+    const sourceHand = customTryOnHandUrl || capturedFrameUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
     if (!sourceHand) return;
     setIsSynthesizingHand(true);
     setSynthesisError(null);
@@ -172,7 +204,7 @@ export function TryOnView({
       }
 
       let refBase64: string | undefined = undefined;
-      const refSource = activePhotoUrl || activeSample?.photoUrl;
+      const refSource = effectiveInspoUrl;
       if (refSource) {
         if (refSource.startsWith('data:image/')) {
           refBase64 = refSource;
@@ -233,25 +265,16 @@ export function TryOnView({
     };
   }, []);
 
-  // Only auto-generate when arriving with an explicit target inspiration design
-  useEffect(() => {
-    const hasTargetDesign = Boolean(activePhotoUrl);
-    const hasHand = Boolean(customTryOnHandUrl || capturedFrameUrl);
-    if (!synthesizedHandUrl && !isSynthesizingHand && hasHand && hasTargetDesign) {
-      handleSynthesizeHand();
-    }
-  }, [synthesizedHandUrl, isSynthesizingHand, activePhotoUrl, customTryOnHandUrl, capturedFrameUrl]);
-
-  // Base image fallback
-  const resultImageUrl =
+  // Hand source image fallback
+  const handSourceImageUrl =
     customTryOnHandUrl ||
     capturedFrameUrl ||
-    (tryOnView === 'after' ? '/assets/milky_gold_tryon_result.jpg' : '/assets/editorial_nail_hero.jpg');
+    'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
 
   const displayedHandImage =
     tryOnView === 'after' && synthesizedHandUrl
       ? synthesizedHandUrl
-      : resultImageUrl;
+      : handSourceImageUrl;
 
   const handleRetake = () => {
     setCustomTryOnHandUrl(null);
@@ -389,54 +412,65 @@ export function TryOnView({
         {/* ============================================================== */}
         <div className="lg:col-span-7 space-y-3 sm:space-y-4">
           <div className="bg-white rounded-3xl p-3 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
-            {/* Viewport Top Toolbar: Before/After Toggle + Action Icons */}
+            {/* Viewport Top Toolbar */}
             <div className="flex items-center justify-between gap-2">
-              {/* Natural vs Manicure Pill Toggle */}
-              <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80 shadow-2xs">
-                <button
-                  type="button"
-                  onClick={() => setTryOnView('before')}
-                  className={`px-3.5 py-1.5 rounded-full text-xs transition cursor-pointer ${
-                    tryOnView === 'before'
-                      ? 'bg-stone-900 text-white font-semibold shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900 font-medium'
-                  }`}
-                >
-                  Bare Hand
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setTryOnView('after')}
-                  className={`px-3.5 py-1.5 rounded-full text-xs transition cursor-pointer ${
-                    tryOnView === 'after'
-                      ? 'bg-[#E0246A] text-white font-semibold shadow-xs'
-                      : 'text-stone-600 hover:text-stone-900 font-medium'
-                  }`}
-                >
-                  With Manicure
-                </button>
-              </div>
+              {hasActiveInspo && !synthesizedHandUrl ? (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200/80 text-xs font-semibold text-[#E0246A] shadow-2xs">
+                  <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+                  <span>Side-by-Side Preview · Ready to Apply</span>
+                </div>
+              ) : (
+                /* Natural vs Manicure Pill Toggle */
+                <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80 shadow-2xs">
+                  <button
+                    type="button"
+                    onClick={() => setTryOnView('before')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs transition cursor-pointer ${
+                      tryOnView === 'before'
+                        ? 'bg-stone-900 text-white font-semibold shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900 font-medium'
+                    }`}
+                  >
+                    Bare Hand
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setTryOnView('after')}
+                    className={`px-3.5 py-1.5 rounded-full text-xs transition cursor-pointer ${
+                      tryOnView === 'after'
+                        ? 'bg-[#E0246A] text-white font-semibold shadow-xs'
+                        : 'text-stone-600 hover:text-stone-900 font-medium'
+                    }`}
+                  >
+                    With Manicure
+                  </button>
+                </div>
+              )}
 
               {/* Action Icons */}
               <div className="flex items-center gap-1.5">
-                <button
-                  type="button"
-                  onClick={handleDownloadBrandedLook}
-                  disabled={isExporting}
-                  className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                  title="Download HD Photo"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                </button>
-                <button
-                  type="button"
-                  onClick={handleShareToStory}
-                  disabled={isExporting}
-                  className="w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
-                  title="Share to Story"
-                >
-                  <Share2 className="w-3.5 h-3.5" />
-                </button>
+                {synthesizedHandUrl && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleDownloadBrandedLook}
+                      disabled={isExporting}
+                      className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                      title="Download HD Photo"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleShareToStory}
+                      disabled={isExporting}
+                      className="w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95 disabled:opacity-50"
+                      title="Share to Story"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                  </>
+                )}
                 <button
                   type="button"
                   onClick={() => setIsZoomOpen(true)}
@@ -449,14 +483,14 @@ export function TryOnView({
             </div>
 
             {/* The Master Hand Canvas Viewport */}
-            <div className="relative aspect-[3/4] max-h-[560px] lg:max-h-[620px] w-full rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group">
+            <div className={`relative aspect-[3/4] max-h-[560px] lg:max-h-[620px] w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group ${hasActiveInspo && !synthesizedHandUrl ? 'bg-stone-950 p-2 sm:p-2.5' : 'bg-stone-100'}`}>
               {/* Spinner Overlay during synthesis */}
               {isSynthesizingHand && (
-                <div className="absolute inset-0 z-30 bg-black/60 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center animate-in fade-in duration-200">
+                <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center animate-in fade-in duration-200">
                   <Loader2 className="w-9 h-9 animate-spin text-[#E0246A]" />
                   <div className="space-y-1">
                     <span className="text-sm font-semibold tracking-wide block">
-                      Applying your set...
+                      Applying manicure to your hand...
                     </span>
                     <span className="text-xs text-stone-300 block max-w-xs leading-relaxed">
                       Matching skin tone, cuticle lines & mirror gel shine
@@ -465,34 +499,106 @@ export function TryOnView({
                 </div>
               )}
 
-              {/* Hand Image */}
-              <img
-                src={displayedHandImage}
-                alt="Virtual Try-On Viewport"
-                onClick={() => setIsZoomOpen(true)}
-                className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102 cursor-pointer"
-                title="Click to zoom in"
-              />
+              {/* Viewport Content: Side-by-Side if staged and not yet synthesized, otherwise single hand */}
+              {hasActiveInspo && !synthesizedHandUrl ? (
+                <div className="relative w-full h-full grid grid-cols-2 gap-2 sm:gap-2.5">
+                  {/* Left Side: Your Hand */}
+                  <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-900 border border-white/10 flex items-center justify-center group/hand">
+                    <img
+                      src={handSourceImageUrl}
+                      alt="Your Hand"
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2 sm:px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10 shadow-xs">
+                        <Hand className="w-3 h-3 text-[#E0246A]" />
+                        <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
+                      </span>
+                    </div>
+                    <div className="absolute bottom-2.5 inset-x-2.5 flex justify-center z-10">
+                      <button
+                        type="button"
+                        onClick={() => changeHandInputRef.current?.click()}
+                        className="px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-medium border border-white/15 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                      >
+                        <UploadCloud className="w-2.5 h-2.5" />
+                        <span>Change Hand</span>
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Floating Top Badge */}
-              <div className="absolute top-3.5 left-3.5 z-20">
-                <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                  <span>{tryOnView === 'after' ? (activeSample?.title || 'Applied Look') : 'Bare Hand'}</span>
-                </span>
-              </div>
+                  {/* Right Side: Picked Inspo */}
+                  <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-900 border border-white/10 flex items-center justify-center group/inspo">
+                    <img
+                      src={effectiveInspoUrl}
+                      alt={effectiveInspoTitle || 'Selected Inspo'}
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-2.5 left-2.5 z-10">
+                      <span className="px-2 sm:px-2.5 py-1 rounded-full bg-[#E0246A]/90 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1.5 border border-white/20 shadow-xs">
+                        <Sparkles className="w-3 h-3 text-white" />
+                        <span>Picked Inspo</span>
+                      </span>
+                    </div>
+                    <div className="absolute bottom-2.5 inset-x-2.5 flex justify-center z-10">
+                      <button
+                        type="button"
+                        onClick={handleResetInspoClick}
+                        className="px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-medium border border-white/15 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                      >
+                        <RotateCcw className="w-2.5 h-2.5" />
+                        <span>Change Inspo</span>
+                      </button>
+                    </div>
+                  </div>
 
-              {/* Floating Compare Button on bottom */}
-              <div className="absolute bottom-3.5 inset-x-0 flex justify-center z-20 pointer-events-none">
-                <button
-                  type="button"
-                  onClick={() => setTryOnView(tryOnView === 'after' ? 'before' : 'after')}
-                  className="pointer-events-auto px-4 py-1.5 rounded-full bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-stone-200/60"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
-                  <span>{tryOnView === 'after' ? 'See Bare Hand' : 'View Manicure'}</span>
-                </button>
-              </div>
+                  {/* Center Floating Plus Indicator */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white text-stone-900 shadow-lg border border-stone-200/90 flex items-center justify-center font-bold text-xs sm:text-sm text-[#E0246A]">
+                      +
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Single Hand Image */}
+                  <img
+                    src={displayedHandImage}
+                    alt="Virtual Try-On Viewport"
+                    onClick={() => setIsZoomOpen(true)}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102 cursor-pointer"
+                    title="Click to zoom in"
+                  />
+
+                  {/* Floating Top Badge */}
+                  <div className="absolute top-3.5 left-3.5 z-20">
+                    <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
+                      <span className={`w-1.5 h-1.5 rounded-full ${synthesizedHandUrl ? 'bg-emerald-400 animate-pulse' : 'bg-pink-400'}`} />
+                      <span>
+                        {synthesizedHandUrl && tryOnView === 'after'
+                          ? (effectiveInspoTitle || 'Applied Look')
+                          : customTryOnHandUrl
+                          ? 'Your Hand · Ready for Inspo'
+                          : 'Studio Hand · Ready'}
+                      </span>
+                    </span>
+                  </div>
+
+                  {/* Floating Compare Button on bottom - only when a manicure is synthesized */}
+                  {synthesizedHandUrl && (
+                    <div className="absolute bottom-3.5 inset-x-0 flex justify-center z-20 pointer-events-none">
+                      <button
+                        type="button"
+                        onClick={() => setTryOnView(tryOnView === 'after' ? 'before' : 'after')}
+                        className="pointer-events-auto px-4 py-1.5 rounded-full bg-white/95 hover:bg-white text-stone-900 text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer transition active:scale-95 border border-stone-200/60"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
+                        <span>{tryOnView === 'after' ? 'See Bare Hand' : 'View Manicure'}</span>
+                      </button>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
 
             {/* Error Message if synthesis failed */}
@@ -536,84 +642,209 @@ export function TryOnView({
         {/* RIGHT COLUMN: ATELIER CONTROL & DESIGN STATION (5 Cols)        */}
         {/* ============================================================== */}
         <div className="lg:col-span-5 space-y-4 sm:space-y-5">
-          {/* Station Card 1: Active Reference Look & AI Customizer */}
-          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
-                Current Inspo
-              </span>
-              <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[#E0246A] border border-rose-100 capitalize">
-                {activeSample?.category || 'Couture Gel'}
-              </span>
-            </div>
-
-            {/* Inspo Preview Box */}
-            <div className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/80 border border-stone-200/70">
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-stone-200 border border-stone-300 shrink-0 shadow-2xs">
-                <img
-                  src={activePhotoUrl || activeSample?.photoUrl || '/assets/milky_gold_tryon_result.jpg'}
-                  alt={activeSample?.title || 'Reference Look'}
-                  className="w-full h-full object-cover"
-                />
+          {/* Station Card 1: Dynamic Inspo Selection / Active Inspo */}
+          {!hasActiveInspo ? (
+            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
+                  Step 2 · Inspiration
+                </span>
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-100">
+                  {customTryOnHandUrl ? 'Hand Ready' : 'Studio Hand'}
+                </span>
               </div>
 
-              <div className="min-w-0 flex-1">
-                <h3 className="font-semibold text-xs sm:text-sm text-stone-900 truncate">
-                  {activeSample?.title || 'Glazed Pearl Chrome'}
+              <div className="space-y-1">
+                <h3 className="font-serif text-base sm:text-lg font-medium text-stone-900 tracking-tight">
+                  Choose Your Inspiration
                 </h3>
-                <p className="text-[11px] text-stone-500 mt-0.5 truncate">
-                  {nails.middle.shape} · {nails.middle.finish} finish
+                <p className="text-xs text-stone-500 leading-relaxed">
+                  Your hand photo is saved and ready. Pick a trending aesthetic below, browse all styles, or upload your own photo.
                 </p>
               </div>
 
-              {/* Heart Toggle */}
-              <button
-                type="button"
-                onClick={handleToggleFavorite}
-                className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
-                title={isSavedFavorite ? 'Remove from favorites' : 'Save to favorites'}
-              >
-                <Heart
-                  className={`w-4 h-4 ${isSavedFavorite ? 'fill-[#E0246A] text-[#E0246A]' : 'text-stone-400'}`}
-                />
-              </button>
-            </div>
+              {/* Dual Action Buttons: Upload Inspo or Explore Styles */}
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => changeRefInspoInputRef.current?.click()}
+                  className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                >
+                  <ImagePlus className="w-4 h-4 shrink-0" />
+                  <span>Upload Photo Inspo</span>
+                </button>
 
-            {/* Primary Action: Customize in AI Studio */}
-            <div className="space-y-2 pt-1">
-              <button
-                type="button"
-                onClick={() => {
-                  if (onCustomizeWithAi) {
-                    onCustomizeWithAi(displayedHandImage);
-                  }
-                }}
-                className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
-              >
-                <span>Customize Look →</span>
-              </button>
-
-              <button
-                type="button"
-                onClick={handleSynthesizeHand}
-                disabled={isSynthesizingHand}
-                className="w-full h-9 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50"
-              >
-                <RefreshCw className={`w-3.5 h-3.5 text-stone-500 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
-                <span>Re-apply Set</span>
-              </button>
+                {onExploreClick && (
+                  <button
+                    type="button"
+                    onClick={onExploreClick}
+                    className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 cursor-pointer shadow-2xs"
+                  >
+                    <Compass className="w-4 h-4 text-[#E0246A] shrink-0" />
+                    <span>Browse All Styles</span>
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+          ) : !synthesizedHandUrl ? (
+            /* STAGED INSPIRATION STATE: PREVIEW SIDE-BY-SIDE & WAITING FOR USER TO HIT APPLY */
+            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
+                  Step 2 · Staged Look
+                </span>
+                <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[#E0246A] border border-rose-100 capitalize">
+                  {effectiveInspoCategory || 'Couture Gel'}
+                </span>
+              </div>
+
+              {/* Inspo Preview Box */}
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/80 border border-stone-200/70">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-stone-200 border border-stone-300 shrink-0 shadow-2xs">
+                  <img
+                    src={effectiveInspoUrl}
+                    alt={effectiveInspoTitle || 'Reference Look'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-xs sm:text-sm text-stone-900 truncate">
+                    {effectiveInspoTitle || 'Custom Inspo Look'}
+                  </h3>
+                  <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                    {nails.middle.shape} · {nails.middle.finish} finish
+                  </p>
+                </div>
+
+                {/* Heart Toggle */}
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
+                  title={isSavedFavorite ? 'Remove from favorites' : 'Save to favorites'}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${isSavedFavorite ? 'fill-[#E0246A] text-[#E0246A]' : 'text-stone-400'}`}
+                  />
+                </button>
+              </div>
+
+              {/* Staged Actions: Primary = Apply Manicure to My Hand */}
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={handleSynthesizeHand}
+                  disabled={isSynthesizingHand}
+                  className="w-full h-12 sm:h-13 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer disabled:opacity-50"
+                >
+                  <Sparkles className="w-4 h-4 text-white" />
+                  <span>✨ Apply Manicure to My Hand</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleResetInspoClick}
+                  className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                  title="Clear selected inspo and pick another"
+                >
+                  <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+                  <span>Change Inspo</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            /* SYNTHESIZED STATE: MANICURE APPLIED TO HAND */
+            <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
+              <div className="flex items-center justify-between">
+                <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
+                  Applied Manicure
+                </span>
+                <span className="text-[10px] font-medium px-2.5 py-0.5 rounded-full bg-rose-50 text-[#E0246A] border border-rose-100 capitalize">
+                  {effectiveInspoCategory || 'Couture Gel'}
+                </span>
+              </div>
+
+              {/* Inspo Preview Box */}
+              <div className="flex items-center gap-3 p-3 rounded-2xl bg-stone-50/80 border border-stone-200/70">
+                <div className="w-14 h-14 rounded-xl overflow-hidden bg-stone-200 border border-stone-300 shrink-0 shadow-2xs">
+                  <img
+                    src={effectiveInspoUrl}
+                    alt={effectiveInspoTitle || 'Reference Look'}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="min-w-0 flex-1">
+                  <h3 className="font-semibold text-xs sm:text-sm text-stone-900 truncate">
+                    {effectiveInspoTitle || 'Custom Inspo Look'}
+                  </h3>
+                  <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                    {nails.middle.shape} · {nails.middle.finish} finish
+                  </p>
+                </div>
+
+                {/* Heart Toggle */}
+                <button
+                  type="button"
+                  onClick={handleToggleFavorite}
+                  className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
+                  title={isSavedFavorite ? 'Remove from favorites' : 'Save to favorites'}
+                >
+                  <Heart
+                    className={`w-4 h-4 ${isSavedFavorite ? 'fill-[#E0246A] text-[#E0246A]' : 'text-stone-400'}`}
+                  />
+                </button>
+              </div>
+
+              {/* Primary Actions */}
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onCustomizeWithAi) {
+                      onCustomizeWithAi(displayedHandImage);
+                    }
+                  }}
+                  className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                >
+                  <span>Customize Look →</span>
+                </button>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleResetInspoClick}
+                    className="h-9 px-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                    title="Reset to bare hand and choose a different inspo"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+                    <span>Change Inspo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleSynthesizeHand}
+                    disabled={isSynthesizingHand}
+                    className="h-9 px-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw className={`w-3.5 h-3.5 text-stone-500 ${isSynthesizingHand ? 'animate-spin' : ''}`} />
+                    <span>Re-apply Set</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Station Card 2: Quick Reference Inspo Switcher */}
           <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3">
             <div className="flex items-center justify-between">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-wider text-stone-400 font-semibold block">
-                  Trending Looks
+                  {hasActiveInspo ? 'Trending Looks' : 'Instant Apply'}
                 </span>
                 <h3 className="text-xs sm:text-sm font-semibold text-stone-900">
-                  Switch Inspo Look
+                  {hasActiveInspo ? 'Switch Inspo Look' : '1-Tap Quick Apply'}
                 </h3>
               </div>
               <span className="text-[10px] text-stone-400 font-mono">1-Tap Apply</span>
@@ -626,10 +857,10 @@ export function TryOnView({
                   key={cat}
                   type="button"
                   onClick={() => setActiveCategoryFilter(cat)}
-                  className={`h-6.5 px-2.5 rounded-full text-[11px] font-medium transition cursor-pointer active:scale-95 shrink-0 ${
+                  className={`h-7 px-2.5 rounded-xl text-[11px] font-semibold transition cursor-pointer active:scale-95 shrink-0 border ${
                     activeCategoryFilter === cat
-                      ? 'bg-stone-900 text-white font-semibold shadow-2xs'
-                      : 'bg-stone-100 hover:bg-stone-200 text-stone-600'
+                      ? 'bg-[#E0246A] text-white border-[#E0246A] shadow-2xs'
+                      : 'bg-white hover:bg-stone-50 text-stone-700 border-stone-200/80'
                   }`}
                 >
                   {cat}
@@ -640,14 +871,17 @@ export function TryOnView({
             {/* Quick Inspo Cards Grid */}
             <div className="grid grid-cols-2 gap-2 pt-1">
               {filteredQuickDesigns.slice(0, 4).map((design) => {
-                const isSelected = activeSample?.id === design.id || activePhotoUrl === design.photoUrl;
+                const isSelected = effectiveInspoUrl === design.photoUrl;
                 return (
                   <button
                     key={design.id}
                     type="button"
                     onClick={() => {
+                      setIsLocallyCleared(false);
+                      setInternalSynthesizedHandUrl(null);
+                      propSetSynthesizedHandUrl?.(null);
+                      setTryOnView('before');
                       onSelectExploreDesign?.(design.id);
-                      setTimeout(() => handleSynthesizeHand(), 80);
                     }}
                     className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer group active:scale-95 ${
                       isSelected
@@ -679,7 +913,7 @@ export function TryOnView({
                 className="w-full h-10 rounded-xl bg-stone-100 hover:bg-stone-200/80 border border-stone-200/80 text-stone-800 text-xs font-semibold flex items-center justify-center gap-2 transition cursor-pointer active:scale-95 shadow-2xs"
               >
                 <ImagePlus className="w-4 h-4 text-stone-600" />
-                <span>Try Another Inspo</span>
+                <span>Upload Photo Inspo</span>
               </button>
             </div>
           </div>
@@ -704,7 +938,6 @@ export function TryOnView({
               localStorage.setItem('finglora_custom_hand_photo', finalUrl);
               localStorage.setItem('finglora_user_hand_photo', finalUrl);
             } catch {}
-            setTimeout(() => handleSynthesizeHand(), 60);
           }
         }}
       />
@@ -718,8 +951,10 @@ export function TryOnView({
           if (f) {
             const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
             const finalUrl = dataUrl || URL.createObjectURL(f);
+            setIsLocallyCleared(false);
+            setInternalSynthesizedHandUrl(null);
+            propSetSynthesizedHandUrl?.(null);
             onSelectExploreDesign?.(finalUrl);
-            setTimeout(() => handleSynthesizeHand(), 60);
           }
         }}
       />
@@ -739,7 +974,6 @@ export function TryOnView({
             }
           } catch {}
           setIsCameraModalOpen(false);
-          setTimeout(() => handleSynthesizeHand(), 80);
         }}
       />
 

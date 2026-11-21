@@ -419,10 +419,10 @@ export function UploadInspirationView({
                   key={cat}
                   type="button"
                   onClick={() => setSelectedCategory(cat)}
-                  className={`h-7 px-3 rounded-full text-xs font-medium whitespace-nowrap transition cursor-pointer active:scale-95 ${
+                  className={`h-7.5 px-3 rounded-xl text-xs font-semibold whitespace-nowrap transition cursor-pointer active:scale-95 border ${
                     active
-                      ? 'bg-stone-900 text-white font-semibold shadow-xs'
-                      : 'bg-white text-stone-600 hover:text-stone-900 border border-stone-200/80 hover:bg-stone-50'
+                      ? 'bg-[#E0246A] text-white border-[#E0246A] shadow-xs'
+                      : 'bg-white text-stone-700 hover:text-stone-900 border-stone-200/80 hover:bg-stone-50'
                   }`}
                 >
                   {cat}
@@ -451,7 +451,7 @@ export function UploadInspirationView({
                 className={`group relative aspect-[3/4] rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 text-left cursor-pointer active:scale-[0.98] ${hideClass}`}
               >
                 <img
-                  src={design.photoUrl || '/assets/editorial_nail_hero.jpg'}
+                  src={design.photoUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg'}
                   alt={design.title || 'Manicure Design'}
                   loading="lazy"
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"

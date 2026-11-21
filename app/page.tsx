@@ -290,7 +290,7 @@ export default function FingloraApp() {
                 userId: session.user.id,
                 passportCode: parsed.activePassportCode,
                 title: parsed.activeSetName || 'My Custom Set',
-                photoUrl: parsed.activePhotoUrl || '/images/ar-nail-hero.jpg',
+                photoUrl: parsed.activePhotoUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
                 nails: parsed.nails,
               });
             }
@@ -444,8 +444,9 @@ export default function FingloraApp() {
 
   const orderedFingers =
     handOrientation === 'left' ? [...FINGER_KEYS].reverse() : [...FINGER_KEYS];
-  const activeSample =
-    exploreDesigns.find((d) => d.id === activeSetId) || exploreDesigns[0];
+  const activeSample = activeSetId
+    ? exploreDesigns.find((d) => d.id === activeSetId) || INITIAL_EXPLORE_DESIGNS.find((d) => d.id === activeSetId)
+    : undefined;
   const activeSkinTone: SkinTonePreset =
     HAND_SKIN_TONES.find((t) => t.id === skinToneId) || HAND_SKIN_TONES[1];
 
@@ -519,6 +520,18 @@ export default function FingloraApp() {
       if (window.location.pathname !== path) {
         window.history.pushState({ surface: 'customer', route }, '', path);
       }
+    }
+  };
+
+  const handleResetInspo = () => {
+    setActiveSetId('');
+    setActivePhotoUrl('');
+    setSynthesizedHandUrl(null);
+    setTryOnView('before');
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('finglora_synthesized_hand_url');
+      } catch {}
     }
   };
 
@@ -996,6 +1009,9 @@ export default function FingloraApp() {
             preferredShape={preferredShape}
             setPreferredShape={setPreferredShape}
             activeSample={activeSample}
+            activeSetId={activeSetId}
+            setActiveSetId={setActiveSetId}
+            onResetInspo={handleResetInspo}
             activePhotoUrl={activePhotoUrl}
             setActivePhotoUrl={setActivePhotoUrl}
             activeSetName={activeSetName}

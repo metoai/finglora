@@ -106,7 +106,7 @@ export function AiCreationView({
       ? localStorage.getItem('finglora_custom_hand_photo') ||
         localStorage.getItem('finglora_user_hand_photo')
       : null) ||
-    '/assets/editorial_nail_hero.jpg';
+    'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
 
   // Active Displayed AI-Generated Try-On Hand Image
   const [currentTryOnImage, setCurrentTryOnImage] = useState<string>(() => {
