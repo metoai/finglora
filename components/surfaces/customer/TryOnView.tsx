@@ -142,11 +142,6 @@ export function TryOnView({
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const sliderContainerRef = useRef<HTMLDivElement>(null);
 
-  // Quick Inspo Swatches
-  const quickInspoList = exploreDesigns && exploreDesigns.length > 0
-    ? exploreDesigns.slice(0, 6)
-    : CURATED_EDITORIAL_DESIGNS.slice(0, 6);
-
   const handleSliderMove = (clientX: number) => {
     if (!sliderContainerRef.current) return;
     const rect = sliderContainerRef.current.getBoundingClientRect();
@@ -828,59 +823,6 @@ export function TryOnView({
                 >
                   Retry
                 </button>
-              </div>
-            )}
-
-            {/* Interactive Inspo Quick-Select Ribbon (when inspo is staged and not yet synthesized) */}
-            {hasActiveInspo && !synthesizedHandUrl && (
-              <div className="bg-stone-50 border border-stone-200/80 rounded-2xl p-2.5 space-y-2">
-                <div className="flex items-center justify-between text-xs px-1">
-                  <span className="font-semibold text-stone-800 flex items-center gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-                    <span>Quick Inspo Swaps</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleAutoPickNextInspo}
-                    className="text-[11px] text-[#E0246A] hover:text-[#BE185D] font-semibold flex items-center gap-1 cursor-pointer active:scale-95 transition"
-                  >
-                    <Shuffle className="w-3 h-3" />
-                    <span>Shuffle Random</span>
-                  </button>
-                </div>
-                <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
-                  {quickInspoList.map((inspo) => {
-                    const isActive = effectiveInspoUrl === inspo.photoUrl || activeSample?.id === inspo.id;
-                    return (
-                      <button
-                        key={inspo.id}
-                        type="button"
-                        onClick={() => {
-                          onSelectExploreDesign?.(inspo.id);
-                          setExportToast(`Switched to ${inspo.title}`);
-                          setTimeout(() => setExportToast(null), 1800);
-                        }}
-                        className={`flex items-center gap-2 p-1.5 pr-2.5 rounded-xl border transition cursor-pointer shrink-0 text-left active:scale-95 ${
-                          isActive
-                            ? 'bg-white border-[#E0246A] shadow-xs ring-2 ring-[#E0246A]/20'
-                            : 'bg-white/80 hover:bg-white border-stone-200 text-stone-600'
-                        }`}
-                      >
-                        <div className="w-8 h-8 rounded-lg overflow-hidden bg-stone-100 border border-stone-200 shrink-0">
-                          <img src={inspo.photoUrl} alt={inspo.title} className="w-full h-full object-cover" />
-                        </div>
-                        <div className="min-w-0">
-                          <div className={`text-[11px] truncate max-w-[95px] ${isActive ? 'font-bold text-[#E0246A]' : 'font-semibold text-stone-800'}`}>
-                            {inspo.title}
-                          </div>
-                          <div className="text-[9px] text-stone-400 capitalize">
-                            {inspo.category}
-                          </div>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
               </div>
             )}
 
