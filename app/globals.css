@@ -1102,4 +1102,24 @@ button {
   will-change: top, opacity;
 }
 
+@keyframes continuousLaserScan {
+  0% {
+    top: 6%;
+    opacity: 0.85;
+  }
+  50% {
+    top: 88%;
+    opacity: 1;
+  }
+  100% {
+    top: 6%;
+    opacity: 0.85;
+  }
+}
+
+.animate-laser-continuous {
+  animation: continuousLaserScan 2.8s ease-in-out infinite;
+  will-change: top, opacity;
+}
+
 
