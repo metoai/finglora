@@ -26,6 +26,7 @@ import {
 import { ExploreDesignSet, NailShape } from '@/types/nail';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { getCurrentUser } from '@/lib/services/auth';
+import { sanitizeEditorialPhotoUrl, EDITORIAL_ASSET_PHOTOS } from '@/constants/nail-data';
 
 // Standard Minimal Category Filter Tags with Lucide Icons
 interface FilterTag {
@@ -257,7 +258,7 @@ export function ExploreGalleryView({
         id: d.id,
         passportCode: d.passportCode || `FGL-${1000 + idx}`,
         title: d.title,
-        photoUrl: d.photoUrl,
+        photoUrl: sanitizeEditorialPhotoUrl(d.photoUrl, idx),
         aspectClass:
           idx % 5 === 0
             ? 'aspect-[3/4.4]'
@@ -275,7 +276,7 @@ export function ExploreGalleryView({
       id: pin.id,
       passportCode: `FGL-${1000 + idx}`,
       title: pin.title,
-      photoUrl: pin.photoUrl,
+      photoUrl: sanitizeEditorialPhotoUrl(pin.photoUrl, idx),
       aspectClass: pin.aspectClass,
       category: (pin.tags[0] || 'curated').toLowerCase(),
       shape: pin.shape,
@@ -451,7 +452,7 @@ export function ExploreGalleryView({
           </div>
         ) : (
           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-3.5 sm:gap-4 space-y-3.5 sm:space-y-4">
-            {filteredPins.map((pin) => {
+            {filteredPins.map((pin, idx) => {
               const isSaved = Boolean(savedPins[pin.id]);
 
               return (
@@ -463,9 +464,13 @@ export function ExploreGalleryView({
                   {/* Photo Pin Container */}
                   <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300">
                     <img
-                      src={pin.photoUrl}
-                      alt={pin.title}
+                      src={sanitizeEditorialPhotoUrl(pin.photoUrl, idx)}
+                      alt={pin.title || 'Manicure inspiration'}
                       loading="lazy"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src =
+                          EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                      }}
                       className={`w-full object-cover group-hover:scale-102 transition-transform duration-300 ${pin.aspectClass}`}
                     />
 

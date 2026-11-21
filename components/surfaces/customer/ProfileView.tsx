@@ -983,26 +983,79 @@ export function ProfileView({
             )}
           </div>
 
-          {/* Card 3: Atelier Guarantee */}
-          <div className="bg-stone-50/80 rounded-3xl p-4 sm:p-5 border border-stone-200/70 space-y-2.5">
-            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block">
-              Atelier Guarantee
-            </span>
-            <div className="space-y-2 text-xs text-stone-700">
-              <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
-                <span>Unlimited 1-tap virtual try-ons across all 100 styles</span>
+          {/* Card 3: Support, Privacy & Sign Out */}
+          <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
+            {/* Help & Support */}
+            <button
+              type="button"
+              onClick={() => setIsSupportModalOpen(true)}
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <HelpCircle className="w-4 h-4" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                    Help & Support
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Private on-device photo synthesis and encrypted storage</span>
+              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                <span>support@finglora.com</span>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
               </div>
-            </div>
+            </button>
+
+            {/* Camera & Data Privacy */}
+            <button
+              type="button"
+              onClick={() => setIsPrivacyModalOpen(true)}
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                    Camera & Data Privacy
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                <span>Private on-device</span>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+              </div>
+            </button>
+
+            {/* Sign Out */}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await signOutUser();
+                } catch (e) {
+                  console.warn('Sign out error:', e);
+                }
+                showToast('Signed out successfully');
+                if (onLogout) onLogout();
+              }}
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-semibold text-red-600">Sign Out</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
+            </button>
           </div>
         </div>
 
         {/* ===================================================================
-            RIGHT COLUMN (6 Cols): Silhouette, Saved Moodboard Shortcut & Settings
+            RIGHT COLUMN (6 Cols): Silhouette, Saved Moodboard Shortcut & Guarantee
             =================================================================== */}
         <div className="lg:col-span-6 space-y-4 sm:space-y-5">
           {/* Card 1: Signature Nail Silhouette & Studio Preferences */}
@@ -1120,74 +1173,21 @@ export function ProfileView({
             </div>
           </button>
 
-          {/* Card 3: Support, Privacy & Sign Out */}
-          <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
-            {/* Help & Support */}
-            <button
-              type="button"
-              onClick={() => setIsSupportModalOpen(true)}
-              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <HelpCircle className="w-4 h-4" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                    Help & Support
-                  </span>
-                </div>
+          {/* Card 3: Atelier Security & Privacy Guarantee */}
+          <div className="bg-stone-50/80 rounded-3xl p-4 sm:p-5 border border-stone-200/70 space-y-2.5">
+            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block">
+              Atelier Guarantee
+            </span>
+            <div className="space-y-2 text-xs text-stone-700">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
+                <span>Unlimited 1-tap virtual try-ons across all 100 styles</span>
               </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
-                <span>support@finglora.com</span>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Private on-device photo synthesis and encrypted storage</span>
               </div>
-            </button>
-
-            {/* Camera & Data Privacy */}
-            <button
-              type="button"
-              onClick={() => setIsPrivacyModalOpen(true)}
-              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                  <ShieldCheck className="w-4 h-4" />
-                </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                    Camera & Data Privacy
-                  </span>
-                </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
-                <span>Private on-device</span>
-                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
-              </div>
-            </button>
-
-            {/* Sign Out */}
-            <button
-              type="button"
-              onClick={async () => {
-                try {
-                  await signOutUser();
-                } catch (e) {
-                  console.warn('Sign out error:', e);
-                }
-                showToast('Signed out successfully');
-                if (onLogout) onLogout();
-              }}
-              className="w-full h-11 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-                  <LogOut className="w-4 h-4" />
-                </div>
-                <span className="text-xs font-semibold text-red-600">Sign Out</span>
-              </div>
-              <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
-            </button>
+            </div>
           </div>
         </div>
       </div>
