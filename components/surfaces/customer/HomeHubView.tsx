@@ -14,7 +14,7 @@ import {
   Palette,
   Compass,
   Heart,
-  Sparkles,
+  LayoutGrid,
   Wand2,
   Wine,
   Circle,
@@ -48,7 +48,7 @@ interface InspirationCategory {
 }
 
 const INSPIRATION_CATEGORIES: InspirationCategory[] = [
-  { id: 'all', label: 'All 100 Styles', Icon: Sparkles },
+  { id: 'all', label: 'All 100 Styles', Icon: LayoutGrid },
   { id: 'glazed', label: 'Glazed & Chrome', Icon: Wand2 },
   { id: 'french', label: 'French Tips', Icon: Palette },
   { id: 'coquette', label: 'Coquette & Ribbons', Icon: Heart },

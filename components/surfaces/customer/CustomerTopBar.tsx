@@ -109,7 +109,7 @@ export function CustomerTopBar({
   const defaultNotifications: TopBarNotification[] = [
     {
       id: 'notif-1',
-      title: 'Studio Ready ✨',
+      title: 'Studio Ready',
       description: `Your ${preferredShape} shape is set and ready to try on any look.`,
       time: 'Just now',
       read: false,

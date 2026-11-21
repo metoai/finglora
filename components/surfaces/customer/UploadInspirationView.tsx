@@ -41,7 +41,7 @@ const ANALYSIS_STEPS = [
   },
   {
     step: 5,
-    title: 'Your set is ready! ✨',
+    title: 'Your set is ready',
     detail: 'Ready to try on your hand live',
   },
 ];

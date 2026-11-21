@@ -19,7 +19,6 @@ import {
   UploadCloud,
   Trash2,
   Search,
-  Sparkles,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -767,8 +766,7 @@ export function ProfileView({
         </div>
 
         <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3] text-xs font-semibold">
-            <Sparkles className="w-3.5 h-3.5" />
+          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3] text-xs font-semibold">
             <span>VIP Atelier Access</span>
           </span>
         </div>
@@ -874,11 +872,11 @@ export function ProfileView({
             {/* Quick Member Badges */}
             <div className="pt-2 border-t border-stone-100 flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-[11px] font-medium inline-flex items-center gap-1 capitalize">
-                <span>💅 Shape:</span>
+                <span>Shape:</span>
                 <span className="font-semibold text-stone-900">{preferredShape}</span>
               </span>
               <span className="px-2.5 py-1 rounded-full bg-pink-50 text-[#E0246A] text-[11px] font-medium inline-flex items-center gap-1">
-                <span>✨ Tier:</span>
+                <span>Tier:</span>
                 <span className="font-semibold">VIP Unlimited</span>
               </span>
             </div>
@@ -1076,7 +1074,6 @@ export function ProfileView({
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div>
               <div className="flex items-center gap-2">
-                <Sparkles className="w-4 h-4 text-[#E0246A]" />
                 <h3 className="text-sm font-semibold text-stone-900">
                   Signature Nail Silhouette
                 </h3>
@@ -1194,7 +1191,7 @@ export function ProfileView({
             </span>
             <div className="space-y-2 text-xs text-stone-700">
               <div className="flex items-center gap-2">
-                <Sparkles className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
+                <Check className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
                 <span>Unlimited 1-tap virtual try-ons across all 100 styles</span>
               </div>
               <div className="flex items-center gap-2">

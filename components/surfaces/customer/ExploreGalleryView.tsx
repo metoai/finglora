@@ -8,13 +8,12 @@ import {
   Hand,
   SlidersHorizontal,
   MoreHorizontal,
-  Sparkles,
+  LayoutGrid,
   Scissors,
   Circle,
   Palette,
   Eye,
   Wine,
-  Sparkle,
   Coffee,
   Square,
   Wand2,
@@ -37,7 +36,7 @@ interface FilterTag {
 }
 
 const CATEGORY_TAGS: FilterTag[] = [
-  { id: 'all', label: 'All Styles', Icon: Sparkles, queryMatch: '' },
+  { id: 'all', label: 'All Styles', Icon: LayoutGrid, queryMatch: '' },
   { id: 'glazed', label: 'Glazed & Chrome', Icon: Wand2, queryMatch: 'glazed' },
   { id: 'french', label: 'French Tips', Icon: Palette, queryMatch: 'french' },
   { id: 'coquette', label: 'Coquette & Ribbons', Icon: Heart, queryMatch: 'coquette' },
@@ -62,7 +61,7 @@ interface ManicurePin {
 const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   {
     id: 'pin-french-bow',
-    title: 'French Tip Nails Forever 🤍✨ with Coquette Ribbons',
+    title: 'French Tip Nails Forever with Coquette Ribbons',
     photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     aspectClass: 'aspect-[3/4.3]',
     tags: ['french', 'coquette', 'pink', 'simple', 'cute'],
@@ -174,7 +173,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   },
   {
     id: 'pin-champagne-dust',
-    title: 'Champagne Gold Fine Shimmer Gel Manicure ✨',
+    title: 'Champagne Gold Fine Shimmer Gel Manicure',
     photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_lavender_coffin_06.jpg',
     aspectClass: 'aspect-[3/4.1]',
     tags: ['chrome', 'cat eye', 'gel'],
