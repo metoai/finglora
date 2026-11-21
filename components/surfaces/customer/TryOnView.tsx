@@ -21,8 +21,6 @@ import {
   Shuffle,
   Columns,
   SlidersHorizontal,
-  Scan,
-  Zap,
   MoveHorizontal,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
@@ -143,9 +141,6 @@ export function TryOnView({
   const [sliderPosition, setSliderPosition] = useState(50);
   const [isDraggingSlider, setIsDraggingSlider] = useState(false);
   const sliderContainerRef = useRef<HTMLDivElement>(null);
-
-  // AR Cuticle Scanner & Landmark Guides Toggle
-  const [isHandScanningActive, setIsHandScanningActive] = useState(false);
 
   // Quick Inspo Swatches
   const quickInspoList = exploreDesigns && exploreDesigns.length > 0
@@ -505,7 +500,7 @@ export function TryOnView({
             {/* Viewport Top Toolbar */}
             <div className="flex items-center justify-between gap-2">
               {hasActiveInspo && !synthesizedHandUrl ? (
-                <div className="flex items-center gap-2 flex-wrap">
+                <div className="flex items-center gap-2">
                   {/* Mode Pill Toggle: Side-by-Side vs Curtain Slider */}
                   <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80 shadow-2xs">
                     <button
@@ -533,21 +528,6 @@ export function TryOnView({
                       <span>Curtain Slider</span>
                     </button>
                   </div>
-
-                  {/* AR Landmark Scan Toggle */}
-                  <button
-                    type="button"
-                    onClick={() => setIsHandScanningActive(!isHandScanningActive)}
-                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border transition cursor-pointer active:scale-95 shadow-2xs ${
-                      isHandScanningActive
-                        ? 'bg-rose-50 text-[#E0246A] border-rose-300 ring-1 ring-[#E0246A]/20'
-                        : 'bg-white text-stone-600 hover:text-stone-900 border-stone-200'
-                    }`}
-                    title="Toggle AR Cuticle Landmarks and Hand Scanner"
-                  >
-                    <Scan className="w-3.5 h-3.5 text-[#E0246A]" />
-                    <span>{isHandScanningActive ? 'AR Points On' : 'Scan Cuticles'}</span>
-                  </button>
                 </div>
               ) : (
                 /* Natural vs Manicure Pill Toggle */
@@ -613,7 +593,7 @@ export function TryOnView({
             </div>
 
             {/* The Master Hand Canvas Viewport */}
-            <div className={`relative aspect-[3/4] max-h-[560px] lg:max-h-[620px] w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group ${hasActiveInspo && !synthesizedHandUrl ? 'bg-stone-950 p-2 sm:p-2.5' : 'bg-stone-100'}`}>
+            <div className={`relative aspect-[3/4] max-h-[560px] lg:max-h-[620px] w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group ${hasActiveInspo && !synthesizedHandUrl ? 'bg-white p-2 sm:p-2.5' : 'bg-stone-100'}`}>
               {/* Spinner Overlay during synthesis */}
               {isSynthesizingHand && (
                 <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center animate-in fade-in duration-200">
@@ -634,65 +614,16 @@ export function TryOnView({
                 stagedPreviewMode === 'side-by-side' ? (
                   <div className="relative w-full h-full grid grid-cols-2 gap-2 sm:gap-2.5">
                     {/* Left Side: Your Hand */}
-                    <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-900 border border-white/10 flex items-center justify-center group/hand">
+                    <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-stone-200/80 shadow-2xs flex items-center justify-center group/hand">
                       <img
                         src={handSourceImageUrl}
                         alt="Your Hand"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover/hand:scale-102"
                       />
 
-                      {/* Laser Scan Beam when AR is Active */}
-                      {isHandScanningActive && (
-                        <div className="absolute inset-x-0 h-14 pointer-events-none z-15 bg-gradient-to-b from-transparent via-[#E0246A]/45 to-transparent animate-laser-continuous" />
-                      )}
-
-                      {/* AR Nail Landmarks */}
-                      {isHandScanningActive && (
-                        <div className="absolute inset-0 pointer-events-none z-15">
-                          {/* Thumb */}
-                          <div className="absolute left-[18%] top-[56%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <span className="w-4 h-4 rounded-full border border-[#E0246A] animate-ping absolute" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#E0246A] shadow-[0_0_8px_#E0246A]" />
-                            <span className="mt-0.5 text-[8px] font-bold text-white bg-black/80 px-1 rounded-xs border border-white/20">T</span>
-                          </div>
-                          {/* Index */}
-                          <div className="absolute left-[33%] top-[35%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <span className="w-4 h-4 rounded-full border border-[#E0246A] animate-ping absolute" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#E0246A] shadow-[0_0_8px_#E0246A]" />
-                            <span className="mt-0.5 text-[8px] font-bold text-white bg-black/80 px-1 rounded-xs border border-white/20">I</span>
-                          </div>
-                          {/* Middle */}
-                          <div className="absolute left-[49%] top-[30%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <span className="w-4 h-4 rounded-full border border-[#E0246A] animate-ping absolute" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#E0246A] shadow-[0_0_8px_#E0246A]" />
-                            <span className="mt-0.5 text-[8px] font-bold text-white bg-black/80 px-1 rounded-xs border border-white/20">M</span>
-                          </div>
-                          {/* Ring */}
-                          <div className="absolute left-[66%] top-[34%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <span className="w-4 h-4 rounded-full border border-[#E0246A] animate-ping absolute" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#E0246A] shadow-[0_0_8px_#E0246A]" />
-                            <span className="mt-0.5 text-[8px] font-bold text-white bg-black/80 px-1 rounded-xs border border-white/20">R</span>
-                          </div>
-                          {/* Pinky */}
-                          <div className="absolute left-[81%] top-[44%] -translate-x-1/2 -translate-y-1/2 flex flex-col items-center">
-                            <span className="w-4 h-4 rounded-full border border-[#E0246A] animate-ping absolute" />
-                            <span className="w-2.5 h-2.5 rounded-full bg-[#E0246A] shadow-[0_0_8px_#E0246A]" />
-                            <span className="mt-0.5 text-[8px] font-bold text-white bg-black/80 px-1 rounded-xs border border-white/20">P</span>
-                          </div>
-
-                          {/* Calibration Notification */}
-                          <div className="absolute top-9 inset-x-2 flex justify-center">
-                            <span className="px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-[9px] font-mono text-emerald-400 border border-emerald-500/30 shadow-xs flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                              <span>5 Cuticles Calibrated</span>
-                            </span>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Top Badges */}
+                      {/* Top Badge: Your Hand */}
                       <div className="absolute top-2.5 left-2.5 z-10">
-                        <span className="px-2 sm:px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10 shadow-xs">
+                        <span className="px-2 sm:px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-800 text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1.5 border border-stone-200/90 shadow-xs">
                           <Hand className="w-3 h-3 text-[#E0246A]" />
                           <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
                         </span>
@@ -703,7 +634,7 @@ export function TryOnView({
                         <button
                           type="button"
                           onClick={() => changeHandInputRef.current?.click()}
-                          className="px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-medium border border-white/15 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                          className="px-2.5 py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
                         >
                           <UploadCloud className="w-2.5 h-2.5" />
                           <span>Change Hand</span>
@@ -712,38 +643,38 @@ export function TryOnView({
                     </div>
 
                     {/* Right Side: Picked Inspo */}
-                    <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-stone-900 border border-white/10 flex items-center justify-center group/inspo">
+                    <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-stone-200/80 shadow-2xs flex items-center justify-center group/inspo">
                       <img
                         src={effectiveInspoUrl}
                         alt={effectiveInspoTitle || 'Selected Inspo'}
                         className="w-full h-full object-cover transition-transform duration-500 group-hover/inspo:scale-103"
                       />
                       <div className="absolute top-2.5 left-2.5 z-10">
-                        <span className="px-2 sm:px-2.5 py-1 rounded-full bg-[#E0246A]/90 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1.5 border border-white/20 shadow-xs">
+                        <span className="px-2 sm:px-2.5 py-1 rounded-full bg-[#E0246A] text-white text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1.5 shadow-xs">
                           <Sparkles className="w-3 h-3 text-white" />
                           <span>Picked Inspo</span>
                         </span>
                       </div>
 
                       <div className="absolute top-2.5 right-2.5 z-10 hidden sm:block">
-                        <span className="px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-white text-[10px] font-medium border border-white/10 capitalize">
+                        <span className="px-2 py-0.5 rounded-full bg-white/95 backdrop-blur-md text-stone-800 text-[10px] font-medium border border-stone-200/90 shadow-xs capitalize">
                           {nails.middle.shape}
                         </span>
                       </div>
 
                       {/* Extracted Color Swatches at bottom left */}
-                      <div className="absolute bottom-2.5 left-2.5 z-10 hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-black/60 backdrop-blur-md border border-white/10">
+                      <div className="absolute bottom-2.5 left-2.5 z-10 hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-xs">
                         <span
-                          className="w-2.5 h-2.5 rounded-full border border-white/40 shadow-xs"
+                          className="w-2.5 h-2.5 rounded-full border border-stone-300 shadow-2xs"
                           style={{ backgroundColor: nails.middle.baseColor || '#F5ECE3' }}
                           title="Base Lacquer"
                         />
                         <span
-                          className="w-2.5 h-2.5 rounded-full border border-white/40 shadow-xs"
+                          className="w-2.5 h-2.5 rounded-full border border-stone-300 shadow-2xs"
                           style={{ backgroundColor: nails.middle.accentColor || '#D4AF37' }}
                           title="Accent Lacquer"
                         />
-                        <span className="text-[9px] text-white/80 capitalize ml-0.5">
+                        <span className="text-[9px] text-stone-600 capitalize ml-0.5">
                           {nails.middle.finish}
                         </span>
                       </div>
@@ -753,7 +684,7 @@ export function TryOnView({
                         <button
                           type="button"
                           onClick={handleAutoPickNextInspo}
-                          className="px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-medium border border-white/15 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                          className="px-2.5 py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
                         >
                           <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
                           <span>Change Inspo</span>
@@ -761,28 +692,16 @@ export function TryOnView({
                       </div>
                     </div>
 
-                    {/* Center Interactive Fusion Node */}
+                    {/* Center Floating "Tap" Tab Button */}
                     <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                       <button
                         type="button"
                         onClick={handleSynthesizeHand}
                         disabled={isSynthesizingHand}
-                        className="pointer-events-auto group/node relative flex flex-col items-center justify-center cursor-pointer active:scale-90 transition-transform"
-                        title="Click to fuse manicure onto your hand"
+                        className="pointer-events-auto px-4 py-1.5 rounded-full bg-white hover:bg-stone-50 text-[#E0246A] hover:text-[#BE185D] border border-stone-200/90 shadow-md text-xs font-semibold tracking-wide transition active:scale-95 cursor-pointer disabled:opacity-50"
+                        title="Tap to apply manicure to your hand"
                       >
-                        {/* Glowing Aura Ring */}
-                        <div className="absolute -inset-2.5 rounded-full bg-gradient-to-r from-[#E0246A] via-pink-400 to-[#E0246A] opacity-35 blur-xs group-hover/node:opacity-85 animate-pulse transition-opacity" />
-
-                        {/* Central Reactor Badge */}
-                        <div className="relative w-8 h-8 sm:w-10 sm:h-10 rounded-full bg-stone-900 border-2 border-[#E0246A] text-white shadow-xl flex items-center justify-center group-hover/node:bg-[#E0246A] group-hover/node:border-white transition-all duration-200">
-                          <Zap className="w-4 h-4 text-[#E0246A] group-hover/node:text-white transition-colors fill-[#E0246A] group-hover/node:fill-white" />
-                        </div>
-
-                        {/* Telemetry Match Pill */}
-                        <div className="absolute -bottom-6 px-2 py-0.5 rounded-full bg-black/90 backdrop-blur-md text-[9px] font-semibold text-rose-200 border border-[#E0246A]/50 whitespace-nowrap shadow-md tracking-wide flex items-center gap-1 group-hover/node:border-rose-300">
-                          <Sparkles className="w-2.5 h-2.5 text-[#E0246A]" />
-                          <span>Tap to Fuse</span>
-                        </div>
+                        <span>Tap</span>
                       </button>
                     </div>
                   </div>
@@ -792,7 +711,7 @@ export function TryOnView({
                     ref={sliderContainerRef}
                     onMouseDown={handleSliderMouseDown}
                     onTouchStart={handleSliderTouchStart}
-                    className="relative w-full h-full select-none overflow-hidden rounded-xl sm:rounded-2xl cursor-ew-resize bg-stone-900"
+                    className="relative w-full h-full select-none overflow-hidden rounded-xl sm:rounded-2xl cursor-ew-resize bg-white border border-stone-200/90 shadow-2xs"
                   >
                     {/* Base Layer: Your Hand */}
                     <img
@@ -802,7 +721,7 @@ export function TryOnView({
                       draggable={false}
                     />
                     <div className="absolute bottom-3 left-3 z-10 pointer-events-none">
-                      <span className="px-2.5 py-1 rounded-full bg-black/75 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-medium border border-white/10 shadow-xs flex items-center gap-1.5">
+                      <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-800 text-[10px] sm:text-[11px] font-semibold border border-stone-200/90 shadow-xs flex items-center gap-1.5">
                         <Hand className="w-3 h-3 text-[#E0246A]" />
                         <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
                       </span>
@@ -822,7 +741,7 @@ export function TryOnView({
                         draggable={false}
                       />
                       <div className="absolute bottom-3 right-3 z-10 pointer-events-none">
-                        <span className="px-2.5 py-1 rounded-full bg-[#E0246A]/90 backdrop-blur-md text-white text-[10px] sm:text-[11px] font-semibold border border-white/20 shadow-xs flex items-center gap-1.5">
+                        <span className="px-2.5 py-1 rounded-full bg-[#E0246A] backdrop-blur-md text-white text-[10px] sm:text-[11px] font-semibold shadow-xs flex items-center gap-1.5">
                           <Sparkles className="w-3 h-3 text-white" />
                           <span>{effectiveInspoTitle || 'Picked Inspo'}</span>
                         </span>
@@ -834,15 +753,15 @@ export function TryOnView({
                       className="absolute top-0 bottom-0 z-20 pointer-events-none"
                       style={{ left: `${sliderPosition}%`, transform: 'translateX(-50%)' }}
                     >
-                      {/* Hairline with subtle neon glow */}
-                      <div className="w-0.5 h-full bg-white shadow-[0_0_12px_rgba(224,36,106,0.9)]" />
+                      {/* Hairline with clean subtle shadow */}
+                      <div className="w-0.5 h-full bg-white shadow-[0_0_8px_rgba(224,36,106,0.6)]" />
 
                       {/* Center Draggable Thumb Button */}
                       <div className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 left-1/2 flex flex-col items-center pointer-events-auto">
-                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-stone-900 shadow-2xl border-2 border-[#E0246A] flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-110 transition-transform active:scale-95">
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white text-stone-900 shadow-xl border-2 border-[#E0246A] flex items-center justify-center cursor-grab active:cursor-grabbing hover:scale-110 transition-transform active:scale-95">
                           <MoveHorizontal className="w-4 h-4 text-[#E0246A]" />
                         </div>
-                        <div className="mt-1 px-2 py-0.5 rounded-full bg-black/85 backdrop-blur-md text-white text-[9px] font-mono border border-white/20 whitespace-nowrap shadow-xs">
+                        <div className="mt-1 px-2 py-0.5 rounded-full bg-white text-stone-800 text-[9px] font-mono border border-stone-200 whitespace-nowrap shadow-xs">
                           {sliderPosition}%
                         </div>
                       </div>
@@ -850,7 +769,7 @@ export function TryOnView({
 
                     {/* Floating Drag Instruction Hint */}
                     <div className="absolute top-3 inset-x-0 flex justify-center pointer-events-none z-10">
-                      <span className="px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-white/90 text-[10px] font-medium border border-white/10 shadow-xs">
+                      <span className="px-3 py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-700 text-[10px] font-medium border border-stone-200/90 shadow-xs">
                         Drag divider to compare your hand with inspo
                       </span>
                     </div>
@@ -1411,27 +1330,27 @@ export function TryOnView({
           >
             {hasActiveInspo && !synthesizedHandUrl ? (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-h-[82vh] max-w-4xl w-full h-full p-2">
-                <div className="relative rounded-2xl overflow-hidden bg-stone-950 border border-white/20 flex items-center justify-center h-full">
+                <div className="relative rounded-2xl overflow-hidden bg-white border border-stone-200 shadow-xl flex items-center justify-center h-full">
                   <img
                     src={handSourceImageUrl}
                     alt="Your Hand"
                     className="w-full h-full object-contain"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="px-3 py-1 rounded-full bg-black/80 text-white text-xs font-medium border border-white/20 flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full bg-white/95 text-stone-800 text-xs font-semibold border border-stone-200/90 shadow-xs flex items-center gap-1.5">
                       <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
                       <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
                     </span>
                   </div>
                 </div>
-                <div className="relative rounded-2xl overflow-hidden bg-stone-950 border border-white/20 flex items-center justify-center h-full">
+                <div className="relative rounded-2xl overflow-hidden bg-white border border-stone-200 shadow-xl flex items-center justify-center h-full">
                   <img
                     src={effectiveInspoUrl}
                     alt={effectiveInspoTitle || 'Selected Inspo'}
                     className="w-full h-full object-contain"
                   />
                   <div className="absolute top-3 left-3">
-                    <span className="px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold border border-white/20 flex items-center gap-1.5">
+                    <span className="px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5">
                       <Sparkles className="w-3.5 h-3.5 text-white" />
                       <span>{effectiveInspoTitle || 'Picked Inspo'}</span>
                     </span>
