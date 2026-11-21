@@ -18,6 +18,7 @@ import {
   Compass,
   ChevronRight,
   Sparkles,
+  Shuffle,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
@@ -54,6 +55,7 @@ export function TryOnView({
   setNails,
   onBackToStudioClick,
   onBackToHomeClick,
+  exploreDesigns = [],
   activeSample,
   activePhotoUrl,
   onCustomizeWithAi,
@@ -149,6 +151,29 @@ export function TryOnView({
       } catch {}
     }
     onResetInspo?.();
+  };
+
+  const handleAutoPickNextInspo = () => {
+    const pool = exploreDesigns && exploreDesigns.length > 0 ? exploreDesigns : CURATED_EDITORIAL_DESIGNS;
+    const candidates = pool.filter((d) => d.id !== activeSample?.id && d.photoUrl !== effectiveInspoUrl);
+    const chosen = candidates.length > 0
+      ? candidates[Math.floor(Math.random() * candidates.length)]
+      : pool[0];
+
+    if (chosen) {
+      setIsLocallyCleared(false);
+      setInternalSynthesizedHandUrl(null);
+      propSetSynthesizedHandUrl?.(null);
+      setTryOnView('before');
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_synthesized_hand_url');
+        } catch {}
+      }
+      onSelectExploreDesign?.(chosen.id);
+      setExportToast(`Switched to ${chosen.title}`);
+      setTimeout(() => setExportToast(null), 2000);
+    }
   };
 
   // Synchronize favorite status
@@ -543,10 +568,10 @@ export function TryOnView({
                     <div className="absolute bottom-2.5 inset-x-2.5 flex justify-center z-10">
                       <button
                         type="button"
-                        onClick={handleResetInspoClick}
+                        onClick={handleAutoPickNextInspo}
                         className="px-2.5 py-1 rounded-full bg-black/60 hover:bg-black/80 backdrop-blur-md text-white text-[10px] font-medium border border-white/15 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
                       >
-                        <RotateCcw className="w-2.5 h-2.5" />
+                        <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
                         <span>Change Inspo</span>
                       </button>
                     </div>
@@ -742,15 +767,38 @@ export function TryOnView({
                   <span>✨ Apply Manicure to My Hand</span>
                 </button>
 
-                <button
-                  type="button"
-                  onClick={handleResetInspoClick}
-                  className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
-                  title="Clear selected inspo and pick another"
-                >
-                  <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-                  <span>Change Inspo</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={handleAutoPickNextInspo}
+                    className="h-10 px-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                    title="Auto-pick another inspiration style"
+                  >
+                    <Shuffle className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Change Inspo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => changeRefInspoInputRef.current?.click()}
+                    className="h-10 px-2 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                    title="Upload your own photo inspiration"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5 text-stone-500" />
+                    <span>Upload Photo</span>
+                  </button>
+                </div>
+
+                {onExploreClick && (
+                  <button
+                    type="button"
+                    onClick={onExploreClick}
+                    className="w-full h-7 rounded-lg text-stone-500 hover:text-stone-800 text-[11px] font-medium flex items-center justify-center gap-1.5 transition cursor-pointer"
+                  >
+                    <Compass className="w-3 h-3 text-stone-400" />
+                    <span>Or browse all styles in gallery →</span>
+                  </button>
+                )}
               </div>
             </div>
           ) : (
@@ -814,11 +862,11 @@ export function TryOnView({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={handleResetInspoClick}
+                    onClick={handleAutoPickNextInspo}
                     className="h-9 px-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                    title="Reset to bare hand and choose a different inspo"
+                    title="Auto-pick another inspiration style"
                   >
-                    <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
+                    <Shuffle className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Change Inspo</span>
                   </button>
 
