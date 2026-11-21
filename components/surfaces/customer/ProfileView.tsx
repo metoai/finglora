@@ -380,7 +380,7 @@ export function ProfileView({
   // -------------------------------------------------------------------------
   if (currentView === 'favorites') {
     return (
-      <div className="w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-3 sm:py-6 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
         {/* Toast */}
         {toastMessage && (
           <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -733,7 +733,7 @@ export function ProfileView({
   // VIEW: MAIN PROFILE VIEW (Clean Profile Card + Account Settings)
   // -------------------------------------------------------------------------
   return (
-    <div className="max-w-5xl xl:max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 text-stone-900 animate-in fade-in duration-200">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 text-stone-900 animate-in fade-in duration-200">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -776,9 +776,9 @@ export function ProfileView({
       {/* Balanced 2-Column Grid on Desktop */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 items-start">
         {/* ===================================================================
-            LEFT COLUMN (5 Cols): Identity, Hand Photo Station & Atelier Access
+            LEFT COLUMN (4-5 Cols): Identity, Hand Photo Station & Atelier Access
             =================================================================== */}
-        <div className="lg:col-span-5 space-y-5">
+        <div className="lg:col-span-5 xl:col-span-4 space-y-5">
           {/* Card 1: Client Atelier Identity */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -900,33 +900,43 @@ export function ProfileView({
             </div>
 
             {customTryOnHandUrl ? (
-              <div className="space-y-3">
-                <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-2xs group">
-                  <img
-                    src={customTryOnHandUrl}
-                    alt="Saved Hand Photo"
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1">
-                    <Check className="w-3 h-3 text-emerald-400" />
-                    <span>Saved for 1-Tap Try-On</span>
+              <div className="flex items-center justify-between p-3 sm:p-3.5 rounded-2xl bg-stone-50 border border-stone-200/80 gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative w-14 h-16 sm:w-16 sm:h-18 rounded-xl overflow-hidden border border-stone-200 bg-stone-100 shrink-0 shadow-2xs group">
+                    <img
+                      src={customTryOnHandUrl}
+                      alt="Saved Hand Photo"
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform"
+                    />
+                  </div>
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-xs font-semibold text-stone-900 truncate">Saved Hand Photo</span>
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    </div>
+                    <p className="text-[11px] text-stone-500 mt-0.5">Active for 1-tap try-on</p>
+                    <button
+                      type="button"
+                      onClick={() => setIsHandModalOpen(true)}
+                      className="text-[11px] text-[#E0246A] hover:text-[#BE185D] font-medium mt-1 inline-flex items-center gap-1 cursor-pointer"
+                    >
+                      <span>Preview / Retake</span>
+                    </button>
                   </div>
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex items-center gap-1.5 shrink-0">
                   <button
                     type="button"
                     onClick={() => setIsHandModalOpen(true)}
-                    className="flex-1 h-9.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
+                    className="h-8.5 px-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-xs font-semibold text-stone-700 transition cursor-pointer active:scale-95 shadow-2xs"
                   >
-                    <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
-                    <span>Manage / Retake</span>
+                    Manage
                   </button>
-
                   <button
                     type="button"
                     onClick={handleRemoveHandPhoto}
-                    className="h-9.5 px-3 rounded-xl border border-stone-200 hover:bg-red-50 text-stone-500 hover:text-red-600 text-xs font-semibold transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                    className="w-8.5 h-8.5 rounded-xl border border-stone-200 hover:bg-red-50 text-stone-400 hover:text-red-600 transition cursor-pointer flex items-center justify-center active:scale-95"
                     title="Remove Hand Photo"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -937,10 +947,10 @@ export function ProfileView({
               <div className="space-y-3">
                 <div
                   onClick={() => handFileInputRef.current?.click()}
-                  className="aspect-[4/2.6] w-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 hover:bg-pink-50/20 transition cursor-pointer flex flex-col items-center justify-center p-4 text-center space-y-1.5"
+                  className="py-5 px-4 w-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 hover:bg-pink-50/20 transition cursor-pointer flex flex-col items-center justify-center text-center space-y-1.5"
                 >
-                  <div className="w-10 h-10 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center">
-                    <Hand className="w-5 h-5" />
+                  <div className="w-9 h-9 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center">
+                    <Hand className="w-4 h-4" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-stone-900">Your Hand Photo</p>
@@ -954,18 +964,18 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => handFileInputRef.current?.click()}
-                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                    className="h-9.5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
                   >
-                    <UploadCloud className="w-4 h-4" />
+                    <UploadCloud className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
                   </button>
 
                   <button
                     type="button"
                     onClick={() => setIsCameraCaptureOpen(true)}
-                    className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                    className="h-9.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
                   >
-                    <Camera className="w-4 h-4 text-[#E0246A]" />
+                    <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Live Camera</span>
                   </button>
                 </div>
@@ -992,226 +1002,10 @@ export function ProfileView({
         </div>
 
         {/* ===================================================================
-            RIGHT COLUMN (7 Cols): Saved Looks Visual Showcase, Silhouette & Settings
+            RIGHT COLUMN (7-8 Cols): Saved Looks Visual Showcase, Silhouette & Settings
             =================================================================== */}
-        <div className="lg:col-span-7 space-y-5">
-          {/* Card 1: Saved Looks Visual Showcase (Fills the desktop space visually!) */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
-                  <Heart className="w-4 h-4 fill-[#E0246A]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-stone-900 block leading-tight">
-                      Saved Looks
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
-                      {savedDesigns.length}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-stone-500">
-                    Your saved manicures ready for instant try-on
-                  </span>
-                </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCurrentView('favorites')}
-                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer active:scale-95"
-              >
-                <span>View All Moodboard</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Showcase Grid of Manicures */}
-            {savedDesigns.length > 0 ? (
-              <div className="space-y-3.5">
-                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-3.5">
-                  {savedDesigns.slice(0, 4).map((item, idx) => {
-                    const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => onSelectExploreDesign?.(item.id)}
-                        className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
-                      >
-                        <img
-                          src={photoSrc}
-                          alt={item.title}
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                          }}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-
-                        {/* Category Badge top-left */}
-                        <div className="absolute top-2 left-2 z-10">
-                          <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
-                            {item.category}
-                          </span>
-                        </div>
-
-                        {/* Bottom Info & Try On */}
-                        <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
-                          <div>
-                            <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
-                              {item.title}
-                            </h4>
-                            <p className="text-[10px] text-white/70 truncate capitalize">
-                              {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectExploreDesign?.(item.id);
-                            }}
-                            className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                          >
-                            <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                            <span>Try On</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {savedDesigns.length < 2 && (
-                  <div className="pt-2 border-t border-stone-100 space-y-2">
-                    <p className="text-[11px] font-medium text-stone-500">Trending Atelier Recommendations:</p>
-                    <div className="grid grid-cols-2 gap-3">
-                      {recommendations.slice(0, 2).map((item, idx) => {
-                        const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
-                        return (
-                          <div
-                            key={item.id}
-                            onClick={() => onSelectExploreDesign?.(item.id)}
-                            className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
-                          >
-                            <img
-                              src={photoSrc}
-                              alt={item.title}
-                              loading="lazy"
-                              onError={(e) => {
-                                (e.target as HTMLImageElement).src =
-                                  EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                              }}
-                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                            />
-                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-
-                            <div className="absolute top-2 left-2 z-10">
-                              <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
-                                {item.category}
-                              </span>
-                            </div>
-
-                            <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
-                              <div>
-                                <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
-                                  {item.title}
-                                </h4>
-                                <p className="text-[10px] text-white/70 truncate capitalize">
-                                  {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
-                                </p>
-                              </div>
-
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onSelectExploreDesign?.(item.id);
-                                }}
-                                className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                              >
-                                <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                                <span>Try On</span>
-                              </button>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
-              </div>
-            ) : (
-              <div className="space-y-3">
-                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/70 text-center space-y-1">
-                  <p className="text-xs font-semibold text-stone-800">No saved looks yet</p>
-                  <p className="text-[11px] text-stone-500">
-                    Bookmark your favorite styles from Explore, or try on these editorial picks:
-                  </p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  {recommendations.slice(0, 2).map((item, idx) => {
-                    const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
-                    return (
-                      <div
-                        key={item.id}
-                        onClick={() => onSelectExploreDesign?.(item.id)}
-                        className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
-                      >
-                        <img
-                          src={photoSrc}
-                          alt={item.title}
-                          loading="lazy"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).src =
-                              EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                          }}
-                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
-
-                        <div className="absolute top-2 left-2 z-10">
-                          <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
-                            {item.category}
-                          </span>
-                        </div>
-
-                        <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
-                          <div>
-                            <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
-                              {item.title}
-                            </h4>
-                            <p className="text-[10px] text-white/70 truncate capitalize">
-                              {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
-                            </p>
-                          </div>
-
-                          <button
-                            type="button"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              onSelectExploreDesign?.(item.id);
-                            }}
-                            className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
-                          >
-                            <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
-                            <span>Try On</span>
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Card 2: Signature Silhouette & Preferences */}
+        <div className="lg:col-span-7 xl:col-span-8 space-y-5">
+          {/* Card 1: Signature Nail Silhouette & Studio Preferences */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div>
               <div className="flex items-center gap-2">
@@ -1294,6 +1088,109 @@ export function ProfileView({
                 </button>
               </div>
             </div>
+          </div>
+
+          {/* Card 2: Saved Looks Moodboard Preview (Clean, compact, NO giant photo spam) */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+                  <Heart className="w-4 h-4 fill-[#E0246A]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-stone-900 block leading-tight">
+                      Saved Looks
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
+                      {savedDesigns.length}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-stone-500">
+                    Your personal manicure moodboard
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentView('favorites')}
+                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <span>View Full Moodboard</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Saved Looks Content */}
+            {savedDesigns.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {savedDesigns.slice(0, 4).map((item, idx) => {
+                  const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
+                  return (
+                    <div
+                      key={item.id}
+                      onClick={() => onSelectExploreDesign?.(item.id)}
+                      className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
+                    >
+                      <img
+                        src={photoSrc}
+                        alt={item.title}
+                        loading="lazy"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src =
+                            EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                        }}
+                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
+
+                      {/* Category Badge top-left */}
+                      <div className="absolute top-2 left-2 z-10">
+                        <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+                          {item.category}
+                        </span>
+                      </div>
+
+                      {/* Bottom Info & Try On */}
+                      <div className="relative z-10 p-2 sm:p-2.5 space-y-1">
+                        <h4 className="text-white text-[11px] sm:text-xs font-semibold leading-tight drop-shadow-xs truncate">
+                          {item.title}
+                        </h4>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onSelectExploreDesign?.(item.id);
+                          }}
+                          className="w-full h-7 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[10px] sm:text-[11px] font-bold shadow-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
+                        >
+                          <Hand className="w-3 h-3 text-[#E0246A]" strokeWidth={2} />
+                          <span>Try On</span>
+                        </button>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="p-4 sm:p-5 rounded-2xl bg-stone-50/80 border border-stone-200/70 text-center space-y-2">
+                <p className="text-xs font-semibold text-stone-800">No saved manicures yet</p>
+                <p className="text-[11px] text-stone-500 max-w-sm mx-auto">
+                  Bookmark designs from the Explore gallery to curate your personal moodboard.
+                </p>
+                {onNavigateLookbook && (
+                  <button
+                    type="button"
+                    onClick={onNavigateLookbook}
+                    className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-xs font-semibold text-stone-700 transition cursor-pointer active:scale-95 shadow-2xs mt-1"
+                  >
+                    <span>Explore 100 Styles</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Card 3: Support, Privacy & Sign Out */}
