@@ -763,8 +763,7 @@ export function TryOnView({
                   disabled={isSynthesizingHand}
                   className="w-full h-12 sm:h-13 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer disabled:opacity-50"
                 >
-                  <Sparkles className="w-4 h-4 text-white" />
-                  <span>✨ Apply Manicure to My Hand</span>
+                  <span>Apply Manicure to My Hand</span>
                 </button>
 
                 <div className="grid grid-cols-2 gap-2">

@@ -44,7 +44,7 @@ export function CustomerTopBar({
     home: 'Home',
     explore: 'Explore',
     tryon: 'Try On',
-    'ai-create': 'Studio',
+    'ai-create': 'AI Studio',
     passport: 'Passport',
     upload: 'Try On',
     favorites: 'Saved',
@@ -61,7 +61,7 @@ export function CustomerTopBar({
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
     { id: 'explore', label: 'Explore', Icon: Compass },
-    { id: 'ai-create', label: 'Studio', Icon: Paintbrush },
+    { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {
       id: 'favorites',
       label: 'Saved',
@@ -79,7 +79,7 @@ export function CustomerTopBar({
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
     { id: 'explore', label: 'Explore', Icon: Compass },
-    { id: 'ai-create', label: 'Studio', Icon: Paintbrush },
+    { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {
       id: 'favorites',
       label: 'Saved',
@@ -139,15 +139,36 @@ export function CustomerTopBar({
   const [notifications, setNotifications] = useState<TopBarNotification[]>(defaultNotifications);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const url =
-        localStorage.getItem('finglora_custom_avatar_photo') ||
-        localStorage.getItem('finglora_avatar_url') ||
-        (localStorage.getItem('finglora_avatar_seed')
-          ? `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(localStorage.getItem('finglora_avatar_seed')!)}&backgroundColor=fde8ef`
-          : 'https://api.dicebear.com/9.x/lorelei/svg?seed=Vivian&backgroundColor=fde8ef');
-      setAvatarUrl(url);
+    const updateAvatar = () => {
+      if (typeof window !== 'undefined') {
+        const custom = localStorage.getItem('finglora_custom_avatar_photo');
+        if (custom) {
+          setAvatarUrl(custom);
+          return;
+        }
+        const saved = localStorage.getItem('finglora_avatar_url');
+        if (saved) {
+          setAvatarUrl(saved);
+          return;
+        }
+        const seed = localStorage.getItem('finglora_avatar_seed') || 'Vivian';
+        setAvatarUrl(
+          `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=fde8ef`
+        );
+      }
+    };
 
+    updateAvatar();
+    window.addEventListener('storage', updateAvatar);
+    window.addEventListener('finglora_avatar_updated', updateAvatar);
+    return () => {
+      window.removeEventListener('storage', updateAvatar);
+      window.removeEventListener('finglora_avatar_updated', updateAvatar);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
       try {
         const savedRead = localStorage.getItem('finglora_notifications_read_ids');
         const readIds: string[] = savedRead ? JSON.parse(savedRead) : [];

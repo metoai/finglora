@@ -19,7 +19,6 @@ import {
   UploadCloud,
   Trash2,
   Search,
-  Dices,
   Sparkles,
 } from 'lucide-react';
 import {
@@ -102,7 +101,6 @@ export function ProfileView({
     return parts[0].slice(0, 2).toUpperCase();
   }, [userName]);
 
-  // Open-source Default Profile Avatar Seed & Giver
   const [avatarSeed, setAvatarSeed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('finglora_avatar_seed');
@@ -132,14 +130,16 @@ export function ProfileView({
       'Claire', 'Sasha', 'Nadia', 'Zoe', 'Leona', 'Celeste', 'Flora'
     ];
     const next = seeds[Math.floor(Math.random() * seeds.length)] + '-' + Math.floor(Math.random() * 999);
+    const newUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(next)}&backgroundColor=fde8ef`;
     setAvatarSeed(next);
     setCustomAvatarPhoto(null);
     if (typeof window !== 'undefined') {
       localStorage.setItem('finglora_avatar_seed', next);
       localStorage.removeItem('finglora_custom_avatar_photo');
-      localStorage.setItem('finglora_avatar_url', `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(next)}&backgroundColor=fde8ef`);
+      localStorage.setItem('finglora_avatar_url', newUrl);
+      window.dispatchEvent(new Event('finglora_avatar_updated'));
     }
-    showToast('New profile avatar rolled ✿');
+    showToast('New random profile pic rolled ✿');
   };
 
   const handleCustomAvatarSelected = (file: File) => {
@@ -151,6 +151,7 @@ export function ProfileView({
         try {
           localStorage.setItem('finglora_custom_avatar_photo', dataUrl);
           localStorage.setItem('finglora_avatar_url', dataUrl);
+          window.dispatchEvent(new Event('finglora_avatar_updated'));
         } catch {}
       }
       showToast('Custom profile picture updated');
@@ -783,12 +784,12 @@ export function ProfileView({
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                {/* Avatar with Dice roll & custom upload */}
+                {/* Avatar with custom upload or random pic */}
                 <div className="relative shrink-0 group">
                   <div
                     onClick={() => profilePicFileInputRef.current?.click()}
                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-                    title="Click to upload custom picture, or use dice to roll random avatar"
+                    title={customAvatarPhoto ? 'Click to change photo' : 'Click to upload custom picture'}
                   >
                     <img
                       src={avatarUrl}
@@ -799,19 +800,6 @@ export function ProfileView({
                       }}
                     />
                   </div>
-
-                  {/* Profile Pic Giver Dice Button */}
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      randomizeAvatar();
-                    }}
-                    title="Roll new default profile picture"
-                    className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-stone-200 shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-pink-50 transition active:scale-90 cursor-pointer"
-                  >
-                    <Dices className="w-3.5 h-3.5" />
-                  </button>
 
                   <input
                     ref={profilePicFileInputRef}
@@ -835,11 +823,37 @@ export function ProfileView({
                       type="button"
                       onClick={randomizeAvatar}
                       className="text-xs text-[#E0246A] hover:text-[#BE185D] font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
-                      title="Roll a new default profile avatar"
+                      title="Roll a new random profile picture"
                     >
-                      <Dices className="w-3.5 h-3.5" />
-                      <span>Roll Avatar</span>
+                      <span>Roll Random Pic</span>
                     </button>
+                    <span className="text-stone-300">·</span>
+                    <button
+                      type="button"
+                      onClick={() => profilePicFileInputRef.current?.click()}
+                      className="text-xs text-stone-600 hover:text-stone-900 font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
+                    >
+                      <span>Upload Custom</span>
+                    </button>
+                    {customAvatarPhoto && (
+                      <>
+                        <span className="text-stone-300">·</span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setCustomAvatarPhoto(null);
+                            if (typeof window !== 'undefined') {
+                              localStorage.removeItem('finglora_custom_avatar_photo');
+                              window.dispatchEvent(new Event('finglora_avatar_updated'));
+                            }
+                            showToast('Custom photo removed');
+                          }}
+                          className="text-xs text-stone-400 hover:text-red-500 transition cursor-pointer"
+                        >
+                          <span>Reset</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>

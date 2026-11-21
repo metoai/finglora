@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Compass, Hand, Heart } from 'lucide-react';
+import { Home, Compass, Hand, Paintbrush } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 
@@ -522,18 +522,18 @@ export function CustomerApp({
       </div>
 
       {/* Mobile Bottom Navigation - Modern Floating Capsule with Fluid Sliding Active Shape */}
-      {customerRoute !== 'ai-create' && (() => {
-        const activeNavTab: 'home' | 'tryon' | 'explore' | 'favorites' =
+      {(() => {
+        const activeNavTab: 'home' | 'tryon' | 'explore' | 'studio' =
           customerRoute === 'tryon' || customerRoute === 'upload'
             ? 'tryon'
             : customerRoute === 'explore'
             ? 'explore'
-            : customerRoute === 'favorites'
-            ? 'favorites'
+            : customerRoute === 'ai-create'
+            ? 'studio'
             : 'home';
 
         const mobileNavTabs: {
-          id: 'home' | 'tryon' | 'explore' | 'favorites';
+          id: 'home' | 'tryon' | 'explore' | 'studio';
           label: string;
           Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
           route: CustomerRoute;
@@ -541,7 +541,7 @@ export function CustomerApp({
           { id: 'home', label: 'Home', Icon: Home, route: 'home' },
           { id: 'tryon', label: 'Try On', Icon: Hand, route: 'tryon' },
           { id: 'explore', label: 'Explore', Icon: Compass, route: 'explore' },
-          { id: 'favorites', label: 'Saved', Icon: Heart, route: 'favorites' },
+          { id: 'studio', label: 'AI Studio', Icon: Paintbrush, route: 'ai-create' },
         ];
 
         return (

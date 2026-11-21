@@ -443,7 +443,7 @@ export function AiCreationView({
         <div
           className={`${
             mobileActiveTab === 'canvas' ? 'flex' : 'hidden lg:flex'
-          } w-full lg:w-[46%] xl:w-[44%] h-full flex-col bg-[#F9F9F9] border-r border-stone-200/80 p-3 sm:p-5 lg:p-6 justify-between items-center relative overflow-hidden`}
+          } w-full lg:w-[46%] xl:w-[44%] h-full flex-col bg-[#F9F9F9] border-r border-stone-200/80 p-3 sm:p-5 lg:p-6 pb-20 sm:pb-5 lg:pb-6 justify-between items-center relative overflow-hidden`}
         >
           {/* Top Canvas Bar */}
           <div className="w-full flex items-center justify-between z-10">
@@ -750,7 +750,7 @@ export function AiCreationView({
           </div>
 
           {/* Bottom Floating Prompt Dock (ChatGPT Style in White Mode) */}
-          <div className="p-3 sm:p-4 lg:p-6 bg-gradient-to-t from-white via-white to-transparent shrink-0 max-w-2xl w-full mx-auto space-y-2">
+          <div className="p-3 sm:p-4 lg:p-6 pb-20 sm:pb-4 lg:pb-6 bg-gradient-to-t from-white via-white to-transparent shrink-0 max-w-2xl w-full mx-auto space-y-2">
             {/* Quick Suggestion Chips */}
             <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-none py-1 select-none">
               {QUICK_CHIPS.map((chip, idx) => (

@@ -53,6 +53,37 @@ export function CustomerSidebar({
     ? userName.trim().slice(0, 2).toUpperCase()
     : 'FL';
 
+  const [sidebarAvatarUrl, setSidebarAvatarUrl] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    const updateAvatar = () => {
+      if (typeof window !== 'undefined') {
+        const custom = localStorage.getItem('finglora_custom_avatar_photo');
+        if (custom) {
+          setSidebarAvatarUrl(custom);
+          return;
+        }
+        const saved = localStorage.getItem('finglora_avatar_url');
+        if (saved) {
+          setSidebarAvatarUrl(saved);
+          return;
+        }
+        const seed = localStorage.getItem('finglora_avatar_seed') || 'Vivian';
+        setSidebarAvatarUrl(
+          `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=fde8ef`
+        );
+      }
+    };
+
+    updateAvatar();
+    window.addEventListener('storage', updateAvatar);
+    window.addEventListener('finglora_avatar_updated', updateAvatar);
+    return () => {
+      window.removeEventListener('storage', updateAvatar);
+      window.removeEventListener('finglora_avatar_updated', updateAvatar);
+    };
+  }, []);
+
   return (
     <aside
       className="hidden md:flex w-14 sm:w-16 flex-col fixed inset-y-0 left-0 bg-white border-r border-stone-200/60 py-3.5 justify-between items-center z-40 select-none"
@@ -178,15 +209,26 @@ export function CustomerSidebar({
         <button
           type="button"
           onClick={() => onNavigate('profile')}
-          className={`w-9 h-9 rounded-full flex items-center justify-center text-xs font-semibold transition cursor-pointer relative group border ${
+          className={`w-9 h-9 rounded-full overflow-hidden flex items-center justify-center text-xs font-semibold transition cursor-pointer relative group border ${
             isProfileActive
-              ? 'border-[#E0246A] ring-2 ring-[#E0246A]/20 bg-[#FDE8EF] text-[#E0246A]'
-              : 'border-stone-200 bg-stone-100 text-stone-700 hover:border-stone-300'
+              ? 'border-[#E0246A] ring-2 ring-[#E0246A]/20 bg-[#FDE8EF]'
+              : 'border-stone-200 bg-stone-100 hover:border-stone-300'
           }`}
           title="Profile"
           aria-label="Profile"
         >
-          {userInitials}
+          {sidebarAvatarUrl ? (
+            <img
+              src={sidebarAvatarUrl}
+              alt={userName}
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLElement).style.display = 'none';
+              }}
+            />
+          ) : (
+            <span className="text-stone-700">{userInitials}</span>
+          )}
           <span className="absolute left-14 px-2.5 py-1 bg-stone-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-md z-50">
             Profile
           </span>
