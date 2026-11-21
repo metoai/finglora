@@ -20,6 +20,7 @@ import {
   Trash2,
   Search,
   Dices,
+  Sparkles,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -732,7 +733,7 @@ export function ProfileView({
   // VIEW: MAIN PROFILE VIEW (Clean Profile Card + Account Settings)
   // -------------------------------------------------------------------------
   return (
-    <div className="max-w-2xl mx-auto w-full px-4 sm:px-6 py-6 sm:py-8 space-y-5 text-stone-900">
+    <div className="max-w-5xl xl:max-w-6xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-5 sm:py-7 space-y-6 text-stone-900 animate-in fade-in duration-200">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -744,309 +745,627 @@ export function ProfileView({
       )}
 
       {/* Top Header */}
-      <div className="flex items-center justify-between pb-4 border-b border-stone-200/80">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-200/80">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={onBackClick}
-            className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
+            className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
             title="Return to Home"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <h1 className="font-serif text-2xl font-normal text-stone-900">
-            Profile & Settings
-          </h1>
+          <div>
+            <h1 className="font-serif text-2xl font-normal text-stone-900 tracking-tight">
+              Profile & Settings
+            </h1>
+            <p className="text-xs text-stone-500 mt-0.5">
+              Atelier client identity, hand photo calibration & signature style
+            </p>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-2 self-start sm:self-auto">
+          <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3] text-xs font-semibold">
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>VIP Atelier Access</span>
+          </span>
         </div>
       </div>
 
-      {/* Card 1: Account & Hand Photo */}
-      <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-5">
-        {/* Profile Avatar & Details */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3.5 min-w-0">
-            {/* Avatar with Default Profile Pic Giver (Dice roll) & Custom Upload */}
-            <div className="relative shrink-0 group">
-              <div
-                onClick={() => profilePicFileInputRef.current?.click()}
-                className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
-                title="Click to upload custom picture, or use dice to roll random avatar"
-              >
-                <img
-                  src={avatarUrl}
-                  alt={userName}
-                  className="w-full h-full object-cover"
-                  onError={(e) => {
-                    (e.target as HTMLElement).style.display = 'none';
-                  }}
-                />
+      {/* Balanced 2-Column Grid on Desktop */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 items-start">
+        {/* ===================================================================
+            LEFT COLUMN (5 Cols): Identity, Hand Photo Station & Atelier Access
+            =================================================================== */}
+        <div className="lg:col-span-5 space-y-5">
+          {/* Card 1: Client Atelier Identity */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-3.5 min-w-0">
+                {/* Avatar with Dice roll & custom upload */}
+                <div className="relative shrink-0 group">
+                  <div
+                    onClick={() => profilePicFileInputRef.current?.click()}
+                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                    title="Click to upload custom picture, or use dice to roll random avatar"
+                  >
+                    <img
+                      src={avatarUrl}
+                      alt={userName}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+
+                  {/* Profile Pic Giver Dice Button */}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      randomizeAvatar();
+                    }}
+                    title="Roll new default profile picture"
+                    className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-stone-200 shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-pink-50 transition active:scale-90 cursor-pointer"
+                  >
+                    <Dices className="w-3.5 h-3.5" />
+                  </button>
+
+                  <input
+                    ref={profilePicFileInputRef}
+                    type="file"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) handleCustomAvatarSelected(f);
+                    }}
+                  />
+                </div>
+
+                <div className="min-w-0">
+                  <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
+                    {userName}
+                  </h2>
+                  <p className="text-xs text-stone-500 font-mono truncate mt-0.5">{userEmail}</p>
+                  <div className="mt-1.5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={randomizeAvatar}
+                      className="text-xs text-[#E0246A] hover:text-[#BE185D] font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
+                      title="Roll a new default profile avatar"
+                    >
+                      <Dices className="w-3.5 h-3.5" />
+                      <span>Roll Avatar</span>
+                    </button>
+                  </div>
+                </div>
               </div>
 
-              {/* The Profile Pic Giver Button */}
               <button
                 type="button"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  randomizeAvatar();
+                onClick={() => {
+                  setNameInput(userName);
+                  setEmailInput(userEmail);
+                  setIsEditProfileOpen(true);
                 }}
-                title="Roll new default profile picture"
-                className="absolute -bottom-1 -right-1 w-6.5 h-6.5 rounded-full bg-white border border-stone-200 shadow-xs flex items-center justify-center text-[#E0246A] hover:text-[#BE185D] hover:bg-pink-50 transition active:scale-90 cursor-pointer"
+                className="h-9 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
               >
-                <Dices className="w-3.5 h-3.5" />
+                Edit
               </button>
-
-              <input
-                ref={profilePicFileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleCustomAvatarSelected(f);
-                }}
-              />
             </div>
 
-            <div className="min-w-0">
-              <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
-                {userName}
-              </h2>
-              <p className="text-xs text-stone-500 font-mono truncate mt-0.5">{userEmail}</p>
-              <div className="mt-1.5 flex items-center gap-2">
+            {/* Quick Member Badges */}
+            <div className="pt-2 border-t border-stone-100 flex items-center gap-2 flex-wrap">
+              <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-[11px] font-medium inline-flex items-center gap-1 capitalize">
+                <span>💅 Shape:</span>
+                <span className="font-semibold text-stone-900">{preferredShape}</span>
+              </span>
+              <span className="px-2.5 py-1 rounded-full bg-pink-50 text-[#E0246A] text-[11px] font-medium inline-flex items-center gap-1">
+                <span>✨ Tier:</span>
+                <span className="font-semibold">VIP Unlimited</span>
+              </span>
+            </div>
+          </div>
+
+          {/* Card 2: Hand Photo Studio Station */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+                  <Hand className="w-4 h-4" />
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                    Hand Photo Calibration
+                  </span>
+                  <span className="text-[11px] text-stone-500">
+                    Used to render manicures directly onto your hand
+                  </span>
+                </div>
+              </div>
+
+              {customTryOnHandUrl ? (
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-flex items-center gap-1 shrink-0">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>Ready</span>
+                </span>
+              ) : (
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 shrink-0">
+                  Not Added
+                </span>
+              )}
+            </div>
+
+            {customTryOnHandUrl ? (
+              <div className="space-y-3">
+                <div className="relative aspect-[4/3] w-full rounded-2xl overflow-hidden border border-stone-200 bg-stone-100 shadow-2xs group">
+                  <img
+                    src={customTryOnHandUrl}
+                    alt="Saved Hand Photo"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute top-2.5 left-2.5 px-2.5 py-1 rounded-full bg-black/60 text-white text-[10px] font-semibold backdrop-blur-xs flex items-center gap-1">
+                    <Check className="w-3 h-3 text-emerald-400" />
+                    <span>Saved for 1-Tap Try-On</span>
+                  </div>
+                </div>
+
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsHandModalOpen(true)}
+                    className="flex-1 h-9.5 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
+                  >
+                    <UploadCloud className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Manage / Retake</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleRemoveHandPhoto}
+                    className="h-9.5 px-3 rounded-xl border border-stone-200 hover:bg-red-50 text-stone-500 hover:text-red-600 text-xs font-semibold transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                    title="Remove Hand Photo"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div
+                  onClick={() => handFileInputRef.current?.click()}
+                  className="aspect-[4/2.6] w-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 hover:bg-pink-50/20 transition cursor-pointer flex flex-col items-center justify-center p-4 text-center space-y-1.5"
+                >
+                  <div className="w-10 h-10 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center">
+                    <Hand className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-semibold text-stone-900">Your Hand Photo</p>
+                    <p className="text-[11px] text-stone-500 mt-0.5">
+                      Upload once to try on any manicure in 1 tap
+                    </p>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => handFileInputRef.current?.click()}
+                    className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                  >
+                    <UploadCloud className="w-4 h-4" />
+                    <span>Upload Photo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setIsCameraCaptureOpen(true)}
+                    className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                  >
+                    <Camera className="w-4 h-4 text-[#E0246A]" />
+                    <span>Live Camera</span>
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 3: Atelier Guarantee */}
+          <div className="bg-stone-50/80 rounded-3xl p-4 sm:p-5 border border-stone-200/70 space-y-2.5">
+            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block">
+              Atelier Guarantee
+            </span>
+            <div className="space-y-2 text-xs text-stone-700">
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
+                <span>Unlimited 1-tap virtual try-ons across all 100 styles</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
+                <span>Private on-device photo synthesis and encrypted storage</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* ===================================================================
+            RIGHT COLUMN (7 Cols): Saved Looks Visual Showcase, Silhouette & Settings
+            =================================================================== */}
+        <div className="lg:col-span-7 space-y-5">
+          {/* Card 1: Saved Looks Visual Showcase (Fills the desktop space visually!) */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+                  <Heart className="w-4 h-4 fill-[#E0246A]" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-semibold text-stone-900 block leading-tight">
+                      Saved Looks
+                    </span>
+                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
+                      {savedDesigns.length}
+                    </span>
+                  </div>
+                  <span className="text-[11px] text-stone-500">
+                    Your saved manicures ready for instant try-on
+                  </span>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setCurrentView('favorites')}
+                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer active:scale-95"
+              >
+                <span>View All Moodboard</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Showcase Grid of Manicures */}
+            {savedDesigns.length > 0 ? (
+              <div className="space-y-3.5">
+                <div className="grid grid-cols-2 sm:grid-cols-2 gap-3 sm:gap-3.5">
+                  {savedDesigns.slice(0, 4).map((item, idx) => {
+                    const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => onSelectExploreDesign?.(item.id)}
+                        className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
+                      >
+                        <img
+                          src={photoSrc}
+                          alt={item.title}
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                          }}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+
+                        {/* Category Badge top-left */}
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+                            {item.category}
+                          </span>
+                        </div>
+
+                        {/* Bottom Info & Try On */}
+                        <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
+                          <div>
+                            <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
+                              {item.title}
+                            </h4>
+                            <p className="text-[10px] text-white/70 truncate capitalize">
+                              {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectExploreDesign?.(item.id);
+                            }}
+                            className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                          >
+                            <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                            <span>Try On</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {savedDesigns.length < 2 && (
+                  <div className="pt-2 border-t border-stone-100 space-y-2">
+                    <p className="text-[11px] font-medium text-stone-500">Trending Atelier Recommendations:</p>
+                    <div className="grid grid-cols-2 gap-3">
+                      {recommendations.slice(0, 2).map((item, idx) => {
+                        const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
+                        return (
+                          <div
+                            key={item.id}
+                            onClick={() => onSelectExploreDesign?.(item.id)}
+                            className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
+                          >
+                            <img
+                              src={photoSrc}
+                              alt={item.title}
+                              loading="lazy"
+                              onError={(e) => {
+                                (e.target as HTMLImageElement).src =
+                                  EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                              }}
+                              className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+
+                            <div className="absolute top-2 left-2 z-10">
+                              <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+                                {item.category}
+                              </span>
+                            </div>
+
+                            <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
+                              <div>
+                                <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
+                                  {item.title}
+                                </h4>
+                                <p className="text-[10px] text-white/70 truncate capitalize">
+                                  {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
+                                </p>
+                              </div>
+
+                              <button
+                                type="button"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onSelectExploreDesign?.(item.id);
+                                }}
+                                className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                              >
+                                <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                                <span>Try On</span>
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/70 text-center space-y-1">
+                  <p className="text-xs font-semibold text-stone-800">No saved looks yet</p>
+                  <p className="text-[11px] text-stone-500">
+                    Bookmark your favorite styles from Explore, or try on these editorial picks:
+                  </p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3">
+                  {recommendations.slice(0, 2).map((item, idx) => {
+                    const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
+                    return (
+                      <div
+                        key={item.id}
+                        onClick={() => onSelectExploreDesign?.(item.id)}
+                        className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
+                      >
+                        <img
+                          src={photoSrc}
+                          alt={item.title}
+                          loading="lazy"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src =
+                              EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                          }}
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/25 to-transparent pointer-events-none" />
+
+                        <div className="absolute top-2 left-2 z-10">
+                          <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
+                            {item.category}
+                          </span>
+                        </div>
+
+                        <div className="relative z-10 p-2.5 sm:p-3 space-y-1.5">
+                          <div>
+                            <h4 className="text-white text-xs font-semibold leading-tight drop-shadow-xs truncate">
+                              {item.title}
+                            </h4>
+                            <p className="text-[10px] text-white/70 truncate capitalize">
+                              {item.nails?.middle?.shape || preferredShape} · {item.nails?.middle?.finish || 'Gloss'}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              onSelectExploreDesign?.(item.id);
+                            }}
+                            className="w-full h-7.5 sm:h-8 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[11px] font-bold shadow-sm flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
+                          >
+                            <Hand className="w-3.5 h-3.5 text-[#E0246A]" strokeWidth={2} />
+                            <span>Try On</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Card 2: Signature Silhouette & Preferences */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Sparkles className="w-4 h-4 text-[#E0246A]" />
+                <h3 className="text-sm font-semibold text-stone-900">
+                  Signature Nail Silhouette
+                </h3>
+              </div>
+              <p className="text-[11px] text-stone-500 mt-0.5">
+                Finglora customizes all studio designs to your signature nail shape
+              </p>
+            </div>
+
+            {/* Shape Selector Pills */}
+            <div className="flex items-center gap-2 flex-wrap">
+              {(['almond', 'coffin', 'oval', 'square', 'stiletto'] as NailShape[]).map((shape) => {
+                const active = preferredShape.toLowerCase() === shape.toLowerCase();
+                return (
+                  <button
+                    key={shape}
+                    type="button"
+                    onClick={() => {
+                      if (setPreferredShape) {
+                        setPreferredShape(shape);
+                      }
+                      if (typeof window !== 'undefined') {
+                        try {
+                          localStorage.setItem('finglora_preferred_shape', shape);
+                        } catch {}
+                      }
+                      showToast(`Signature shape set to ${shape.charAt(0).toUpperCase() + shape.slice(1)}`);
+                    }}
+                    className={`h-9 px-4 rounded-xl text-xs font-semibold capitalize transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                      active
+                        ? 'bg-[#E0246A] text-white shadow-xs'
+                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200/80'
+                    }`}
+                  >
+                    {active && <Check className="w-3.5 h-3.5" />}
+                    <span>{shape}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-stone-100 pt-3">
+              {/* Notifications Toggle */}
+              <div className="w-full flex items-center justify-between">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                    <Bell className="w-4 h-4" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                      Seasonal Drops & Updates
+                    </span>
+                    <span className="text-[11px] text-stone-500 truncate block">
+                      New style drops, color releases & studio updates
+                    </span>
+                  </div>
+                </div>
+
                 <button
                   type="button"
-                  onClick={randomizeAvatar}
-                  className="text-xs text-[#E0246A] hover:text-[#BE185D] font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
-                  title="Roll a new default profile avatar"
+                  onClick={() => {
+                    setNotificationsEnabled(!notificationsEnabled);
+                    showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
+                  }}
+                  className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
+                    notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
+                  }`}
+                  aria-label="Toggle notifications"
                 >
-                  <Dices className="w-3.5 h-3.5" />
-                  <span>Roll Avatar</span>
+                  <span
+                    className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
+                      notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
                 </button>
               </div>
             </div>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              setNameInput(userName);
-              setEmailInput(userEmail);
-              setIsEditProfileOpen(true);
-            }}
-            className="h-9 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
-          >
-            Edit
-          </button>
-        </div>
-
-        {/* Divider */}
-        <div className="border-t border-stone-100" />
-
-        {/* Hand Photo for Try-On */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
-                <Hand className="w-4 h-4" />
-              </div>
-              <div>
-                <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                  Hand Photo
-                </span>
-                <span className="text-[11px] text-stone-500">
-                  Used to render manicures directly onto your hand
-                </span>
-              </div>
-            </div>
-
-            {customTryOnHandUrl ? (
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 inline-flex items-center gap-1">
-                <Check className="w-3 h-3 text-emerald-600" />
-                <span>Ready</span>
-              </span>
-            ) : (
-              <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200">
-                Not Added
-              </span>
-            )}
-          </div>
-
-          {customTryOnHandUrl ? (
-            <div className="flex items-center justify-between p-3 rounded-2xl bg-stone-50 border border-stone-200/70">
+          {/* Card 3: Support, Privacy & Sign Out */}
+          <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
+            {/* Help & Support */}
+            <button
+              type="button"
+              onClick={() => setIsSupportModalOpen(true)}
+              className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-stone-200 bg-stone-100 shrink-0">
-                  <img
-                    src={customTryOnHandUrl}
-                    alt="My Hand"
-                    className="w-full h-full object-cover"
-                  />
+                <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <HelpCircle className="w-4 h-4" />
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-stone-900 truncate">Saved Hand Photo</p>
-                  <p className="text-[11px] text-stone-500">Active for 1-tap try-on</p>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                    Help & Support
+                  </span>
+                  <span className="text-[11px] text-stone-500 truncate block">
+                    support@finglora.com
+                  </span>
                 </div>
               </div>
+              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setIsHandModalOpen(true)}
-                className="h-9 px-3.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
-              >
-                Manage
-              </button>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => handFileInputRef.current?.click()}
-                className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
-              >
-                <UploadCloud className="w-4 h-4" />
-                <span>Upload Photo</span>
-              </button>
+            {/* Camera & Data Privacy */}
+            <button
+              type="button"
+              onClick={() => setIsPrivacyModalOpen(true)}
+              className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                    Camera & Data Privacy
+                  </span>
+                  <span className="text-[11px] text-stone-500 truncate block">
+                    Private on-device processing
+                  </span>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+            </button>
 
-              <button
-                type="button"
-                onClick={() => setIsCameraCaptureOpen(true)}
-                className="h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
-              >
-                <Camera className="w-4 h-4 text-[#E0246A]" />
-                <span>Live Camera</span>
-              </button>
-            </div>
-          )}
+            {/* Sign Out */}
+            <button
+              type="button"
+              onClick={async () => {
+                try {
+                  await signOutUser();
+                } catch (e) {
+                  console.warn('Sign out error:', e);
+                }
+                showToast('Signed out successfully');
+                if (onLogout) onLogout();
+              }}
+              className="w-full h-12 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3">
+                <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                  <LogOut className="w-4 h-4" />
+                </div>
+                <span className="text-xs font-semibold text-red-600">Sign Out</span>
+              </div>
+              <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
+            </button>
+          </div>
         </div>
-      </div>
-
-      {/* Card 2: Settings, Support & Security */}
-      <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
-        {/* Saved Looks */}
-        <button
-          type="button"
-          onClick={() => setCurrentView('favorites')}
-          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
-              <Heart className="w-4 h-4 fill-[#E0246A]" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                Saved Looks
-              </span>
-              <span className="text-[11px] text-stone-500 truncate block">
-                {savedDesigns.length} bookmarked manicure{savedDesigns.length === 1 ? '' : 's'}
-              </span>
-            </div>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-stone-500 group-hover:text-stone-900 transition-colors">
-            <span className="text-xs font-semibold text-[#E0246A]">View All</span>
-            <ChevronRight className="w-4 h-4" />
-          </div>
-        </button>
-
-        {/* Notifications Toggle */}
-        <div className="w-full h-12 px-3.5 rounded-2xl flex items-center justify-between">
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-              <Bell className="w-4 h-4" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                Notifications
-              </span>
-              <span className="text-[11px] text-stone-500 truncate block">
-                Seasonal manicure drops & design updates
-              </span>
-            </div>
-          </div>
-
-          <button
-            type="button"
-            onClick={() => {
-              setNotificationsEnabled(!notificationsEnabled);
-              showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
-            }}
-            className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
-              notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
-            }`}
-            aria-label="Toggle notifications"
-          >
-            <span
-              className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
-                notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-              }`}
-            />
-          </button>
-        </div>
-
-        {/* Help & Support */}
-        <button
-          type="button"
-          onClick={() => setIsSupportModalOpen(true)}
-          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-              <HelpCircle className="w-4 h-4" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                Help & Support
-              </span>
-              <span className="text-[11px] text-stone-500 truncate block">
-                support@finglora.com
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
-        </button>
-
-        {/* Camera & Data Privacy */}
-        <button
-          type="button"
-          onClick={() => setIsPrivacyModalOpen(true)}
-          className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3 min-w-0">
-            <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-              <ShieldCheck className="w-4 h-4" />
-            </div>
-            <div className="text-left min-w-0">
-              <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                Camera & Data Privacy
-              </span>
-              <span className="text-[11px] text-stone-500 truncate block">
-                Private on-device processing
-              </span>
-            </div>
-          </div>
-          <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
-        </button>
-
-        {/* Sign Out */}
-        <button
-          type="button"
-          onClick={async () => {
-            try {
-              await signOutUser();
-            } catch (e) {
-              console.warn('Sign out error:', e);
-            }
-            showToast('Signed out successfully');
-            if (onLogout) onLogout();
-          }}
-          className="w-full h-12 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
-              <LogOut className="w-4 h-4" />
-            </div>
-            <span className="text-xs font-semibold text-red-600">Sign Out</span>
-          </div>
-          <ChevronRight className="w-4 h-4 text-red-400 group-hover:text-red-600 transition-colors" />
-        </button>
       </div>
 
       {/* ---------------------------------------------------------------------
