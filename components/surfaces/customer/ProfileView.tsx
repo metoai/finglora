@@ -773,12 +773,12 @@ export function ProfileView({
         </div>
       </div>
 
-      {/* Balanced 2-Column Grid on Desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 items-start">
+      {/* Balanced 2-Column Grid on Desktop (50/50 single-screen layout) */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
         {/* ===================================================================
-            LEFT COLUMN (4-5 Cols): Identity, Hand Photo Station & Atelier Access
+            LEFT COLUMN (6 Cols): Identity, Hand Photo Station & Atelier Guarantee
             =================================================================== */}
-        <div className="lg:col-span-5 xl:col-span-4 space-y-5">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-5">
           {/* Card 1: Client Atelier Identity */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between gap-3">
@@ -1002,9 +1002,9 @@ export function ProfileView({
         </div>
 
         {/* ===================================================================
-            RIGHT COLUMN (7-8 Cols): Saved Looks Visual Showcase, Silhouette & Settings
+            RIGHT COLUMN (6 Cols): Silhouette, Saved Moodboard Shortcut & Settings
             =================================================================== */}
-        <div className="lg:col-span-7 xl:col-span-8 space-y-5">
+        <div className="lg:col-span-6 space-y-4 sm:space-y-5">
           {/* Card 1: Signature Nail Silhouette & Studio Preferences */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div>
@@ -1038,7 +1038,7 @@ export function ProfileView({
                       }
                       showToast(`Signature shape set to ${shape.charAt(0).toUpperCase() + shape.slice(1)}`);
                     }}
-                    className={`h-9 px-4 rounded-xl text-xs font-semibold capitalize transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
+                    className={`h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold capitalize transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
                       active
                         ? 'bg-[#E0246A] text-white shadow-xs'
                         : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200/80'
@@ -1090,108 +1090,35 @@ export function ProfileView({
             </div>
           </div>
 
-          {/* Card 2: Saved Looks Moodboard Preview (Clean, compact, NO giant photo spam) */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
-                  <Heart className="w-4 h-4 fill-[#E0246A]" />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-stone-900 block leading-tight">
-                      Saved Looks
-                    </span>
-                    <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
-                      {savedDesigns.length}
-                    </span>
-                  </div>
-                  <span className="text-[11px] text-stone-500">
-                    Your personal manicure moodboard
+          {/* Card 2: Saved Looks Shortcut to Full Moodboard (Clean, compact, NO photo clutter) */}
+          <button
+            type="button"
+            onClick={() => setCurrentView('favorites')}
+            className="w-full p-4 sm:p-4.5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center justify-between transition group cursor-pointer active:scale-[0.99]"
+          >
+            <div className="flex items-center gap-3.5 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+                <Heart className="w-5 h-5 fill-[#E0246A]" />
+              </div>
+              <div className="text-left min-w-0">
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight">
+                    Saved Looks
+                  </span>
+                  <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
+                    {savedDesigns.length}
                   </span>
                 </div>
-              </div>
-
-              <button
-                type="button"
-                onClick={() => setCurrentView('favorites')}
-                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer active:scale-95"
-              >
-                <span>View Full Moodboard</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            {/* Saved Looks Content */}
-            {savedDesigns.length > 0 ? (
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                {savedDesigns.slice(0, 4).map((item, idx) => {
-                  const photoSrc = sanitizeEditorialPhotoUrl(item.photoUrl, idx);
-                  return (
-                    <div
-                      key={item.id}
-                      onClick={() => onSelectExploreDesign?.(item.id)}
-                      className="group relative flex flex-col justify-end rounded-2xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-2xs hover:shadow-md transition-all duration-300 cursor-pointer aspect-[3/3.8]"
-                    >
-                      <img
-                        src={photoSrc}
-                        alt={item.title}
-                        loading="lazy"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).src =
-                            EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
-                        }}
-                        className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 ease-out"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent pointer-events-none" />
-
-                      {/* Category Badge top-left */}
-                      <div className="absolute top-2 left-2 z-10">
-                        <span className="px-2 py-0.5 rounded-full bg-black/50 text-white text-[9px] font-semibold backdrop-blur-xs capitalize border border-white/10">
-                          {item.category}
-                        </span>
-                      </div>
-
-                      {/* Bottom Info & Try On */}
-                      <div className="relative z-10 p-2 sm:p-2.5 space-y-1">
-                        <h4 className="text-white text-[11px] sm:text-xs font-semibold leading-tight drop-shadow-xs truncate">
-                          {item.title}
-                        </h4>
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onSelectExploreDesign?.(item.id);
-                          }}
-                          className="w-full h-7 rounded-full bg-white hover:bg-stone-50 text-stone-900 text-[10px] sm:text-[11px] font-bold shadow-xs flex items-center justify-center gap-1 transition active:scale-95 cursor-pointer"
-                        >
-                          <Hand className="w-3 h-3 text-[#E0246A]" strokeWidth={2} />
-                          <span>Try On</span>
-                        </button>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="p-4 sm:p-5 rounded-2xl bg-stone-50/80 border border-stone-200/70 text-center space-y-2">
-                <p className="text-xs font-semibold text-stone-800">No saved manicures yet</p>
-                <p className="text-[11px] text-stone-500 max-w-sm mx-auto">
-                  Bookmark designs from the Explore gallery to curate your personal moodboard.
+                <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                  View your bookmarked styles in the full moodboard
                 </p>
-                {onNavigateLookbook && (
-                  <button
-                    type="button"
-                    onClick={onNavigateLookbook}
-                    className="inline-flex items-center gap-1.5 h-8 px-3.5 rounded-xl bg-white hover:bg-stone-100 border border-stone-200 text-xs font-semibold text-stone-700 transition cursor-pointer active:scale-95 shadow-2xs mt-1"
-                  >
-                    <span>Explore 100 Styles</span>
-                    <ChevronRight className="w-3.5 h-3.5" />
-                  </button>
-                )}
               </div>
-            )}
-          </div>
+            </div>
+            <div className="flex items-center gap-1 text-xs font-semibold text-[#E0246A] shrink-0">
+              <span>Open Moodboard</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </button>
 
           {/* Card 3: Support, Privacy & Sign Out */}
           <div className="bg-white rounded-3xl p-2 sm:p-2.5 border border-stone-200/80 shadow-2xs divide-y divide-stone-100">
@@ -1199,44 +1126,44 @@ export function ProfileView({
             <button
               type="button"
               onClick={() => setIsSupportModalOpen(true)}
-              className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                   <HelpCircle className="w-4 h-4" />
                 </div>
                 <div className="text-left min-w-0">
                   <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
                     Help & Support
                   </span>
-                  <span className="text-[11px] text-stone-500 truncate block">
-                    support@finglora.com
-                  </span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                <span>support@finglora.com</span>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+              </div>
             </button>
 
             {/* Camera & Data Privacy */}
             <button
               type="button"
               onClick={() => setIsPrivacyModalOpen(true)}
-              className="w-full h-12 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
             >
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
                 <div className="text-left min-w-0">
                   <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
                     Camera & Data Privacy
                   </span>
-                  <span className="text-[11px] text-stone-500 truncate block">
-                    Private on-device processing
-                  </span>
                 </div>
               </div>
-              <ChevronRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 transition-colors shrink-0" />
+              <div className="flex items-center gap-1.5 text-[11px] text-stone-500">
+                <span>Private on-device</span>
+                <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
+              </div>
             </button>
 
             {/* Sign Out */}
@@ -1251,10 +1178,10 @@ export function ProfileView({
                 showToast('Signed out successfully');
                 if (onLogout) onLogout();
               }}
-              className="w-full h-12 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-xl bg-red-50 text-red-600 flex items-center justify-center shrink-0">
+                <div className="w-7 h-7 rounded-lg bg-red-50 text-red-600 flex items-center justify-center shrink-0">
                   <LogOut className="w-4 h-4" />
                 </div>
                 <span className="text-xs font-semibold text-red-600">Sign Out</span>
