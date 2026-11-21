@@ -14,6 +14,10 @@ import {
   Palette,
   Compass,
   Heart,
+  Sparkles,
+  Wand2,
+  Wine,
+  Circle,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
@@ -33,39 +37,39 @@ interface FeaturedLook {
 interface InspirationCategory {
   id: string;
   label: string;
-  thumbnailUrl: string;
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
 }
 
 const INSPIRATION_CATEGORIES: InspirationCategory[] = [
   {
     id: 'all',
     label: 'All Styles',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
+    Icon: Sparkles,
   },
   {
     id: 'glazed',
     label: 'Glazed & Chrome',
-    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
+    Icon: Wand2,
   },
   {
     id: 'french',
     label: 'French Tips',
-    thumbnailUrl: '/images/ar-nail-hero.jpg',
+    Icon: Palette,
   },
   {
     id: 'coquette',
     label: 'Coquette & Ribbons',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
+    Icon: Heart,
   },
   {
     id: 'velvet',
     label: 'Velvet Wine',
-    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
+    Icon: Wine,
   },
   {
     id: 'minimal',
     label: 'Minimal Nude',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
+    Icon: Circle,
   },
 ];
 
@@ -586,7 +590,7 @@ export function HomeHubView({
           )}
         </div>
 
-        {/* Normal Category Navigation Pills (Half-Image, Half-Text) */}
+        {/* Standard Minimal Category Navigation Pills */}
         <div className="flex items-center gap-2 overflow-x-auto scrollbar-none py-1 select-none">
           {INSPIRATION_CATEGORIES.map((cat) => {
             const isActive = activeCategory === cat.id;
@@ -596,25 +600,19 @@ export function HomeHubView({
                 key={cat.id}
                 type="button"
                 onClick={() => setActiveCategory(cat.id)}
-                className={`h-9 sm:h-9.5 rounded-xl overflow-hidden flex items-center transition-all cursor-pointer active:scale-95 shrink-0 border ${
+                className={`h-8.5 sm:h-9 px-3.5 sm:px-4 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer active:scale-95 shrink-0 border text-xs sm:text-[13px] font-medium whitespace-nowrap ${
                   isActive
-                    ? 'ring-2 ring-stone-900 bg-stone-900 text-white border-stone-900 shadow-xs'
-                    : 'bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-900 border-transparent'
+                    ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                    : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border-stone-200/50'
                 }`}
               >
-                {/* Left Half: Image */}
-                <div className="w-10 sm:w-11 h-full shrink-0 relative overflow-hidden">
-                  <img
-                    src={cat.thumbnailUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Right Half: Text Label */}
-                <div className="px-3 sm:px-3.5 flex items-center justify-center font-semibold text-xs sm:text-[13px] whitespace-nowrap">
-                  <span>{cat.label}</span>
-                </div>
+                <cat.Icon
+                  className={`w-3.5 h-3.5 transition-colors ${
+                    isActive ? 'text-white' : 'text-stone-500'
+                  }`}
+                  strokeWidth={isActive ? 2 : 1.75}
+                />
+                <span>{cat.label}</span>
               </button>
             );
           })}

@@ -8,110 +8,49 @@ import {
   Hand,
   SlidersHorizontal,
   MoreHorizontal,
+  Sparkles,
+  Scissors,
+  Circle,
+  Palette,
+  Eye,
+  Wine,
+  Sparkle,
+  Coffee,
+  Square,
+  Wand2,
+  Flame,
+  Gem,
+  Layers,
+  Droplets,
 } from 'lucide-react';
 import { ExploreDesignSet, NailShape } from '@/types/nail';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { getCurrentUser } from '@/lib/services/auth';
 
-// Sensible Category Filter Tags: Half Image, Half Label
+// Standard Minimal Category Filter Tags with Lucide Icons
 interface FilterTag {
   id: string;
   label: string;
-  thumbnailUrl: string;
+  Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
   queryMatch: string;
 }
 
 const CATEGORY_TAGS: FilterTag[] = [
-  {
-    id: 'all',
-    label: 'All Styles',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
-    queryMatch: '',
-  },
-  {
-    id: 'short',
-    label: 'Short',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
-    queryMatch: 'short',
-  },
-  {
-    id: 'simple',
-    label: 'Simple',
-    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
-    queryMatch: 'simple',
-  },
-  {
-    id: 'french',
-    label: 'French',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
-    queryMatch: 'french',
-  },
-  {
-    id: 'cat-eye',
-    label: 'Cat Eye',
-    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    queryMatch: 'cat eye',
-  },
-  {
-    id: 'coquette',
-    label: 'Coquette',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
-    queryMatch: 'coquette',
-  },
-  {
-    id: 'red',
-    label: 'Red Wine',
-    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    queryMatch: 'red',
-  },
-  {
-    id: 'pink',
-    label: 'Pink Blush',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
-    queryMatch: 'pink',
-  },
-  {
-    id: 'cherry-mocha',
-    label: 'Cherry Mocha',
-    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    queryMatch: 'mocha',
-  },
-  {
-    id: 'black',
-    label: 'Black Minimal',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
-    queryMatch: 'black',
-  },
-  {
-    id: 'chrome',
-    label: 'Chrome Glaze',
-    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
-    queryMatch: 'chrome',
-  },
-  {
-    id: 'espresso',
-    label: 'Espresso',
-    thumbnailUrl: '/assets/editorial_nail_hero.jpg',
-    queryMatch: 'espresso',
-  },
-  {
-    id: 'almond',
-    label: 'Almond',
-    thumbnailUrl: '/assets/pink_heart_tryon_result.jpg',
-    queryMatch: 'almond',
-  },
-  {
-    id: 'coffin',
-    label: 'Coffin',
-    thumbnailUrl: '/assets/burgundy_gold_virtual_tryon.jpg',
-    queryMatch: 'coffin',
-  },
-  {
-    id: 'gel',
-    label: 'Gel Gloss',
-    thumbnailUrl: '/assets/milky_gold_tryon_result.jpg',
-    queryMatch: 'gel',
-  },
+  { id: 'all', label: 'All Styles', Icon: Sparkles, queryMatch: '' },
+  { id: 'short', label: 'Short', Icon: Scissors, queryMatch: 'short' },
+  { id: 'simple', label: 'Simple', Icon: Circle, queryMatch: 'simple' },
+  { id: 'french', label: 'French', Icon: Palette, queryMatch: 'french' },
+  { id: 'cat-eye', label: 'Cat Eye', Icon: Eye, queryMatch: 'cat eye' },
+  { id: 'coquette', label: 'Coquette', Icon: Heart, queryMatch: 'coquette' },
+  { id: 'red', label: 'Red Wine', Icon: Wine, queryMatch: 'red' },
+  { id: 'pink', label: 'Pink Blush', Icon: Sparkle, queryMatch: 'pink' },
+  { id: 'cherry-mocha', label: 'Cherry Mocha', Icon: Coffee, queryMatch: 'mocha' },
+  { id: 'black', label: 'Black Minimal', Icon: Square, queryMatch: 'black' },
+  { id: 'chrome', label: 'Chrome Glaze', Icon: Wand2, queryMatch: 'chrome' },
+  { id: 'espresso', label: 'Espresso', Icon: Flame, queryMatch: 'espresso' },
+  { id: 'almond', label: 'Almond', Icon: Gem, queryMatch: 'almond' },
+  { id: 'coffin', label: 'Coffin', Icon: Layers, queryMatch: 'coffin' },
+  { id: 'gel', label: 'Gel Gloss', Icon: Droplets, queryMatch: 'gel' },
 ];
 
 interface ManicurePin {
@@ -403,8 +342,8 @@ export function ExploreGalleryView({
           </div>
         </div>
 
-        {/* 2. Half-Image Category Buttons (Image is 50% of the button!) */}
-        <div className="w-full flex items-center gap-2.5 overflow-x-auto pt-2.5 pb-1 scrollbar-none select-none">
+        {/* 2. Standard Minimal Category Filter Buttons */}
+        <div className="w-full flex items-center gap-2 overflow-x-auto pt-2.5 pb-1 scrollbar-none select-none">
           {/* Filter Sliders Icon */}
           <button
             type="button"
@@ -412,13 +351,13 @@ export function ExploreGalleryView({
               setActiveFilterId('all');
               setExploreSearch('');
             }}
-            className="flex items-center justify-center w-9 h-10 rounded-xl bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-850 shrink-0 transition cursor-pointer"
+            className="flex items-center justify-center w-8.5 h-8.5 sm:w-9 sm:h-9 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 shrink-0 transition cursor-pointer active:scale-95 border border-stone-200/60"
             title="Reset Filters"
           >
-            <SlidersHorizontal className="w-4 h-4" strokeWidth={1.8} />
+            <SlidersHorizontal className="w-3.5 h-3.5" strokeWidth={1.8} />
           </button>
 
-          {/* Half-Image, Half-Text Category Buttons */}
+          {/* Minimal Icon + Label Category Buttons */}
           {CATEGORY_TAGS.map((tag) => {
             const isActive = activeFilterId === tag.id;
 
@@ -432,25 +371,19 @@ export function ExploreGalleryView({
                     setExploreSearch('');
                   }
                 }}
-                className={`h-10 rounded-xl overflow-hidden flex items-center transition-all cursor-pointer active:scale-95 shrink-0 border ${
+                className={`h-8.5 sm:h-9 px-3.5 sm:px-4 rounded-full flex items-center gap-1.5 sm:gap-2 transition-all cursor-pointer active:scale-95 shrink-0 border text-xs sm:text-[13px] font-medium whitespace-nowrap ${
                   isActive
-                    ? 'ring-2 ring-stone-900 bg-stone-900 text-white border-stone-900 shadow-xs'
-                    : 'bg-[#E9E9E9] hover:bg-[#DFDFDF] text-stone-900 border-transparent'
+                    ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                    : 'bg-stone-100 hover:bg-stone-200/80 text-stone-700 hover:text-stone-900 border-stone-200/50'
                 }`}
               >
-                {/* Left Half: Image fills 50% of the button */}
-                <div className="w-12 h-full shrink-0 relative overflow-hidden">
-                  <img
-                    src={tag.thumbnailUrl}
-                    alt=""
-                    className="w-full h-full object-cover"
-                  />
-                </div>
-
-                {/* Right Half: Text Label */}
-                <div className="px-3.5 flex items-center justify-center font-semibold text-xs sm:text-[13px] whitespace-nowrap">
-                  <span>{tag.label}</span>
-                </div>
+                <tag.Icon
+                  className={`w-3.5 h-3.5 transition-colors ${
+                    isActive ? 'text-white' : 'text-stone-500'
+                  }`}
+                  strokeWidth={isActive ? 2 : 1.75}
+                />
+                <span>{tag.label}</span>
               </button>
             );
           })}
