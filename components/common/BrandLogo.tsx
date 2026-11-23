@@ -15,35 +15,26 @@ export interface BrandLogoProps {
 
 export function BrandLogoIcon({
   size = 'md',
-  variant = 'dark',
   className = '',
 }: {
   size?: 'sm' | 'md' | 'lg';
   variant?: 'dark' | 'light';
   className?: string;
 }) {
-  const isLight = variant === 'light';
-
-  // Generous, luxury proportions
   const dimMap = {
-    sm: { box: 'w-8.5 h-8.5 sm:w-9.5 sm:h-9.5', flower: 'text-lg sm:text-xl' },
-    md: { box: 'w-10 h-10 sm:w-11 sm:h-11', flower: 'text-2xl sm:text-[24px]' },
-    lg: { box: 'w-12 h-12 sm:w-14 sm:h-14', flower: 'text-3xl sm:text-4xl' },
+    sm: 'w-6 h-6 sm:w-7 sm:h-7',
+    md: 'w-7 h-7 sm:w-8 sm:h-8',
+    lg: 'w-9 h-9 sm:w-10 sm:h-10',
   }[size];
 
   return (
-    <div
-      className={`relative flex items-center justify-center rounded-full transition-transform duration-200 group-hover:scale-105 select-none shrink-0 ${
-        isLight
-          ? 'bg-white/10 border border-white/20 text-[#E0246A] shadow-xs'
-          : 'bg-white border border-[#E0246A]/25 shadow-xs shadow-[#E0246A]/10 text-[#E0246A]'
-      } ${dimMap.box} ${className}`}
-      title="Finglora"
-    >
-      <span className={`${dimMap.flower} leading-none select-none -translate-y-[0.5px]`}>
-        ✿
-      </span>
-    </div>
+    <img
+      src="/assets/finglora_logo.png"
+      alt="Finglora emblem"
+      className={`object-contain select-none shrink-0 transition-transform duration-200 group-hover:scale-105 ${dimMap} ${className}`}
+      loading="eager"
+      decoding="async"
+    />
   );
 }
 
