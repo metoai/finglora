@@ -17,6 +17,7 @@ import {
   X,
   Compass,
   Shuffle,
+  ArrowRight,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
@@ -602,16 +603,26 @@ export function TryOnView({
                     </div>
                   </div>
 
-                  {/* Center Floating "Tap" Tab Button */}
+                  {/* Center Floating "Apply" Badge / Action Button */}
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     <button
                       type="button"
                       onClick={handleSynthesizeHand}
                       disabled={isSynthesizingHand}
-                      className="pointer-events-auto px-4 py-1.5 rounded-full bg-white hover:bg-stone-50 text-[#E0246A] hover:text-[#BE185D] border border-stone-200/90 shadow-md text-xs font-semibold tracking-wide transition active:scale-95 cursor-pointer disabled:opacity-50"
-                      title="Tap to apply manicure to your hand"
+                      className="group pointer-events-auto px-4.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-4 ring-white shadow-[0_4px_18px_rgba(224,36,106,0.38)] hover:shadow-[0_6px_26px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1.5 hover:scale-105"
+                      title="Apply manicure inspiration to your hand"
                     >
-                      <span>Tap</span>
+                      {isSynthesizingHand ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Applying...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Apply</span>
+                          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                        </>
+                      )}
                     </button>
                   </div>
                 </div>
