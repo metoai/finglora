@@ -385,51 +385,7 @@ export function TryOnView({
         </div>
       )}
 
-      {/* 1. Atelier Top Navigation Bar */}
-      <div className="flex items-center justify-between pb-2 border-b border-stone-200/80">
-        <div className="flex items-center gap-2 sm:gap-3">
-          <button
-            type="button"
-            onClick={onBackToHomeClick || onBackToStudioClick}
-            className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white border border-stone-200 hover:border-stone-300 flex items-center justify-center text-stone-700 hover:text-stone-900 transition cursor-pointer active:scale-95 shadow-2xs"
-            title="Back to Home"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-
-          <div>
-            <span className="text-[9px] sm:text-[10px] font-mono uppercase tracking-wider text-stone-400 block leading-none mb-0.5">
-              Live Atelier
-            </span>
-            <h1 className="font-serif text-lg sm:text-2xl font-normal text-stone-900 tracking-tight leading-tight">
-              Virtual Try-On
-            </h1>
-          </div>
-        </div>
-
-        {/* Right Status & Orientation Pills */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
-          {/* Hand Ready Indicator */}
-          <div className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-stone-100 border border-stone-200/80 text-[11px] sm:text-xs font-semibold text-stone-700">
-            <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
-            <span className="hidden sm:inline">{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
-            <span className="sm:hidden">{customTryOnHandUrl ? 'Mine' : 'Studio'}</span>
-          </div>
-
-          {/* Orientation Switcher */}
-          <button
-            type="button"
-            onClick={() => setHandOrientation((h) => (h === 'right' ? 'left' : 'right'))}
-            className="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-[11px] sm:text-xs font-medium text-stone-700 shadow-2xs transition cursor-pointer active:scale-95"
-            title="Switch Hand Orientation"
-          >
-            <RotateCcw className="w-3.5 h-3.5 text-stone-500" />
-            <span className="capitalize">{handOrientation}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* 2. Full-Space Atelier 2-Column Responsive Workbench */}
+      {/* Full-Space Atelier 2-Column Responsive Workbench */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-7 items-start">
         {/* ============================================================== */}
         {/* LEFT COLUMN: THE MASTER PHOTOREALISTIC HAND VIEWPORT (7 Cols)  */}

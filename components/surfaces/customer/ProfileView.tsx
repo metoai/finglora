@@ -391,50 +391,7 @@ export function ProfileView({
           </div>
         )}
 
-        {/* 1. Header with Back button, Title, Count Badge, and Explore More link */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-stone-200/80">
-          <div className="flex items-center gap-2.5 sm:gap-3">
-            <button
-              type="button"
-              onClick={() => {
-                if (initialView === 'favorites' && onBackClick) {
-                  onBackClick();
-                } else {
-                  setCurrentView('settings');
-                }
-              }}
-              className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 hover:text-stone-900 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
-              title="Back"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
 
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight leading-tight">
-                  Saved Looks
-                </h1>
-                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
-                  {savedDesigns.length}
-                </span>
-              </div>
-              <p className="text-[11px] sm:text-xs text-stone-500 mt-0.5">
-                Your personal curated moodboard and try-on collection
-              </p>
-            </div>
-          </div>
-
-          {onNavigateLookbook && (
-            <button
-              type="button"
-              onClick={onNavigateLookbook}
-              className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] transition flex items-center gap-1 cursor-pointer self-start sm:self-auto"
-            >
-              <span>Explore More Pins</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </button>
-          )}
-        </div>
 
         {/* 2. Search & Category Filters Toolbar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-1">

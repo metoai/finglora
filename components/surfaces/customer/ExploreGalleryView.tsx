@@ -364,15 +364,6 @@ export function ExploreGalleryView({
               </button>
             )}
           </div>
-
-          {/* User Monogram Avatar on far right */}
-          <div
-            onClick={() => onTryOnClick?.()}
-            className="w-9 h-9 rounded-full bg-stone-200 hover:bg-stone-300 text-stone-800 font-bold text-xs flex items-center justify-center shrink-0 cursor-pointer select-none transition"
-            title="Profile"
-          >
-            FL
-          </div>
         </div>
 
         {/* 2. Standard Minimal Category Filter Buttons */}

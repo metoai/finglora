@@ -351,31 +351,9 @@ export function AiCreationView({
         </div>
       )}
 
-      {/* 1. Clean, Spacious Header (Simplified on Mobile) */}
-      <header className="h-12 sm:h-14 border-b border-stone-200/80 px-2.5 sm:px-6 flex items-center justify-between shrink-0 bg-white z-20 gap-2">
-        {/* Left: Back button + Model badge */}
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0 min-w-0">
-          {onBackToTryOn && (
-            <button
-              type="button"
-              onClick={onBackToTryOn}
-              className="w-8 h-8 rounded-full hover:bg-stone-100 flex items-center justify-center text-stone-600 hover:text-stone-900 transition cursor-pointer active:scale-95 shrink-0"
-              title="Back to Virtual Try-On"
-            >
-              <ArrowLeft className="w-4 h-4" />
-            </button>
-          )}
-
-          {/* Title: Single line without wrapping */}
-          <div className="flex items-center gap-1.5 py-1 select-none">
-            <span className="font-semibold text-sm sm:text-base text-stone-900 tracking-tight whitespace-nowrap">
-              Finglora AI
-            </span>
-          </div>
-        </div>
-
-        {/* Center on Mobile: Compact [Chat | Hand] Toggle */}
-        <div className="flex lg:hidden items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/60 shrink-0">
+      {/* Mobile-Only Compact View Switcher [Chat | Hand] */}
+      <div className="flex lg:hidden items-center justify-between px-3 py-1.5 border-b border-stone-200/60 bg-white shrink-0 z-20">
+        <div className="flex items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/60">
           <button
             type="button"
             onClick={() => setMobileActiveTab('chat')}
@@ -400,39 +378,16 @@ export function AiCreationView({
           </button>
         </div>
 
-        {/* Right: Clean Actions (Single '+' on mobile, full actions on sm+) */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleStartNewLook}
-            className="h-8 px-2.5 sm:px-3 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer active:scale-95 shadow-2xs"
-            title="Start fresh look"
-          >
-            <Plus className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">New Look</span>
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleDownloadBrandedLook(currentTryOnImage)}
-            disabled={isExporting}
-            className="hidden sm:flex w-8 h-8 rounded-full hover:bg-stone-100 text-stone-700 items-center justify-center transition cursor-pointer active:scale-95 disabled:opacity-50"
-            title="Download high-resolution image"
-          >
-            <Download className="w-4 h-4" />
-          </button>
-
-          <button
-            type="button"
-            onClick={() => handleShareToStory(currentTryOnImage)}
-            disabled={isExporting}
-            className="hidden sm:flex w-8 h-8 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs"
-            title="Share to Instagram Story"
-          >
-            <Share2 className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      </header>
+        <button
+          type="button"
+          onClick={handleStartNewLook}
+          className="h-7 px-2.5 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1 transition cursor-pointer active:scale-95 shadow-2xs"
+          title="Start fresh look"
+        >
+          <Plus className="w-3 h-3" />
+          <span>New Look</span>
+        </button>
+      </div>
 
       {/* 2. Full-Space Workspace: Desktop Split Screen / Mobile View Switcher */}
       <div className="flex-1 min-h-0 w-full flex overflow-hidden">
