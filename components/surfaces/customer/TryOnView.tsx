@@ -546,15 +546,25 @@ export function TryOnView({
                       </span>
                     </div>
 
-                    {/* Change Inspo Button */}
-                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex justify-center z-10">
+                    {/* Change Inspo Buttons */}
+                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex items-center justify-center gap-1.5 z-10">
                       <button
                         type="button"
                         onClick={handleAutoPickNextInspo}
                         className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                        title="Shuffle random inspiration"
                       >
                         <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
-                        <span>Change Inspo</span>
+                        <span>Shuffle</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => changeRefInspoInputRef.current?.click()}
+                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                        title="Upload your own photo inspiration"
+                      >
+                        <ImagePlus className="w-2.5 h-2.5 text-[#E0246A]" />
+                        <span>Upload</span>
                       </button>
                     </div>
                   </div>
@@ -638,33 +648,81 @@ export function TryOnView({
               </div>
             )}
 
-            {/* Hand Source Actions (Upload, Camera) */}
-            <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-1">
-              <button
-                type="button"
-                onClick={() => changeHandInputRef.current?.click()}
-                className="h-10 sm:h-11 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
-              >
-                <UploadCloud className="w-4 h-4 shrink-0" />
-                <span className="truncate">Upload Hand</span>
-              </button>
+            {/* Primary Action Dock */}
+            {synthesizedHandUrl ? (
+              <div className="space-y-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (onCustomizeWithAi) {
+                      onCustomizeWithAi(displayedHandImage);
+                    }
+                  }}
+                  className="w-full h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                >
+                  <span>Customize in AI Studio →</span>
+                </button>
 
-              <button
-                type="button"
-                onClick={() => setIsCameraModalOpen(true)}
-                className="h-10 sm:h-11 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer"
-              >
-                <Camera className="w-4 h-4 text-[#E0246A] shrink-0" />
-                <span className="truncate">Live Camera</span>
-              </button>
-            </div>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => changeRefInspoInputRef.current?.click()}
+                    className="h-10 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs font-semibold inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
+                  >
+                    <ImagePlus className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Upload Inspo</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleAutoPickNextInspo}
+                    className="h-10 px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs font-medium inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer"
+                  >
+                    <Shuffle className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span>Change Inspo</span>
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-1">
+                <button
+                  type="button"
+                  onClick={() => changeHandInputRef.current?.click()}
+                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                  title="Upload Hand Photo"
+                >
+                  <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <span className="truncate">Hand</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setIsCameraModalOpen(true)}
+                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer"
+                  title="Live Camera Hand Capture"
+                >
+                  <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E0246A] shrink-0" />
+                  <span className="truncate">Camera</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => changeRefInspoInputRef.current?.click()}
+                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
+                  title="Upload Inspiration Photo"
+                >
+                  <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E0246A] shrink-0" />
+                  <span className="truncate text-[#E0246A]">Upload Inspo</span>
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
         {/* ============================================================== */}
-        {/* RIGHT COLUMN: ATELIER CONTROL & DESIGN STATION (5 Cols)        */}
+        {/* RIGHT COLUMN: ATELIER CONTROL & DESIGN STATION (Hidden on mobile) */}
         {/* ============================================================== */}
-        <div className="lg:col-span-5 space-y-4 sm:space-y-5">
+        <div className="hidden lg:block lg:col-span-5 space-y-4 sm:space-y-5">
           {/* Station Card 1: Dynamic Inspo Selection / Active Inspo */}
           {!hasActiveInspo ? (
             <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
