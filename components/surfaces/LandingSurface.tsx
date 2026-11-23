@@ -33,8 +33,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     finish: 'Mirror Glaze',
     beforeUrl: BARE_HAND_URL,
     afterUrl: '/assets/tryon_glazed_pearl.webp',
-    inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+    inspoThumbUrl: '/assets/designs/glazed_pearl_almond_01.webp',
     accentColor: '#E0246A',
   },
   {
@@ -45,8 +44,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     finish: 'Glossy Sheer',
     beforeUrl: BARE_HAND_URL,
     afterUrl: '/assets/tryon_french_micro.webp',
-    inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
+    inspoThumbUrl: '/assets/designs/french_micro_almond_01.webp',
     accentColor: '#E0246A',
   },
   {
@@ -57,8 +55,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     finish: 'Cat-Eye Shimmer',
     beforeUrl: BARE_HAND_URL,
     afterUrl: '/assets/tryon_rose_velvet.webp',
-    inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
+    inspoThumbUrl: '/assets/designs/glazed_rosegold_square_04.webp',
     accentColor: '#C59B27',
   },
   {
@@ -69,8 +66,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     finish: 'High-Gloss',
     beforeUrl: BARE_HAND_URL,
     afterUrl: '/assets/tryon_dusty_ribbon.webp',
-    inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
+    inspoThumbUrl: '/assets/designs/coquette_pearl_bow_01.webp',
     accentColor: '#801A35',
   },
 ];
