@@ -190,8 +190,8 @@ export function AiCreationView({
 
       // 2. Call /api/generate-nail-art in hand-tryon mode
       const promptInstruction = isInitialCreation
-        ? `On this human hand, generate and apply this custom manicure design: "${trimmed}". Preserve the natural hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto each fingernail with glossy salon gel clearcoat.`
-        : `On this human hand with manicure, update and customize the manicure according to this request: "${trimmed}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails with high-gloss salon gel clearcoat.`;
+        ? `On this human hand, generate and apply this custom manicure design: "${trimmed}". Preserve the natural hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto each fingernail. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not add rings, jewelry, or foreign objects.`
+        : `On this human hand with manicure, update and customize the manicure according to this request: "${trimmed}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not add rings, jewelry, or foreign objects.`;
 
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',

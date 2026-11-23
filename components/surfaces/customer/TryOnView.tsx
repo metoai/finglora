@@ -237,7 +237,7 @@ export function TryOnView({
         }
       }
 
-      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}. High gloss gel clearcoat on nails.`;
+      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not include any rings, jewelry, or external objects from the reference inspo.`;
 
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',

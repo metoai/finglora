@@ -90,7 +90,16 @@ export async function POST(request: Request) {
     if (finalReferenceBase64 && finalHandBase64) {
       // Image-to-Image with Reference Nail Design + User's Real Hand
       parts.push({
-        text: `Image 1 is the reference manicure design photograph. Image 2 is the photograph of the user's human hand. You are an expert salon AI. Flawlessly apply the manicure design, colors, patterns, and nail shape from Image 1 onto the fingernails of the hand in Image 2. Preserve the exact skin tone, finger positions, hand pose, lighting, and natural background from Image 2 while rendering high-gloss salon gel clearcoat on the nails.`
+        text: `Image 1 is the reference inspiration manicure photograph. Image 2 is the photograph of the user's human hand.
+You are an expert salon atelier AI.
+
+TASK:
+Flawlessly transfer and apply ONLY the nail design (colors, nail art, finish, and ${nailShape} shape) from Image 1 onto the fingernails of the hand in Image 2.
+
+CRITICAL CONSTRAINTS:
+1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Extract strictly the nail design from Image 1. If Image 1 contains ANY other objects, accessories, rings, jewelry, bracelets, watches, sleeves, fabrics, bottles, flowers, props, or background items, DO NOT copy, transfer, or include them. Absolutely NO jewelry, rings, or foreign objects. Only the fingernails should be modified.
+2. CLEAN, DRY SKIN - NO VASELINE OR GREASY RESIDUE: The skin under the fingernails (hyponychium), around the cuticles, and on the finger pads must remain clean, natural, and dry skin. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO glossy gel spills under or around the nails. The lacquer/gel must be cleanly bounded to the top surface of the nail plate with crisp, clean cuticle margins.
+3. PRESERVE THE USER'S REAL HAND: Retain the user's exact hand pose, finger anatomy, skin tone, skin texture, knuckles, lighting, and natural background from Image 2.`
       });
       parts.push({
         inlineData: {
@@ -106,7 +115,12 @@ export async function POST(request: Request) {
       });
     } else if (finalHandBase64) {
       parts.push({
-        text: `You are an expert nail artist AI. Generate an ultra-photorealistic editorial salon photograph of this exact human hand showcasing this manicure design: "${prompt}". Preserve the hand pose, skin tone, and fingers while applying high-gloss gel clearcoat to the nails.`
+        text: `You are an expert salon atelier AI. Generate an ultra-photorealistic editorial salon photograph of this exact human hand showcasing this manicure design: "${prompt}".
+
+CRITICAL CONSTRAINTS:
+1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Modify ONLY the fingernails. Do not add any rings, jewelry, bracelets, accessories, or foreign props.
+2. CLEAN, DRY SKIN - NO VASELINE OR GREASE: The skin under the fingernails (hyponychium) and around the cuticles must remain completely clean, natural, dry skin. Absolutely NO vaseline, NO petroleum jelly, NO shiny grease, NO cuticle oil pooling, and NO gel spillage under or around the nails. The lacquer must be neatly confined to the nail plate with crisp, sharp cuticle lines.
+3. PRESERVE USER'S REAL HAND: Preserve the exact hand pose, finger proportions, skin tone, knuckles, and background from the photo.`
       });
       parts.push({
         inlineData: {
@@ -116,7 +130,12 @@ export async function POST(request: Request) {
       });
     } else if (finalReferenceBase64) {
       parts.push({
-        text: `You are an expert nail artist AI. Generate an ultra-photorealistic salon photograph of a real human hand wearing the exact manicure design from this reference image: "${prompt}". Natural lighting, high-gloss gel clearcoat, perfect cuticle margin, realistic skin texture.`
+        text: `You are an expert salon atelier AI. Generate an ultra-photorealistic salon photograph of a real human hand wearing the exact manicure design from this reference image: "${prompt}".
+
+CRITICAL CONSTRAINTS:
+1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Copy ONLY the nail design (colors, patterns, finish, shape). If the reference image has rings, jewelry, accessories, bracelets, sleeves, props, or background objects, DO NOT include them. Only render the human hand and the manicured fingernails.
+2. CLEAN, DRY SKIN - NO VASELINE OR GREASE: The skin under the nails and around the cuticles must be completely clean, natural, and dry. Strictly NO vaseline, NO petroleum jelly, NO greasy residue, and NO oil pooling under the nail edges.
+3. Realistic skin texture, crisp cuticle margins, and natural lighting.`
       });
       parts.push({
         inlineData: {
@@ -127,9 +146,9 @@ export async function POST(request: Request) {
     } else {
       let promptText = '';
       if (mode === '5-nail-set') {
-        promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish.`;
+        promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish. No vaseline, no petroleum jelly, no foreign objects.`;
       } else {
-        promptText = `You are an expert nail artist AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Natural lighting, high-gloss gel clearcoat, perfect cuticle margin, realistic skin texture.`;
+        promptText = `You are an expert salon atelier AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Clean, natural, dry skin under and around the fingernails with no vaseline, petroleum jelly, or greasy residue. Nail design only, no jewelry, rings, or foreign objects. Natural lighting, crisp cuticle margin, realistic skin texture.`;
       }
       parts.push({ text: promptText });
     }
