@@ -437,12 +437,8 @@ export function TryOnView({
         <div className="lg:col-span-7 space-y-3 sm:space-y-4">
           <div className="bg-white rounded-3xl p-3 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
             {/* Viewport Top Toolbar */}
-            <div className="flex items-center justify-between gap-2">
-              {hasActiveInspo && !synthesizedHandUrl ? (
-                <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-rose-50 border border-rose-200/80 text-xs font-semibold text-[#E0246A] shadow-2xs">
-                  <span>Side-by-Side Preview · Ready to Apply</span>
-                </div>
-              ) : (
+            <div className={`flex items-center ${hasActiveInspo && !synthesizedHandUrl ? 'justify-end' : 'justify-between'} gap-2`}>
+              {hasActiveInspo && !synthesizedHandUrl ? null : (
                 /* Natural vs Manicure Pill Toggle */
                 <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80 shadow-2xs">
                   <button
@@ -506,7 +502,11 @@ export function TryOnView({
             </div>
 
             {/* The Master Hand Canvas Viewport */}
-            <div className={`relative aspect-[3/4] max-h-[560px] lg:max-h-[620px] w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group ${hasActiveInspo && !synthesizedHandUrl ? 'bg-white p-2 sm:p-2.5' : 'bg-stone-100'}`}>
+            <div className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group transition-all duration-300 ${
+              hasActiveInspo && !synthesizedHandUrl
+                ? 'bg-white p-1.5 sm:p-2.5 h-[340px] xs:h-[380px] sm:h-[450px] md:h-[500px] lg:h-[540px]'
+                : 'bg-stone-100 aspect-[3/4] max-h-[560px] lg:max-h-[620px]'
+            }`}>
               {/* Spinner Overlay during synthesis */}
               {isSynthesizingHand && (
                 <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center animate-in fade-in duration-200">
@@ -524,7 +524,7 @@ export function TryOnView({
 
               {/* Viewport Content: Side-by-Side if staged and not yet synthesized, otherwise single hand */}
               {hasActiveInspo && !synthesizedHandUrl ? (
-                <div className="relative w-full h-full grid grid-cols-2 gap-2 sm:gap-2.5">
+                <div className="relative w-full h-full grid grid-cols-2 gap-1.5 sm:gap-2.5">
                   {/* Left Side: Your Hand */}
                   <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-stone-200/80 shadow-2xs flex items-center justify-center group/hand">
                     <img
@@ -534,19 +534,19 @@ export function TryOnView({
                     />
 
                     {/* Top Badge: Your Hand */}
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      <span className="px-2 sm:px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-800 text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1.5 border border-stone-200/90 shadow-xs">
-                        <Hand className="w-3 h-3 text-[#E0246A]" />
+                    <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10">
+                      <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-800 text-[9px] sm:text-[11px] font-semibold tracking-wide flex items-center gap-1 sm:gap-1.5 border border-stone-200/90 shadow-xs">
+                        <Hand className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-[#E0246A]" />
                         <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
                       </span>
                     </div>
 
                     {/* Bottom Action: Change Hand */}
-                    <div className="absolute bottom-2.5 inset-x-2.5 flex justify-center z-10">
+                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex justify-center z-10">
                       <button
                         type="button"
                         onClick={() => changeHandInputRef.current?.click()}
-                        className="px-2.5 py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
                       >
                         <UploadCloud className="w-2.5 h-2.5" />
                         <span>Change Hand</span>
@@ -561,8 +561,8 @@ export function TryOnView({
                       alt={effectiveInspoTitle || 'Selected Inspo'}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover/inspo:scale-103"
                     />
-                    <div className="absolute top-2.5 left-2.5 z-10">
-                      <span className="px-2 sm:px-2.5 py-1 rounded-full bg-[#E0246A] text-white text-[10px] sm:text-[11px] font-semibold tracking-wide flex items-center shadow-xs">
+                    <div className="absolute top-2 left-2 sm:top-2.5 sm:left-2.5 z-10">
+                      <span className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-[#E0246A] text-white text-[9px] sm:text-[11px] font-semibold tracking-wide flex items-center shadow-xs">
                         <span>Picked Inspo</span>
                       </span>
                     </div>
@@ -591,11 +591,11 @@ export function TryOnView({
                     </div>
 
                     {/* Change Inspo Button */}
-                    <div className="absolute bottom-2.5 inset-x-2.5 flex justify-center z-10">
+                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex justify-center z-10">
                       <button
                         type="button"
                         onClick={handleAutoPickNextInspo}
-                        className="px-2.5 py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
                       >
                         <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
                         <span>Change Inspo</span>
@@ -609,18 +609,18 @@ export function TryOnView({
                       type="button"
                       onClick={handleSynthesizeHand}
                       disabled={isSynthesizingHand}
-                      className="group pointer-events-auto px-4.5 sm:px-5 py-2 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-4 ring-white shadow-[0_4px_18px_rgba(224,36,106,0.38)] hover:shadow-[0_6px_26px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1.5 hover:scale-105"
+                      className="group pointer-events-auto px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-2 sm:ring-4 ring-white shadow-[0_4px_16px_rgba(224,36,106,0.35)] hover:shadow-[0_6px_24px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1 sm:gap-1.5 hover:scale-105"
                       title="Apply manicure inspiration to your hand"
                     >
                       {isSynthesizingHand ? (
                         <>
-                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
                           <span>Applying...</span>
                         </>
                       ) : (
                         <>
                           <span>Apply</span>
-                          <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                          <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
                         </>
                       )}
                     </button>
