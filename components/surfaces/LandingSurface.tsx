@@ -21,9 +21,8 @@ interface TryOnPair {
   accentColor: string;
 }
 
-// TODO: Swap this with an unpolished bare hand photo from your Supabase bucket
-const BARE_HAND_URL =
-  'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg';
+// Real bare hand capture and matched try-on outputs on the identical hand
+const BARE_HAND_URL = '/assets/bare_hand.jpg';
 
 const FEATURED_PAIRS: TryOnPair[] = [
   {
@@ -33,8 +32,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     shape: 'Almond',
     finish: 'Mirror Glaze',
     beforeUrl: BARE_HAND_URL,
-    afterUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+    afterUrl: '/assets/tryon_glazed_pearl.jpg',
     inspoThumbUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     accentColor: '#E0246A',
@@ -46,10 +44,9 @@ const FEATURED_PAIRS: TryOnPair[] = [
     shape: 'Almond',
     finish: 'Glossy Sheer',
     beforeUrl: BARE_HAND_URL,
-    afterUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
+    afterUrl: '/assets/tryon_french_micro.jpg',
     inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg',
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
     accentColor: '#E0246A',
   },
   {
@@ -59,10 +56,9 @@ const FEATURED_PAIRS: TryOnPair[] = [
     shape: 'Oval',
     finish: 'Cat-Eye Shimmer',
     beforeUrl: BARE_HAND_URL,
-    afterUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
+    afterUrl: '/assets/tryon_rose_velvet.jpg',
     inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_liquid_silver_03.jpg',
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
     accentColor: '#C59B27',
   },
   {
@@ -72,10 +68,9 @@ const FEATURED_PAIRS: TryOnPair[] = [
     shape: 'Coffin',
     finish: 'High-Gloss',
     beforeUrl: BARE_HAND_URL,
-    afterUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
+    afterUrl: '/assets/tryon_dusty_ribbon.jpg',
     inspoThumbUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_noir_classic_03.jpg',
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     accentColor: '#801A35',
   },
 ];
@@ -214,7 +209,7 @@ export function LandingSurface({
                           }`}
                         >
                           <img
-                            src={pair.afterUrl}
+                            src={pair.inspoThumbUrl || pair.afterUrl}
                             alt={pair.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
