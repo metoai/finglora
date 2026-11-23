@@ -113,6 +113,7 @@ export function TryOnView({
   const changeHandInputRef = useRef<HTMLInputElement>(null);
   const changeRefInspoInputRef = useRef<HTMLInputElement>(null);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
+  const [isHandSourceModalOpen, setIsHandSourceModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [internalSynthesizedHandUrl, setInternalSynthesizedHandUrl] = useState<string | null>(null);
@@ -530,9 +531,19 @@ export function TryOnView({
                         style={{ backgroundColor: nails.middle.accentColor || '#D4AF37' }}
                         title="Accent Lacquer"
                       />
-                      <span className="text-[9px] text-stone-600 capitalize ml-0.5">
-                        {nails.middle.finish}
-                      </span>
+                    </div>
+
+                    {/* Change Inspo (Shuffle) Button */}
+                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex items-center justify-center z-10">
+                      <button
+                        type="button"
+                        onClick={handleAutoPickNextInspo}
+                        className="px-2.5 sm:px-3 py-1 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
+                        title="Shuffle next inspiration"
+                      >
+                        <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
+                        <span>Change Inspo</span>
+                      </button>
                     </div>
                   </div>
 
@@ -654,9 +665,9 @@ export function TryOnView({
               <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-1">
                 <button
                   type="button"
-                  onClick={() => changeHandInputRef.current?.click()}
+                  onClick={() => setIsHandSourceModalOpen(true)}
                   className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
-                  title="Upload Hand Photo"
+                  title="Change Hand Photo"
                 >
                   <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
                   <span className="truncate">Change Hand</span>
@@ -1028,6 +1039,87 @@ export function TryOnView({
           }
         }}
       />
+
+      {/* Hand Source Selection Modal (Camera vs Choose from Photos) */}
+      {isHandSourceModalOpen && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200"
+          onClick={() => setIsHandSourceModalOpen(false)}
+        >
+          <div
+            className="w-full max-w-sm rounded-3xl bg-white border border-stone-200/90 shadow-2xl p-5 sm:p-6 space-y-4 animate-in zoom-in-95 duration-200"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="font-serif text-base sm:text-lg font-medium text-stone-900 tracking-tight">
+                  Change Hand Photo
+                </h3>
+                <p className="text-xs text-stone-500 mt-0.5">
+                  Select how you would like to provide your hand photo
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsHandSourceModalOpen(false)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-2.5 pt-1">
+              {/* Option 1: Live Camera Capture */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHandSourceModalOpen(false);
+                  setIsCameraModalOpen(true);
+                }}
+                className="w-full p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F4EFEB] border border-stone-200/80 text-left transition active:scale-98 cursor-pointer flex items-center gap-3.5 group shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-xl bg-white border border-stone-200 flex items-center justify-center text-[#E0246A] shadow-2xs group-hover:scale-105 transition shrink-0">
+                  <Camera className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-semibold text-stone-900 block">
+                    Capture with Camera
+                  </span>
+                  <span className="text-[11px] text-stone-500 block truncate">
+                    Take a live photo using your phone or webcam
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5 transition" />
+              </button>
+
+              {/* Option 2: Choose from Photos / Files */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHandSourceModalOpen(false);
+                  changeHandInputRef.current?.click();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F4EFEB] border border-stone-200/80 text-left transition active:scale-98 cursor-pointer flex items-center gap-3.5 group shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#E0246A] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition shrink-0">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-semibold text-stone-900 block">
+                    Choose from Photos
+                  </span>
+                  <span className="text-[11px] text-stone-500 block truncate">
+                    Browse camera roll, photo library, or files
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5 transition" />
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Live WebRTC Camera Capture Modal */}
       <HandCameraCaptureModal
