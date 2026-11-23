@@ -412,7 +412,7 @@ export function HomeHubView({
       {/* 1. Header: Greeting & Status Indicators (Hidden on Mobile per user request) */}
       <div className="hidden sm:flex items-center justify-between gap-3 pt-0.5">
         <div>
-          <h1 className="font-serif text-xl sm:text-2xl lg:text-3xl font-medium text-stone-900 tracking-tight">
+          <h1 className="font-sans text-xl sm:text-2xl lg:text-3xl font-semibold text-stone-900 tracking-tight">
             {getGreeting()}, {cleanUserName}
           </h1>
         </div>
@@ -627,35 +627,16 @@ export function HomeHubView({
             </h2>
           </div>
 
-          <div className="flex items-center gap-1.5 sm:gap-2">
+          {onExploreClick && (
             <button
               type="button"
-              onClick={() => scrollCarousel('left')}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
-              title="Previous"
+              onClick={() => onExploreClick()}
+              className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] inline-flex items-center gap-0.5 cursor-pointer transition active:scale-95 py-1 px-2 rounded-lg hover:bg-pink-50"
             >
-              <ChevronLeft className="w-3.5 h-3.5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => scrollCarousel('right')}
-              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
-              title="Next"
-            >
+              <span>See All</span>
               <ChevronRight className="w-3.5 h-3.5" />
             </button>
-
-            {onExploreClick && (
-              <button
-                type="button"
-                onClick={() => onExploreClick()}
-                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] inline-flex items-center gap-0.5 cursor-pointer transition active:scale-95 py-1 px-2 rounded-lg hover:bg-pink-50"
-              >
-                <span>See All</span>
-                <ChevronRight className="w-3.5 h-3.5" />
-              </button>
-            )}
-          </div>
+          )}
         </div>
 
         {/* Featured Editorial Manicure Cards - Generous Large Cards */}
