@@ -153,9 +153,9 @@ export function LandingSurface({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-12 items-center w-full">
           {/* 1. Headline (Mobile: 1st, Desktop: Top-Left) */}
           <div className="order-1 lg:col-span-5 text-center lg:text-left">
-            <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-normal text-stone-900 tracking-tight leading-[1.15] lg:leading-[1.12]">
+            <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-medium sm:font-normal text-stone-900 tracking-tight leading-[1.12] sm:leading-[1.08] lg:leading-[1.05]">
               See any nail inspo on your{' '}
-              <span className="italic text-[#E0246A]">actual hand</span> before you book.
+              <span className="italic font-normal text-[#E0246A]">actual hand</span> before you book.
             </h1>
           </div>
 
