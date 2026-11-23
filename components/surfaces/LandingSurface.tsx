@@ -149,43 +149,24 @@ export function LandingSurface({
       </header>
 
       {/* Split Hero Section */}
-      <section className="flex-1 flex items-center w-full max-w-6xl mx-auto px-5 sm:px-8 py-6 lg:py-10 z-10">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
-          {/* Left Column: Headline + Primary CTA */}
-          <div className="lg:col-span-5 text-center lg:text-left space-y-5">
-            <h1 className="font-serif text-3xl sm:text-5xl font-normal text-stone-900 tracking-tight leading-[1.12]">
+      <section className="flex-1 flex items-center w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-10 z-10">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-12 items-center w-full">
+          {/* 1. Headline (Mobile: 1st, Desktop: Top-Left) */}
+          <div className="order-1 lg:col-span-5 text-center lg:text-left">
+            <h1 className="font-serif text-2xl sm:text-4xl lg:text-5xl font-normal text-stone-900 tracking-tight leading-[1.15] lg:leading-[1.12]">
               See any nail inspo on your{' '}
               <span className="italic text-[#E0246A]">actual hand</span> before you book.
             </h1>
-
-            <p className="text-stone-600 text-sm sm:text-base max-w-md mx-auto lg:mx-0 leading-relaxed">
-              Pick a look, snap your hand once, and see how it fits your real skin tone.
-            </p>
-
-            <div className="pt-2 space-y-3 max-w-xs mx-auto lg:mx-0">
-              <button
-                type="button"
-                onClick={handleLaunchTryOn}
-                className="w-full h-12 sm:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xs"
-              >
-                <span>Try On My Hand Free</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
-
-              <p className="text-xs text-stone-500 text-center lg:text-left">
-                1 free instant try-on · No card required
-              </p>
-            </div>
           </div>
 
-          {/* Right Column: Interactive 3-Step Visual Progress Card */}
+          {/* 2. Interactive 3-Step Visual Progress Card (Mobile: 2nd, Desktop: Right Column row-span-2) */}
           <div
-            className="lg:col-span-7 w-full max-w-xl mx-auto lg:max-w-none space-y-3.5"
+            className="order-2 lg:col-span-7 lg:col-start-6 lg:row-span-2 w-full max-w-md sm:max-w-lg lg:max-w-none mx-auto space-y-2.5 sm:space-y-3.5"
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
             {/* Step Progress Tabs - Clean Text-Only */}
-            <div className="grid grid-cols-3 gap-2 bg-white p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
+            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-white p-1 sm:p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
               {STEPS.map((step) => {
                 const isActive = activeStep === step.id;
                 const isCompleted = activeStep > step.id;
@@ -197,7 +178,7 @@ export function LandingSurface({
                       setActiveStep(step.id);
                       setIsPaused(true);
                     }}
-                    className={`flex items-center justify-center py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center py-1.5 sm:py-2 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
                       isActive
                         ? 'bg-stone-900 text-white shadow-xs'
                         : isCompleted
@@ -212,11 +193,11 @@ export function LandingSurface({
             </div>
 
             {/* Visual Stage */}
-            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_16px_48px_rgba(24,18,22,0.08)]">
+            <div className="relative w-full aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_12px_40px_rgba(24,18,22,0.08)]">
               {/* STEP 1: Choose Inspo Grid */}
               {activeStep === 0 && (
-                <div className="absolute inset-0 p-3 sm:p-4 bg-[#FAF7F5] flex flex-col justify-between animate-in fade-in duration-300">
-                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3 flex-1 min-h-0">
+                <div className="absolute inset-0 p-2.5 sm:p-4 bg-[#FAF7F5] flex flex-col justify-between animate-in fade-in duration-300">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0">
                     {FEATURED_PAIRS.map((pair, idx) => {
                       const isSelected = idx === selectedPairIndex;
                       return (
@@ -228,7 +209,7 @@ export function LandingSurface({
                             setActiveStep(1);
                             setIsPaused(true);
                           }}
-                          className={`relative rounded-2xl overflow-hidden group cursor-pointer border-2 transition-all text-left ${
+                          className={`relative rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer border-2 transition-all text-left ${
                             isSelected
                               ? 'border-[#E0246A] shadow-md'
                               : 'border-transparent hover:border-stone-300'
@@ -242,16 +223,16 @@ export function LandingSurface({
                           <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
 
                           {isSelected && (
-                            <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-sm">
-                              <Check className="w-3.5 h-3.5" />
+                            <span className="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-sm">
+                              <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
                             </span>
                           )}
 
-                          <div className="absolute bottom-2 left-2.5 right-2.5">
-                            <p className="text-white text-xs font-semibold truncate">
+                          <div className="absolute bottom-1.5 sm:bottom-2 left-2 right-2 sm:left-2.5 sm:right-2.5">
+                            <p className="text-white text-[11px] sm:text-xs font-semibold truncate">
                               {pair.title}
                             </p>
-                            <p className="text-white/75 text-[10px]">{pair.shape}</p>
+                            <p className="text-white/75 text-[9px] sm:text-[10px]">{pair.shape}</p>
                           </div>
                         </button>
                       );
@@ -333,6 +314,28 @@ export function LandingSurface({
                   </div>
                 </div>
               )}
+            </div>
+          </div>
+
+          {/* 3. Subheadline & CTA Block (Mobile: 3rd, Desktop: Left Column under Headline) */}
+          <div className="order-3 lg:col-span-5 lg:col-start-1 lg:row-start-2 text-center lg:text-left space-y-3.5 sm:space-y-4">
+            <p className="text-stone-600 text-xs sm:text-sm lg:text-base max-w-md mx-auto lg:mx-0 leading-relaxed">
+              Pick a look, snap your hand once, and see how it fits your real skin tone.
+            </p>
+
+            <div className="space-y-2 max-w-xs mx-auto lg:mx-0">
+              <button
+                type="button"
+                onClick={handleLaunchTryOn}
+                className="w-full h-11 sm:h-12 lg:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-xs sm:text-sm lg:text-base font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xs"
+              >
+                <span>Try On My Hand Free</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+
+              <p className="text-[11px] sm:text-xs text-stone-500 text-center lg:text-left">
+                1 free instant try-on · No card required
+              </p>
             </div>
           </div>
         </div>
