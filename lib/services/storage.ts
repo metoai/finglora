@@ -1,13 +1,13 @@
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 /**
- * Downscales any image (File, Blob, or URL) down to max 800px and returns a compact ~50KB base64 JPEG
+ * Downscales any image (File, Blob, or URL) down to max 768px and returns a compact ~30-40KB base64 JPEG
  * for ultra-fast Gemini Vision processing without hanging.
  */
 export async function downscaleImageForVision(
   input: File | Blob | string,
-  maxDim = 800,
-  quality = 0.75
+  maxDim = 768,
+  quality = 0.72
 ): Promise<string> {
   return new Promise((resolve) => {
     try {

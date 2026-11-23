@@ -225,7 +225,7 @@ export function TryOnView({
       if (sourceHand.startsWith('data:image/')) {
         handBase64 = sourceHand;
       } else {
-        handBase64 = await downscaleImageForVision(sourceHand, 1024, 0.88);
+        handBase64 = await downscaleImageForVision(sourceHand, 768, 0.72);
       }
 
       let refBase64: string | undefined = undefined;
@@ -234,7 +234,7 @@ export function TryOnView({
         if (refSource.startsWith('data:image/')) {
           refBase64 = refSource;
         } else {
-          refBase64 = await downscaleImageForVision(refSource, 1024, 0.88);
+          refBase64 = await downscaleImageForVision(refSource, 768, 0.72);
         }
       }
 

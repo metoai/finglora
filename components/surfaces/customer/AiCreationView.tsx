@@ -185,7 +185,7 @@ export function AiCreationView({
       if (baseSource.startsWith('data:image/')) {
         handBase64 = baseSource;
       } else {
-        handBase64 = await downscaleImageForVision(baseSource, 1024, 0.88);
+        handBase64 = await downscaleImageForVision(baseSource, 768, 0.72);
       }
 
       // 2. Call /api/generate-nail-art in hand-tryon mode
