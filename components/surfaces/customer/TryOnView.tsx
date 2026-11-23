@@ -497,17 +497,6 @@ export function TryOnView({
                       </span>
                     </div>
 
-                    {/* Bottom Action: Change Hand */}
-                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex justify-center z-10">
-                      <button
-                        type="button"
-                        onClick={() => changeHandInputRef.current?.click()}
-                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
-                      >
-                        <UploadCloud className="w-2.5 h-2.5" />
-                        <span>Change Hand</span>
-                      </button>
-                    </div>
                   </div>
 
                   {/* Right Side: Picked Inspo */}
@@ -544,28 +533,6 @@ export function TryOnView({
                       <span className="text-[9px] text-stone-600 capitalize ml-0.5">
                         {nails.middle.finish}
                       </span>
-                    </div>
-
-                    {/* Change Inspo Buttons */}
-                    <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex items-center justify-center gap-1.5 z-10">
-                      <button
-                        type="button"
-                        onClick={handleAutoPickNextInspo}
-                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
-                        title="Shuffle random inspiration"
-                      >
-                        <Shuffle className="w-2.5 h-2.5 text-[#E0246A]" />
-                        <span>Shuffle</span>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => changeRefInspoInputRef.current?.click()}
-                        className="px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full bg-white/95 hover:bg-white text-stone-700 hover:text-stone-900 backdrop-blur-md text-[9px] sm:text-[10px] font-medium border border-stone-200/90 transition cursor-pointer active:scale-95 flex items-center gap-1 shadow-xs"
-                        title="Upload your own photo inspiration"
-                      >
-                        <ImagePlus className="w-2.5 h-2.5 text-[#E0246A]" />
-                        <span>Upload</span>
-                      </button>
                     </div>
                   </div>
 
@@ -692,7 +659,7 @@ export function TryOnView({
                   title="Upload Hand Photo"
                 >
                   <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
-                  <span className="truncate">Hand</span>
+                  <span className="truncate">Change Hand</span>
                 </button>
 
                 <button
