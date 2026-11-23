@@ -1,91 +1,72 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Camera, X, Check, ArrowRight, SlidersHorizontal, Info, Scan, Palette, CheckCircle2, UploadCloud, ChevronRight, ChevronLeft, Layers } from 'lucide-react';
+import {
+  Sparkles,
+  ArrowRight,
+  Hand,
+  ImagePlus,
+  RotateCcw,
+  Sliders,
+  Check,
+  X,
+} from 'lucide-react';
 import { ExploreDesignSet, NailShape, Finger } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
-interface ShadeOption {
+interface TryOnPair {
   id: string;
-  name: string;
-  hex: string;
-  gradient: { base: string; mid: string; tip: string };
-  finish?: 'glossy' | 'matte' | 'chrome' | 'glitter';
-  pattern?: 'solid' | 'classic-french';
-  accentColor?: string;
-  hasTip?: boolean;
+  title: string;
+  category: string;
+  shape: string;
+  finish: string;
+  // Natural bare hand baseline
+  beforeUrl: string;
+  // Real manicured hand try-on result
+  afterUrl: string;
+  accentColor: string;
 }
 
-const SHADES: ShadeOption[] = [
+const FEATURED_PAIRS: TryOnPair[] = [
   {
-    id: 'milk-glaze',
-    name: 'Milk Glaze',
-    hex: '#FDF6F8',
-    gradient: { base: '#FFFFFF', mid: '#FBF0F5', tip: '#F2D3DF' },
-    finish: 'chrome',
-    pattern: 'solid',
-    hasTip: false,
+    id: 'glazed-pearl',
+    title: 'Glazed Pearl Chrome',
+    category: 'Hailey Chrome',
+    shape: 'Almond',
+    finish: 'Mirror Glaze',
+    beforeUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    afterUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+    accentColor: '#E0246A',
   },
   {
-    id: 'petal',
-    name: 'Petal',
-    hex: '#E892A8',
-    gradient: { base: '#FFF0F5', mid: '#F4A7BD', tip: '#E0246A' },
-    finish: 'glossy',
-    pattern: 'solid',
-    hasTip: false,
+    id: 'blush-french',
+    title: 'Blush Micro French',
+    category: 'French Atelier',
+    shape: 'Almond',
+    finish: 'Glossy Sheer',
+    beforeUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    afterUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
+    accentColor: '#E0246A',
   },
   {
-    id: 'french-rose',
-    name: 'French Rose',
-    hex: '#DF6A89',
-    gradient: { base: '#FDF0F4', mid: '#F2AFC4', tip: '#DF6A89' },
-    finish: 'glossy',
-    pattern: 'classic-french',
-    accentColor: '#FFFFFF',
-    hasTip: true,
+    id: 'rose-aura',
+    title: 'Rose Gold Velvet',
+    category: 'Aura Velvet',
+    shape: 'Oval',
+    finish: 'Cat-Eye Shimmer',
+    beforeUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    afterUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
+    accentColor: '#C59B27',
   },
   {
-    id: 'berry-rouge',
-    name: 'Berry Rouge',
-    hex: '#CF3168',
-    gradient: { base: '#F78DB0', mid: '#DF2466', tip: '#A81144' },
-    finish: 'glossy',
-    pattern: 'solid',
-    hasTip: false,
-  },
-  {
-    id: 'deep-wine',
-    name: 'Deep Wine',
-    hex: '#851838',
-    gradient: { base: '#A3294C', mid: '#73142F', tip: '#420818' },
-    finish: 'glossy',
-    pattern: 'solid',
-    hasTip: false,
-  },
-];
-
-const SHAPES: { id: NailShape; name: string; desc: string }[] = [
-  {
-    id: 'almond',
-    name: 'Almond',
-    desc: 'Soft, chic, and elongates your fingers effortlessly',
-  },
-  {
-    id: 'coffin',
-    name: 'Coffin',
-    desc: 'Glam, trendy, and gives instant statement baddie energy',
-  },
-  {
-    id: 'oval',
-    name: 'Oval',
-    desc: 'Clean-girl aesthetic, soft natural curves, effortless',
-  },
-  {
-    id: 'square',
-    name: 'Square',
-    desc: 'Crisp, bold edges — the ultimate French tip silhouette',
+    id: 'coquette-ribbon',
+    title: 'Dusty Rose Ribbon',
+    category: 'Coquette 3D',
+    shape: 'Coffin',
+    finish: 'High-Gloss',
+    beforeUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    afterUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
+    accentColor: '#801A35',
   },
 ];
 
@@ -112,18 +93,12 @@ export function LandingSurface({
   onSaveAndCustomize?: (setId: string) => void;
   onOnboardingClick?: () => void;
 }) {
-  const [activeShadeIndex, setActiveShadeIndex] = useState(1); // default 'Petal'
-  const [activeShapeIndex, setActiveShapeIndex] = useState(0); // default 'Almond'
-  const [activeLength] = useState('Medium');
-  const [frenchTipActive, setFrenchTipActive] = useState<boolean | null>(null);
+  const [selectedPairIndex, setSelectedPairIndex] = useState(0);
+  const [sliderPosition, setSliderPosition] = useState(55); // 0 to 100 percentage
+  const [isLiveComparing, setIsLiveComparing] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
-  const [shapesModalOpen, setShapesModalOpen] = useState(false);
-  const [shadesModalOpen, setShadesModalOpen] = useState(false);
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  const activeShade = SHADES[activeShadeIndex];
-  const activeShape = SHAPES[activeShapeIndex];
-  const isFrenchTip = frenchTipActive !== null ? frenchTipActive : Boolean(activeShade.hasTip);
+  const activePair = FEATURED_PAIRS[selectedPairIndex];
 
   const handleLaunchTryOn = () => {
     if (onSignUpClick) {
@@ -137,30 +112,31 @@ export function LandingSurface({
     }
   };
 
-  const handleToggleShape = () => {
-    setActiveShapeIndex((prev) => (prev + 1) % SHAPES.length);
-  };
-
   return (
-    <main className="min-h-screen bg-white text-[#181216] flex flex-col justify-between overflow-x-hidden relative selection:bg-[#E0246A]/20 font-sans">
-      {/* Soft Radial Ambient Pink Aura in Background */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[550px] sm:w-[650px] lg:w-[750px] h-[550px] sm:h-[650px] lg:h-[750px] rounded-full bg-[radial-gradient(circle,rgba(224,36,106,0.11)_0%,rgba(224,36,106,0.03)_50%,transparent_70%)] pointer-events-none -z-0" />
+    <main className="min-h-screen bg-[#FCFAF8] text-[#181216] flex flex-col justify-between overflow-x-hidden relative selection:bg-[#E0246A]/20 font-sans">
+      {/* Subtle luxury ambient pink gradient aura */}
+      <div className="absolute top-0 inset-x-0 h-[480px] bg-[radial-gradient(ellipse_80%_60%_at_50%_-20%,rgba(224,36,106,0.12),transparent_70%)] pointer-events-none" />
 
       {/* =====================================================================
-          TOP NAVIGATION BAR (DESKTOP & MOBILE)
+          1. TOP NAVIGATION BAR (Clean, Editorial, Sign In Action)
           ===================================================================== */}
-      {/* Desktop Top Bar */}
-      <header className="hidden lg:flex w-full max-w-7xl mx-auto px-8 lg:px-12 pt-7 pb-4 items-center justify-between z-20">
-        {/* User Brand Logo with Text */}
+      <header className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 pt-4 sm:pt-6 pb-2 flex items-center justify-between z-20">
         <BrandLogo size="md" />
 
-        {/* Right: Sign In Only */}
-        <div>
+        <div className="flex items-center gap-2 sm:gap-3">
+          <button
+            type="button"
+            onClick={() => setHowItWorksOpen(true)}
+            className="hidden sm:inline-flex text-xs font-semibold text-stone-600 hover:text-stone-900 px-3 py-1.5 transition cursor-pointer"
+          >
+            How it works
+          </button>
+
           {onSignInClick && (
             <button
               type="button"
               onClick={onSignInClick}
-              className="h-9 px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-sm font-medium text-stone-800 hover:text-[#E0246A] hover:border-[#E0246A]/50 transition cursor-pointer shadow-2xs active:scale-95"
+              className="h-8.5 sm:h-9 px-4 sm:px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-200/90 text-xs sm:text-sm font-semibold text-stone-800 hover:text-[#E0246A] hover:border-[#E0246A]/40 transition cursor-pointer shadow-2xs active:scale-95"
             >
               Sign In
             </button>
@@ -168,353 +144,266 @@ export function LandingSurface({
         </div>
       </header>
 
-      {/* Mobile Top Bar */}
-      <header className="lg:hidden w-full px-5 pt-4 pb-2 flex items-center justify-between z-20">
-        {/* User Brand Logo with Text */}
-        <BrandLogo size="sm" />
-
-        {/* Right: Sign In Only */}
-        {onSignInClick && (
-          <button
-            type="button"
-            onClick={onSignInClick}
-            className="h-8 px-4 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs font-semibold text-stone-800 hover:text-[#E0246A] transition cursor-pointer shadow-2xs active:scale-95"
-          >
-            Sign In
-          </button>
-        )}
-      </header>
-
       {/* =====================================================================
-          MAIN HERO ARTWORK: "Try" + AR VIEW FINDER WITH 3D NAIL + "on."
+          2. CORE HERO SECTION: ONE SCREEN VIEW, BEFORE & AFTER TRANSFORMATION
           ===================================================================== */}
-      {/* Desktop Artwork (Page 1): Centered Row Layout with Giant "Try" and "on." */}
-      <div className="hidden lg:flex relative items-center justify-center w-full max-w-7xl mx-auto my-auto py-4 px-6 z-10 select-none">
-        {/* Left Headline: "Try" */}
-        <div className="flex-1 flex justify-end items-center pr-4 xl:pr-8">
-          <span className="font-serif text-[130px] xl:text-[160px] 2xl:text-[185px] font-normal text-[#181216] leading-none tracking-tight select-none pointer-events-none">
-            Try
-          </span>
+      <section className="flex-1 flex flex-col items-center justify-center w-full max-w-6xl mx-auto px-3 sm:px-6 py-2 sm:py-4 z-10">
+        {/* Value Proposition Headline: Instantly Understood by Anyone */}
+        <div className="text-center max-w-2xl mx-auto space-y-2 sm:space-y-3 mb-3.5 sm:mb-5">
+          {/* Eyebrow Pill */}
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-pink-50 border border-pink-100/90 text-[11px] sm:text-xs font-semibold text-[#E0246A] shadow-2xs">
+            <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A] animate-pulse" />
+            <span>Virtual Hand Try-On Atelier</span>
+          </div>
+
+          {/* Punchy, Clear Title */}
+          <h1 className="font-serif text-2xl sm:text-4xl lg:text-[44px] font-normal text-stone-900 tracking-tight leading-[1.15]">
+            See any nail inspo on your{' '}
+            <span className="italic font-serif text-[#E0246A]">actual hand</span>{' '}
+            before you book.
+          </h1>
+
+          {/* Subtitle */}
+          <p className="text-stone-600 text-xs sm:text-sm max-w-lg mx-auto leading-relaxed">
+            Snap your hand once. Drop any Pinterest, TikTok, or Instagram look. See the manicure tailored to your real skin tone & fingers in seconds.
+          </p>
         </div>
 
-        {/* Center: Circular AR Viewfinder & 3D Glass Nail */}
-        <div className="relative shrink-0">
-          {/* Circular Reticle Ring */}
-          <div className="w-[360px] h-[360px] xl:w-[420px] xl:h-[420px] rounded-full border border-pink-200/70 relative flex items-center justify-center">
-            {/* 4 Crisp Pink Camera Reticle Corners */}
-            <span className="absolute top-5 left-5 w-6 h-6 border-t-2 border-l-2 border-[#E0246A] rounded-tl-md pointer-events-none" />
-            <span className="absolute top-5 right-5 w-6 h-6 border-t-2 border-r-2 border-[#E0246A] rounded-tr-md pointer-events-none" />
-            <span className="absolute bottom-10 left-5 w-6 h-6 border-b-2 border-l-2 border-[#E0246A] rounded-bl-md pointer-events-none" />
-            <span className="absolute bottom-10 right-5 w-6 h-6 border-b-2 border-r-2 border-[#E0246A] rounded-br-md pointer-events-none" />
-            {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
-            <div className="absolute inset-4 rounded-full overflow-hidden pointer-events-none z-10">
-              <div className="absolute left-4 right-4 animate-scan-periodic">
-                <div className="h-8 -mt-4 bg-gradient-to-b from-transparent via-[#E0246A]/25 to-transparent blur-[2px]" />
-                <div className="h-[2px] -mt-[17px] bg-gradient-to-r from-transparent via-[#E0246A] to-transparent shadow-[0_0_16px_#E0246A,0_0_6px_#FFFFFF]" />
+        {/* =====================================================================
+            INTERACTIVE BEFORE / AFTER TRANSFORMATION CANVAS
+            (Shows real hand vs. applied manicure side-by-side with slider or tabs)
+            ===================================================================== */}
+        <div className="w-full max-w-md sm:max-w-lg lg:max-w-xl mx-auto space-y-3">
+          {/* The Viewport Container */}
+          <div className="relative w-full aspect-[4/3] sm:aspect-[16/11] rounded-3xl overflow-hidden bg-white border border-stone-200/90 shadow-[0_12px_40px_rgba(224,36,106,0.14)] select-none group">
+            {/* Layer 1: Manicured Hand (After - Full Base) */}
+            <img
+              src={activePair.afterUrl}
+              alt="Manicured Hand"
+              className="absolute inset-0 w-full h-full object-cover pointer-events-none"
+            />
+
+            {/* Layer 2: Bare Natural Hand (Before - Clipped by Slider) */}
+            <div
+              className="absolute inset-y-0 left-0 overflow-hidden pointer-events-none border-r-2 border-white shadow-[2px_0_12px_rgba(0,0,0,0.25)]"
+              style={{ width: `${sliderPosition}%` }}
+            >
+              <img
+                src={activePair.beforeUrl}
+                alt="Bare Natural Hand"
+                className="absolute inset-y-0 left-0 max-w-none h-full object-cover"
+                style={{ width: '100%', minWidth: '100%' }}
+              />
+
+              {/* Bare Hand Floating Pill */}
+              <div className="absolute top-3 left-3 z-10">
+                <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] sm:text-xs font-semibold tracking-wide border border-white/10 shadow-xs flex items-center gap-1">
+                  <Hand className="w-3 h-3 text-pink-300" />
+                  <span>Bare Hand</span>
+                </span>
               </div>
             </div>
 
-            {/* 3D Glass Nail Silhouette on Real Finger (Pure CSS Micro-Geometry, ZERO SVG) */}
+            {/* Manicure Look Floating Pill (Right side) */}
+            <div className="absolute top-3 right-3 z-10 pointer-events-none">
+              <span className="px-2.5 py-1 rounded-full bg-[#E0246A] text-white text-[10px] sm:text-xs font-semibold tracking-wide shadow-xs flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-white" />
+                <span>With Manicure</span>
+              </span>
+            </div>
+
+            {/* Interactive Slider Divider Handle */}
             <div
-              onClick={handleToggleShape}
-              className="relative w-[180px] h-[310px] xl:w-[200px] xl:h-[340px] flex items-center justify-center cursor-pointer transition-transform duration-300 hover:scale-[1.03] active:scale-95 group"
-              title="Click nail to cycle shape: Almond · Coffin · Oval · Square · Stiletto"
-            >
-              <NailCanvasPreview
-                nail={{
-                  finger: 'middle',
-                  title: 'Editorial Hero Nail',
-                  shape: activeShape.id,
-                  length: 'long',
-                  finish: activeShade.finish || 'glossy',
-                  baseColor: activeShade.hex,
-                  accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
-                  pattern: isFrenchTip ? 'classic-french' : 'solid',
-                  clientNote: 'Pure CSS Micro-Geometry',
-                  status: 'detected',
-                }}
-                gradient={activeShade.gradient}
-                glowColor={activeShade.gradient.tip}
-                width={190}
-                height={320}
-                showFinger={true}
-              />
-            </div>
+              className="absolute top-0 bottom-0 z-20 flex items-center justify-center -ml-4 w-8 cursor-ew-resize touch-none"
+              style={{ left: `${sliderPosition}%` }}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                setIsLiveComparing(true);
+                const container = e.currentTarget.parentElement;
+                if (!container) return;
+                const rect = container.getBoundingClientRect();
 
-            {/* Label Below Viewfinder: Shape · Finish · Shade */}
-            <button
-              type="button"
-              onClick={() => setShapesModalOpen(true)}
-              className="absolute -bottom-3.5 left-1/2 -translate-x-1/2 px-4 py-1 text-xs font-medium text-stone-700 hover:text-[#E0246A] tracking-wide whitespace-nowrap bg-white/95 hover:bg-white border border-stone-200/80 hover:border-[#E0246A]/50 shadow-xs rounded-full transition cursor-pointer flex items-center gap-1.5 active:scale-95 z-20 group"
-              title="Click to select nail silhouette"
-            >
-              <span className="font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors">{activeShape.name}</span>
-              <span className="text-stone-300">·</span>
-              <span className="text-stone-500">{isFrenchTip ? 'French Tip' : activeShade.finish === 'chrome' ? 'Glazed' : 'Glossy'}</span>
-              <span className="text-stone-300">·</span>
-              <span className="text-stone-600">{activeShade.name}</span>
-            </button>
-          </div>
-        </div>
+                const onMouseMove = (moveEvent: MouseEvent) => {
+                  const x = moveEvent.clientX - rect.left;
+                  const percent = Math.min(Math.max((x / rect.width) * 100, 5), 95);
+                  setSliderPosition(percent);
+                };
 
-        {/* Right Headline: "on." in Pink Serif Italic */}
-        <div className="flex-1 flex justify-start items-center pl-4 xl:pr-8">
-          <span className="font-serif italic text-[130px] xl:text-[160px] 2xl:text-[185px] font-normal text-[#E0246A] leading-none tracking-tight select-none pointer-events-none">
-            on.
-          </span>
-        </div>
-      </div>
+                const onMouseUp = () => {
+                  setIsLiveComparing(false);
+                  window.removeEventListener('mousemove', onMouseMove);
+                  window.removeEventListener('mouseup', onMouseUp);
+                };
 
-      {/* Mobile Artwork (Page 2): "Try on." at top in 1 row, then centered AR Viewfinder */}
-      <div className="lg:hidden relative w-full flex flex-col items-center justify-center my-auto py-2 px-3 select-none">
-        {/* "Try on." at the top in 1 row */}
-        <div className="flex items-baseline justify-center gap-2 mb-7 sm:mb-8 pt-1 z-10 pointer-events-none select-none">
-          <span className="font-serif text-[48px] sm:text-[58px] font-normal text-[#181216] leading-none tracking-tight">
-            Try
-          </span>
-          <span className="font-serif italic text-[48px] sm:text-[58px] font-normal text-[#E0246A] leading-none tracking-tight">
-            on.
-          </span>
-        </div>
-
-        {/* Reticle Ring */}
-        <div className="relative w-[280px] h-[280px] sm:w-[320px] sm:h-[320px] rounded-full border border-pink-200/70 flex items-center justify-center">
-          {/* 4 Pink Reticle Corners */}
-          <span className="absolute top-4 left-4 w-5 h-5 border-t-2 border-l-2 border-[#E0246A] rounded-tl-sm pointer-events-none" />
-          <span className="absolute top-4 right-4 w-5 h-5 border-t-2 border-r-2 border-[#E0246A] rounded-tr-sm pointer-events-none" />
-          <span className="absolute bottom-8 left-4 w-5 h-5 border-b-2 border-l-2 border-[#E0246A] rounded-bl-sm pointer-events-none" />
-          <span className="absolute bottom-8 right-4 w-5 h-5 border-b-2 border-r-2 border-[#E0246A] rounded-br-sm pointer-events-none" />
-          {/* Modern Periodic AR Laser Beam (Sweeps Down & Up 1 time per 10s) */}
-          <div className="absolute inset-3 rounded-full overflow-hidden pointer-events-none z-10">
-            <div className="absolute left-3 right-3 animate-scan-periodic">
-              <div className="h-7 -mt-3.5 bg-gradient-to-b from-transparent via-[#E0246A]/25 to-transparent blur-[2px]" />
-              <div className="h-[2px] -mt-[15px] bg-gradient-to-r from-transparent via-[#E0246A] to-transparent shadow-[0_0_14px_#E0246A,0_0_6px_#FFFFFF]" />
-            </div>
-          </div>
-
-          {/* 3D Glass Nail Silhouette on Real Finger (Pure CSS Micro-Geometry, ZERO SVG) */}
-          <div
-            onClick={handleToggleShape}
-            className="relative w-[145px] h-[250px] sm:w-[165px] sm:h-[285px] flex items-center justify-center cursor-pointer active:scale-95 transition-transform"
-            title="Click to cycle nail shape"
-          >
-            <NailCanvasPreview
-              nail={{
-                finger: 'middle',
-                title: 'Editorial Hero Nail',
-                shape: activeShape.id,
-                length: 'long',
-                finish: activeShade.finish || 'glossy',
-                baseColor: activeShade.hex,
-                accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
-                pattern: isFrenchTip ? 'classic-french' : 'solid',
-                clientNote: 'Pure CSS Micro-Geometry',
-                status: 'detected',
+                window.addEventListener('mousemove', onMouseMove);
+                window.addEventListener('mouseup', onMouseUp);
               }}
-              gradient={activeShade.gradient}
-              glowColor={activeShade.gradient.tip}
-              width={150}
-              height={260}
-              showFinger={true}
-            />
-          </div>
+              onTouchMove={(e) => {
+                const container = e.currentTarget.parentElement;
+                if (!container) return;
+                const rect = container.getBoundingClientRect();
+                const touch = e.touches[0];
+                if (!touch) return;
+                const x = touch.clientX - rect.left;
+                const percent = Math.min(Math.max((x / rect.width) * 100, 5), 95);
+                setSliderPosition(percent);
+              }}
+            >
+              <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white shadow-[0_2px_12px_rgba(0,0,0,0.35)] border-2 border-[#E0246A] flex items-center justify-center text-[#E0246A] transition-transform group-hover:scale-110 active:scale-95">
+                <Sliders className="w-3.5 h-3.5 rotate-90" />
+              </div>
+            </div>
 
-          {/* Bottom Label: Almond · Finish */}
-          <button
-            type="button"
-            onClick={() => setShapesModalOpen(true)}
-            className="absolute -bottom-3 left-1/2 -translate-x-1/2 px-3.5 py-0.5 text-xs font-medium text-stone-700 tracking-wide whitespace-nowrap bg-white/95 border border-stone-200/80 shadow-2xs rounded-full active:scale-95 flex items-center gap-1.5"
-            title="Choose nail shape"
-          >
-            <span className="font-semibold text-stone-900">{activeShape.name}</span>
-            <span className="text-stone-300">·</span>
-            <span className="text-stone-500">{isFrenchTip ? 'French' : activeShade.finish === 'chrome' ? 'Glazed' : 'Glossy'}</span>
-          </button>
-        </div>
-      </div>
-
-      {/* =====================================================================
-          BOTTOM CONTENT & CONTROLS (DESKTOP & MOBILE)
-          ===================================================================== */}
-      {/* Desktop Bottom Section (Page 1) */}
-      <footer className="hidden lg:block w-full max-w-7xl mx-auto px-8 lg:px-12 pb-8 pt-2 z-20">
-        <div className="grid grid-cols-3 items-center gap-6">
-          {/* Left: Explanatory Copy */}
-          <div className="text-left">
-            <p className="text-stone-600 text-sm leading-relaxed max-w-[320px]">
-              See any nail inspo on your actual hand before your appointment. Zero salon regrets.
-            </p>
-          </div>
-
-          {/* Center: Interactive Shade Selector Pill with French Tip Toggle */}
-          <div className="flex justify-center">
-            <div className="inline-flex items-center gap-3 px-4 py-2.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/80 shadow-[0_4px_20px_rgba(0,0,0,0.06)]">
-              {SHADES.map((shade, idx) => {
-                const active = idx === activeShadeIndex;
-                return (
-                  <button
-                    key={shade.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveShadeIndex(idx);
-                      if (frenchTipActive !== null) {
-                        setFrenchTipActive(null);
-                      }
-                    }}
-                    className={`w-7 h-7 rounded-full transition-all duration-200 cursor-pointer ${
-                      active
-                        ? 'ring-2 ring-offset-2 ring-[#E0246A] scale-110 shadow-xs'
-                        : 'hover:scale-105 opacity-85 hover:opacity-100 border border-black/10'
-                    }`}
-                    style={{ backgroundColor: shade.hex }}
-                    title={shade.name}
-                  />
-                );
-              })}
-
-              <div className="w-[1px] h-4 bg-stone-200 mx-0.5" />
-
-              {/* French Tip Quick Toggle */}
-              <button
-                type="button"
-                onClick={() => setFrenchTipActive((prev) => (prev === null ? !activeShade.hasTip : !prev))}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition cursor-pointer ${
-                  isFrenchTip
-                    ? 'bg-[#E0246A] text-white shadow-xs'
-                    : 'bg-stone-100 hover:bg-stone-200/70 text-stone-600'
-                }`}
-                title="Toggle French smile-line tip"
-              >
-                French tip
-              </button>
+            {/* Bottom Inspo Spec Pill */}
+            <div className="absolute bottom-2.5 inset-x-3 flex items-center justify-between z-10 pointer-events-none">
+              <span className="px-2.5 py-1 rounded-full bg-white/95 backdrop-blur-md text-stone-900 text-[10px] sm:text-xs font-semibold border border-stone-200/90 shadow-xs">
+                {activePair.title} · {activePair.shape}
+              </span>
+              <span className="hidden sm:inline-flex px-2 py-0.5 rounded-full bg-black/40 backdrop-blur-md text-white text-[9px] font-medium tracking-wide">
+                Drag slider to compare
+              </span>
             </div>
           </div>
 
-          {/* Right: Actions */}
-          <div className="flex items-center justify-end gap-6">
-            <button
-              type="button"
-              onClick={() => setHowItWorksOpen(true)}
-              className="text-sm font-medium text-stone-700 hover:text-stone-900 transition-colors cursor-pointer"
-            >
-              How it works
-            </button>
-            <button
-              type="button"
-              onClick={onSignUpClick || handleLaunchTryOn}
-              className="h-11 px-6 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/20 flex items-center gap-2 transition active:scale-95 cursor-pointer"
-            >
-              <Camera className="w-4 h-4" />
-              <span>Try On My Hand</span>
-            </button>
-          </div>
-        </div>
-      </footer>
-
-      {/* Mobile Bottom Section (Page 2) */}
-      <footer className="lg:hidden w-full px-5 pb-8 pt-2 space-y-3.5 z-20">
-        {/* Copy */}
-        <p className="text-stone-700 text-xs sm:text-sm leading-relaxed text-center max-w-xs mx-auto">
-          See any nail inspo on your actual hand before your appointment. Zero salon regrets.
-        </p>
-
-        {/* Swatch Pill with Shade Name & French Tip Toggle on Mobile */}
-        <div className="w-full max-w-sm mx-auto flex items-center justify-between px-3.5 py-2 rounded-full bg-white border border-stone-200/80 shadow-xs">
-          <div className="flex items-center gap-2">
-            {SHADES.map((shade, idx) => {
-              const active = idx === activeShadeIndex;
+          {/* 4 Manicure Style Selector Chips (1-tap to switch look) */}
+          <div className="flex items-center justify-center gap-1.5 sm:gap-2 overflow-x-auto py-1 scrollbar-none">
+            {FEATURED_PAIRS.map((pair, idx) => {
+              const isSelected = idx === selectedPairIndex;
               return (
                 <button
-                  key={shade.id}
+                  key={pair.id}
                   type="button"
                   onClick={() => {
-                    setActiveShadeIndex(idx);
-                    if (frenchTipActive !== null) {
-                      setFrenchTipActive(null);
-                    }
+                    setSelectedPairIndex(idx);
+                    setSliderPosition(55);
                   }}
-                  className={`w-6 h-6 rounded-full transition-all duration-200 cursor-pointer ${
-                    active
-                      ? 'ring-2 ring-offset-2 ring-[#E0246A] scale-110 shadow-xs'
-                      : 'opacity-80 hover:opacity-100 border border-black/10'
+                  className={`px-3 py-1.5 rounded-full text-xs font-semibold transition-all cursor-pointer whitespace-nowrap active:scale-95 flex items-center gap-1.5 border ${
+                    isSelected
+                      ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
+                      : 'bg-white hover:bg-stone-50 text-stone-700 border-stone-200/90'
                   }`}
-                  style={{ backgroundColor: shade.hex }}
-                  title={shade.name}
-                />
+                >
+                  <span
+                    className="w-2 h-2 rounded-full shrink-0"
+                    style={{ backgroundColor: pair.accentColor }}
+                  />
+                  <span>{pair.title}</span>
+                </button>
               );
             })}
           </div>
+        </div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={() => setFrenchTipActive((prev) => (prev === null ? !activeShade.hasTip : !prev))}
-              className={`px-2.5 py-0.5 rounded-full text-[11px] font-medium transition cursor-pointer ${
-                isFrenchTip
-                  ? 'bg-[#E0246A] text-white'
-                  : 'bg-stone-100 text-stone-600'
-              }`}
-            >
-              French
-            </button>
-            <span className="font-semibold text-stone-900 text-xs pr-1">
-              {activeShade.name}
+        {/* =====================================================================
+            3-STEP VALUE PROPOSITION (Clear, 3 Visual Icons)
+            ===================================================================== */}
+        <div className="grid grid-cols-3 gap-2 sm:gap-4 max-w-lg mx-auto w-full pt-3 sm:pt-4 text-center">
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs flex flex-col items-center">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center mb-1">
+              <Hand className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-semibold text-stone-900">
+              1. Snap Hand
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-stone-500 mt-0.5">
+              1-time phone photo
+            </span>
+          </div>
+
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs flex flex-col items-center">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center mb-1">
+              <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-semibold text-stone-900">
+              2. Drop Inspo
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-stone-500 mt-0.5">
+              Any Pinterest/IG look
+            </span>
+          </div>
+
+          <div className="p-2 sm:p-2.5 rounded-2xl bg-white border border-stone-200/80 shadow-2xs flex flex-col items-center">
+            <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-[#E0246A] text-white flex items-center justify-center mb-1 shadow-xs">
+              <Sparkles className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            </div>
+            <span className="text-[11px] sm:text-xs font-semibold text-stone-900">
+              3. Instant Try-On
+            </span>
+            <span className="text-[9px] sm:text-[10px] text-stone-500 mt-0.5">
+              Live on your fingers
             </span>
           </div>
         </div>
 
-        {/* Primary Full-Width CTA Button */}
-        <button
-          type="button"
-          onClick={onSignUpClick || handleLaunchTryOn}
-          className="w-full max-w-sm mx-auto h-12 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold shadow-md shadow-[#E0246A]/25 flex items-center justify-center gap-2 transition active:scale-98 cursor-pointer"
-        >
-          <Camera className="w-4 h-4" />
-          <span>Try On My Hand</span>
-        </button>
+        {/* =====================================================================
+            PRIMARY CALL TO ACTION: INSTANT FREE TRY-ON
+            ===================================================================== */}
+        <div className="pt-4 sm:pt-5 w-full max-w-sm mx-auto text-center space-y-2">
+          <button
+            type="button"
+            onClick={onSignUpClick || handleLaunchTryOn}
+            className="w-full h-12 sm:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-sm sm:text-base font-semibold shadow-[0_6px_22px_rgba(224,36,106,0.38)] hover:shadow-[0_8px_30px_rgba(224,36,106,0.5)] flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+          >
+            <span>Try On My Hand Free</span>
+            <ArrowRight className="w-4 h-4" />
+          </button>
 
-        {/* How It Works Link */}
-        <div className="text-center pt-0.5">
+          <p className="text-[11px] text-stone-500 flex items-center justify-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+            <span>1 free instant try-on · No credit card required</span>
+          </p>
+        </div>
+      </section>
+
+      {/* =====================================================================
+          FOOTER: REFINED EDITORIAL SUBTLETY
+          ===================================================================== */}
+      <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-10 py-3 flex items-center justify-between text-[11px] text-stone-400 z-10 border-t border-stone-200/60">
+        <span>© {new Date().getFullYear()} Finglora Atelier. All rights reserved.</span>
+        <div className="flex items-center gap-4">
           <button
             type="button"
             onClick={() => setHowItWorksOpen(true)}
-            className="text-xs font-semibold text-stone-900 hover:text-[#E0246A] transition-colors cursor-pointer"
+            className="hover:text-stone-700 transition cursor-pointer"
           >
             How it works
           </button>
+          <span>Zero salon regrets.</span>
         </div>
       </footer>
 
       {/* =====================================================================
-          MODAL: HOW IT WORKS
-          ===================================================================== */}
-      {/* =====================================================================
-          MODAL: HOW IT WORKS (MINIMAL EDITORIAL)
+          MODAL: HOW IT WORKS (CLEAN LUXURY EDITORIAL)
           ===================================================================== */}
       {howItWorksOpen && (
-        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200/90 space-y-5 animate-in zoom-in-95 duration-150">
-            {/* Header */}
+        <div
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setHowItWorksOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200/90 space-y-5 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="flex items-start justify-between">
               <div>
                 <span className="text-[10px] font-mono uppercase tracking-widest text-[#E0246A] font-semibold block">
-                  HOW IT WORKS
+                  HOW FINGLORA WORKS
                 </span>
-                <h3 className="font-serif text-2xl font-normal text-stone-900 tracking-tight mt-1">
-                  Virtual Nail Try-On
+                <h3 className="font-serif text-xl sm:text-2xl font-normal text-stone-900 tracking-tight mt-1">
+                  Virtual Manicure Try-On
                 </h3>
               </div>
               <button
                 type="button"
                 onClick={() => setHowItWorksOpen(false)}
                 className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition shrink-0"
-                title="Close"
               >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
-            {/* 3 Minimal Editorial Steps */}
             <div className="divide-y divide-stone-100 text-left">
               <div className="py-3 first:pt-0 flex items-start gap-3.5">
                 <span className="font-mono text-xs font-semibold text-[#E0246A] tracking-wider pt-0.5 shrink-0">
@@ -522,10 +411,10 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    Drop Inspo
+                    Snap Your Hand Once
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Pick any screenshot from Pinterest, TikTok, or Instagram — or describe your dream aesthetic.
+                    Take a clear photo with your phone or webcam. Finglora learns your unique skin tone and cuticle lines.
                   </p>
                 </div>
               </div>
@@ -536,10 +425,10 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    Mix & Match
+                    Pick or Upload Inspo
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Customize shape, length, chrome glaze, or French tips on every single finger.
+                    Choose from trending aesthetics or drop any Pinterest, Instagram, or TikTok screenshot.
                   </p>
                 </div>
               </div>
@@ -550,157 +439,26 @@ export function LandingSurface({
                 </span>
                 <div className="space-y-0.5">
                   <h4 className="text-xs font-semibold text-stone-900">
-                    See It On You
+                    See It Fitted Live
                   </h4>
                   <p className="text-xs text-stone-500 leading-relaxed">
-                    Snap your hand once to see the manicure live on your real fingers before booking.
+                    Instantly preview the realistic manicure on your actual hand. Customize shape or colors, then bring the exact formula to your technician.
                   </p>
                 </div>
               </div>
             </div>
 
-            {/* Clean Pill CTA */}
             <button
               type="button"
               onClick={() => {
                 setHowItWorksOpen(false);
                 handleLaunchTryOn();
               }}
-              className="w-full h-11 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
+              className="w-full h-11 sm:h-12 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
             >
-              <Camera className="w-4 h-4" />
-              <span>Try On My Hand</span>
+              <span>Try On My Hand Free</span>
+              <ArrowRight className="w-4 h-4" />
             </button>
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================================
-          MODAL: SHAPES SELECTOR
-          ===================================================================== */}
-      {shapesModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-semibold block">
-                  SILHOUETTES
-                </span>
-                <h3 className="font-serif text-lg font-normal text-stone-900">Choose Shape</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShapesModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {SHAPES.map((shape, idx) => {
-                const active = idx === activeShapeIndex;
-                return (
-                  <button
-                    key={shape.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveShapeIndex(idx);
-                      setShapesModalOpen(false);
-                    }}
-                    className={`w-full p-3 rounded-2xl text-left border transition flex items-center justify-between cursor-pointer ${
-                      active
-                        ? 'bg-[#FDF2F8] border-[#E0246A] text-stone-900 shadow-xs'
-                        : 'bg-white border-stone-200/80 hover:bg-stone-50 text-stone-700'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <div className="w-8 h-11 flex items-center justify-center shrink-0">
-                        <NailCanvasPreview
-                          nail={{
-                            finger: 'middle',
-                            title: shape.name,
-                            shape: shape.id,
-                            length: 'medium',
-                            finish: activeShade.finish || 'glossy',
-                            baseColor: activeShade.hex,
-                            accentColor: isFrenchTip ? '#FFFFFF' : activeShade.gradient.tip,
-                            pattern: isFrenchTip ? 'classic-french' : 'solid',
-                            clientNote: '',
-                            status: 'detected',
-                          }}
-                          gradient={activeShade.gradient}
-                          glowColor={activeShade.gradient.tip}
-                          width={28}
-                          height={42}
-                          showFinger={true}
-                        />
-                      </div>
-                      <div>
-                        <div className="text-xs font-semibold text-stone-900">{shape.name}</div>
-                        <div className="text-[11px] text-stone-500 mt-0.5">{shape.desc}</div>
-                      </div>
-                    </div>
-                    {active && <Check className="w-4 h-4 text-[#E0246A]" />}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* =====================================================================
-          MODAL: SHADES SELECTOR
-          ===================================================================== */}
-      {shadesModalOpen && (
-        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-150">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-stone-400 font-semibold block">
-                  LACQUER SHADES
-                </span>
-                <h3 className="font-serif text-lg font-normal text-stone-900">Select Polish</h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setShadesModalOpen(false)}
-                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer"
-              >
-                <X className="w-3.5 h-3.5" />
-              </button>
-            </div>
-
-            <div className="space-y-2">
-              {SHADES.map((shade, idx) => {
-                const active = idx === activeShadeIndex;
-                return (
-                  <button
-                    key={shade.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveShadeIndex(idx);
-                      setShadesModalOpen(false);
-                    }}
-                    className={`w-full p-3 rounded-2xl text-left border transition flex items-center justify-between cursor-pointer ${
-                      active
-                        ? 'bg-[#FDF2F8] border-[#E0246A] shadow-xs'
-                        : 'bg-white border-stone-200/80 hover:bg-stone-50'
-                    }`}
-                  >
-                    <div className="flex items-center gap-3">
-                      <span
-                        className="w-6 h-6 rounded-full border border-black/10 shadow-xs shrink-0"
-                        style={{ backgroundColor: shade.hex }}
-                      />
-                      <span className="text-xs font-semibold text-stone-900">{shade.name}</span>
-                    </div>
-                    {active && <Check className="w-4 h-4 text-[#E0246A]" />}
-                  </button>
-                );
-              })}
-            </div>
           </div>
         </div>
       )}
