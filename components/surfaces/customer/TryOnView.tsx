@@ -478,26 +478,11 @@ export function TryOnView({
               </div>
             </div>
 
-            {/* The Master Hand Canvas Viewport */}
             <div className={`relative w-full rounded-2xl sm:rounded-3xl overflow-hidden border border-stone-200/90 flex items-center justify-center mx-auto shadow-inner group transition-all duration-300 ${
               hasActiveInspo && !synthesizedHandUrl
                 ? 'bg-white p-1.5 sm:p-2.5 h-[340px] xs:h-[380px] sm:h-[450px] md:h-[500px] lg:h-[540px]'
                 : 'bg-stone-100 aspect-[3/4] max-h-[560px] lg:max-h-[620px]'
             }`}>
-              {/* Spinner Overlay during synthesis */}
-              {isSynthesizingHand && (
-                <div className="absolute inset-0 z-30 bg-black/75 backdrop-blur-xs flex flex-col items-center justify-center gap-3 text-white p-6 text-center animate-in fade-in duration-200">
-                  <Loader2 className="w-9 h-9 animate-spin text-[#E0246A]" />
-                  <div className="space-y-1">
-                    <span className="text-sm font-semibold tracking-wide block">
-                      Applying manicure to your hand...
-                    </span>
-                    <span className="text-xs text-stone-300 block max-w-xs leading-relaxed">
-                      Matching skin tone, cuticle lines & mirror gel shine
-                    </span>
-                  </div>
-                </div>
-              )}
 
               {/* Viewport Content: Side-by-Side if staged and not yet synthesized, otherwise single hand */}
               {hasActiveInspo && !synthesizedHandUrl ? (
@@ -583,83 +568,46 @@ export function TryOnView({
                   )}
 
                   {/* ============================================================== */}
-                  {/* PSYCHOLOGICAL LUXURY ATELIER SALON APPLYING MOTION OVERLAY     */}
+                  {/* EDITORIAL ATELIER APPLICATION (CLEAN, LUXURY, QUIET BEAUTY)   */}
                   {/* ============================================================== */}
                   {isSynthesizingHand && (
-                    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden bg-black/25 backdrop-blur-[1.5px] transition-all duration-500 animate-in fade-in">
-                      {/* 1. Luminous Sweeping Atelier Laser Scan Line */}
-                      <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#E0246A] to-transparent shadow-[0_0_16px_#E0246A] animate-laser-scan z-20">
-                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-32 h-3 bg-[#E0246A]/20 blur-sm rounded-full" />
-                      </div>
-
-                      {/* 2. Soft Gel Layer Pulse / Chromatic Infusion */}
-                      <div className="absolute inset-0 bg-radial from-[#E0246A]/10 via-transparent to-transparent animate-gel-pulse pointer-events-none" />
-
-                      {/* 3. High-Gloss Specular Light Sheen */}
-                      {synthesisPhase >= 3 && (
-                        <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-light-sheen pointer-events-none" />
-                      )}
-
-                      {/* 4. Precision Geometric Cuticle Calibration Crosshairs */}
-                      <div className="absolute inset-0 flex items-center justify-around px-8 opacity-75">
-                        {[0, 1, 2, 3, 4].map((i) => (
-                          <div
-                            key={i}
-                            className="relative flex flex-col items-center justify-center animate-pulse"
-                            style={{ animationDelay: `${i * 150}ms` }}
-                          >
-                            <span className="w-3 h-[1px] bg-white/70" />
-                            <span className="h-3 w-[1px] bg-white/70 -mt-[7px]" />
-                            <span className="w-1.5 h-1.5 rounded-full border border-[#E0246A] mt-1 shadow-xs" />
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* 5. Psychological Atelier Salon Progress Dock */}
-                      <div className="absolute bottom-4 inset-x-3 sm:inset-x-6 flex justify-center z-30">
-                        <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-stone-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.12)] space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <span className="font-semibold text-stone-900 flex items-center gap-1.5">
-                              <span className="w-2 h-2 rounded-full bg-[#E0246A] animate-ping" />
-                              <span>
-                                {synthesisPhase === 1 && '1/4 Calibrating Cuticles & Apex'}
-                                {synthesisPhase === 2 && '2/4 Sculpting Nail Silhouette'}
-                                {synthesisPhase === 3 && '3/4 Infusing Pigment & Pearl Glaze'}
-                                {synthesisPhase >= 4 && '4/4 Sealing High-Gloss Topcoat'}
-                              </span>
-                            </span>
-                            <span className="text-[11px] font-mono text-[#E0246A] font-medium">
-                              {synthesisPhase === 1 && '25%'}
-                              {synthesisPhase === 2 && '55%'}
-                              {synthesisPhase === 3 && '80%'}
-                              {synthesisPhase >= 4 && '95%'}
-                            </span>
-                          </div>
-
-                          {/* Progress Track */}
-                          <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden p-0.5">
-                            <div
-                              className="h-full bg-gradient-to-r from-[#E0246A] to-[#F43F5E] rounded-full transition-all duration-700 ease-out shadow-xs"
-                              style={{
-                                width:
-                                  synthesisPhase === 1
-                                    ? '25%'
-                                    : synthesisPhase === 2
-                                    ? '55%'
-                                    : synthesisPhase === 3
-                                    ? '82%'
-                                    : '96%',
-                              }}
-                            />
-                          </div>
-
-                          <p className="text-[10px] text-stone-500 truncate text-center">
-                            {synthesisPhase === 1 && 'Mapping fingernail geometry on your skin...'}
-                            {synthesisPhase === 2 && `Applying ${nails.middle.shape} contour architecture...`}
-                            {synthesisPhase === 3 && `Blending ${effectiveInspoTitle || 'selected look'} pigment...`}
-                            {synthesisPhase >= 4 && 'Applying LED mirror-shine gel seal...'}
-                          </p>
+                    <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 sm:p-5 bg-black/40 backdrop-blur-[2px] transition-all duration-300 animate-in fade-in">
+                      {/* Top Quiet Status Pill */}
+                      <div className="flex justify-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-sm">
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A] animate-pulse" />
+                          <span className="text-xs font-semibold text-stone-900 tracking-tight">
+                            {synthesisPhase <= 1 && 'Calibrating skin & cuticles'}
+                            {synthesisPhase === 2 && `Sculpting ${nails.middle.shape} contour`}
+                            {synthesisPhase === 3 && 'Infusing pigment & finish'}
+                            {synthesisPhase >= 4 && 'Applying gel clearcoat'}
+                          </span>
                         </div>
+                      </div>
+
+                      {/* Bottom Subtle Hairline Progress */}
+                      <div className="w-full max-w-xs mx-auto space-y-1.5">
+                        <div className="h-[2px] w-full bg-white/30 rounded-full overflow-hidden">
+                          <div
+                            className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-xs"
+                            style={{
+                              width:
+                                synthesisPhase === 1
+                                  ? '25%'
+                                  : synthesisPhase === 2
+                                  ? '55%'
+                                  : synthesisPhase === 3
+                                  ? '80%'
+                                  : '96%',
+                            }}
+                          />
+                        </div>
+                        <p className="text-[10px] text-white/80 font-mono tracking-wide text-center">
+                          {synthesisPhase <= 1 && '1 / 4'}
+                          {synthesisPhase === 2 && '2 / 4'}
+                          {synthesisPhase === 3 && '3 / 4'}
+                          {synthesisPhase >= 4 && '4 / 4'}
+                        </p>
                       </div>
                     </div>
                   )}
