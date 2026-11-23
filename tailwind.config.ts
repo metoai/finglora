@@ -86,8 +86,13 @@ const config: Config = {
         gradient: "gradient 8s linear infinite",
         "float-gentle": "float 4s ease-in-out infinite",
         "pulse-subtle": "pulseSubtle 3s ease-in-out infinite",
+        "step-progress": "stepProgress 3.5s linear infinite",
       },
       keyframes: {
+        stepProgress: {
+          '0%': { width: '0%' },
+          '100%': { width: '100%' },
+        },
         float: {
           '0%, 100%': { transform: 'translateY(0px)' },
           '50%': { transform: 'translateY(-4px)' },

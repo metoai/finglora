@@ -165,39 +165,50 @@ export function LandingSurface({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Step Progress Tabs - Clean Text-Only */}
-            <div className="grid grid-cols-3 gap-1.5 sm:gap-2 bg-white p-1 sm:p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
-              {STEPS.map((step) => {
-                const isActive = activeStep === step.id;
-                const isCompleted = activeStep > step.id;
-                return (
-                  <button
-                    key={step.id}
-                    type="button"
-                    onClick={() => {
-                      setActiveStep(step.id);
-                      setIsPaused(true);
-                    }}
-                    className={`flex items-center justify-center py-1.5 sm:py-2 px-1.5 sm:px-2 rounded-xl text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
-                      isActive
-                        ? 'bg-stone-900 text-white shadow-xs'
-                        : isCompleted
-                        ? 'bg-pink-50/70 text-[#E0246A]'
-                        : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
-                    }`}
-                  >
-                    <span className="truncate">{step.label}</span>
-                  </button>
-                );
-              })}
+            {/* Step Progress Tabs - Connected Flow Stepper */}
+            <div className="bg-white p-1 sm:p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
+              <div className="grid grid-cols-3 gap-1 sm:gap-1.5">
+                {STEPS.map((step, idx) => {
+                  const isActive = activeStep === step.id;
+                  const isCompleted = activeStep > step.id;
+                  return (
+                    <button
+                      key={step.id}
+                      type="button"
+                      onClick={() => {
+                        setActiveStep(step.id);
+                        setIsPaused(true);
+                      }}
+                      className={`relative flex items-center justify-center py-1.5 sm:py-2 px-1 rounded-xl text-[11px] sm:text-xs font-semibold transition-all cursor-pointer ${
+                        isActive
+                          ? 'bg-stone-900 text-white shadow-xs'
+                          : isCompleted
+                          ? 'bg-pink-50 text-[#E0246A]'
+                          : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
+                      }`}
+                    >
+                      <span className="truncate">{step.label}</span>
+                      {idx < STEPS.length - 1 && (
+                        <span className="hidden sm:inline-block ml-1 text-[10px] opacity-40">→</span>
+                      )}
+                      {/* Active timer progress line */}
+                      {isActive && !isPaused && (
+                        <span className="absolute bottom-0 left-2 right-2 h-[2px] bg-stone-700/60 rounded-full overflow-hidden">
+                          <span className="block h-full bg-[#E0246A] animate-step-progress rounded-full" />
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             {/* Visual Stage */}
             <div className="relative w-full aspect-[4/3] rounded-2xl sm:rounded-3xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_12px_40px_rgba(24,18,22,0.08)]">
               {/* STEP 1: Choose Inspo Grid */}
               {activeStep === 0 && (
-                <div className="absolute inset-0 p-2.5 sm:p-4 bg-[#FAF7F5] flex flex-col justify-between animate-in fade-in duration-300">
-                  <div className="grid grid-cols-2 gap-2 sm:gap-3 flex-1 min-h-0">
+                <div className="absolute inset-0 p-2.5 sm:p-3.5 bg-[#FAF7F5] flex flex-col justify-between animate-in fade-in duration-300">
+                  <div className="grid grid-cols-2 gap-2 sm:gap-2.5 flex-1 min-h-0">
                     {FEATURED_PAIRS.map((pair, idx) => {
                       const isSelected = idx === selectedPairIndex;
                       return (
@@ -211,7 +222,7 @@ export function LandingSurface({
                           }}
                           className={`relative rounded-xl sm:rounded-2xl overflow-hidden group cursor-pointer border-2 transition-all text-left ${
                             isSelected
-                              ? 'border-[#E0246A] shadow-md'
+                              ? 'border-[#E0246A] shadow-md ring-2 ring-[#E0246A]/20'
                               : 'border-transparent hover:border-stone-300'
                           }`}
                         >
@@ -220,23 +231,34 @@ export function LandingSurface({
                             alt={pair.title}
                             className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                           />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/15 to-transparent" />
 
-                          {isSelected && (
+                          {isSelected ? (
                             <span className="absolute top-2 right-2 w-5 h-5 sm:w-6 sm:h-6 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-sm">
                               <Check className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                            </span>
+                          ) : (
+                            <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/40 backdrop-blur-xs text-[9px] text-white font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                              Try
                             </span>
                           )}
 
                           <div className="absolute bottom-1.5 sm:bottom-2 left-2 right-2 sm:left-2.5 sm:right-2.5">
-                            <p className="text-white text-[11px] sm:text-xs font-semibold truncate">
+                            <p className="text-white text-[11px] sm:text-xs font-semibold truncate drop-shadow-xs">
                               {pair.title}
                             </p>
-                            <p className="text-white/75 text-[9px] sm:text-[10px]">{pair.shape}</p>
+                            <p className="text-white/80 text-[9px] sm:text-[10px]">{pair.shape}</p>
                           </div>
                         </button>
                       );
                     })}
+                  </div>
+
+                  {/* Micro Hint to guide user action */}
+                  <div className="mt-1.5 pt-1 text-center">
+                    <p className="text-[10px] sm:text-[11px] font-medium text-stone-500">
+                      Tap any style to preview on hand →
+                    </p>
                   </div>
                 </div>
               )}
