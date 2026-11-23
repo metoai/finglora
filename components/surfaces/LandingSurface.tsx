@@ -23,6 +23,10 @@ interface TryOnPair {
   accentColor: string;
 }
 
+// TODO: Swap this with an unpolished bare hand photo from your Supabase bucket
+const BARE_HAND_URL =
+  'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg';
+
 const FEATURED_PAIRS: TryOnPair[] = [
   {
     id: 'glazed-pearl',
@@ -30,8 +34,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     category: 'Hailey Chrome',
     shape: 'Almond',
     finish: 'Mirror Glaze',
-    beforeUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     accentColor: '#E0246A',
@@ -42,8 +45,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     category: 'French Atelier',
     shape: 'Almond',
     finish: 'Glossy Sheer',
-    beforeUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
     accentColor: '#E0246A',
@@ -54,8 +56,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     category: 'Aura Velvet',
     shape: 'Oval',
     finish: 'Cat-Eye Shimmer',
-    beforeUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
     accentColor: '#C59B27',
@@ -66,8 +67,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
     category: 'Coquette 3D',
     shape: 'Coffin',
     finish: 'High-Gloss',
-    beforeUrl:
-      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',
+    beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
     accentColor: '#801A35',
@@ -77,7 +77,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
 const STEPS = [
   { id: 0, label: '1. Pick Inspo', icon: ImageIcon },
   { id: 1, label: '2. Snap Hand', icon: Camera },
-  { id: 2, label: '3. Your Try-On', icon: Sparkles },
+  { id: 2, label: '3. Preview', icon: Sparkles },
 ];
 
 export function LandingSurface({
@@ -328,7 +328,7 @@ export function LandingSurface({
                   </div>
 
                   {/* Bottom Applied Inspo Card */}
-                  <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between gap-2 bg-white/92 backdrop-blur-md p-2 pr-3.5 rounded-2xl border border-white/60 shadow-lg">
+                  <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between gap-2 bg-white p-2 pr-3.5 rounded-2xl border border-stone-200/80 shadow-lg">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <img
                         src={activePair.afterUrl}
@@ -339,7 +339,7 @@ export function LandingSurface({
                         <p className="text-xs font-semibold text-stone-900 truncate">
                           {activePair.title}
                         </p>
-                        <p className="text-[11px] text-stone-500">
+                        <p className="text-[11px] text-stone-600">
                           {activePair.shape} · {activePair.finish}
                         </p>
                       </div>
