@@ -662,34 +662,24 @@ export function TryOnView({
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-3 gap-1.5 sm:gap-2.5 pt-1">
+              <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-1">
                 <button
                   type="button"
                   onClick={() => setIsHandSourceModalOpen(true)}
-                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                  className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
                   title="Change Hand Photo"
                 >
-                  <UploadCloud className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                  <UploadCloud className="w-4 h-4 shrink-0" />
                   <span className="truncate">Change Hand</span>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setIsCameraModalOpen(true)}
-                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-medium inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer"
-                  title="Live Camera Hand Capture"
-                >
-                  <Camera className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E0246A] shrink-0" />
-                  <span className="truncate">Camera</span>
-                </button>
-
-                <button
-                  type="button"
                   onClick={() => changeRefInspoInputRef.current?.click()}
-                  className="h-10 sm:h-11 px-2 sm:px-3 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-1.5 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
+                  className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
                   title="Upload Inspiration Photo"
                 >
-                  <ImagePlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-[#E0246A] shrink-0" />
+                  <ImagePlus className="w-4 h-4 text-[#E0246A] shrink-0" />
                   <span className="truncate text-[#E0246A]">Upload Inspo</span>
                 </button>
               </div>
