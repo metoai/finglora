@@ -131,28 +131,15 @@ export function LandingSurface({
       {/* Subtle ambient aura */}
       <div className="absolute top-0 inset-x-0 h-[420px] bg-[radial-gradient(ellipse_75%_55%_at_50%_-20%,rgba(224,36,106,0.10),transparent_70%)] pointer-events-none" />
 
-      {/* Top Navigation */}
-      <header className="w-full max-w-6xl mx-auto px-5 sm:px-8 pt-5 pb-3 flex items-center justify-between z-20">
-        <BrandLogo size="md" />
-
-        <div className="flex items-center gap-3">
-          {onSignInClick && (
-            <button
-              type="button"
-              onClick={onSignInClick}
-              className="h-9 px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs sm:text-sm font-semibold text-stone-800 hover:border-stone-300 transition cursor-pointer shadow-2xs active:scale-95"
-            >
-              Sign In
-            </button>
-          )}
-        </div>
-      </header>
-
       {/* Split Hero Section */}
-      <section className="flex-1 flex items-center w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-3 sm:py-6 lg:py-10 z-10">
+      <section className="flex-1 flex items-center w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 sm:pt-8 lg:pt-12 pb-4 sm:pb-6 lg:pb-10 z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6 lg:gap-12 items-center w-full">
-          {/* 1. Headline (Mobile: 1st, Desktop: Top-Left) */}
-          <div className="order-1 lg:col-span-5 text-center lg:text-left">
+          {/* 1. Logo + Headline (Mobile: 1st, Desktop: Top-Left) */}
+          <div className="order-1 lg:col-span-5 text-center lg:text-left space-y-3 sm:space-y-4">
+            <div className="flex justify-center lg:justify-start">
+              <BrandLogo size="md" />
+            </div>
+
             <h1 className="font-serif text-3xl sm:text-5xl lg:text-6xl font-medium sm:font-normal text-stone-900 tracking-tight leading-[1.12] sm:leading-[1.08] lg:leading-[1.05]">
               See any nail inspo on your{' '}
               <span className="italic font-normal text-[#E0246A]">actual hand</span> before you book.
@@ -345,15 +332,27 @@ export function LandingSurface({
               Pick a look, snap your hand once, and see how it fits your real skin tone.
             </p>
 
-            <div className="space-y-2 max-w-xs mx-auto lg:mx-0">
-              <button
-                type="button"
-                onClick={handleLaunchTryOn}
-                className="w-full h-11 sm:h-12 lg:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-xs sm:text-sm lg:text-base font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xs"
-              >
-                <span>Try On My Hand Free</span>
-                <ArrowRight className="w-4 h-4" />
-              </button>
+            <div className="space-y-2 max-w-md mx-auto lg:mx-0">
+              <div className="flex items-center justify-center lg:justify-start gap-2.5">
+                <button
+                  type="button"
+                  onClick={handleLaunchTryOn}
+                  className="flex-1 h-11 sm:h-12 lg:h-13 px-4 sm:px-6 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-xs sm:text-sm lg:text-base font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xs whitespace-nowrap"
+                >
+                  <span>Try On My Hand Free</span>
+                  <ArrowRight className="w-4 h-4 shrink-0" />
+                </button>
+
+                {onSignInClick && (
+                  <button
+                    type="button"
+                    onClick={onSignInClick}
+                    className="h-11 sm:h-12 lg:h-13 px-4 sm:px-5 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-xs sm:text-sm font-semibold text-stone-800 hover:border-stone-300 transition cursor-pointer shadow-2xs active:scale-95 whitespace-nowrap"
+                  >
+                    Sign In
+                  </button>
+                )}
+              </div>
 
               <p className="text-[11px] sm:text-xs text-stone-500 text-center lg:text-left">
                 1 free instant try-on · No card required
