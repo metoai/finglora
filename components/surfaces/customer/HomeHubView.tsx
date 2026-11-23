@@ -618,44 +618,41 @@ export function HomeHubView({
         </div>
       </div>
 
-      {/* 4. Curated Inspiration - Mixed 10 Showcase */}
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
+      {/* 4. Curated Inspiration - Minimal Header */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between px-1">
           <div>
-            <h2 className="font-serif text-lg sm:text-xl lg:text-2xl font-medium text-stone-900 tracking-tight">
-              Curated Inspiration
+            <h2 className="text-sm sm:text-base font-semibold text-stone-900 tracking-tight">
+              Inspiration
             </h2>
-            <p className="text-xs sm:text-sm text-stone-500 font-normal">
-              10 handpicked aesthetics ready to try on
-            </p>
           </div>
 
           <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
               onClick={() => scrollCarousel('left')}
-              className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
-              title="Previous look"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+              title="Previous"
             >
-              <ChevronLeft className="w-4 h-4" />
+              <ChevronLeft className="w-3.5 h-3.5" />
             </button>
             <button
               type="button"
               onClick={() => scrollCarousel('right')}
-              className="w-8 h-8 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
-              title="Next look"
+              className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-white hover:bg-stone-50 border border-stone-200 text-stone-600 flex items-center justify-center transition active:scale-95 cursor-pointer shadow-2xs"
+              title="Next"
             >
-              <ChevronRight className="w-4 h-4" />
+              <ChevronRight className="w-3.5 h-3.5" />
             </button>
 
             {onExploreClick && (
               <button
                 type="button"
                 onClick={() => onExploreClick()}
-                className="text-xs sm:text-sm font-semibold text-[#E0246A] hover:text-[#BE185D] hover:underline inline-flex items-center gap-1 cursor-pointer transition active:scale-95 py-1 px-2.5 rounded-xl hover:bg-pink-50 ml-1"
+                className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] inline-flex items-center gap-0.5 cursor-pointer transition active:scale-95 py-1 px-2 rounded-lg hover:bg-pink-50"
               >
                 <span>See All</span>
-                <Compass className="w-3.5 h-3.5" />
+                <ChevronRight className="w-3.5 h-3.5" />
               </button>
             )}
           </div>
