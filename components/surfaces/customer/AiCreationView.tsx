@@ -352,7 +352,7 @@ export function AiCreationView({
       )}
 
       {/* Mobile-Only Compact View Switcher [Chat | Hand] */}
-      <div className="flex lg:hidden items-center justify-between px-3 py-1.5 border-b border-stone-200/60 bg-white shrink-0 z-20">
+      <div className="flex lg:hidden items-center justify-center px-3 py-1.5 border-b border-stone-200/60 bg-white shrink-0 z-20">
         <div className="flex items-center bg-stone-100 rounded-full p-0.5 border border-stone-200/60">
           <button
             type="button"
@@ -377,16 +377,6 @@ export function AiCreationView({
             Hand
           </button>
         </div>
-
-        <button
-          type="button"
-          onClick={handleStartNewLook}
-          className="h-7 px-2.5 rounded-full hover:bg-stone-100 border border-stone-200 text-stone-700 text-xs font-medium flex items-center gap-1 transition cursor-pointer active:scale-95 shadow-2xs"
-          title="Start fresh look"
-        >
-          <Plus className="w-3 h-3" />
-          <span>New Look</span>
-        </button>
       </div>
 
       {/* 2. Full-Space Workspace: Desktop Split Screen / Mobile View Switcher */}
