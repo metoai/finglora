@@ -2,12 +2,9 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Sparkles,
   ArrowRight,
   Camera,
   Check,
-  X,
-  Image as ImageIcon,
 } from 'lucide-react';
 import { ExploreDesignSet, Finger } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
@@ -75,9 +72,9 @@ const FEATURED_PAIRS: TryOnPair[] = [
 ];
 
 const STEPS = [
-  { id: 0, label: '1. Pick Inspo', icon: ImageIcon },
-  { id: 1, label: '2. Snap Hand', icon: Camera },
-  { id: 2, label: '3. Preview', icon: Sparkles },
+  { id: 0, label: '1. Pick Inspo' },
+  { id: 1, label: '2. Snap Hand' },
+  { id: 2, label: '3. Preview' },
 ];
 
 export function LandingSurface({
@@ -147,33 +144,27 @@ export function LandingSurface({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
           {/* Left Column: Headline + Primary CTA */}
           <div className="lg:col-span-5 text-center lg:text-left space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-xs font-semibold text-[#E0246A]">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A]" />
-              <span>Virtual Hand Try-On</span>
-            </div>
-
             <h1 className="font-serif text-3xl sm:text-5xl font-normal text-stone-900 tracking-tight leading-[1.12]">
               See any nail inspo on your{' '}
               <span className="italic text-[#E0246A]">actual hand</span> before you book.
             </h1>
 
             <p className="text-stone-600 text-sm sm:text-base max-w-md mx-auto lg:mx-0 leading-relaxed">
-              Pick a look, snap your hand once, and preview the manicure on your real skin tone in seconds.
+              Pick a look, snap your hand once, and see how it fits your real skin tone.
             </p>
 
             <div className="pt-2 space-y-3 max-w-xs mx-auto lg:mx-0">
               <button
                 type="button"
                 onClick={handleLaunchTryOn}
-                className="w-full h-12 sm:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-sm sm:text-base font-semibold shadow-[0_6px_22px_rgba(224,36,106,0.32)] hover:shadow-[0_8px_28px_rgba(224,36,106,0.45)] flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer"
+                className="w-full h-12 sm:h-13 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white text-sm sm:text-base font-semibold flex items-center justify-center gap-2 transition-all active:scale-98 cursor-pointer shadow-xs"
               >
                 <span>Try On My Hand Free</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
 
-              <p className="text-xs text-stone-500 flex items-center justify-center lg:justify-start gap-1.5">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                <span>1 free instant try-on · No card required</span>
+              <p className="text-xs text-stone-500 text-center lg:text-left">
+                1 free instant try-on · No card required
               </p>
             </div>
           </div>
@@ -184,10 +175,9 @@ export function LandingSurface({
             onMouseEnter={() => setIsPaused(true)}
             onMouseLeave={() => setIsPaused(false)}
           >
-            {/* Step Progress Tabs */}
+            {/* Step Progress Tabs - Clean Text-Only */}
             <div className="grid grid-cols-3 gap-2 bg-white p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
               {STEPS.map((step) => {
-                const Icon = step.icon;
                 const isActive = activeStep === step.id;
                 const isCompleted = activeStep > step.id;
                 return (
@@ -198,7 +188,7 @@ export function LandingSurface({
                       setActiveStep(step.id);
                       setIsPaused(true);
                     }}
-                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    className={`flex items-center justify-center py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                       isActive
                         ? 'bg-stone-900 text-white shadow-xs'
                         : isCompleted
@@ -206,11 +196,6 @@ export function LandingSurface({
                         : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
                     }`}
                   >
-                    {isCompleted ? (
-                      <Check className="w-3.5 h-3.5 shrink-0" />
-                    ) : (
-                      <Icon className="w-3.5 h-3.5 shrink-0" />
-                    )}
                     <span className="truncate">{step.label}</span>
                   </button>
                 );
@@ -276,27 +261,19 @@ export function LandingSurface({
                   />
                   <div className="absolute inset-0 bg-black/15" />
 
-                  {/* Camera Viewfinder Frame */}
-                  <div className="absolute inset-6 sm:inset-8 pointer-events-none">
-                    <div className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-white/90 rounded-tl-xl" />
-                    <div className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-white/90 rounded-tr-xl" />
-                    <div className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-white/90 rounded-bl-xl" />
-                    <div className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-white/90 rounded-br-xl" />
-                  </div>
-
                   {/* Floating Status Pill */}
                   <div className="absolute bottom-4 inset-x-4 flex items-center justify-between gap-2">
-                    <div className="px-3.5 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium flex items-center gap-2">
-                      <Camera className="w-3.5 h-3.5 text-pink-300" />
-                      <span>Upload or snap your bare hand</span>
+                    <div className="px-3.5 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap">
+                      <Camera className="w-3.5 h-3.5 text-pink-300 shrink-0" />
+                      <span>Your bare hand</span>
                     </div>
 
                     <button
                       type="button"
                       onClick={() => setActiveStep(2)}
-                      className="px-3.5 py-2 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1 shadow-md cursor-pointer transition"
+                      className="px-3.5 py-2 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1 shadow-md cursor-pointer transition whitespace-nowrap"
                     >
-                      <span>Apply look</span>
+                      <span>Preview</span>
                       <ArrowRight className="w-3.5 h-3.5" />
                     </button>
                   </div>
@@ -313,8 +290,7 @@ export function LandingSurface({
                   />
 
                   {/* Top Result Badge */}
-                  <div className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
-                    <Sparkles className="w-3.5 h-3.5" />
+                  <div className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold shadow-sm">
                     <span>Fitted to your hand</span>
                   </div>
 
@@ -353,8 +329,7 @@ export function LandingSurface({
 
       {/* Footer */}
       <footer className="w-full max-w-6xl mx-auto px-5 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-stone-400 z-10 border-t border-stone-200/60">
-        <span>© {new Date().getFullYear()} Finglora Atelier.</span>
-        <span>Zero salon regrets.</span>
+        <span>© {new Date().getFullYear()} Finglora</span>
       </footer>
     </main>
   );
