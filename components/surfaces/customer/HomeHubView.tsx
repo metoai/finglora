@@ -580,7 +580,7 @@ export function HomeHubView({
             <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-white text-[#E0246A] border border-pink-100 flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105">
               <Heart className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-all duration-300 ease-out group-hover:scale-115 group-hover:fill-[#E0246A]" strokeWidth={2} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-white hover:bg-[#E0246A] text-stone-400 hover:text-white border border-pink-100 flex items-center justify-center transition-all duration-200 shadow-2xs">
+            <div className="w-7 h-7 rounded-full bg-white group-hover:bg-[#E0246A] text-[#E0246A] group-hover:text-white border border-pink-100 flex items-center justify-center transition-all duration-200 shadow-2xs">
               <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
             </div>
           </div>
@@ -594,24 +594,24 @@ export function HomeHubView({
           </div>
         </div>
 
-        {/* Station 4: Explore Pins - CRISP ATELIER WHITE CARD */}
+        {/* Station 4: Explore Pins - BRAND PINK ACCENT CARD */}
         <div
           onClick={() => onExploreClick?.()}
-          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-[#FAF7F2] border border-stone-200/90 hover:border-stone-400/80 transition-all duration-300 shadow-[0_2px_8px_rgba(0,0,0,0.03)] hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
+          className="group relative overflow-hidden p-3.5 sm:p-4 rounded-2xl sm:rounded-3xl bg-white hover:bg-[#FFF5F8] border border-stone-200/90 hover:border-[#E0246A]/40 transition-all duration-300 shadow-[0_2px_8px_rgba(224,36,106,0.04)] hover:shadow-[0_8px_24px_rgba(224,36,106,0.12)] hover:-translate-y-1 active:translate-y-0 active:scale-[0.98] cursor-pointer flex flex-col justify-between min-h-[110px] sm:min-h-[122px]"
         >
           <div className="flex items-center justify-between relative z-10">
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-[#181416] text-white flex items-center justify-center shadow-2xs transition-all duration-300 ease-out group-hover:scale-105 group-hover:bg-black">
-              <Compass className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-500 ease-out group-hover:rotate-45 group-hover:scale-110" strokeWidth={1.8} />
+            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl sm:rounded-2xl bg-gradient-to-br from-[#E0246A] to-[#BE185D] text-white flex items-center justify-center shadow-[0_2px_10px_rgba(224,36,106,0.22)] transition-all duration-300 ease-out group-hover:scale-105 group-hover:shadow-[0_4px_14px_rgba(224,36,106,0.35)]">
+              <Compass className="w-4.5 h-4.5 sm:w-5 sm:h-5 transition-transform duration-500 ease-out group-hover:rotate-45 group-hover:scale-110" strokeWidth={2} />
             </div>
-            <div className="w-7 h-7 rounded-full bg-stone-100 hover:bg-[#181416] text-stone-400 hover:text-white border border-stone-200 flex items-center justify-center transition-all duration-200 shadow-2xs">
-              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2} />
+            <div className="w-7 h-7 rounded-full bg-pink-50 group-hover:bg-[#E0246A] text-[#E0246A] group-hover:text-white border border-pink-100/80 flex items-center justify-center transition-all duration-200 shadow-2xs">
+              <ArrowUpRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5 group-hover:-translate-y-0.5" strokeWidth={2.25} />
             </div>
           </div>
           <div className="relative z-10 mt-3">
-            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-stone-900 transition-colors leading-tight truncate">
+            <h3 className="font-semibold text-xs sm:text-sm text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight truncate">
               Explore Pins
             </h3>
-            <p className="text-[10px] sm:text-[11px] text-stone-500 mt-0.5 truncate font-normal">
+            <p className="text-[10px] sm:text-[11px] text-stone-500 group-hover:text-[#BE185D] transition-colors mt-0.5 truncate font-normal">
               Trending discovery
             </p>
           </div>
