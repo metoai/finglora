@@ -17,6 +17,7 @@ interface TryOnPair {
   finish: string;
   beforeUrl: string;
   afterUrl: string;
+  inspoThumbUrl: string;
   accentColor: string;
 }
 
@@ -34,6 +35,8 @@ const FEATURED_PAIRS: TryOnPair[] = [
     beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+    inspoThumbUrl:
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
     accentColor: '#E0246A',
   },
   {
@@ -45,6 +48,8 @@ const FEATURED_PAIRS: TryOnPair[] = [
     beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_micro_almond_01.jpg',
+    inspoThumbUrl:
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg',
     accentColor: '#E0246A',
   },
   {
@@ -56,6 +61,8 @@ const FEATURED_PAIRS: TryOnPair[] = [
     beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_rosegold_square_04.jpg',
+    inspoThumbUrl:
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_liquid_silver_03.jpg',
     accentColor: '#C59B27',
   },
   {
@@ -67,6 +74,8 @@ const FEATURED_PAIRS: TryOnPair[] = [
     beforeUrl: BARE_HAND_URL,
     afterUrl:
       'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg',
+    inspoThumbUrl:
+      'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_noir_classic_03.jpg',
     accentColor: '#801A35',
   },
 ];
@@ -253,16 +262,23 @@ export function LandingSurface({
 
               {/* STEP 2: Upload or Capture Your Hand */}
               {activeStep === 1 && (
-                <div className="absolute inset-0 animate-in fade-in duration-300">
+                <div
+                  onClick={handleLaunchTryOn}
+                  className="absolute inset-0 animate-in fade-in duration-300 cursor-pointer group/camera"
+                  title="Click to snap or upload your hand"
+                >
                   <img
                     src={activePair.beforeUrl}
                     alt="Bare hand capture"
-                    className="w-full h-full object-cover"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover/camera:scale-102"
                   />
-                  <div className="absolute inset-0 bg-black/15" />
+                  <div className="absolute inset-0 bg-black/15 group-hover/camera:bg-black/10 transition-colors" />
 
                   {/* Floating Status Pill */}
-                  <div className="absolute bottom-4 inset-x-4 flex items-center justify-between gap-2">
+                  <div
+                    className="absolute bottom-4 inset-x-4 flex items-center justify-between gap-2"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <div className="px-3.5 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium flex items-center gap-1.5 whitespace-nowrap">
                       <Camera className="w-3.5 h-3.5 text-pink-300 shrink-0" />
                       <span>Your bare hand</span>
@@ -271,7 +287,7 @@ export function LandingSurface({
                     <button
                       type="button"
                       onClick={() => setActiveStep(2)}
-                      className="px-3.5 py-2 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1 shadow-md cursor-pointer transition whitespace-nowrap"
+                      className="px-3.5 py-2 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1 shadow-md cursor-pointer transition whitespace-nowrap active:scale-95"
                     >
                       <span>Preview</span>
                       <ArrowRight className="w-3.5 h-3.5" />
@@ -289,18 +305,13 @@ export function LandingSurface({
                     className="w-full h-full object-cover"
                   />
 
-                  {/* Top Result Badge */}
-                  <div className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold shadow-sm">
-                    <span>Fitted to your hand</span>
-                  </div>
-
                   {/* Bottom Applied Inspo Card */}
                   <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between gap-2 bg-white p-2 pr-3.5 rounded-2xl border border-stone-200/80 shadow-lg">
                     <div className="flex items-center gap-2.5 min-w-0">
                       <img
-                        src={activePair.afterUrl}
-                        alt={activePair.title}
-                        className="w-10 h-10 rounded-xl object-cover shrink-0 border border-stone-200"
+                        src={activePair.inspoThumbUrl || activePair.afterUrl}
+                        alt={`${activePair.title} inspo`}
+                        className="w-10 h-10 rounded-xl object-cover shrink-0 border border-stone-200 shadow-2xs"
                       />
                       <div className="min-w-0">
                         <p className="text-xs font-semibold text-stone-900 truncate">
