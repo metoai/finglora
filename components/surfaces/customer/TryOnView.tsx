@@ -568,46 +568,111 @@ export function TryOnView({
                   )}
 
                   {/* ============================================================== */}
-                  {/* EDITORIAL ATELIER APPLICATION (CLEAN, LUXURY, QUIET BEAUTY)   */}
+                  {/* PSYCHOLOGICAL SALON ATELIER TRANSFORMATION (ENGAGING & LUXURY) */}
                   {/* ============================================================== */}
                   {isSynthesizingHand && (
-                    <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 sm:p-5 bg-black/40 backdrop-blur-[2px] transition-all duration-300 animate-in fade-in">
-                      {/* Top Quiet Status Pill */}
-                      <div className="flex justify-center">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-sm">
-                          <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A] animate-pulse" />
-                          <span className="text-xs font-semibold text-stone-900 tracking-tight">
-                            {synthesisPhase <= 1 && 'Calibrating skin & cuticles'}
-                            {synthesisPhase === 2 && `Sculpting ${nails.middle.shape} contour`}
-                            {synthesisPhase === 3 && 'Infusing pigment & finish'}
-                            {synthesisPhase >= 4 && 'Applying gel clearcoat'}
+                    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden select-none">
+                      {/* 1. Dynamic Inspo Bleed / Polish Sweep on the Hand */}
+                      <div className="absolute inset-0 overflow-hidden">
+                        <div
+                          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-45 mix-blend-color"
+                          style={{
+                            backgroundImage: `url(${effectiveInspoUrl || '/assets/designs/glazed_pearl_almond_01.webp'})`,
+                            clipPath:
+                              synthesisPhase === 1
+                                ? 'polygon(0 0, 30% 0, 15% 100%, 0% 100%)'
+                                : synthesisPhase === 2
+                                ? 'polygon(0 0, 60% 0, 45% 100%, 0% 100%)'
+                                : synthesisPhase === 3
+                                ? 'polygon(0 0, 85% 0, 75% 100%, 0% 100%)'
+                                : 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
+                          }}
+                        />
+
+                        {/* Liquid Polish Infusion Seam */}
+                        <div
+                          className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-white/90 via-[#E0246A] to-white/90 shadow-[0_0_20px_#E0246A] transition-all duration-1000 ease-out"
+                          style={{
+                            left:
+                              synthesisPhase === 1
+                                ? '22%'
+                                : synthesisPhase === 2
+                                ? '52%'
+                                : synthesisPhase === 3
+                                ? '80%'
+                                : '98%',
+                          }}
+                        />
+                      </div>
+
+                      {/* 2. Soft Salon LED Curing Light Beam */}
+                      <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-[#E0246A]/15 to-transparent animate-cure-beam pointer-events-none blur-sm" />
+
+                      {/* 3. Top Floating Atelier Stage Pill */}
+                      <div className="absolute top-3.5 inset-x-0 flex justify-center z-20">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/90 text-white backdrop-blur-md shadow-lg border border-white/10">
+                          {/* Active Color Lacquer Swatch */}
+                          <span
+                            className="w-2.5 h-2.5 rounded-full ring-1 ring-white/60 shadow-xs animate-ping"
+                            style={{ backgroundColor: nails.middle.accentColor || '#E0246A' }}
+                          />
+                          <span className="text-xs font-medium tracking-tight">
+                            {synthesisPhase <= 1 && '1/4 Calibrating Nail Apex & Cuticles'}
+                            {synthesisPhase === 2 && `2/4 Sculpting ${nails.middle.shape} Architecture`}
+                            {synthesisPhase === 3 && `3/4 Infusing ${effectiveInspoTitle || 'Lacquer'} Pigment`}
+                            {synthesisPhase >= 4 && '4/4 LED High-Gloss Clearcoat Curing'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Bottom Subtle Hairline Progress */}
-                      <div className="w-full max-w-xs mx-auto space-y-1.5">
-                        <div className="h-[2px] w-full bg-white/30 rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-white rounded-full transition-all duration-700 ease-out shadow-xs"
-                            style={{
-                              width:
-                                synthesisPhase === 1
-                                  ? '25%'
-                                  : synthesisPhase === 2
-                                  ? '55%'
-                                  : synthesisPhase === 3
-                                  ? '80%'
-                                  : '96%',
-                            }}
-                          />
+                      {/* 4. Bottom Tactile Salon Craftsmanship Card */}
+                      <div className="absolute bottom-3.5 inset-x-3.5 sm:inset-x-8 flex justify-center z-20">
+                        <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-stone-200/90 shadow-[0_12px_32px_rgba(24,18,22,0.14)] space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={effectiveInspoUrl || '/assets/designs/glazed_pearl_almond_01.webp'}
+                                alt="Inspo"
+                                className="w-6 h-6 rounded-lg object-cover border border-stone-200 shrink-0"
+                              />
+                              <span className="font-semibold text-stone-900 truncate">
+                                {effectiveInspoTitle || 'Manicure Design'}
+                              </span>
+                            </div>
+
+                            <span className="font-mono text-[#E0246A] text-xs font-semibold">
+                              {synthesisPhase <= 1 && '25%'}
+                              {synthesisPhase === 2 && '55%'}
+                              {synthesisPhase === 3 && '82%'}
+                              {synthesisPhase >= 4 && '98%'}
+                            </span>
+                          </div>
+
+                          {/* Fluid Progress Bar */}
+                          <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden p-0.5">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#E0246A] via-[#F43F5E] to-[#E0246A] rounded-full transition-all duration-700 ease-out shadow-xs"
+                              style={{
+                                width:
+                                  synthesisPhase <= 1
+                                    ? '25%'
+                                    : synthesisPhase === 2
+                                    ? '55%'
+                                    : synthesisPhase === 3
+                                    ? '82%'
+                                    : '98%',
+                              }}
+                            />
+                          </div>
+
+                          <div className="flex items-center justify-between text-[10px] text-stone-500 font-medium pt-0.5">
+                            <span className="capitalize">{nails.middle.shape} silhouette</span>
+                            <span>•</span>
+                            <span className="capitalize">{nails.middle.finish} finish</span>
+                            <span>•</span>
+                            <span>5-finger match</span>
+                          </div>
                         </div>
-                        <p className="text-[10px] text-white/80 font-mono tracking-wide text-center">
-                          {synthesisPhase <= 1 && '1 / 4'}
-                          {synthesisPhase === 2 && '2 / 4'}
-                          {synthesisPhase === 3 && '3 / 4'}
-                          {synthesisPhase >= 4 && '4 / 4'}
-                        </p>
                       </div>
                     </div>
                   )}

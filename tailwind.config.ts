@@ -88,10 +88,20 @@ const config: Config = {
         "pulse-subtle": "pulseSubtle 3s ease-in-out infinite",
         "step-progress": "stepProgress 3.5s linear infinite",
         "laser-scan": "laserScan 2.4s ease-in-out infinite",
-        "gel-pulse": "gelPulse 1.8s ease-in-out infinite",
-        "light-sheen": "lightSheen 2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
+        "curtain-reveal": "curtainReveal 3.5s ease-in-out infinite",
+        "cure-beam": "cureBeam 2.8s ease-in-out infinite",
       },
       keyframes: {
+        curtainReveal: {
+          '0%': { transform: 'scaleX(0)', opacity: '0.9' },
+          '50%': { transform: 'scaleX(1)', opacity: '1' },
+          '100%': { transform: 'scaleX(0)', opacity: '0.9' },
+        },
+        cureBeam: {
+          '0%, 100%': { transform: 'translateY(-100%)', opacity: '0' },
+          '30%, 70%': { opacity: '0.8' },
+          '50%': { transform: 'translateY(100%)', opacity: '1' },
+        },
         laserScan: {
           '0%, 100%': { top: '8%', opacity: '0.9' },
           '50%': { top: '92%', opacity: '1' },
