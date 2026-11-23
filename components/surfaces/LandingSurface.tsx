@@ -1,7 +1,14 @@
 'use client';
 
-import React, { useState } from 'react';
-import { Sparkles, ArrowRight, Sliders, X } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import {
+  Sparkles,
+  ArrowRight,
+  Camera,
+  Check,
+  X,
+  Image as ImageIcon,
+} from 'lucide-react';
 import { ExploreDesignSet, Finger } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
 
@@ -67,6 +74,12 @@ const FEATURED_PAIRS: TryOnPair[] = [
   },
 ];
 
+const STEPS = [
+  { id: 0, label: '1. Pick Inspo', icon: ImageIcon },
+  { id: 1, label: '2. Snap Hand', icon: Camera },
+  { id: 2, label: '3. Your Try-On', icon: Sparkles },
+];
+
 export function LandingSurface({
   onSignInClick,
   onSignUpClick,
@@ -85,24 +98,27 @@ export function LandingSurface({
   onSaveAndCustomize?: (setId: string) => void;
   onOnboardingClick?: () => void;
 }) {
+  const [activeStep, setActiveStep] = useState(0);
   const [selectedPairIndex, setSelectedPairIndex] = useState(0);
-  const [sliderPosition, setSliderPosition] = useState(50);
+  const [isPaused, setIsPaused] = useState(false);
   const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const activePair = FEATURED_PAIRS[selectedPairIndex];
+
+  // Gently cycle through the 3 steps unless the user is interacting
+  useEffect(() => {
+    if (isPaused) return;
+    const timer = setInterval(() => {
+      setActiveStep((prev) => (prev + 1) % 3);
+    }, 4000);
+    return () => clearInterval(timer);
+  }, [isPaused]);
 
   const handleLaunchTryOn = () => {
     if (onSignUpClick) onSignUpClick();
     else if (onTryOnClick) onTryOnClick();
     else if (onStudioClick) onStudioClick();
     else if (onOnboardingClick) onOnboardingClick();
-  };
-
-  const updateSliderFromClientX = (clientX: number, container: HTMLElement | null) => {
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const percent = Math.min(Math.max(((clientX - rect.left) / rect.width) * 100, 5), 95);
-    setSliderPosition(percent);
   };
 
   return (
@@ -138,7 +154,7 @@ export function LandingSurface({
       {/* Split Hero Section */}
       <section className="flex-1 flex items-center w-full max-w-6xl mx-auto px-5 sm:px-8 py-6 lg:py-10 z-10">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center w-full">
-          {/* Left Column: Copy + Primary CTA */}
+          {/* Left Column: Headline + Primary CTA */}
           <div className="lg:col-span-5 text-center lg:text-left space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-50 border border-pink-100 text-xs font-semibold text-[#E0246A]">
               <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A]" />
@@ -151,7 +167,7 @@ export function LandingSurface({
             </h1>
 
             <p className="text-stone-600 text-sm sm:text-base max-w-md mx-auto lg:mx-0 leading-relaxed">
-              Snap your hand once, drop any Pinterest or TikTok look, and preview it on your real skin tone in seconds.
+              Pick a look, snap your hand once, and preview the manicure on your real skin tone in seconds.
             </p>
 
             <div className="pt-2 space-y-3 max-w-xs mx-auto lg:mx-0">
@@ -171,86 +187,174 @@ export function LandingSurface({
             </div>
           </div>
 
-          {/* Right Column: Interactive Before/After + Style Switcher */}
-          <div className="lg:col-span-7 w-full max-w-xl mx-auto lg:max-w-none space-y-4">
-            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden bg-stone-100 border border-stone-200/80 shadow-[0_16px_48px_rgba(24,18,22,0.10)] select-none group">
-              {/* After Image (Full Base) */}
-              <img
-                src={activePair.afterUrl}
-                alt={`${activePair.title} manicure`}
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-              />
-
-              {/* Before Image (Clipped cleanly without distortion) */}
-              <img
-                src={activePair.beforeUrl}
-                alt="Bare natural hand"
-                className="absolute inset-0 w-full h-full object-cover pointer-events-none"
-                style={{ clipPath: `inset(0 ${100 - sliderPosition}% 0 0)` }}
-              />
-
-              {/* Minimal Labels */}
-              <span className="absolute top-3.5 left-3.5 px-2.5 py-1 rounded-full bg-black/50 backdrop-blur-md text-white text-[11px] font-medium pointer-events-none">
-                Bare
-              </span>
-              <span className="absolute top-3.5 right-3.5 px-2.5 py-1 rounded-full bg-[#E0246A]/90 backdrop-blur-md text-white text-[11px] font-medium flex items-center gap-1 pointer-events-none">
-                <Sparkles className="w-3 h-3" />
-                <span>Try-On</span>
-              </span>
-
-              {/* Divider Line & Handle */}
-              <div
-                className="absolute inset-y-0 z-20 flex items-center justify-center -ml-4 w-8 cursor-ew-resize touch-none"
-                style={{ left: `${sliderPosition}%` }}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  const container = e.currentTarget.parentElement;
-                  const onMove = (ev: MouseEvent) => updateSliderFromClientX(ev.clientX, container);
-                  const onUp = () => {
-                    window.removeEventListener('mousemove', onMove);
-                    window.removeEventListener('mouseup', onUp);
-                  };
-                  window.addEventListener('mousemove', onMove);
-                  window.addEventListener('mouseup', onUp);
-                }}
-                onTouchMove={(e) => {
-                  const touch = e.touches[0];
-                  if (touch) updateSliderFromClientX(touch.clientX, e.currentTarget.parentElement);
-                }}
-              >
-                <div className="absolute inset-y-0 w-0.5 bg-white/90 shadow-sm pointer-events-none" />
-                <div className="relative w-8 h-8 rounded-full bg-white shadow-md border-2 border-[#E0246A] flex items-center justify-center text-[#E0246A] transition-transform group-hover:scale-110 active:scale-95">
-                  <Sliders className="w-3.5 h-3.5 rotate-90" />
-                </div>
-              </div>
-            </div>
-
-            {/* Clean Wrapping Style Switcher */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
-              {FEATURED_PAIRS.map((pair, idx) => {
-                const isSelected = idx === selectedPairIndex;
+          {/* Right Column: Interactive 3-Step Visual Progress Card */}
+          <div
+            className="lg:col-span-7 w-full max-w-xl mx-auto lg:max-w-none space-y-3.5"
+            onMouseEnter={() => setIsPaused(true)}
+            onMouseLeave={() => setIsPaused(false)}
+          >
+            {/* Step Progress Tabs */}
+            <div className="grid grid-cols-3 gap-2 bg-white p-1.5 rounded-2xl border border-stone-200/80 shadow-2xs">
+              {STEPS.map((step) => {
+                const Icon = step.icon;
+                const isActive = activeStep === step.id;
+                const isCompleted = activeStep > step.id;
                 return (
                   <button
-                    key={pair.id}
+                    key={step.id}
                     type="button"
                     onClick={() => {
-                      setSelectedPairIndex(idx);
-                      setSliderPosition(50);
+                      setActiveStep(step.id);
+                      setIsPaused(true);
                     }}
-                    className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all cursor-pointer active:scale-95 flex items-center gap-1.5 border ${
-                      isSelected
-                        ? 'bg-stone-900 text-white border-stone-900 shadow-xs'
-                        : 'bg-white hover:bg-stone-50 text-stone-700 border-stone-200'
+                    className={`flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                      isActive
+                        ? 'bg-stone-900 text-white shadow-xs'
+                        : isCompleted
+                        ? 'bg-pink-50/70 text-[#E0246A]'
+                        : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50'
                     }`}
                   >
-                    <span
-                      className="w-2 h-2 rounded-full shrink-0"
-                      style={{ backgroundColor: pair.accentColor }}
-                    />
-                    <span>{pair.title}</span>
+                    {isCompleted ? (
+                      <Check className="w-3.5 h-3.5 shrink-0" />
+                    ) : (
+                      <Icon className="w-3.5 h-3.5 shrink-0" />
+                    )}
+                    <span className="truncate">{step.label}</span>
                   </button>
                 );
               })}
+            </div>
+
+            {/* Visual Stage */}
+            <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden bg-white border border-stone-200/80 shadow-[0_16px_48px_rgba(24,18,22,0.08)]">
+              {/* STEP 1: Choose Inspo Grid */}
+              {activeStep === 0 && (
+                <div className="absolute inset-0 p-3 sm:p-4 bg-[#FAF7F5] flex flex-col justify-between animate-in fade-in duration-300">
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3 flex-1 min-h-0">
+                    {FEATURED_PAIRS.map((pair, idx) => {
+                      const isSelected = idx === selectedPairIndex;
+                      return (
+                        <button
+                          key={pair.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedPairIndex(idx);
+                            setActiveStep(1);
+                            setIsPaused(true);
+                          }}
+                          className={`relative rounded-2xl overflow-hidden group cursor-pointer border-2 transition-all text-left ${
+                            isSelected
+                              ? 'border-[#E0246A] shadow-md'
+                              : 'border-transparent hover:border-stone-300'
+                          }`}
+                        >
+                          <img
+                            src={pair.afterUrl}
+                            alt={pair.title}
+                            className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                          />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/65 via-black/10 to-transparent" />
+
+                          {isSelected && (
+                            <span className="absolute top-2 right-2 w-6 h-6 rounded-full bg-[#E0246A] text-white flex items-center justify-center shadow-sm">
+                              <Check className="w-3.5 h-3.5" />
+                            </span>
+                          )}
+
+                          <div className="absolute bottom-2 left-2.5 right-2.5">
+                            <p className="text-white text-xs font-semibold truncate">
+                              {pair.title}
+                            </p>
+                            <p className="text-white/75 text-[10px]">{pair.shape}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 2: Upload or Capture Your Hand */}
+              {activeStep === 1 && (
+                <div className="absolute inset-0 animate-in fade-in duration-300">
+                  <img
+                    src={activePair.beforeUrl}
+                    alt="Bare hand capture"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/15" />
+
+                  {/* Camera Viewfinder Frame */}
+                  <div className="absolute inset-6 sm:inset-8 pointer-events-none">
+                    <div className="absolute top-0 left-0 w-7 h-7 border-t-2 border-l-2 border-white/90 rounded-tl-xl" />
+                    <div className="absolute top-0 right-0 w-7 h-7 border-t-2 border-r-2 border-white/90 rounded-tr-xl" />
+                    <div className="absolute bottom-0 left-0 w-7 h-7 border-b-2 border-l-2 border-white/90 rounded-bl-xl" />
+                    <div className="absolute bottom-0 right-0 w-7 h-7 border-b-2 border-r-2 border-white/90 rounded-br-xl" />
+                  </div>
+
+                  {/* Floating Status Pill */}
+                  <div className="absolute bottom-4 inset-x-4 flex items-center justify-between gap-2">
+                    <div className="px-3.5 py-2 rounded-full bg-black/60 backdrop-blur-md text-white text-xs font-medium flex items-center gap-2">
+                      <Camera className="w-3.5 h-3.5 text-pink-300" />
+                      <span>Upload or snap your bare hand</span>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveStep(2)}
+                      className="px-3.5 py-2 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1 shadow-md cursor-pointer transition"
+                    >
+                      <span>Apply look</span>
+                      <ArrowRight className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* STEP 3: See Nail Design on Your Hand */}
+              {activeStep === 2 && (
+                <div className="absolute inset-0 animate-in fade-in duration-300">
+                  <img
+                    src={activePair.afterUrl}
+                    alt={`${activePair.title} applied on hand`}
+                    className="w-full h-full object-cover"
+                  />
+
+                  {/* Top Result Badge */}
+                  <div className="absolute top-3.5 right-3.5 px-3 py-1 rounded-full bg-[#E0246A] text-white text-xs font-semibold flex items-center gap-1.5 shadow-sm">
+                    <Sparkles className="w-3.5 h-3.5" />
+                    <span>Fitted to your hand</span>
+                  </div>
+
+                  {/* Bottom Applied Inspo Card */}
+                  <div className="absolute bottom-3.5 inset-x-3.5 flex items-center justify-between gap-2 bg-white/92 backdrop-blur-md p-2 pr-3.5 rounded-2xl border border-white/60 shadow-lg">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <img
+                        src={activePair.afterUrl}
+                        alt={activePair.title}
+                        className="w-10 h-10 rounded-xl object-cover shrink-0 border border-stone-200"
+                      />
+                      <div className="min-w-0">
+                        <p className="text-xs font-semibold text-stone-900 truncate">
+                          {activePair.title}
+                        </p>
+                        <p className="text-[11px] text-stone-500">
+                          {activePair.shape} · {activePair.finish}
+                        </p>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={() => setActiveStep(0)}
+                      className="text-xs font-semibold text-[#E0246A] hover:text-[#BE185D] shrink-0 cursor-pointer"
+                    >
+                      Try another
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -296,13 +400,13 @@ export function LandingSurface({
               {[
                 {
                   step: '01',
-                  title: 'Snap Your Hand Once',
-                  desc: 'Take a quick photo so Finglora matches your real skin tone and nail beds.',
+                  title: 'Pick or Drop Inspo',
+                  desc: 'Choose a trending look or upload any Pinterest, TikTok, or Instagram screenshot.',
                 },
                 {
                   step: '02',
-                  title: 'Pick or Drop Inspo',
-                  desc: 'Choose a trending look or upload any Pinterest, TikTok, or Instagram screenshot.',
+                  title: 'Snap Your Hand Once',
+                  desc: 'Take a quick photo so Finglora matches your real skin tone and nail beds.',
                 },
                 {
                   step: '03',
