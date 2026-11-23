@@ -101,7 +101,6 @@ export function LandingSurface({
   const [activeStep, setActiveStep] = useState(0);
   const [selectedPairIndex, setSelectedPairIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [howItWorksOpen, setHowItWorksOpen] = useState(false);
 
   const activePair = FEATURED_PAIRS[selectedPairIndex];
 
@@ -131,14 +130,6 @@ export function LandingSurface({
         <BrandLogo size="md" />
 
         <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={() => setHowItWorksOpen(true)}
-            className="text-xs sm:text-sm font-medium text-stone-600 hover:text-stone-900 px-3 py-1.5 transition cursor-pointer"
-          >
-            How it works
-          </button>
-
           {onSignInClick && (
             <button
               type="button"
@@ -365,81 +356,6 @@ export function LandingSurface({
         <span>© {new Date().getFullYear()} Finglora Atelier.</span>
         <span>Zero salon regrets.</span>
       </footer>
-
-      {/* How It Works Modal */}
-      {howItWorksOpen && (
-        <div
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4"
-          onClick={() => setHowItWorksOpen(false)}
-        >
-          <div
-            className="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-stone-200 space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-start justify-between">
-              <div>
-                <span className="text-[10px] font-mono uppercase tracking-widest text-[#E0246A] font-semibold">
-                  How Finglora Works
-                </span>
-                <h3 className="font-serif text-2xl text-stone-900 mt-1">
-                  3 steps to your next set
-                </h3>
-              </div>
-              <button
-                type="button"
-                onClick={() => setHowItWorksOpen(false)}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </div>
-
-            <div className="divide-y divide-stone-100">
-              {[
-                {
-                  step: '01',
-                  title: 'Pick or Drop Inspo',
-                  desc: 'Choose a trending look or upload any Pinterest, TikTok, or Instagram screenshot.',
-                },
-                {
-                  step: '02',
-                  title: 'Snap Your Hand Once',
-                  desc: 'Take a quick photo so Finglora matches your real skin tone and nail beds.',
-                },
-                {
-                  step: '03',
-                  title: 'Preview & Save',
-                  desc: 'See the manicure live on your hand, tweak the shape, and bring it to your salon.',
-                },
-              ].map((item) => (
-                <div key={item.step} className="py-3.5 first:pt-0 last:pb-0 flex items-start gap-3.5">
-                  <span className="font-mono text-xs font-semibold text-[#E0246A] pt-0.5">
-                    {item.step}
-                  </span>
-                  <div>
-                    <h4 className="text-sm font-semibold text-stone-900">{item.title}</h4>
-                    <p className="text-xs text-stone-500 mt-0.5 leading-relaxed">{item.desc}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <button
-              type="button"
-              onClick={() => {
-                setHowItWorksOpen(false);
-                handleLaunchTryOn();
-              }}
-              className="w-full h-11 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-sm font-semibold flex items-center justify-center gap-2 transition cursor-pointer active:scale-95"
-            >
-              <span>Try On My Hand Free</span>
-              <ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-      )}
     </main>
   );
 }
