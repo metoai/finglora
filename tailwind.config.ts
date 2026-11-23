@@ -87,8 +87,23 @@ const config: Config = {
         "float-gentle": "float 4s ease-in-out infinite",
         "pulse-subtle": "pulseSubtle 3s ease-in-out infinite",
         "step-progress": "stepProgress 3.5s linear infinite",
+        "laser-scan": "laserScan 2.4s ease-in-out infinite",
+        "gel-pulse": "gelPulse 1.8s ease-in-out infinite",
+        "light-sheen": "lightSheen 2s cubic-bezier(0.4, 0, 0.2, 1) infinite",
       },
       keyframes: {
+        laserScan: {
+          '0%, 100%': { top: '8%', opacity: '0.9' },
+          '50%': { top: '92%', opacity: '1' },
+        },
+        gelPulse: {
+          '0%, 100%': { transform: 'scale(0.98)', opacity: '0.4' },
+          '50%': { transform: 'scale(1.03)', opacity: '0.85' },
+        },
+        lightSheen: {
+          '0%': { transform: 'translateX(-120%) rotate(25deg)' },
+          '100%': { transform: 'translateX(220%) rotate(25deg)' },
+        },
         stepProgress: {
           '0%': { width: '0%' },
           '100%': { width: '100%' },

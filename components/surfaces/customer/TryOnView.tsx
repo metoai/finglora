@@ -124,8 +124,28 @@ export function TryOnView({
   };
 
   const [isSynthesizingHand, setIsSynthesizingHand] = useState(false);
+  const [synthesisPhase, setSynthesisPhase] = useState<number>(0);
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
   const [isLocallyCleared, setIsLocallyCleared] = useState(false);
+
+  // Psychological salon phase sequencer while applying
+  useEffect(() => {
+    if (!isSynthesizingHand) {
+      setSynthesisPhase(0);
+      return;
+    }
+
+    setSynthesisPhase(1);
+    const t1 = setTimeout(() => setSynthesisPhase(2), 1800);
+    const t2 = setTimeout(() => setSynthesisPhase(3), 3600);
+    const t3 = setTimeout(() => setSynthesisPhase(4), 5400);
+
+    return () => {
+      clearTimeout(t1);
+      clearTimeout(t2);
+      clearTimeout(t3);
+    };
+  }, [isSynthesizingHand]);
 
   // Derived effective inspiration details
   const effectiveInspoUrl = !isLocallyCleared ? (activePhotoUrl || activeSample?.photoUrl || '') : '';
@@ -547,28 +567,102 @@ export function TryOnView({
                     </div>
                   </div>
 
-                  {/* Center Floating "Apply" Badge / Action Button */}
-                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                    <button
-                      type="button"
-                      onClick={handleSynthesizeHand}
-                      disabled={isSynthesizingHand}
-                      className="group pointer-events-auto px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-2 sm:ring-4 ring-white shadow-[0_4px_16px_rgba(224,36,106,0.35)] hover:shadow-[0_6px_24px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer disabled:opacity-60 flex items-center gap-1 sm:gap-1.5 hover:scale-105"
-                      title="Apply manicure inspiration to your hand"
-                    >
-                      {isSynthesizingHand ? (
-                        <>
-                          <Loader2 className="w-3 h-3 sm:w-3.5 sm:h-3.5 animate-spin" />
-                          <span>Applying...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Apply</span>
-                          <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
-                        </>
+                  {/* Center Floating "Apply" Badge / Action Button (when not synthesizing) */}
+                  {!isSynthesizingHand && (
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                      <button
+                        type="button"
+                        onClick={handleSynthesizeHand}
+                        className="group pointer-events-auto px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-2 sm:ring-4 ring-white shadow-[0_4px_16px_rgba(224,36,106,0.35)] hover:shadow-[0_6px_24px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 sm:gap-1.5 hover:scale-105"
+                        title="Apply manicure inspiration to your hand"
+                      >
+                        <span>Apply</span>
+                        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                      </button>
+                    </div>
+                  )}
+
+                  {/* ============================================================== */}
+                  {/* PSYCHOLOGICAL LUXURY ATELIER SALON APPLYING MOTION OVERLAY     */}
+                  {/* ============================================================== */}
+                  {isSynthesizingHand && (
+                    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden bg-black/25 backdrop-blur-[1.5px] transition-all duration-500 animate-in fade-in">
+                      {/* 1. Luminous Sweeping Atelier Laser Scan Line */}
+                      <div className="absolute inset-x-0 h-[2px] bg-gradient-to-r from-transparent via-[#E0246A] to-transparent shadow-[0_0_16px_#E0246A] animate-laser-scan z-20">
+                        <div className="absolute -top-1 left-1/2 -translate-x-1/2 w-32 h-3 bg-[#E0246A]/20 blur-sm rounded-full" />
+                      </div>
+
+                      {/* 2. Soft Gel Layer Pulse / Chromatic Infusion */}
+                      <div className="absolute inset-0 bg-radial from-[#E0246A]/10 via-transparent to-transparent animate-gel-pulse pointer-events-none" />
+
+                      {/* 3. High-Gloss Specular Light Sheen */}
+                      {synthesisPhase >= 3 && (
+                        <div className="absolute -inset-full bg-gradient-to-r from-transparent via-white/20 to-transparent animate-light-sheen pointer-events-none" />
                       )}
-                    </button>
-                  </div>
+
+                      {/* 4. Precision Geometric Cuticle Calibration Crosshairs */}
+                      <div className="absolute inset-0 flex items-center justify-around px-8 opacity-75">
+                        {[0, 1, 2, 3, 4].map((i) => (
+                          <div
+                            key={i}
+                            className="relative flex flex-col items-center justify-center animate-pulse"
+                            style={{ animationDelay: `${i * 150}ms` }}
+                          >
+                            <span className="w-3 h-[1px] bg-white/70" />
+                            <span className="h-3 w-[1px] bg-white/70 -mt-[7px]" />
+                            <span className="w-1.5 h-1.5 rounded-full border border-[#E0246A] mt-1 shadow-xs" />
+                          </div>
+                        ))}
+                      </div>
+
+                      {/* 5. Psychological Atelier Salon Progress Dock */}
+                      <div className="absolute bottom-4 inset-x-3 sm:inset-x-6 flex justify-center z-30">
+                        <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-3 rounded-2xl border border-stone-200/90 shadow-[0_8px_30px_rgba(0,0,0,0.12)] space-y-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="font-semibold text-stone-900 flex items-center gap-1.5">
+                              <span className="w-2 h-2 rounded-full bg-[#E0246A] animate-ping" />
+                              <span>
+                                {synthesisPhase === 1 && '1/4 Calibrating Cuticles & Apex'}
+                                {synthesisPhase === 2 && '2/4 Sculpting Nail Silhouette'}
+                                {synthesisPhase === 3 && '3/4 Infusing Pigment & Pearl Glaze'}
+                                {synthesisPhase >= 4 && '4/4 Sealing High-Gloss Topcoat'}
+                              </span>
+                            </span>
+                            <span className="text-[11px] font-mono text-[#E0246A] font-medium">
+                              {synthesisPhase === 1 && '25%'}
+                              {synthesisPhase === 2 && '55%'}
+                              {synthesisPhase === 3 && '80%'}
+                              {synthesisPhase >= 4 && '95%'}
+                            </span>
+                          </div>
+
+                          {/* Progress Track */}
+                          <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden p-0.5">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#E0246A] to-[#F43F5E] rounded-full transition-all duration-700 ease-out shadow-xs"
+                              style={{
+                                width:
+                                  synthesisPhase === 1
+                                    ? '25%'
+                                    : synthesisPhase === 2
+                                    ? '55%'
+                                    : synthesisPhase === 3
+                                    ? '82%'
+                                    : '96%',
+                              }}
+                            />
+                          </div>
+
+                          <p className="text-[10px] text-stone-500 truncate text-center">
+                            {synthesisPhase === 1 && 'Mapping fingernail geometry on your skin...'}
+                            {synthesisPhase === 2 && `Applying ${nails.middle.shape} contour architecture...`}
+                            {synthesisPhase === 3 && `Blending ${effectiveInspoTitle || 'selected look'} pigment...`}
+                            {synthesisPhase >= 4 && 'Applying LED mirror-shine gel seal...'}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <>
