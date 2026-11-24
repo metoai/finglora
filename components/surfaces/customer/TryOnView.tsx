@@ -352,7 +352,7 @@ export function TryOnView({
         setSynthesisError(errJson?.error || 'Could not generate manicure. Please try again.');
       }
     } catch {
-      setSynthesisError('Connection error while contacting AI atelier.');
+      setSynthesisError('Connection error while generating manicure.');
     } finally {
       setIsSynthesizingHand(false);
     }
@@ -732,7 +732,7 @@ export function TryOnView({
                     </div>
                   )}
 
-                  {/* Floating Top Badge */}
+                  {/* Floating Top Badge - Strictly hidden while applying or revealing */}
                   {!isSynthesizingHand && !isRevealing && (
                     <div className="absolute top-3.5 left-3.5 z-20">
                       <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
@@ -740,8 +740,6 @@ export function TryOnView({
                         <span>
                           {synthesizedHandUrl && tryOnView === 'after'
                             ? (effectiveInspoTitle || 'Applied Look')
-                            : isSynthesizingHand
-                            ? 'Atelier Curing in Progress...'
                             : customTryOnHandUrl
                             ? 'Your Hand · Ready for Inspo'
                             : 'Studio Hand · Ready'}
