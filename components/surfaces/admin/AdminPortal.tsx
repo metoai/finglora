@@ -35,7 +35,9 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-import { Finger } from '@/types/nail';
+import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
+import { HAND_SKIN_TONES } from '@/constants/nail-data';
+import { Finger, NailDesign } from '@/types/nail';
 
 interface AdminStats {
   totalUsers: number;
@@ -1595,35 +1597,80 @@ export default function AdminPortal() {
                               </Link>
                             </div>
 
-                            {/* 5-Finger Applied Breakdown */}
+                            {/* FULL REALISTIC GENERATED HAND WEARING THIS MANICURE */}
                             {hasFingers && (
-                              <div className="pt-2 border-t border-stone-100">
-                                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 block mb-1.5">
-                                  Applied 5-Finger Formulation
-                                </span>
-                                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
-                                  {fingerKeys.map((f) => {
-                                    const n = setNails[f];
-                                    if (!n) return null;
-                                    return (
-                                      <div
-                                        key={f}
-                                        className="p-1.5 rounded-xl bg-stone-50 border border-stone-200/60 flex flex-col items-center text-center space-y-1"
-                                      >
-                                        <span className="text-[9px] font-semibold text-stone-500 capitalize">
-                                          {f}
-                                        </span>
-                                        <div
-                                          className="w-4 h-6 rounded-md shadow-inner border border-black/10"
-                                          style={{ backgroundColor: n.baseColor || '#F9D8E0' }}
-                                          title={`Base: ${n.baseColor}`}
-                                        />
-                                        <span className="text-[9px] font-mono text-stone-600 truncate max-w-full">
-                                          {n.baseColor}
-                                        </span>
-                                      </div>
-                                    );
-                                  })}
+                              <div className="pt-2 border-t border-stone-100 space-y-3">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-500 block">
+                                    Generated Hand Visualizer (Try-On Preview)
+                                  </span>
+                                  <span className="text-[10px] text-stone-400 capitalize">
+                                    {selectedUser.preferred_shape || s.nails?.middle?.shape || 'Almond'} • {selectedUser.skin_tone_id || 'Warm Honey'}
+                                  </span>
+                                </div>
+
+                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-stone-50/80 p-3 rounded-2xl border border-stone-200/80 items-center">
+                                  {/* Left: Complete Hand With Applied Manicure On Each Fingertip */}
+                                  <div className="sm:col-span-5 flex justify-center bg-white p-2.5 rounded-xl border border-stone-200/60 shadow-2xs">
+                                    {(() => {
+                                      const skinPreset =
+                                        HAND_SKIN_TONES.find((st) => st.id === selectedUser.skin_tone_id) ||
+                                        HAND_SKIN_TONES[1];
+                                      const isRightHand = (selectedUser.hand_orientation || 'right') === 'right';
+
+                                      return (
+                                        <div className="relative group">
+                                          <EditorialHandVisual
+                                            nails={setNails}
+                                            skinTone={skinPreset}
+                                            width={180}
+                                            height={190}
+                                            isRight={isRightHand}
+                                          />
+                                          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium">
+                                            Hand Preview
+                                          </div>
+                                        </div>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  {/* Right: 5 Individual Fingertip Macro Cards */}
+                                  <div className="sm:col-span-7 space-y-1.5">
+                                    <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider block">
+                                      5-Finger Lacquer & Shape Formulation
+                                    </span>
+                                    <div className="grid grid-cols-5 gap-1.5">
+                                      {fingerKeys.map((f) => {
+                                        const n = setNails[f];
+                                        if (!n) return null;
+                                        return (
+                                          <div
+                                            key={f}
+                                            className="p-1.5 rounded-xl bg-white border border-stone-200/80 flex flex-col items-center text-center space-y-1 shadow-2xs"
+                                          >
+                                            <span className="text-[9px] font-semibold text-stone-500 capitalize">
+                                              {f}
+                                            </span>
+                                            {/* Photographic Nail Canvas */}
+                                            <NailCanvasPreview
+                                              nail={n}
+                                              width={28}
+                                              height={44}
+                                              showCuticle={true}
+                                              skinColor="#FAF0EA"
+                                            />
+                                            <span className="text-[8.5px] font-mono text-stone-700 truncate max-w-full">
+                                              {n.baseColor}
+                                            </span>
+                                            <span className="text-[8px] text-stone-400 capitalize truncate max-w-full">
+                                              {n.finish || 'glossy'}
+                                            </span>
+                                          </div>
+                                        );
+                                      })}
+                                    </div>
+                                  </div>
                                 </div>
                               </div>
                             )}
