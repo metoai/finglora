@@ -891,10 +891,10 @@ export function ProfileView({
               <div className="space-y-3">
                 <div
                   onClick={() => handFileInputRef.current?.click()}
-                  className="py-5 px-4 w-full rounded-2xl border-2 border-dashed border-stone-200 bg-stone-50/70 hover:bg-pink-50/20 transition cursor-pointer flex flex-col items-center justify-center text-center space-y-1.5"
+                  className="py-6 px-4 w-full rounded-2xl border border-dashed border-stone-300/80 bg-stone-50/50 hover:bg-pink-50/20 hover:border-[#E0246A]/50 transition cursor-pointer flex flex-col items-center justify-center text-center space-y-2 group"
                 >
-                  <div className="w-9 h-9 rounded-xl bg-pink-50 text-[#E0246A] flex items-center justify-center">
-                    <Hand className="w-4 h-4" />
+                  <div className="w-10 h-10 rounded-2xl bg-white text-[#E0246A] flex items-center justify-center shadow-xs border border-stone-200/60 group-hover:scale-105 transition-transform">
+                    <Hand className="w-4.5 h-4.5" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-stone-900">Your Hand Photo</p>
@@ -904,11 +904,11 @@ export function ProfileView({
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                   <button
                     type="button"
                     onClick={() => handFileInputRef.current?.click()}
-                    className="h-9.5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                    className="h-10 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-xs active:scale-95"
                   >
                     <UploadCloud className="w-3.5 h-3.5" />
                     <span>Upload Photo</span>
@@ -917,7 +917,7 @@ export function ProfileView({
                   <button
                     type="button"
                     onClick={() => setIsCameraCaptureOpen(true)}
-                    className="h-9.5 rounded-xl bg-white hover:bg-stone-50 border border-stone-200/80 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs active:scale-95"
+                    className="h-10 px-3 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 shadow-2xs hover:border-stone-300 active:scale-95"
                   >
                     <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
                     <span>Live Camera</span>
