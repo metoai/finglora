@@ -589,7 +589,7 @@ export default function FingloraApp() {
       showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
     } else {
       grantSignupCreditBonus();
-      showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
+      showToast(`Account created, ${chosenName}! 10 Free Try-On Credits added.`);
     }
     navigateCustomer('home');
   };

@@ -121,12 +121,12 @@ function mockGetUserCreditStatus() {
   const isPro = mockStorage.getItem('finglora_is_pro_subscriber') === 'true';
   const hasReceivedSignupBonus = mockStorage.getItem('finglora_signup_bonus_granted') === 'true';
   const storedCredits = mockStorage.getItem('finglora_tryon_credits');
-  let credits = 1;
+  let credits = 10;
   if (storedCredits !== null) {
     credits = parseInt(storedCredits, 10);
     if (isNaN(credits)) credits = 0;
   } else {
-    mockStorage.setItem('finglora_tryon_credits', '1');
+    mockStorage.setItem('finglora_tryon_credits', '10');
   }
   const hasUsedGuestCredit = storedCredits !== null && credits < 1 && !hasReceivedSignupBonus;
   return {
@@ -150,7 +150,7 @@ function mockGrantSignupCreditBonus() {
   const alreadyGranted = mockStorage.getItem('finglora_signup_bonus_granted') === 'true';
   if (alreadyGranted) return mockGetUserCreditStatus().credits;
   const status = mockGetUserCreditStatus();
-  const newBalance = status.credits + 1;
+  const newBalance = Math.max(status.credits, 10);
   mockStorage.setItem('finglora_tryon_credits', newBalance.toString());
   mockStorage.setItem('finglora_signup_bonus_granted', 'true');
   return newBalance;
@@ -161,45 +161,43 @@ function mockActivateProSubscription() {
   mockStorage.setItem('finglora_tryon_credits', '999999');
 }
 
-// Step 3.1: Guest initial state
-const initialGuest = mockGetUserCreditStatus();
-assert(initialGuest.credits === 1, 'Guest user starts with exactly 1 free try-on credit');
-assert(initialGuest.isPro === false, 'Guest is not Pro by default');
-assert(initialGuest.hasUsedGuestCredit === false, 'Guest has not yet used free credit');
+// Step 3.1: Free user initial state (10 free try-on credits)
+const initialFreeUser = mockGetUserCreditStatus();
+assert(initialFreeUser.credits === 10, 'Free user starts with 10 free try-on credits');
+assert(initialFreeUser.isPro === false, 'Free user is not Pro by default');
+assert(initialFreeUser.hasUsedGuestCredit === false, 'Free user has not yet exhausted credits');
 
-// Step 3.2: 1st Try-On (Deduction without signup)
-const firstTrySuccess = mockUseTryOnCredit();
-assert(firstTrySuccess === true, '1st try-on consumes free guest credit successfully without signup');
+// Step 3.2: Try-on consumes 1 credit
+const trySuccess = mockUseTryOnCredit();
+assert(trySuccess === true, 'Try-on consumes 1 credit successfully');
 const postFirstStatus = mockGetUserCreditStatus();
-assert(postFirstStatus.credits === 0, 'Credit balance drops to 0 after 1st try-on');
-assert(postFirstStatus.hasUsedGuestCredit === true, 'System detects guest credit has been used');
+assert(postFirstStatus.credits === 9, 'Credit balance drops from 10 to 9 after 1 try-on');
 
-// Step 3.3: 2nd Try-On attempt without signup (Paywall triggered)
-const secondTryWithoutSignup = mockUseTryOnCredit();
-assert(secondTryWithoutSignup === false, 'Attempting 2nd try-on with 0 credits returns false (triggers Paywall/Signup modal)');
+// Step 3.3: Exhaust remaining 9 credits
+for (let i = 0; i < 9; i++) {
+  mockUseTryOnCredit();
+}
+const exhaustedStatus = mockGetUserCreditStatus();
+assert(exhaustedStatus.credits === 0, 'Credit balance drops to 0 after exhausting all 10 free credits');
+assert(exhaustedStatus.hasUsedGuestCredit === true, 'System detects all free credits have been exhausted');
 
-// Step 3.4: Account signup grant +1 bonus credit
+// Step 3.4: Attempt try-on with 0 credits triggers paywall
+const blockedTry = mockUseTryOnCredit();
+assert(blockedTry === false, 'Attempting try-on with 0 credits returns false (triggers Paywall modal)');
+
+// Step 3.5: Signup bonus ensures 10 credits
+mockStorage.setItem('finglora_tryon_credits', '0');
 const bonusBalance = mockGrantSignupCreditBonus();
-assert(bonusBalance === 1, 'Account creation grants +1 bonus credit (balance restored to 1)');
+assert(bonusBalance === 10, 'Free account creation grants 10 credits balance');
 const postSignupStatus = mockGetUserCreditStatus();
 assert(postSignupStatus.hasReceivedSignupBonus === true, 'User marked as having received signup bonus');
-assert(postSignupStatus.hasUsedGuestCredit === false, 'Guest credit exhaustion flag cleared');
+assert(postSignupStatus.hasUsedGuestCredit === false, 'Exhaustion flag cleared');
 
-// Step 3.5: Double-grant protection
+// Step 3.6: Double-grant protection
 const repeatBonus = mockGrantSignupCreditBonus();
-assert(repeatBonus === 1, 'Bonus cannot be claimed multiple times');
+assert(repeatBonus === 10, 'Bonus cannot be claimed multiple times');
 
-// Step 3.6: Use the signup bonus credit
-const bonusTrySuccess = mockUseTryOnCredit();
-assert(bonusTrySuccess === true, 'Signup bonus credit consumed successfully on 2nd try-on');
-const postBonusStatus = mockGetUserCreditStatus();
-assert(postBonusStatus.credits === 0, 'Credits back to 0 after consuming signup bonus');
-
-// Step 3.7: 3rd Try-On triggers Pro Paywall
-const thirdTrySuccess = mockUseTryOnCredit();
-assert(thirdTrySuccess === false, '3rd try-on blocked with 0 credits (Pro subscription required)');
-
-// Step 3.8: Pro Subscription upgrade
+// Step 3.7: Pro Subscription upgrade
 mockActivateProSubscription();
 const proStatus = mockGetUserCreditStatus();
 assert(proStatus.isPro === true, 'User successfully upgraded to Pro subscriber');

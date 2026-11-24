@@ -1,8 +1,8 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Crown, ShieldCheck, ArrowRight, Hand } from 'lucide-react';
-import { activateProSubscription } from '@/lib/services/credits';
+import { X, Check, Crown, ShieldCheck, ArrowRight, Sparkles } from 'lucide-react';
+import { activateProSubscription, PRO_PLANS, ProPlanType } from '@/lib/services/credits';
 
 export function ProPaywallModal({
   isOpen,
@@ -17,7 +17,7 @@ export function ProPaywallModal({
   isGuestFirstTry?: boolean;
   onSignUpClick?: () => void;
 }) {
-  const [selectedPlan, setSelectedPlan] = useState<'monthly' | 'annual'>('annual');
+  const [selectedPlan, setSelectedPlan] = useState<ProPlanType>('biannual');
   const [isUpgrading, setIsUpgrading] = useState(false);
 
   if (!isOpen) return null;
@@ -25,14 +25,14 @@ export function ProPaywallModal({
   const handleUpgrade = () => {
     setIsUpgrading(true);
     setTimeout(() => {
-      activateProSubscription();
+      activateProSubscription(selectedPlan);
       setIsUpgrading(false);
       onSuccess();
       onClose();
     }, 800);
   };
 
-  // If user is a guest who just finished their 1st credit, offer the "+1 Free Credit on Signup" first!
+  // If user is a guest who ran out of guest tries, offer the "Sign up & get 10 Free Credits"
   if (isGuestFirstTry && onSignUpClick) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -46,18 +46,18 @@ export function ProPaywallModal({
           </button>
 
           <div className="w-14 h-14 mx-auto rounded-2xl bg-[#E0246A]/10 border border-[#E0246A]/20 flex items-center justify-center text-[#E0246A] shadow-inner">
-            <Hand className="w-7 h-7" />
+            <Sparkles className="w-7 h-7" />
           </div>
 
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full bg-[#E0246A]/10 text-[#E0246A] text-xs font-semibold tracking-wide">
-              1st Try-On Completed
+              Free Plan
             </span>
             <h2 className="font-serif text-2xl font-medium text-stone-900 tracking-tight">
-              Unlock 1 More Free Try-On
+              Get 10 Free Try-On Credits
             </h2>
             <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
-              Create a free account to save your manicure recipe and receive an additional try-on credit.
+              Create a free account to instantly unlock 10 complimentary photorealistic virtual try-ons and save your designs.
             </p>
           </div>
 
@@ -70,7 +70,7 @@ export function ProPaywallModal({
               }}
               className="w-full h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-medium text-sm shadow-md shadow-[#E0246A]/25 transition-all cursor-pointer active:scale-95 flex items-center justify-center gap-2"
             >
-              <span>Create Free Account (+1 Credit)</span>
+              <span>Create Free Account (10 Credits)</span>
               <ArrowRight className="w-4 h-4 text-white" />
             </button>
 
@@ -89,7 +89,7 @@ export function ProPaywallModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-md animate-in fade-in duration-200">
-      <div className="relative w-full max-w-md rounded-3xl bg-[#FFF8FA] border border-pink-200 shadow-2xl p-6 sm:p-8 text-center space-y-6">
+      <div className="relative w-full max-w-lg rounded-3xl bg-[#FFF8FA] border border-pink-200 shadow-2xl p-6 sm:p-8 text-center space-y-6">
         <button
           type="button"
           onClick={onClose}
@@ -104,26 +104,25 @@ export function ProPaywallModal({
 
         <div className="space-y-1.5">
           <span className="px-3 py-1 rounded-full bg-[#E0246A]/10 text-[#E0246A] text-[11px] font-semibold tracking-wider uppercase">
-            Finglora Pro Salon Pass
+            Finglora Pro Atelier
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
             Unlimited Photorealistic Try-Ons
           </h2>
-          <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
-            You have used all your complimentary try-on credits. Upgrade to Finglora Pro for unlimited high-definition Gemini virtual manicures.
+          <p className="text-xs text-stone-600 max-w-sm mx-auto leading-relaxed">
+            You have used all 10 free try-on credits. Upgrade to Finglora Pro for unlimited virtual salon try-ons and full studio access.
           </p>
         </div>
 
         {/* Feature List */}
-        <div className="space-y-2 text-left bg-white/80 rounded-2xl p-4 border border-pink-100 shadow-xs">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-left bg-white/80 rounded-2xl p-4 border border-pink-100 shadow-xs">
           {[
-            'Unlimited Gemini Photorealistic Virtual Try-Ons',
-            'Constant Hand AI Chat Iterations (Mutate with words)',
-            '5-Finger High-Res Photographic Studio Assets',
-            'Full Salon Formula Recipes & Passport Codes',
-            'Zero Watermarks & Instant 4K Export',
+            'Unlimited Gemini photorealistic try-ons',
+            'Full 5-finger bespoke studio generation',
+            'Hand AI mutation & chat iterations',
+            'High-definition 4K clean export',
           ].map((benefit, i) => (
-            <div key={i} className="flex items-center gap-2.5 text-xs text-stone-800">
+            <div key={i} className="flex items-center gap-2 text-xs text-stone-800">
               <div className="w-4 h-4 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center shrink-0">
                 <Check className="w-2.5 h-2.5 stroke-[2.5]" />
               </div>
@@ -132,39 +131,82 @@ export function ProPaywallModal({
           ))}
         </div>
 
-        {/* Plan Selector */}
-        <div className="grid grid-cols-2 gap-3">
-          <button
-            type="button"
-            onClick={() => setSelectedPlan('annual')}
-            className={`p-3.5 rounded-2xl border text-left transition-all relative ${
-              selectedPlan === 'annual'
-                ? 'bg-pink-50/90 border-[#E0246A] ring-1 ring-[#E0246A]'
-                : 'bg-white border-stone-200 hover:border-pink-300'
-            }`}
-          >
-            <span className="absolute -top-2.5 right-2 px-2 py-0.5 rounded-full bg-[#E0246A] text-white text-[9px] font-bold tracking-wide">
-              SAVE 35%
-            </span>
-            <div className="text-xs font-semibold text-stone-900">Annual</div>
-            <div className="text-lg font-bold text-stone-900 mt-0.5">$6.58<span className="text-[10px] font-normal text-stone-500">/mo</span></div>
-            <div className="text-[10px] text-stone-500 mt-0.5">$79 billed yearly</div>
-          </button>
-
+        {/* 3-Tier Plan Selector: $7/mo, $29/6mo, $49/yr */}
+        <div className="grid grid-cols-3 gap-2.5 sm:gap-3">
+          {/* Monthly: $7/mo */}
           <button
             type="button"
             onClick={() => setSelectedPlan('monthly')}
-            className={`p-3.5 rounded-2xl border text-left transition-all ${
+            className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
               selectedPlan === 'monthly'
-                ? 'bg-pink-50/90 border-[#E0246A] ring-1 ring-[#E0246A]'
+                ? 'bg-pink-50/90 border-[#E0246A] ring-2 ring-[#E0246A]/20'
                 : 'bg-white border-stone-200 hover:border-pink-300'
             }`}
           >
-            <div className="text-xs font-semibold text-stone-900">Monthly</div>
-            <div className="text-lg font-bold text-stone-900 mt-0.5">$9.99<span className="text-[10px] font-normal text-stone-500">/mo</span></div>
-            <div className="text-[10px] text-stone-500 mt-0.5">Cancel anytime</div>
+            <div>
+              <div className="text-xs font-semibold text-stone-900">Monthly</div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
+                $7<span className="text-[10px] font-normal text-stone-500">/mo</span>
+              </div>
+            </div>
+            <div className="text-[10px] text-stone-500 mt-2">Billed monthly</div>
+          </button>
+
+          {/* 6 Months: $29 ($4.83/mo) */}
+          <button
+            type="button"
+            onClick={() => setSelectedPlan('biannual')}
+            className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
+              selectedPlan === 'biannual'
+                ? 'bg-pink-50/90 border-[#E0246A] ring-2 ring-[#E0246A]/20'
+                : 'bg-white border-stone-200 hover:border-pink-300'
+            }`}
+          >
+            <span className="absolute -top-2.5 right-1.5 px-1.5 py-0.5 rounded-full bg-[#E0246A] text-white text-[8px] font-bold tracking-wide">
+              POPULAR
+            </span>
+            <div>
+              <div className="text-xs font-semibold text-stone-900">6 Months</div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
+                $29
+              </div>
+              <div className="text-[10px] text-[#E0246A] font-semibold mt-0.5">
+                $4.83/mo
+              </div>
+            </div>
+            <div className="text-[10px] text-stone-500 mt-1">Save 31%</div>
+          </button>
+
+          {/* Yearly: $49 ($4.08/mo) */}
+          <button
+            type="button"
+            onClick={() => setSelectedPlan('annual')}
+            className={`p-3 rounded-2xl border text-left transition-all relative flex flex-col justify-between cursor-pointer ${
+              selectedPlan === 'annual'
+                ? 'bg-pink-50/90 border-[#E0246A] ring-2 ring-[#E0246A]/20'
+                : 'bg-white border-stone-200 hover:border-pink-300'
+            }`}
+          >
+            <span className="absolute -top-2.5 right-1.5 px-1.5 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-bold tracking-wide">
+              SAVE 42%
+            </span>
+            <div>
+              <div className="text-xs font-semibold text-stone-900">Yearly</div>
+              <div className="text-base sm:text-lg font-bold text-stone-900 mt-0.5">
+                $49
+              </div>
+              <div className="text-[10px] text-emerald-600 font-semibold mt-0.5">
+                $4.08/mo
+              </div>
+            </div>
+            <div className="text-[10px] text-stone-500 mt-1">Best Value</div>
           </button>
         </div>
+
+        {/* Selected Plan Details */}
+        <p className="text-[11px] text-stone-500 text-center">
+          {PRO_PLANS[selectedPlan].billingText}
+        </p>
 
         {/* Upgrade Action */}
         <div className="space-y-2">
@@ -179,14 +221,16 @@ export function ProPaywallModal({
             ) : (
               <>
                 <Crown className="w-4 h-4 text-white" />
-                <span>Upgrade to Pro — Unlimited Access</span>
+                <span>
+                  Upgrade to Pro ({PRO_PLANS[selectedPlan].price}{PRO_PLANS[selectedPlan].period})
+                </span>
               </>
             )}
           </button>
 
           <div className="flex items-center justify-center gap-1.5 text-[10px] text-stone-400">
             <ShieldCheck className="w-3.5 h-3.5" />
-            <span>Secure 256-bit checkout • Instant activation</span>
+            <span>Secure checkout • Instant activation • Cancel anytime</span>
           </div>
         </div>
       </div>

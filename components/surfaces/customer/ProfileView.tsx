@@ -40,8 +40,9 @@ import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
 import { uploadUserHandPhoto } from '@/lib/services/storage';
-import { isVipEmail, getUserCreditStatus } from '@/lib/services/credits';
+import { isVipEmail, getUserCreditStatus, PRO_PLANS } from '@/lib/services/credits';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
+import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 
 interface ProfileViewProps {
   userName: string;
@@ -197,6 +198,7 @@ export function ProfileView({
 
   // Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
+  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
   const [isHandModalOpen, setIsHandModalOpen] = useState(false);
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
@@ -855,6 +857,76 @@ export function ProfileView({
             )}
           </div>
 
+          {/* Card: Plan & Credits Station */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUserVip || isUserPro ? 'bg-pink-50 text-[#E0246A]' : 'bg-stone-100 text-stone-700'}`}>
+                  {isUserVip || isUserPro ? <Crown className="w-4 h-4 fill-[#E0246A]" /> : <Sparkles className="w-4 h-4 text-[#E0246A]" />}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                    {isUserVip ? 'VIP Atelier (Unlimited)' : isUserPro ? 'Pro Atelier Plan' : 'Free Atelier Plan'}
+                  </span>
+                  <span className="text-[11px] text-stone-500">
+                    {isUserVip || isUserPro ? 'Unlimited high-definition virtual try-ons' : `${creditStatus.credits} try-on credits remaining`}
+                  </span>
+                </div>
+              </div>
+
+              {isUserVip || isUserPro ? (
+                <span className="text-[10px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 inline-flex items-center gap-1 shrink-0">
+                  <Check className="w-3 h-3 text-emerald-600" />
+                  <span>Unlimited</span>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsPaywallOpen(true)}
+                  className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-[11px] font-semibold transition cursor-pointer flex items-center gap-1 shadow-xs active:scale-95"
+                >
+                  <Crown className="w-3 h-3" />
+                  <span>Upgrade to Pro</span>
+                </button>
+              )}
+            </div>
+
+            {/* Pricing Highlights for Free Users */}
+            {!isUserPro && !isUserVip && (
+              <div className="pt-3 border-t border-stone-100 grid grid-cols-3 gap-2 text-center">
+                <div
+                  onClick={() => setIsPaywallOpen(true)}
+                  className="p-2 rounded-xl bg-stone-50 hover:bg-pink-50/50 border border-stone-200/60 transition cursor-pointer"
+                >
+                  <div className="text-[10px] text-stone-500">Monthly</div>
+                  <div className="text-xs font-bold text-stone-900 mt-0.5">$7<span className="text-[9px] font-normal text-stone-400">/mo</span></div>
+                </div>
+                <div
+                  onClick={() => setIsPaywallOpen(true)}
+                  className="p-2 rounded-xl bg-pink-50/70 hover:bg-pink-50 border border-pink-200 transition cursor-pointer relative"
+                >
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-[#E0246A] text-white text-[7px] font-bold">
+                    POPULAR
+                  </span>
+                  <div className="text-[10px] text-stone-600">6 Months</div>
+                  <div className="text-xs font-bold text-[#E0246A] mt-0.5">$29</div>
+                  <div className="text-[8px] text-stone-400">$4.83/mo</div>
+                </div>
+                <div
+                  onClick={() => setIsPaywallOpen(true)}
+                  className="p-2 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200 transition cursor-pointer relative"
+                >
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[7px] font-bold">
+                    BEST VALUE
+                  </span>
+                  <div className="text-[10px] text-stone-600">Yearly</div>
+                  <div className="text-xs font-bold text-emerald-700 mt-0.5">$49</div>
+                  <div className="text-[8px] text-stone-400">$4.08/mo</div>
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* Card 2: Hand Photo Studio Station */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
@@ -1422,6 +1494,16 @@ export function ProfileView({
         onClose={() => setIsCameraCaptureOpen(false)}
         onCaptureHand={handleCameraHandCaptured}
         onUploadFileFallback={(file) => handleHandPhotoSelected(file)}
+      />
+
+      {/* Pro Subscription Paywall Modal */}
+      <ProPaywallModal
+        isOpen={isPaywallOpen}
+        onClose={() => setIsPaywallOpen(false)}
+        onSuccess={() => {
+          setIsPaywallOpen(false);
+          showToast('Pro Atelier Access activated! Enjoy unlimited try-ons.');
+        }}
       />
     </div>
   );

@@ -107,9 +107,16 @@ export function CustomerSignupView({
           </h1>
           <p className="font-sans text-xs text-stone-500">
             {mode === 'signup'
-              ? 'Save your custom sets, try-ons, and personal styles.'
+              ? 'Get 10 complimentary virtual try-on credits to style any manicure on your hand.'
               : 'Sign in to access your saved manicures and personal atelier.'}
           </p>
+          {mode === 'signup' && (
+            <div className="pt-1">
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-[#E0246A] text-[11px] font-semibold">
+                ✨ Free Plan: 10 Try-On Credits Included
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Mode Toggle */}
