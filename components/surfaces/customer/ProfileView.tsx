@@ -1390,31 +1390,31 @@ export function ProfileView({
       {/* Sign Out Confirmation Modal */}
       {isSignOutModalOpen && (
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
           onClick={() => setIsSignOutModalOpen(false)}
         >
           <div
-            className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-150"
+            className="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl border border-stone-200/80 text-center space-y-3.5 animate-in zoom-in-95 duration-150"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
-              <LogOut className="w-6 h-6" />
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+              <LogOut className="w-5 h-5" />
             </div>
 
-            <div className="text-center space-y-1">
-              <h3 className="font-serif text-lg font-normal text-stone-900">
-                Sign out of Finglora?
+            <div className="space-y-1">
+              <h3 className="font-semibold text-stone-900 text-sm">
+                Sign out?
               </h3>
-              <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
-                You will be returned to the guest view. Your saved hand photo and calibrated designs are safely stored in your account.
+              <p className="text-xs text-stone-500 leading-normal">
+                Your saved manicures and hand photo are safely stored.
               </p>
             </div>
 
-            <div className="grid grid-cols-2 gap-2.5 pt-2">
+            <div className="grid grid-cols-2 gap-2 pt-1">
               <button
                 type="button"
                 onClick={() => setIsSignOutModalOpen(false)}
-                className="h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition active:scale-95"
+                className="h-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition active:scale-95"
               >
                 Cancel
               </button>
@@ -1431,7 +1431,7 @@ export function ProfileView({
                   showToast('Signed out successfully');
                   if (onLogout) onLogout();
                 }}
-                className="h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer transition active:scale-95 shadow-xs"
+                className="h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer transition active:scale-95 shadow-xs"
               >
                 Sign Out
               </button>

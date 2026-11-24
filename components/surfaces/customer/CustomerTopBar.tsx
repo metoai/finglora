@@ -229,6 +229,7 @@ export function CustomerTopBar({
   };
 
   return (
+    <>
     <header className="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-[rgba(31,26,28,0.06)] shadow-2xs select-none">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-14 sm:h-16 flex items-center justify-between gap-4">
         {/* Left: Brand Identity */}
@@ -590,62 +591,63 @@ export function CustomerTopBar({
           </div>
         </div>
       )}
+    </header>
 
-      {/* Sign Out Confirmation Modal */}
-      {isSignOutModalOpen && (
+    {/* Sign Out Confirmation Modal - Rendered outside header to prevent mobile clipping */}
+    {isSignOutModalOpen && (
+      <div
+        className="fixed inset-0 z-[100] bg-black/50 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-150"
+        onClick={() => setIsSignOutModalOpen(false)}
+      >
         <div
-          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
-          onClick={() => setIsSignOutModalOpen(false)}
+          className="bg-white rounded-2xl w-full max-w-xs p-5 shadow-xl border border-stone-200/80 text-center space-y-3.5 animate-in zoom-in-95 duration-150"
+          onClick={(e) => e.stopPropagation()}
         >
-          <div
-            className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-150"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
-              <LogOut className="w-6 h-6" />
-            </div>
+          <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto">
+            <LogOut className="w-5 h-5" />
+          </div>
 
-            <div className="text-center space-y-1">
-              <h3 className="font-serif text-lg font-normal text-stone-900">
-                Sign out of Finglora?
-              </h3>
-              <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
-                You will be returned to the guest view. Your saved hand photo and calibrated designs are safely stored in your account.
-              </p>
-            </div>
+          <div className="space-y-1">
+            <h3 className="font-semibold text-stone-900 text-sm">
+              Sign out?
+            </h3>
+            <p className="text-xs text-stone-500 leading-normal">
+              Your saved manicures and hand photo are safely stored.
+            </p>
+          </div>
 
-            <div className="grid grid-cols-2 gap-2.5 pt-2">
-              <button
-                type="button"
-                onClick={() => setIsSignOutModalOpen(false)}
-                className="h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition active:scale-95"
-              >
-                Cancel
-              </button>
+          <div className="grid grid-cols-2 gap-2 pt-1">
+            <button
+              type="button"
+              onClick={() => setIsSignOutModalOpen(false)}
+              className="h-9 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition active:scale-95"
+            >
+              Cancel
+            </button>
 
-              <button
-                type="button"
-                onClick={async () => {
-                  setIsSignOutModalOpen(false);
-                  try {
-                    await signOutUser();
-                  } catch (e) {
-                    console.warn('Sign out error:', e);
-                  }
-                  if (onLogout) {
-                    onLogout();
-                  } else {
-                    window.location.href = '/';
-                  }
-                }}
-                className="h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer transition active:scale-95 shadow-xs"
-              >
-                Sign Out
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={async () => {
+                setIsSignOutModalOpen(false);
+                try {
+                  await signOutUser();
+                } catch (e) {
+                  console.warn('Sign out error:', e);
+                }
+                if (onLogout) {
+                  onLogout();
+                } else {
+                  window.location.href = '/';
+                }
+              }}
+              className="h-9 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer transition active:scale-95 shadow-xs"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
-      )}
-    </header>
+      </div>
+    )}
+    </>
   );
 }
