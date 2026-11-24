@@ -8,6 +8,8 @@ import {
   Hand,
   ArrowRight,
   ShieldCheck,
+  Mail,
+  Loader2,
 } from 'lucide-react';
 import { Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { FINGER_LABELS } from '@/constants/nail-data';
@@ -39,6 +41,9 @@ export function PassportView({
   onTryOnClick?: () => void;
 }) {
   const [copied, setCopied] = useState(false);
+  const [emailStatus, setEmailStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
+  const [emailPromptOpen, setEmailPromptOpen] = useState(false);
+  const [emailInput, setEmailInput] = useState('');
 
   // Format cleanly to #FGL-XXXX
   const cleanCode = (activePassportCode || '4091')
@@ -50,6 +55,46 @@ export function PassportView({
     onCopyShareLink();
     setCopied(true);
     setTimeout(() => setCopied(false), 2400);
+  };
+
+  const handleSendEmail = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!emailInput || !emailInput.includes('@')) return;
+
+    setEmailStatus('sending');
+    try {
+      const colors = Object.values(nails)
+        .map((n) => n.baseColor)
+        .filter(Boolean);
+      const uniqueColors = Array.from(new Set(colors));
+      const shape = nails.index?.shape || 'almond';
+      const length = nails.index?.length || 'medium';
+
+      const res = await fetch('/api/email/passport', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: emailInput.trim(),
+          passportCode: formattedPassportCode,
+          designName: activeSetName || 'Custom Finglora Look',
+          shape,
+          length,
+          colors: uniqueColors.length > 0 ? uniqueColors : ['#F9E9E9', '#E0246A'],
+        }),
+      });
+
+      if (res.ok) {
+        setEmailStatus('sent');
+        setTimeout(() => {
+          setEmailPromptOpen(false);
+          setEmailStatus('idle');
+        }, 2500);
+      } else {
+        setEmailStatus('error');
+      }
+    } catch {
+      setEmailStatus('error');
+    }
   };
 
   return (
@@ -69,7 +114,17 @@ export function PassportView({
         </div>
 
         {/* Primary & Secondary Action Buttons */}
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="flex flex-wrap items-center gap-2.5">
+          {/* Email Recipe Button */}
+          <button
+            type="button"
+            onClick={() => setEmailPromptOpen(true)}
+            className="h-11 px-4 rounded-xl bg-[#FFFFFF] border border-[rgba(31,26,28,0.12)] hover:bg-[#F4F4F5] text-xs font-semibold text-[#18181B] transition-all inline-flex items-center gap-2 shadow-2xs cursor-pointer active:scale-95"
+          >
+            <Mail className="w-4 h-4 text-[#E0246A]" strokeWidth={1.75} />
+            <span>Email Recipe</span>
+          </button>
+
           {/* Secondary Button: Share Recipe / Copy Link */}
           <button
             type="button"
@@ -100,6 +155,79 @@ export function PassportView({
           </button>
         </div>
       </div>
+
+      {/* Email Recipe Modal */}
+      {emailPromptOpen && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl border border-stone-200 max-w-md w-full p-6 shadow-xl space-y-4">
+            <div className="flex items-center justify-between">
+              <h3 className="font-serif text-lg text-stone-900 font-semibold">
+                Email Salon Recipe
+              </h3>
+              <button
+                type="button"
+                onClick={() => setEmailPromptOpen(false)}
+                className="text-stone-400 hover:text-stone-700 text-sm font-semibold p-1"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="text-xs text-stone-600">
+              Send this 5-finger manicure specification sheet and color palette directly to your email or your nail technician.
+            </p>
+
+            <form onSubmit={handleSendEmail} className="space-y-3">
+              <input
+                type="email"
+                required
+                value={emailInput}
+                onChange={(e) => setEmailInput(e.target.value)}
+                placeholder="client@gmail.com or salon@nailtech.com"
+                className="w-full h-11 px-3.5 rounded-xl border border-stone-300 text-sm focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
+              />
+
+              {emailStatus === 'error' && (
+                <p className="text-xs text-red-600">
+                  Could not send email. Please check the address or try again.
+                </p>
+              )}
+
+              {emailStatus === 'sent' && (
+                <p className="text-xs text-green-600 font-medium flex items-center gap-1.5">
+                  <Check className="w-4 h-4 text-green-600" />
+                  Recipe emailed successfully!
+                </p>
+              )}
+
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEmailPromptOpen(false)}
+                  className="h-10 px-4 rounded-xl text-xs font-semibold text-stone-600 hover:bg-stone-100"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={emailStatus === 'sending' || emailStatus === 'sent'}
+                  className="h-10 px-5 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-50 cursor-pointer shadow-xs"
+                >
+                  {emailStatus === 'sending' ? (
+                    <>
+                      <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      Sending...
+                    </>
+                  ) : emailStatus === 'sent' ? (
+                    'Sent!'
+                  ) : (
+                    'Send Recipe'
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* Luxury Design Passport Card with Embossed Styling & Clean Hairline Borders */}
       <div className="relative bg-[#FFFFFF] rounded-3xl border border-[rgba(31,26,28,0.08)] shadow-sm overflow-hidden">
