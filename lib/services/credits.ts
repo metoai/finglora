@@ -1,3 +1,5 @@
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
+
 /**
  * Finglora Credit & Subscription Service
  * Free Plan: 10 complimentary try-on credits
@@ -58,15 +60,14 @@ export const PRO_PLANS: Record<ProPlanType, PlanPricing> = {
 
 export const VIP_EMAILS = [
   'finglora.vip.pro@gmail.com',
-  'vip@finglora.com',
-  'pro@finglora.com',
-  'admin@finglora.com',
+  'metoaipr@gmail.com',
+  'alazartesema1@gmail.com',
 ];
 
 export function isVipEmail(email?: string | null): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
-  return VIP_EMAILS.includes(clean) || clean.includes('finglora.vip') || clean.includes('+pro');
+  return VIP_EMAILS.includes(clean);
 }
 
 export interface UserCreditStatus {
@@ -77,25 +78,42 @@ export interface UserCreditStatus {
   hasReceivedSignupBonus: boolean;
 }
 
+/**
+ * Synchronize client cache strictly with the authenticated user's real DB profile row.
+ */
+export function syncCreditsFromProfile(isPro: boolean, credits?: number | null): void {
+  if (typeof window === 'undefined') return;
+  try {
+    localStorage.setItem(PRO_STATUS_KEY, isPro ? 'true' : 'false');
+    if (isPro) {
+      localStorage.setItem(CREDITS_STORAGE_KEY, String(typeof credits === 'number' ? credits : 999999));
+    } else if (typeof credits === 'number') {
+      localStorage.setItem(CREDITS_STORAGE_KEY, String(Math.max(0, credits)));
+    } else {
+      localStorage.setItem(CREDITS_STORAGE_KEY, String(FREE_SIGNUP_CREDITS));
+    }
+    localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
+  } catch {
+    // ignore storage quota error
+  }
+}
+
 export function getUserCreditStatus(): UserCreditStatus {
   if (typeof window === 'undefined') {
     return { credits: FREE_SIGNUP_CREDITS, isPro: false, proPlan: null, hasUsedGuestCredit: false, hasReceivedSignupBonus: false };
   }
 
-  const storedEmail = localStorage.getItem(USER_EMAIL_KEY) || '';
-  const isVip = isVipEmail(storedEmail);
-  const isPro = isVip || localStorage.getItem(PRO_STATUS_KEY) === 'true';
+  const isPro = localStorage.getItem(PRO_STATUS_KEY) === 'true';
   const proPlan = (localStorage.getItem(PRO_PLAN_KEY) as ProPlanType) || (isPro ? 'annual' : null);
   const hasReceivedSignupBonus = localStorage.getItem(SIGNUP_BONUS_KEY) === 'true';
-  
+
   const storedCredits = localStorage.getItem(CREDITS_STORAGE_KEY);
-  let credits = isPro ? 999999 : FREE_SIGNUP_CREDITS; // Default: 10 free credits for free users
+  let credits = isPro ? 999999 : FREE_SIGNUP_CREDITS;
 
   if (!isPro && storedCredits !== null) {
     credits = parseInt(storedCredits, 10);
     if (isNaN(credits)) credits = 0;
   } else if (!isPro && storedCredits === null) {
-    // First time guest/free user: initialize with 10 credits
     localStorage.setItem(CREDITS_STORAGE_KEY, FREE_SIGNUP_CREDITS.toString());
   }
 
@@ -111,8 +129,8 @@ export function getUserCreditStatus(): UserCreditStatus {
 }
 
 /**
- * Deduct 1 credit for a try-on session.
- * Returns true if successful, false if paywall is required.
+ * Deduct 1 credit for a try-on session locally (for instant UI feedback).
+ * Prefer consumeAuthenticatedCredit() for authenticated users.
  */
 export function useTryOnCredit(): boolean {
   if (typeof window === 'undefined') return true;
@@ -121,12 +139,43 @@ export function useTryOnCredit(): boolean {
   if (status.isPro) return true;
 
   if (status.credits <= 0) {
-    return false; // Requires paywall / signup
+    return false;
   }
 
   const remaining = status.credits - 1;
   localStorage.setItem(CREDITS_STORAGE_KEY, remaining.toString());
   return true;
+}
+
+/**
+ * Atomically deduct 1 credit via Supabase RPC for logged-in users, syncing local state.
+ */
+export async function consumeAuthenticatedCredit(): Promise<{ allowed: boolean; credits: number; isPro: boolean }> {
+  try {
+    const supabase = getSupabaseBrowserClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const ok = useTryOnCredit();
+      const s = getUserCreditStatus();
+      return { allowed: ok, credits: s.credits, isPro: s.isPro };
+    }
+
+    const { data, error } = await (supabase as any).rpc('consume_tryon_credit');
+    if (!error && data && typeof data.allowed === 'boolean') {
+      syncCreditsFromProfile(Boolean(data.is_pro), data.credits);
+      return {
+        allowed: Boolean(data.allowed),
+        credits: typeof data.credits === 'number' ? data.credits : 0,
+        isPro: Boolean(data.is_pro),
+      };
+    }
+  } catch {
+    // fallback to local check only if RPC is not deployed yet
+  }
+
+  const ok = useTryOnCredit();
+  const s = getUserCreditStatus();
+  return { allowed: ok, credits: s.credits, isPro: s.isPro };
 }
 
 /**
@@ -141,7 +190,6 @@ export function grantSignupCreditBonus(): number {
   }
 
   const status = getUserCreditStatus();
-  // Ensure user has at least 10 credits on signup
   const newBalance = Math.max(status.credits, FREE_SIGNUP_CREDITS);
   localStorage.setItem(CREDITS_STORAGE_KEY, newBalance.toString());
   localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
@@ -149,11 +197,20 @@ export function grantSignupCreditBonus(): number {
 }
 
 /**
- * Upgrade user to Pro subscriber with selected plan
+ * Upgrade user to Pro subscriber with selected plan (client display cache after verified checkout)
  */
 export function activateProSubscription(plan: ProPlanType = 'annual'): void {
   if (typeof window === 'undefined') return;
   localStorage.setItem(PRO_STATUS_KEY, 'true');
   localStorage.setItem(PRO_PLAN_KEY, plan);
   localStorage.setItem(CREDITS_STORAGE_KEY, '999999');
+}
+
+export function clearCreditStorage(): void {
+  if (typeof window === 'undefined') return;
+  localStorage.removeItem(CREDITS_STORAGE_KEY);
+  localStorage.removeItem(SIGNUP_BONUS_KEY);
+  localStorage.removeItem(PRO_STATUS_KEY);
+  localStorage.removeItem(PRO_PLAN_KEY);
+  localStorage.removeItem(USER_EMAIL_KEY);
 }

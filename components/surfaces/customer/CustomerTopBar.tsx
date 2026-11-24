@@ -29,6 +29,7 @@ export interface CustomerTopBarProps {
   onLogout?: () => void;
   favoritesCount?: number;
   userName?: string;
+  avatarUrl?: string | null;
   preferredShape?: NailShape;
   mobileMenuOpen: boolean;
   setMobileMenuOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -40,6 +41,7 @@ export function CustomerTopBar({
   onBrandClick,
   favoritesCount = 0,
   userName = 'Flora',
+  avatarUrl = null,
   preferredShape = 'almond',
   mobileMenuOpen,
   setMobileMenuOpen,
@@ -97,11 +99,15 @@ export function CustomerTopBar({
     { id: 'profile', label: 'Profile & Settings', Icon: User },
   ];
 
-  const userInitials = userName && userName.trim()
-    ? userName.trim().slice(0, 2).toUpperCase()
-    : 'FL';
+  const nameParts = (userName || '').trim().split(/\s+/).filter(Boolean);
+  const userInitials =
+    nameParts.length >= 2
+      ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase()
+      : nameParts[0]
+      ? nameParts[0].slice(0, 2).toUpperCase()
+      : 'FL';
 
-  const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
+  const [avatarLoadError, setAvatarLoadError] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
 
@@ -148,33 +154,8 @@ export function CustomerTopBar({
   const [notifications, setNotifications] = useState<TopBarNotification[]>(defaultNotifications);
 
   useEffect(() => {
-    const updateAvatar = () => {
-      if (typeof window !== 'undefined') {
-        const custom = localStorage.getItem('finglora_custom_avatar_photo');
-        if (custom) {
-          setAvatarUrl(custom);
-          return;
-        }
-        const saved = localStorage.getItem('finglora_avatar_url');
-        if (saved) {
-          setAvatarUrl(saved);
-          return;
-        }
-        const seed = localStorage.getItem('finglora_avatar_seed') || 'Vivian';
-        setAvatarUrl(
-          `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=fde8ef`
-        );
-      }
-    };
-
-    updateAvatar();
-    window.addEventListener('storage', updateAvatar);
-    window.addEventListener('finglora_avatar_updated', updateAvatar);
-    return () => {
-      window.removeEventListener('storage', updateAvatar);
-      window.removeEventListener('finglora_avatar_updated', updateAvatar);
-    };
-  }, []);
+    setAvatarLoadError(false);
+  }, [avatarUrl]);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -357,14 +338,13 @@ export function CustomerTopBar({
             }`}
             title="Profile & Settings"
           >
-            {avatarUrl ? (
+            {avatarUrl && !avatarLoadError ? (
               <img
                 src={avatarUrl}
                 alt={userName}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover"
-                onError={(e) => {
-                  (e.target as HTMLElement).style.display = 'none';
-                }}
+                onError={() => setAvatarLoadError(true)}
               />
             ) : (
               userInitials

@@ -268,8 +268,34 @@ export async function uploadUserHandPhoto(
 }
 
 /**
+ * Uploads a user profile avatar to Supabase Storage bucket 'avatars'
+ */
+export async function uploadUserAvatar(file: File, userId: string): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+  const optimizedBlob = await optimizeImage(file, 512, 0.85);
+  const path = `${userId}/${Date.now()}_avatar.jpg`;
+
+  const { data, error } = await supabase.storage
+    .from('avatars')
+    .upload(path, optimizedBlob, {
+      contentType: 'image/jpeg',
+      upsert: true,
+    });
+
+  if (error) {
+    throw error;
+  }
+
+  const { data: publicUrlData } = supabase.storage
+    .from('avatars')
+    .getPublicUrl(data.path);
+
+  return publicUrlData.publicUrl;
+}
+
+/**
  * Uploads an AI-synthesized applied manicure result to Supabase Storage ('try-on-captures')
- * and records it into the try_on_history table via RPC.
+ * and records it strictly under the verified authenticated user's try_on_history.
  */
 export async function uploadAppliedTryOnResult({
   imageDataUrl,
@@ -289,17 +315,17 @@ export async function uploadAppliedTryOnResult({
   try {
     let effectiveUserId = userId;
     if (!effectiveUserId) {
-      try {
-        const { data } = await supabase.auth.getSession();
-        effectiveUserId = data.session?.user?.id;
-      } catch {}
+      const { data: { user } } = await supabase.auth.getUser();
+      effectiveUserId = user?.id;
     }
 
-    // Convert base64 dataUrl to blob
+    if (!effectiveUserId) {
+      return imageDataUrl;
+    }
+
     const res = await fetch(imageDataUrl);
     const blob = await res.blob();
-
-    const path = `${effectiveUserId || 'guest'}/${Date.now()}_applied_manicure.jpg`;
+    const path = `${effectiveUserId}/${Date.now()}_applied_manicure.jpg`;
 
     const { data, error } = await supabase.storage
       .from('try-on-captures')
@@ -319,19 +345,24 @@ export async function uploadAppliedTryOnResult({
 
     const publicUrl = publicData.publicUrl;
 
-    // Record into try_on_history table if user is authenticated
-    if (effectiveUserId) {
-      try {
-        await (supabase as any).rpc('save_try_on_result', {
-          p_user_id: effectiveUserId,
-          p_image_url: publicUrl,
-          p_mode: mode,
-          p_set_id: setId || null,
-          p_skin_tone_id: skinToneId,
-        });
-      } catch (rpcErr) {
-        console.warn('Could not record into try_on_history:', rpcErr);
-      }
+    // Insert under authenticated user's own RLS ("Users can insert own try-ons")
+    const { error: insertError } = await supabase.from('try_on_history').insert({
+      user_id: effectiveUserId,
+      image_url: publicUrl,
+      mode,
+      set_id: setId || null,
+      skin_tone_id: skinToneId,
+    } as any);
+
+    if (insertError) {
+      // Fallback to RPC if direct insert had policy conflict
+      await (supabase as any).rpc('save_try_on_result', {
+        p_user_id: effectiveUserId,
+        p_image_url: publicUrl,
+        p_mode: mode,
+        p_set_id: setId || null,
+        p_skin_tone_id: skinToneId,
+      });
     }
 
     return publicUrl;

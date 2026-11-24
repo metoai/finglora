@@ -32,6 +32,7 @@ export interface CustomerSidebarProps {
   onBrandClick: () => void;
   favoritesCount?: number;
   userName?: string;
+  avatarUrl?: string | null;
   preferredShape?: NailShape;
   activeSetName?: string;
   activePhotoUrl?: string;
@@ -44,6 +45,7 @@ export function CustomerSidebar({
   onBrandClick,
   favoritesCount = 0,
   userName = 'Flora',
+  avatarUrl = null,
 }: CustomerSidebarProps) {
   const isHomeActive = currentRoute === 'home';
   const isExploreActive = currentRoute === 'explore';
@@ -53,40 +55,19 @@ export function CustomerSidebar({
   const isHistoryActive = currentRoute === 'history';
   const isProfileActive = currentRoute === 'profile';
 
-  const userInitials = userName && userName.trim()
-    ? userName.trim().slice(0, 2).toUpperCase()
-    : 'FL';
+  const nameParts = (userName || '').trim().split(/\s+/).filter(Boolean);
+  const userInitials =
+    nameParts.length >= 2
+      ? `${nameParts[0][0]}${nameParts[1][0]}`.toUpperCase()
+      : nameParts[0]
+      ? nameParts[0].slice(0, 2).toUpperCase()
+      : 'FL';
 
-  const [sidebarAvatarUrl, setSidebarAvatarUrl] = React.useState<string | null>(null);
+  const [avatarLoadError, setAvatarLoadError] = React.useState(false);
 
   React.useEffect(() => {
-    const updateAvatar = () => {
-      if (typeof window !== 'undefined') {
-        const custom = localStorage.getItem('finglora_custom_avatar_photo');
-        if (custom) {
-          setSidebarAvatarUrl(custom);
-          return;
-        }
-        const saved = localStorage.getItem('finglora_avatar_url');
-        if (saved) {
-          setSidebarAvatarUrl(saved);
-          return;
-        }
-        const seed = localStorage.getItem('finglora_avatar_seed') || 'Vivian';
-        setSidebarAvatarUrl(
-          `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(seed)}&backgroundColor=fde8ef`
-        );
-      }
-    };
-
-    updateAvatar();
-    window.addEventListener('storage', updateAvatar);
-    window.addEventListener('finglora_avatar_updated', updateAvatar);
-    return () => {
-      window.removeEventListener('storage', updateAvatar);
-      window.removeEventListener('finglora_avatar_updated', updateAvatar);
-    };
-  }, []);
+    setAvatarLoadError(false);
+  }, [avatarUrl]);
 
   return (
     <aside
@@ -242,13 +223,13 @@ export function CustomerSidebar({
           title="Profile"
           aria-label="Profile"
         >
-          {sidebarAvatarUrl ? (
+          {avatarUrl && !avatarLoadError ? (
             <img
-              src={sidebarAvatarUrl}
+              src={avatarUrl}
               alt={userName}
               referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
-              onError={() => setSidebarAvatarUrl(null)}
+              onError={() => setAvatarLoadError(true)}
             />
           ) : (
             <span className="text-stone-700">{userInitials}</span>

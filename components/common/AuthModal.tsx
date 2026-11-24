@@ -1,9 +1,14 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, ArrowRight, Check } from 'lucide-react';
+import { X, ArrowRight, Mail, Check } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { signUpWithEmail, signInWithEmail, signInWithGoogle, VIP_ACCOUNT } from '@/lib/services/auth';
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  signInWithGoogle,
+  resendVerificationEmail,
+} from '@/lib/services/auth';
 
 export interface AuthModalProps {
   isOpen: boolean;
@@ -21,16 +26,21 @@ export function AuthModal({
   onSignInSuccess,
 }: AuthModalProps) {
   const [mode, setMode] = useState<'signup' | 'signin'>(initialMode);
-  const [name, setName] = useState('Elena');
+  const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [canResendConfirm, setCanResendConfirm] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
-  // Sync mode if initialMode changes
   React.useEffect(() => {
     setMode(initialMode);
     setErrorMessage('');
+    setPendingVerificationEmail(null);
+    setCanResendConfirm(false);
+    setResendSuccess(false);
   }, [initialMode, isOpen]);
 
   if (!isOpen) return null;
@@ -46,41 +56,128 @@ export function AuthModal({
     }
   };
 
+  const handleResend = async () => {
+    const targetEmail = (pendingVerificationEmail || email).trim();
+    if (!targetEmail) return;
+    setIsSubmitting(true);
+    setResendSuccess(false);
+    try {
+      await resendVerificationEmail(targetEmail);
+      setResendSuccess(true);
+      setErrorMessage('');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Could not resend verification email.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
+    setCanResendConfirm(false);
+    setResendSuccess(false);
 
     try {
       if (mode === 'signup') {
-        const cleanName = name.trim() || 'Elena';
-        const cleanEmail = email.trim();
-        await signUpWithEmail(cleanEmail, password, cleanName);
+        const cleanName = name.trim() || email.trim().split('@')[0] || 'Client';
+        const cleanEmail = email.trim().toLowerCase();
+        const result = await signUpWithEmail(cleanEmail, password, cleanName);
 
-        // Send welcome email via Resend in background
-        if (cleanEmail) {
-          fetch('/api/email/welcome', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: cleanEmail, name: cleanName }),
-          }).catch((e) => console.warn('Welcome email error:', e));
+        if (result.needsEmailVerification) {
+          setPendingVerificationEmail(cleanEmail);
+          setIsSubmitting(false);
+          return;
         }
 
         setIsSubmitting(false);
         onClose();
         onSignUpSuccess({ name: cleanName, email: cleanEmail });
       } else {
-        const cleanEmail = email.trim();
+        const cleanEmail = email.trim().toLowerCase();
         await signInWithEmail(cleanEmail, password);
         setIsSubmitting(false);
         onClose();
         onSignInSuccess({ email: cleanEmail });
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      const msg = err?.message || 'Authentication failed. Please check your credentials.';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        setCanResendConfirm(true);
+        setErrorMessage('Please confirm your email address before signing in.');
+      } else {
+        setErrorMessage(msg);
+      }
       setIsSubmitting(false);
     }
   };
+
+  if (pendingVerificationEmail) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
+        <div className="bg-white rounded-3xl w-full max-w-md p-6 sm:p-8 shadow-2xl border border-stone-200 space-y-5 relative text-center">
+          <button
+            type="button"
+            onClick={onClose}
+            className="absolute top-5 right-5 w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-600 transition cursor-pointer"
+            title="Close"
+          >
+            <X className="w-4 h-4" />
+          </button>
+
+          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center mx-auto">
+            <Mail className="w-6 h-6" />
+          </div>
+
+          <div className="space-y-1.5">
+            <h2 className="font-serif text-2xl font-normal text-stone-900">
+              Check your email
+            </h2>
+            <p className="text-xs text-stone-500 leading-relaxed">
+              We sent a verification link to{' '}
+              <span className="font-semibold text-stone-800">{pendingVerificationEmail}</span>.
+              Click the link in your inbox to activate your account and sign in.
+            </p>
+          </div>
+
+          {errorMessage && (
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 font-medium">
+              {errorMessage}
+            </div>
+          )}
+
+          {resendSuccess && (
+            <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5" />
+              <span>Verification email resent.</span>
+            </div>
+          )}
+
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={isSubmitting}
+              className="w-full h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingVerificationEmail(null);
+                setMode('signin');
+              }}
+              className="w-full h-10 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium transition cursor-pointer"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200">
@@ -110,11 +207,15 @@ export function AuthModal({
           </p>
         </div>
 
-        {/* Mode Pill Toggle: [Create Account] [Sign In] */}
+        {/* Mode Pill Toggle */}
         <div className="grid grid-cols-2 p-1 bg-stone-100 rounded-2xl text-xs font-semibold">
           <button
             type="button"
-            onClick={() => setMode('signup')}
+            onClick={() => {
+              setMode('signup');
+              setErrorMessage('');
+              setCanResendConfirm(false);
+            }}
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               mode === 'signup'
                 ? 'bg-white text-stone-900 shadow-xs'
@@ -125,7 +226,11 @@ export function AuthModal({
           </button>
           <button
             type="button"
-            onClick={() => setMode('signin')}
+            onClick={() => {
+              setMode('signin');
+              setErrorMessage('');
+              setCanResendConfirm(false);
+            }}
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               mode === 'signin'
                 ? 'bg-white text-stone-900 shadow-xs'
@@ -138,8 +243,18 @@ export function AuthModal({
 
         {/* Error Notice */}
         {errorMessage && (
-          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in">
-            {errorMessage}
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in space-y-1.5">
+            <p>{errorMessage}</p>
+            {canResendConfirm && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isSubmitting}
+                className="underline font-semibold text-[#E0246A] hover:text-[#BE185D] cursor-pointer"
+              >
+                {resendSuccess ? 'Verification link sent!' : 'Resend verification email'}
+              </button>
+            )}
           </div>
         )}
 
@@ -190,7 +305,7 @@ export function AuthModal({
               </label>
               <input
                 type="text"
-                placeholder="Elena"
+                placeholder="Your name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -209,6 +324,7 @@ export function AuthModal({
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="w-full h-10 px-3.5 rounded-xl bg-stone-50 border border-stone-200 font-sans text-xs text-stone-900 focus:outline-none focus:border-[#E0246A] focus:bg-white transition-all"
             />
           </div>
@@ -219,10 +335,12 @@ export function AuthModal({
             </label>
             <input
               type="password"
-              placeholder="••••••••••••"
+              placeholder={mode === 'signup' ? 'Minimum 8 characters' : 'Enter password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={mode === 'signup' ? 8 : 1}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               className="w-full h-10 px-3.5 rounded-xl bg-stone-50 border border-stone-200 font-sans text-xs text-stone-900 focus:outline-none focus:border-[#E0246A] focus:bg-white transition-all"
             />
           </div>
@@ -234,35 +352,30 @@ export function AuthModal({
               className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
             >
               <span>
-                {mode === 'signup' ? 'Create Account & Continue' : 'Sign In to Dashboard'}
+                {isSubmitting
+                  ? mode === 'signup'
+                    ? 'Creating account...'
+                    : 'Signing in...'
+                  : mode === 'signup'
+                  ? 'Create Account & Continue'
+                  : 'Sign In to Dashboard'}
               </span>
               <ArrowRight className="w-3.5 h-3.5" />
             </button>
 
             <button
               type="button"
-              onClick={() => setMode((m) => (m === 'signup' ? 'signin' : 'signup'))}
+              onClick={() => {
+                setMode((m) => (m === 'signup' ? 'signin' : 'signup'));
+                setErrorMessage('');
+                setCanResendConfirm(false);
+              }}
               className="w-full text-center text-xs text-stone-500 hover:text-stone-900 transition py-1 cursor-pointer"
             >
               {mode === 'signup'
                 ? 'Already have an account? Sign In'
                 : "Don't have an account? Create Account"}
             </button>
-
-            {/* Quick-fill VIP Unlimited Pro Account */}
-            <div className="pt-2 border-t border-stone-100 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signin');
-                  setEmail(VIP_ACCOUNT.email);
-                  setPassword(VIP_ACCOUNT.password);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] text-[11px] font-semibold transition cursor-pointer"
-              >
-                <span>Use VIP Pro Account (Unlimited)</span>
-              </button>
-            </div>
           </div>
         </form>
       </div>

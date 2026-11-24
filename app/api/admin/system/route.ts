@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/server/admin-auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -16,11 +15,17 @@ export async function GET(req: NextRequest) {
     const hasSupabaseAnon = !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     const resendFromEmail = process.env.RESEND_FROM_EMAIL || 'Finglora <onboarding@resend.dev>';
 
-    // Test Gemini connectivity
+    // Test Gemini / Vertex connectivity without exposing keys
     let geminiStatus = 'unknown';
     try {
       const gRes = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models?key=${process.env.GEMINI_API_KEY}`
+        `https://aiplatform.googleapis.com/v1/publishers/google/models/gemini-3.1-flash-lite:countTokens?key=${process.env.GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: [{ role: 'user', parts: [{ text: 'ping' }] }] }),
+          signal: AbortSignal.timeout(4000),
+        }
       );
       geminiStatus = gRes.ok ? 'connected' : 'error';
     } catch {

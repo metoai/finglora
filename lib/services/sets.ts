@@ -25,11 +25,15 @@ function mapRowToExploreSet(row: any, isSaved = false): ExploreDesignSet {
 export async function fetchExploreSets(currentUserId?: string): Promise<ExploreDesignSet[]> {
   const supabase = getSupabaseBrowserClient();
 
-  // 1. Fetch public / curated sets
+  // 1. Fetch curated sets (plus active user's own custom sets if authenticated)
+  const filterClause = currentUserId
+    ? `is_curated.eq.true,user_id.eq.${currentUserId}`
+    : 'is_curated.eq.true';
+
   const { data: sets, error } = await supabase
     .from('nail_sets')
     .select('*')
-    .or('is_curated.eq.true,is_public.eq.true')
+    .or(filterClause)
     .order('likes_count', { ascending: false });
 
   if (error || !sets) {
@@ -74,6 +78,7 @@ export async function saveUserManicureSet({
   nails,
   skinToneId = 'warm-ivory',
   backdrop,
+  isPublic = false,
 }: {
   userId: string;
   passportCode: string;
@@ -84,12 +89,12 @@ export async function saveUserManicureSet({
   nails: Record<Finger, NailDesign>;
   skinToneId?: string;
   backdrop?: string;
+  isPublic?: boolean;
 }) {
   const supabase = getSupabaseBrowserClient();
 
   let targetCode = passportCode;
 
-  // Check if passportCode belongs to another user or a curated set to avoid RLS 403
   if (targetCode) {
     try {
       const { data: existing } = await supabase
@@ -119,7 +124,7 @@ export async function saveUserManicureSet({
     skin_tone_id: skinToneId,
     backdrop: backdrop || 'linear-gradient(135deg, #FAF7F2 0%, #F4EFEB 100%)',
     is_curated: false,
-    is_public: true,
+    is_public: isPublic,
   };
 
   const { data, error } = await supabase

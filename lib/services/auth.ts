@@ -1,80 +1,118 @@
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
-import { activateProSubscription, isVipEmail } from '@/lib/services/credits';
+import { clearCreditStorage } from '@/lib/services/credits';
 
-export const VIP_ACCOUNT = {
-  email: 'finglora.vip.pro@gmail.com',
-  aliasEmails: ['vip@finglora.com', 'pro@finglora.com', 'admin@finglora.com'],
-  password: 'FingloraUnlimited2026!',
-  displayName: 'VIP Creator (Unlimited)',
-};
+const USER_SCOPED_STORAGE_KEYS = [
+  'finglora_session_owner_id',
+  'finglora_user_email',
+  'finglora_user_display_name',
+  'finglora_custom_hand_photo',
+  'finglora_user_hand_photo',
+  'finglora_guest_hand_pending',
+  'finglora_synthesized_hand_url',
+  'finglora_ai_base_hand_image',
+  'finglora_avatar_url',
+  'finglora_custom_avatar_photo',
+  'finglora_avatar_seed',
+  'finglora_session_v1',
+  'finglora_notifications_read_ids',
+];
+
+export function clearUserLocalSessionData(preserveGuestHand = false) {
+  if (typeof window === 'undefined') return;
+  clearCreditStorage();
+  for (const key of USER_SCOPED_STORAGE_KEYS) {
+    if (
+      preserveGuestHand &&
+      (key === 'finglora_custom_hand_photo' ||
+        key === 'finglora_user_hand_photo' ||
+        key === 'finglora_guest_hand_pending')
+    ) {
+      continue;
+    }
+    try {
+      localStorage.removeItem(key);
+    } catch {
+      // ignore storage errors
+    }
+  }
+  window.dispatchEvent(new Event('finglora_avatar_updated'));
+}
 
 export async function signUpWithEmail(email: string, password: string, displayName?: string) {
   const supabase = getSupabaseBrowserClient();
   const cleanEmail = email.trim().toLowerCase();
-  const targetEmail = VIP_ACCOUNT.aliasEmails.includes(cleanEmail) ? VIP_ACCOUNT.email : cleanEmail;
+  const cleanName = (displayName || '').trim() || cleanEmail.split('@')[0];
 
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    throw new Error('Please enter a valid email address.');
+  }
+  if (!password || password.length < 8) {
+    throw new Error('Password must be at least 8 characters long.');
+  }
+
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const { data, error } = await supabase.auth.signUp({
-    email: targetEmail,
+    email: cleanEmail,
     password,
     options: {
+      emailRedirectTo: origin ? `${origin}/auth/callback?next=/home` : undefined,
       data: {
-        full_name: displayName || targetEmail.split('@')[0],
+        full_name: cleanName,
       },
     },
   });
 
-  if (isVipEmail(targetEmail)) {
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('finglora_user_email', targetEmail);
-      activateProSubscription();
-    }
+  if (error) throw error;
+
+  // Detect duplicate existing unconfirmed vs obfuscated empty identities in Supabase Auth
+  if (data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0) {
+    throw new Error('An account with this email already exists. Please sign in instead.');
   }
 
-  if (error) throw error;
-  return data;
+  const needsEmailVerification = Boolean(data.user && !data.session);
+  return {
+    user: data.user,
+    session: data.session,
+    needsEmailVerification,
+  };
 }
 
 export async function signInWithEmail(email: string, password: string) {
   const supabase = getSupabaseBrowserClient();
   const cleanEmail = email.trim().toLowerCase();
-  const targetEmail = VIP_ACCOUNT.aliasEmails.includes(cleanEmail) ? VIP_ACCOUNT.email : cleanEmail;
-  const isTargetVip = isVipEmail(targetEmail) || targetEmail === VIP_ACCOUNT.email;
 
-  try {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email: targetEmail,
-      password,
-    });
-
-    if (error) {
-      // If VIP credentials entered and password matches master password, guarantee seamless login
-      if (isTargetVip && password === VIP_ACCOUNT.password) {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('finglora_user_email', targetEmail);
-          activateProSubscription();
-        }
-        return { user: { id: 'd777868f-59ab-45ad-8944-dc749beedbc0', email: targetEmail }, session: null };
-      }
-      throw error;
-    }
-
-    if (isTargetVip) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('finglora_user_email', targetEmail);
-        activateProSubscription();
-      }
-    }
-    return data;
-  } catch (err: any) {
-    if (isTargetVip && password === VIP_ACCOUNT.password) {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('finglora_user_email', targetEmail);
-        activateProSubscription();
-      }
-      return { user: { id: 'd777868f-59ab-45ad-8944-dc749beedbc0', email: targetEmail }, session: null };
-    }
-    throw err;
+  if (!cleanEmail || !cleanEmail.includes('@')) {
+    throw new Error('Please enter a valid email address.');
   }
+  if (!password) {
+    throw new Error('Please enter your password.');
+  }
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email: cleanEmail,
+    password,
+  });
+
+  if (error) throw error;
+  if (!data.session || !data.user) {
+    throw new Error('Login did not return an active session. Please verify your email.');
+  }
+
+  return data;
+}
+
+export async function resendVerificationEmail(email: string) {
+  const supabase = getSupabaseBrowserClient();
+  const cleanEmail = email.trim().toLowerCase();
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const { error } = await supabase.auth.resend({
+    type: 'signup',
+    email: cleanEmail,
+    options: {
+      emailRedirectTo: origin ? `${origin}/auth/callback?next=/home` : undefined,
+    },
+  });
+  if (error) throw error;
 }
 
 export async function signInWithGoogle() {
@@ -93,10 +131,7 @@ export async function signInWithGoogle() {
 
 export async function signOutUser() {
   const supabase = getSupabaseBrowserClient();
-  if (typeof window !== 'undefined') {
-    localStorage.removeItem('finglora_user_email');
-    localStorage.removeItem('finglora_is_pro_subscriber');
-  }
+  clearUserLocalSessionData(false);
   const { error } = await supabase.auth.signOut();
   if (error) throw error;
 }

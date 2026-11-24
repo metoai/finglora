@@ -1167,10 +1167,6 @@ export function TryOnView({
             setCustomTryOnHandUrl(finalUrl);
             setInternalSynthesizedHandUrl(null);
             propSetSynthesizedHandUrl?.(null);
-            try {
-              localStorage.setItem('finglora_custom_hand_photo', finalUrl);
-              localStorage.setItem('finglora_user_hand_photo', finalUrl);
-            } catch {}
           }
         }}
       />
@@ -1281,12 +1277,6 @@ export function TryOnView({
           setCustomTryOnHandUrl(dataUrl);
           setInternalSynthesizedHandUrl(null);
           propSetSynthesizedHandUrl?.(null);
-          try {
-            if (typeof window !== 'undefined') {
-              localStorage.setItem('finglora_custom_hand_photo', dataUrl);
-              localStorage.setItem('finglora_user_hand_photo', dataUrl);
-            }
-          } catch {}
           setIsCameraModalOpen(false);
         }}
       />

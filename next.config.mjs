@@ -28,6 +28,8 @@ const nextConfig = {
       { source: '/ai-create', destination: '/' },
       { source: '/create', destination: '/' },
       { source: '/favorites', destination: '/' },
+      { source: '/history', destination: '/' },
+      { source: '/passport', destination: '/' },
       { source: '/profile', destination: '/' },
       { source: '/onboarding', destination: '/' },
     ];

@@ -38,12 +38,12 @@ import { LandingSurface } from '@/components/surfaces/LandingSurface';
 import { OnboardingSurface } from '@/components/surfaces/OnboardingSurface';
 import { CustomerApp } from '@/components/surfaces/customer/CustomerApp';
 import { CustomerRoute } from '@/components/surfaces/customer/CustomerSidebar';
-import { subscribeToAuthChanges, getCurrentUser } from '@/lib/services/auth';
+import { subscribeToAuthChanges, getCurrentUser, clearUserLocalSessionData, signOutUser } from '@/lib/services/auth';
 import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
 import { toggleSetFavorite } from '@/lib/services/favorites';
-import { fetchUserProfile, updateUserProfile } from '@/lib/services/profile';
+import { ensureAndFetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, uploadUserHandPhoto, downscaleImageForVision } from '@/lib/services/storage';
-import { grantSignupCreditBonus, activateProSubscription, isVipEmail } from '@/lib/services/credits';
+import { grantSignupCreditBonus, syncCreditsFromProfile } from '@/lib/services/credits';
 import { slice5NailSetImage } from '@/lib/services/nail-image-processor';
 
 export default function FingloraApp() {
@@ -61,6 +61,9 @@ export default function FingloraApp() {
   // User & 2-Step Visual Onboarding State
   const [userName, setUserName] = useState('Elena');
   const [userEmail, setUserEmail] = useState<string>('');
+  const [userAvatarUrl, setUserAvatarUrl] = useState<string | null>(null);
+  const [userIsPro, setUserIsPro] = useState(false);
+  const [userCredits, setUserCredits] = useState(10);
   const [pendingPostSignupSetId, setPendingPostSignupSetId] = useState<string | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
   const [onboardingSelectedIds, setOnboardingSelectedIds] = useState<string[]>(['set-blush-daisy']);
@@ -88,6 +91,7 @@ export default function FingloraApp() {
   );
   const [fingerHistory, setFingerHistory] = useState<Partial<Record<Finger, NailDesign[]>>>({});
   const [showApplyAllModal, setShowApplyAllModal] = useState(false);
+  const hasCustomSetEditsRef = useRef(false);
 
   // Inspiration Extraction Cache
   const [inspoCache, setInspoCache] = useState<
@@ -118,12 +122,7 @@ export default function FingloraApp() {
   const [overlayScale, setOverlayScale] = useState(100);
   const [overlayOffsetY, setOverlayOffsetY] = useState(0);
   const [skinToneId, setSkinToneId] = useState('warm-ivory');
-  const [customTryOnHandUrl, setCustomTryOnHandUrl] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('finglora_user_hand_photo') || null;
-    }
-    return null;
-  });
+  const [customTryOnHandUrl, setCustomTryOnHandUrl] = useState<string | null>(null);
   const [synthesizedHandUrl, setSynthesizedHandUrlState] = useState<string | null>(null);
 
   const setSynthesizedHandUrl = (url: string | null) => {
@@ -147,10 +146,15 @@ export default function FingloraApp() {
         if (url) {
           localStorage.setItem('finglora_user_hand_photo', url);
           localStorage.setItem('finglora_custom_hand_photo', url);
+          if (!supabaseUser?.id) {
+            localStorage.setItem('finglora_session_owner_id', 'guest');
+            localStorage.setItem('finglora_guest_hand_pending', 'true');
+          }
           setTryOnMode('upload');
         } else {
           localStorage.removeItem('finglora_user_hand_photo');
           localStorage.removeItem('finglora_custom_hand_photo');
+          localStorage.removeItem('finglora_guest_hand_pending');
         }
       } catch {
         // ignore storage quota error
@@ -201,155 +205,314 @@ export default function FingloraApp() {
     }, 2800);
   };
 
-  // Hydrate Design Session from localStorage and Supabase on Mount
-  useEffect(() => {
-    // Local storage hydration for immediate instant UI response
-    try {
-      const saved = window.localStorage.getItem('finglora_session_v1');
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        if (parsed.nails) setNails(parsed.nails);
-        if (parsed.activeSetName) setActiveSetName(parsed.activeSetName);
-        if (parsed.activeSetId) setActiveSetId(parsed.activeSetId);
-        if (parsed.activePassportCode) setActivePassportCode(parsed.activePassportCode);
-        if (parsed.activePhotoUrl) setActivePhotoUrl(parsed.activePhotoUrl);
-        if (parsed.preferredShape) setPreferredShape(parsed.preferredShape);
-        if (parsed.userName) setUserName(parsed.userName);
-      }
-      const savedHand =
-        window.localStorage.getItem('finglora_user_hand_photo') ||
-        window.localStorage.getItem('finglora_custom_hand_photo');
-      if (savedHand) {
-        setCustomTryOnHandUrl(savedHand);
-      }
-    } catch {
-      // Ignore storage errors
+  const authSeqRef = useRef(0);
+  const hydratedUserIdRef = useRef<string | null>(null);
+
+  const resetReactUserState = (reloadPublicSets = false) => {
+    hydratedUserIdRef.current = null;
+    clearUserLocalSessionData(false);
+    setSupabaseUser(null);
+    setUserEmail('');
+    setUserName('Elena');
+    setUserAvatarUrl(null);
+    setUserIsPro(false);
+    setUserCredits(10);
+    setPreferredShape('almond');
+    setSkinToneId('warm-ivory');
+    setHandOrientation('right');
+    setCustomTryOnHandUrl(null);
+    setSynthesizedHandUrlState(null);
+    setCapturedFrameUrl(null);
+    hasCustomSetEditsRef.current = false;
+
+    if (reloadPublicSets) {
+      fetchExploreSets().then((sets) => {
+        if (sets && sets.length > 0) {
+          setExploreDesigns(sets);
+        }
+      });
+    }
+  };
+
+  const hydrateAuthenticatedUser = async (authUser: any) => {
+    const seq = ++authSeqRef.current;
+
+    if (hydratedUserIdRef.current === authUser.id) {
+      return;
     }
 
-    // 1. Fetch live curated explore sets from Supabase
-    fetchExploreSets().then((sets) => {
-      if (sets && sets.length > 0) {
-        setExploreDesigns(sets);
-      }
-    });
+    let pendingGuestHand: string | null = null;
+    let pendingGuestNails: any = null;
+    if (typeof window !== 'undefined') {
+      try {
+        const previousOwner = window.localStorage.getItem('finglora_session_owner_id');
+        const isGuestOwner = !previousOwner || previousOwner === 'guest';
+        const hasPendingGuestHand =
+          isGuestOwner && window.localStorage.getItem('finglora_guest_hand_pending') === 'true';
 
-    // 2. Subscribe to Supabase Auth Changes
-    const subscription = subscribeToAuthChanges(async (event, session) => {
-      if (session?.user) {
-        setSupabaseUser(session.user);
-        // Switch to the customer app studio upon successful login
-        setSurface('customer');
-        const sessionEmail = session.user.email;
-        if (sessionEmail) {
-          setUserEmail(sessionEmail);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('finglora_user_email', sessionEmail);
-            } catch {}
+        if (hasPendingGuestHand) {
+          pendingGuestHand =
+            window.localStorage.getItem('finglora_user_hand_photo') ||
+            window.localStorage.getItem('finglora_custom_hand_photo');
+        }
+
+        if (isGuestOwner) {
+          const savedGuestSession = window.localStorage.getItem('finglora_session_v1');
+          if (savedGuestSession) {
+            const parsedGuest = JSON.parse(savedGuestSession);
+            if (
+              parsedGuest?.nails &&
+              parsedGuest?.activePassportCode &&
+              parsedGuest?.hasCustomEdits
+            ) {
+              pendingGuestNails = parsedGuest;
+            }
           }
         }
-        const userMetaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
-        if (userMetaName) setUserName(userMetaName);
 
-        const userAvatar = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture;
-        if (userAvatar && typeof window !== 'undefined') {
+        if (previousOwner !== authUser.id) {
+          clearUserLocalSessionData(false);
+          setCustomTryOnHandUrl(null);
+          setSynthesizedHandUrlState(null);
+          setCapturedFrameUrl(null);
+        }
+        window.localStorage.setItem('finglora_session_owner_id', authUser.id);
+      } catch {
+        // Ignore storage errors
+      }
+    }
+
+    setSupabaseUser(authUser);
+    hydratedUserIdRef.current = authUser.id;
+    hasCustomSetEditsRef.current = false;
+
+    // Fetch strictly this authenticated user's profile row from Supabase
+    const profile = await ensureAndFetchUserProfile(authUser);
+    if (seq !== authSeqRef.current) return;
+
+    const verifiedEmail = profile?.email || authUser.email || '';
+    setUserEmail(verifiedEmail);
+    if (verifiedEmail && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('finglora_user_email', verifiedEmail);
+      } catch {}
+    }
+
+    const metaName = authUser.user_metadata?.full_name || authUser.user_metadata?.name;
+    const resolvedName =
+      profile?.displayName ||
+      metaName ||
+      (verifiedEmail ? verifiedEmail.split('@')[0] : 'Elena');
+    setUserName(resolvedName);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('finglora_user_display_name', resolvedName);
+      } catch {}
+    }
+
+    const metaAvatar =
+      authUser.user_metadata?.avatar_url || authUser.user_metadata?.picture || null;
+    const resolvedAvatar = profile?.avatarUrl || metaAvatar || null;
+    setUserAvatarUrl(resolvedAvatar);
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.removeItem('finglora_custom_avatar_photo');
+        if (resolvedAvatar) {
+          localStorage.setItem('finglora_avatar_url', resolvedAvatar);
+        } else {
+          localStorage.removeItem('finglora_avatar_url');
+        }
+        window.dispatchEvent(new Event('finglora_avatar_updated'));
+      } catch {}
+    }
+
+    const resolvedIsPro = Boolean(profile?.isPro);
+    const resolvedCredits =
+      typeof profile?.credits === 'number'
+        ? profile.credits
+        : resolvedIsPro
+        ? 999999
+        : 10;
+    setUserIsPro(resolvedIsPro);
+    setUserCredits(resolvedCredits);
+    if (!profile) {
+      syncCreditsFromProfile(resolvedIsPro, resolvedCredits);
+    }
+
+    setPreferredShape(profile?.preferredShape || 'almond');
+    setSkinToneId(profile?.skinToneId || 'warm-ivory');
+    setHandOrientation(profile?.handOrientation || 'right');
+
+    // Only apply this user's own stored hand photo (or an explicit just-uploaded guest hand)
+    if (profile?.customHandUrl) {
+      setCustomTryOnHandUrl(profile.customHandUrl);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.setItem('finglora_user_hand_photo', profile.customHandUrl);
+          localStorage.setItem('finglora_custom_hand_photo', profile.customHandUrl);
+          localStorage.removeItem('finglora_guest_hand_pending');
+        } catch {}
+      }
+    } else if (pendingGuestHand) {
+      try {
+        const uploadedUrl = await uploadUserHandPhoto(pendingGuestHand, authUser.id);
+        if (seq !== authSeqRef.current) return;
+        const finalUrl = uploadedUrl || pendingGuestHand;
+        await updateUserProfile(authUser.id, { customHandUrl: finalUrl });
+        setCustomTryOnHandUrl(finalUrl);
+        if (typeof window !== 'undefined') {
           try {
-            localStorage.setItem('finglora_avatar_url', userAvatar);
-            window.dispatchEvent(new Event('finglora_avatar_updated'));
+            localStorage.setItem('finglora_user_hand_photo', finalUrl);
+            localStorage.setItem('finglora_custom_hand_photo', finalUrl);
+            localStorage.removeItem('finglora_guest_hand_pending');
           } catch {}
         }
-
-        // Send welcome email once upon initial signup (handles Google OAuth & email)
-        if (sessionEmail && typeof window !== 'undefined') {
-          const welcomeKey = `finglora_welcome_sent_${session.user.id}`;
-          const alreadySent = localStorage.getItem(welcomeKey);
-          if (!alreadySent) {
-            localStorage.setItem(welcomeKey, 'true');
-            fetch('/api/email/welcome', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email: sessionEmail,
-                name: userMetaName || 'Manicure Lover',
-              }),
-            }).catch((err) => console.warn('Welcome email error:', err));
-          }
-        }
-
-        const profile = await fetchUserProfile(session.user.id);
-        if (profile) {
-          if (profile.displayName) setUserName(profile.displayName);
-          if (profile.preferredShape) setPreferredShape(profile.preferredShape);
-          if (profile.customHandUrl) {
-            setCustomTryOnHandUrl(profile.customHandUrl);
-            if (typeof window !== 'undefined') {
-              try {
-                localStorage.setItem('finglora_user_hand_photo', profile.customHandUrl);
-                localStorage.setItem('finglora_custom_hand_photo', profile.customHandUrl);
-              } catch {}
-            }
-          } else {
-            // Profile exists in DB but custom_hand_url is null: auto-migrate local hand if present
-            if (typeof window !== 'undefined') {
-              try {
-                const localHand =
-                  localStorage.getItem('finglora_custom_hand_photo') ||
-                  localStorage.getItem('finglora_user_hand_photo');
-                if (localHand) {
-                  uploadUserHandPhoto(localHand, session.user.id)
-                    .then(async (uploadedUrl) => {
-                      if (uploadedUrl) {
-                        await updateUserProfile(session.user.id, { customHandUrl: uploadedUrl });
-                        setCustomTryOnHandUrl(uploadedUrl);
-                        try {
-                          localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
-                          localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
-                        } catch {}
-                      }
-                    })
-                    .catch((err) => console.warn('Auto-migration of local hand photo failed:', err));
-                }
-              } catch {}
-            }
-          }
-        }
-
-        // Re-fetch explore sets with user's specific favorites
-        const userSets = await fetchExploreSets(session.user.id);
-        if (userSets && userSets.length > 0) {
-          setExploreDesigns(userSets);
-        }
-
-        // Guest to Authenticated sync: if user customized nails while guest, save them to their account
-        try {
-          const localSaved = window.localStorage.getItem('finglora_session_v1');
-          if (localSaved) {
-            const parsed = JSON.parse(localSaved);
-            if (parsed.nails && parsed.activePassportCode) {
-              await saveUserManicureSet({
-                userId: session.user.id,
-                passportCode: parsed.activePassportCode,
-                title: parsed.activeSetName || 'My Custom Set',
-                photoUrl: parsed.activePhotoUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
-                nails: parsed.nails,
-              });
-            }
-          }
-        } catch {
-          // ignore auto-migration error
-        }
-      } else {
-        setSupabaseUser(null);
+      } catch (err) {
+        console.warn('Guest hand migration failed:', err);
+        setCustomTryOnHandUrl(null);
       }
+    } else {
+      setCustomTryOnHandUrl(null);
+      if (typeof window !== 'undefined') {
+        try {
+          localStorage.removeItem('finglora_user_hand_photo');
+          localStorage.removeItem('finglora_custom_hand_photo');
+          localStorage.removeItem('finglora_synthesized_hand_url');
+          localStorage.removeItem('finglora_ai_base_hand_image');
+          localStorage.removeItem('finglora_guest_hand_pending');
+        } catch {}
+      }
+    }
+
+    // Send welcome email once for newly created accounts only
+    if (verifiedEmail && typeof window !== 'undefined') {
+      const welcomeKey = `finglora_welcome_sent_${authUser.id}`;
+      const createdAtMs = authUser.created_at ? new Date(authUser.created_at).getTime() : 0;
+      const isFreshAccount = createdAtMs > 0 && Date.now() - createdAtMs < 5 * 60 * 1000;
+      if (isFreshAccount && !localStorage.getItem(welcomeKey)) {
+        localStorage.setItem(welcomeKey, 'true');
+        fetch('/api/email/welcome', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            email: verifiedEmail,
+            name: resolvedName,
+          }),
+        }).catch((err) => console.warn('Welcome email error:', err));
+      }
+    }
+
+    // Fetch explore sets scoped to curated sets + this user's own sets + favorites
+    const userSets = await fetchExploreSets(authUser.id);
+    if (seq !== authSeqRef.current) return;
+    if (userSets && userSets.length > 0) {
+      setExploreDesigns(userSets);
+    }
+
+    // Migrate guest custom set only if the guest explicitly customized nails before signup
+    if (pendingGuestNails) {
+      try {
+        await saveUserManicureSet({
+          userId: authUser.id,
+          passportCode: pendingGuestNails.activePassportCode,
+          title: pendingGuestNails.activeSetName || 'My Custom Set',
+          photoUrl:
+            pendingGuestNails.activePhotoUrl ||
+            'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+          nails: pendingGuestNails.nails,
+        });
+      } catch {
+        // ignore migration error
+      }
+    }
+  };
+
+  // Hydrate Design Session from localStorage (guest-only) and verified Supabase Auth on Mount
+  useEffect(() => {
+    let active = true;
+
+    const bootstrapSession = async () => {
+      const verifiedUser = await getCurrentUser();
+      if (!active) return;
+
+      if (verifiedUser) {
+        await hydrateAuthenticatedUser(verifiedUser);
+        return;
+      }
+
+      // Unauthenticated visitor: restore local workspace ONLY if it belongs to guest
+      try {
+        const ownerId = window.localStorage.getItem('finglora_session_owner_id');
+        if (ownerId && ownerId !== 'guest') {
+          // Stale signed-out account leftovers — clear completely
+          clearUserLocalSessionData(false);
+        } else {
+          const saved = window.localStorage.getItem('finglora_session_v1');
+          if (saved) {
+            const parsed = JSON.parse(saved);
+            if (parsed.nails) setNails(parsed.nails);
+            if (parsed.activeSetName) setActiveSetName(parsed.activeSetName);
+            if (parsed.activeSetId) setActiveSetId(parsed.activeSetId);
+            if (parsed.activePassportCode) setActivePassportCode(parsed.activePassportCode);
+            if (parsed.activePhotoUrl) setActivePhotoUrl(parsed.activePhotoUrl);
+            if (parsed.preferredShape) setPreferredShape(parsed.preferredShape);
+            if (parsed.userName) setUserName(parsed.userName);
+          }
+          const savedHand =
+            window.localStorage.getItem('finglora_user_hand_photo') ||
+            window.localStorage.getItem('finglora_custom_hand_photo');
+          if (savedHand) {
+            setCustomTryOnHandUrl(savedHand);
+          }
+        }
+      } catch {
+        // Ignore storage errors
+      }
+
+      // Fetch public curated explore sets for guest
+      fetchExploreSets().then((sets) => {
+        if (active && sets && sets.length > 0) {
+          setExploreDesigns(sets);
+        }
+      });
+    };
+
+    bootstrapSession();
+
+    // Subscribe to Supabase Auth Changes
+    const subscription = subscribeToAuthChanges(async (event, session) => {
+      if (!active) return;
+
+      if (event === 'SIGNED_OUT' || !session?.user) {
+        authSeqRef.current++;
+        resetReactUserState(true);
+        return;
+      }
+
+      // Always verify session user against Supabase Auth server instead of trusting local JWT
+      const verifiedUser = await getCurrentUser();
+      if (!active) return;
+      if (!verifiedUser || verifiedUser.id !== session.user.id) {
+        authSeqRef.current++;
+        resetReactUserState(true);
+        return;
+      }
+
+      if (event === 'SIGNED_IN') {
+        setSurface('customer');
+      }
+
+      await hydrateAuthenticatedUser(verifiedUser);
     });
 
-    // 3. Check for passport code in URL query (?passport=FGL-XXXX or ?code=FGL-XXXX)
+    // Check for passport code in URL query (?passport=FGL-XXXX or ?code=FGL-XXXX)
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search);
       const code = params.get('passport') || params.get('code');
       if (code) {
         getSetByPassportCode(code).then((foundSet) => {
-          if (foundSet) {
+          if (active && foundSet) {
+            hasCustomSetEditsRef.current = false;
             setActiveSetId(foundSet.id);
             setActivePassportCode(foundSet.passportCode);
             setActiveSetName(foundSet.title);
@@ -363,11 +526,12 @@ export default function FingloraApp() {
     }
 
     return () => {
+      active = false;
       subscription?.unsubscribe();
     };
   }, []);
 
-  // Persist Design Session to localStorage and debounced Supabase sync
+  // Persist Design Session to localStorage and debounced Supabase sync (only after real custom edits)
   useEffect(() => {
     try {
       window.localStorage.setItem(
@@ -380,14 +544,15 @@ export default function FingloraApp() {
           activePhotoUrl,
           preferredShape,
           userName,
+          hasCustomEdits: hasCustomSetEditsRef.current,
         })
       );
     } catch {
       // Ignore storage quota errors
     }
 
-    // Debounced sync to Supabase if user is authenticated
-    if (supabaseUser?.id) {
+    // Debounced sync to Supabase ONLY if user is authenticated AND actually customized a set
+    if (supabaseUser?.id && hasCustomSetEditsRef.current) {
       const timer = setTimeout(() => {
         saveUserManicureSet({
           userId: supabaseUser.id,
@@ -398,6 +563,7 @@ export default function FingloraApp() {
           skinToneId,
         })
           .then((savedSet) => {
+            hasCustomSetEditsRef.current = false;
             if (savedSet?.passportCode && savedSet.passportCode !== activePassportCode) {
               setActivePassportCode(savedSet.passportCode);
             }
@@ -513,7 +679,13 @@ export default function FingloraApp() {
       } else if (raw === 'ai-create' || raw === 'create') {
         setCustomerRoute('ai-create');
         setSurface('customer');
-      } else if (raw === 'profile' || raw === 'account') {
+      } else if (raw === 'studio') {
+        setCustomerRoute('ai-create');
+        setSurface('customer');
+      } else if (raw === 'passport') {
+        setCustomerRoute('passport');
+        setSurface('customer');
+      } else if (raw === 'profile' || raw === 'account' || raw === 'history') {
         setCustomerRoute('profile');
         setSurface('customer');
       } else if (raw === 'home') {
@@ -601,7 +773,7 @@ export default function FingloraApp() {
   };
 
   const handleAuthSignUpSuccess = ({ name, email }: { name: string; email: string }) => {
-    const chosenName = name || 'Elena';
+    const chosenName = (name || '').trim() || (email ? email.split('@')[0] : 'Elena');
     setUserName(chosenName);
     if (typeof window !== 'undefined' && email) {
       try {
@@ -609,31 +781,32 @@ export default function FingloraApp() {
         localStorage.setItem('finglora_user_display_name', chosenName);
       } catch {}
     }
-    if (isVipEmail(email)) {
-      activateProSubscription();
-      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
-    } else {
-      grantSignupCreditBonus();
-      showToast(`Account created, ${chosenName}! 10 Free Try-On Credits added.`);
-    }
+    grantSignupCreditBonus();
+    showToast(`Account created, ${chosenName}! 10 Free Try-On Credits added.`);
     navigateCustomer('home');
   };
 
   const handleAuthSignInSuccess = (user?: { email?: string }) => {
-    const email = user?.email || (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_email') : '');
+    const email = user?.email || '';
     if (email && typeof window !== 'undefined') {
       try {
         localStorage.setItem('finglora_user_email', email);
       } catch {}
     }
-    if (email && isVipEmail(email)) {
-      activateProSubscription();
-      setUserName('VIP Creator');
-      showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
-    } else {
-      showToast(`Welcome back! Opening your studio...`);
-    }
+    showToast('Welcome back! Loading your profile...');
     navigateCustomer('home');
+  };
+
+  const handleSignOutReset = async () => {
+    try {
+      await signOutUser();
+    } catch {
+      // ignore signOut network errors, still reset local state
+    }
+    authSeqRef.current++;
+    resetReactUserState(true);
+    navigateSurface('landing');
+    showToast('Signed out cleanly.');
   };
 
   const extractFromInspirationHand = (designIdOrUrl: string, targetRoute: CustomerRoute = 'tryon') => {
@@ -834,6 +1007,7 @@ export default function FingloraApp() {
     }
 
     // Apply detected nails to active atelier state
+    hasCustomSetEditsRef.current = Boolean(customUploadedUrl);
     setNails(detectedNails);
 
     // Persist extracted manicure set into cache
@@ -857,6 +1031,7 @@ export default function FingloraApp() {
 
   const handleOnboardingSelectSet = (setId: string, customUrl?: string) => {
     const found = exploreDesigns.find((d) => d.id === setId) || exploreDesigns[0];
+    hasCustomSetEditsRef.current = Boolean(customUrl);
     setActiveSetId(found.id);
     setActivePassportCode(found.passportCode);
     setActiveSetName(customUrl ? 'Custom Inspo Look' : found.title);
@@ -922,6 +1097,7 @@ export default function FingloraApp() {
         setSwapFirstFinger(null);
         return;
       }
+      hasCustomSetEditsRef.current = true;
       setNails((prev) => ({
         ...prev,
         [swapFirstFinger]: { ...prev[fk], finger: swapFirstFinger },
@@ -937,6 +1113,7 @@ export default function FingloraApp() {
   };
 
   const updateActiveFinger = (patch: Partial<NailDesign>) => {
+    hasCustomSetEditsRef.current = true;
     setFingerHistory((prev) => ({
       ...prev,
       [selectedFinger]: [...(prev[selectedFinger] || []), JSON.parse(JSON.stringify(nails[selectedFinger]))],
@@ -954,6 +1131,7 @@ export default function FingloraApp() {
       return;
     }
     const previous = stack[stack.length - 1];
+    hasCustomSetEditsRef.current = true;
     setFingerHistory((prev) => ({
       ...prev,
       [selectedFinger]: stack.slice(0, -1),
@@ -970,6 +1148,7 @@ export default function FingloraApp() {
     FINGER_KEYS.forEach((fk) => {
       updated[fk] = { ...JSON.parse(JSON.stringify(source)), finger: fk, status: 'edited' };
     });
+    hasCustomSetEditsRef.current = true;
     setNails(updated);
     setShowApplyAllModal(false);
     showToast(`Applied ${FINGER_LABELS[selectedFinger]} style to all 5 nails`);
@@ -1057,8 +1236,14 @@ export default function FingloraApp() {
             mobilePreview={mobilePreview}
             userName={userName}
             setUserName={setUserName}
-            userEmail={userEmail || supabaseUser?.email}
+            userEmail={supabaseUser?.email || userEmail}
+            userAvatarUrl={userAvatarUrl}
+            setUserAvatarUrl={setUserAvatarUrl}
+            userIsPro={userIsPro}
+            userCredits={userCredits}
+            setUserCredits={setUserCredits}
             supabaseUser={supabaseUser}
+            onLogout={handleSignOutReset}
             preferredShape={preferredShape}
             setPreferredShape={setPreferredShape}
             activeSample={activeSample}
@@ -1146,6 +1331,7 @@ export default function FingloraApp() {
                 allSets.find((d) => d.id === id || d.photoUrl === id) ||
                 INITIAL_EXPLORE_DESIGNS.find((d) => d.id === id || d.photoUrl === id);
               if (found) {
+                hasCustomSetEditsRef.current = false;
                 setActiveSetId(found.id);
                 setActivePhotoUrl(found.photoUrl);
                 setActiveSetName(found.title);
@@ -1156,6 +1342,7 @@ export default function FingloraApp() {
                 setSynthesizedHandUrl(null);
                 navigateCustomer('tryon');
               } else if (id && (id.startsWith('data:') || id.startsWith('http') || id.startsWith('blob:') || id.startsWith('/'))) {
+                hasCustomSetEditsRef.current = true;
                 setActiveSetId(`custom-${Date.now()}`);
                 setActivePhotoUrl(id);
                 setActiveSetName('Custom Inspo Look');
@@ -1165,6 +1352,7 @@ export default function FingloraApp() {
               } else {
                 const fallback = allSets[0] || INITIAL_EXPLORE_DESIGNS[0];
                 if (fallback) {
+                  hasCustomSetEditsRef.current = false;
                   setActiveSetId(fallback.id);
                   setActivePhotoUrl(fallback.photoUrl);
                   setActiveSetName(fallback.title);

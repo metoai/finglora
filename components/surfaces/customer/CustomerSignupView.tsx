@@ -1,10 +1,15 @@
 'use client';
 
 import React, { useState } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Mail, Check } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 
-import { signUpWithEmail, signInWithEmail, signInWithGoogle, VIP_ACCOUNT } from '@/lib/services/auth';
+import {
+  signUpWithEmail,
+  signInWithEmail,
+  signInWithGoogle,
+  resendVerificationEmail,
+} from '@/lib/services/auth';
 
 export interface CustomerSignupViewProps {
   userName: string;
@@ -28,6 +33,9 @@ export function CustomerSignupView({
   const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [pendingVerificationEmail, setPendingVerificationEmail] = useState<string | null>(null);
+  const [canResendConfirm, setCanResendConfirm] = useState(false);
+  const [resendSuccess, setResendSuccess] = useState(false);
 
   const handleGuestContinue = () => {
     if (onContinueAsGuest) {
@@ -48,52 +56,116 @@ export function CustomerSignupView({
     }
   };
 
+  const handleResend = async () => {
+    const targetEmail = (pendingVerificationEmail || email).trim();
+    if (!targetEmail) return;
+    setIsSubmitting(true);
+    setResendSuccess(false);
+    try {
+      await resendVerificationEmail(targetEmail);
+      setResendSuccess(true);
+      setErrorMessage('');
+    } catch (err: any) {
+      setErrorMessage(err.message || 'Could not resend verification email.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
     setErrorMessage('');
+    setCanResendConfirm(false);
+    setResendSuccess(false);
 
     try {
       if (mode === 'signup') {
-        const cleanName = userName.trim() || 'Elena';
-        const cleanEmail = email.trim();
-        await signUpWithEmail(cleanEmail, password, cleanName);
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanName = userName.trim() || cleanEmail.split('@')[0] || 'Client';
+        const result = await signUpWithEmail(cleanEmail, password, cleanName);
 
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem('finglora_user_email', cleanEmail);
-            localStorage.setItem('finglora_user_display_name', cleanName);
-          } catch {}
-        }
-
-        // Send welcome email via Resend in background
-        if (cleanEmail) {
-          fetch('/api/email/welcome', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email: cleanEmail, name: cleanName }),
-          }).catch((e) => console.warn('Welcome email error:', e));
+        if (result.needsEmailVerification) {
+          setPendingVerificationEmail(cleanEmail);
+          setIsSubmitting(false);
+          return;
         }
 
         setIsSubmitting(false);
         onSubmit();
       } else {
-        const cleanEmail = email.trim();
+        const cleanEmail = email.trim().toLowerCase();
         await signInWithEmail(cleanEmail, password);
-        if (typeof window !== 'undefined') {
-          try {
-            localStorage.setItem('finglora_user_email', cleanEmail);
-          } catch {}
-        }
         setIsSubmitting(false);
         if (onSignInSuccess) onSignInSuccess();
         else onSubmit();
       }
     } catch (err: any) {
-      setErrorMessage(err.message || 'Authentication failed. Please check your credentials.');
+      const msg = err?.message || 'Authentication failed. Please check your credentials.';
+      if (msg.toLowerCase().includes('email not confirmed')) {
+        setCanResendConfirm(true);
+        setErrorMessage('Please confirm your email address before signing in.');
+      } else {
+        setErrorMessage(msg);
+      }
       setIsSubmitting(false);
     }
   };
+
+  if (pendingVerificationEmail) {
+    return (
+      <div className="max-w-md py-6 mx-auto">
+        <div className="bg-[#FFFFFF] rounded-3xl p-6 sm:p-8 border border-stone-200/80 shadow-md space-y-5 text-center">
+          <div className="w-12 h-12 rounded-2xl bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center mx-auto">
+            <Mail className="w-6 h-6" />
+          </div>
+          <div className="space-y-1.5">
+            <h1 className="font-serif text-2xl font-normal text-stone-900">
+              Check your email
+            </h1>
+            <p className="font-sans text-xs text-stone-500 leading-relaxed">
+              We sent a verification link to{' '}
+              <span className="font-semibold text-stone-800">{pendingVerificationEmail}</span>.
+              Open the link to activate your account and load your profile.
+            </p>
+          </div>
+
+          {errorMessage && (
+            <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 font-medium">
+              {errorMessage}
+            </div>
+          )}
+          {resendSuccess && (
+            <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-medium inline-flex items-center gap-1.5">
+              <Check className="w-3.5 h-3.5" />
+              <span>Verification email resent.</span>
+            </div>
+          )}
+
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={isSubmitting}
+              className="w-full h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold transition cursor-pointer disabled:opacity-50"
+            >
+              {isSubmitting ? 'Sending...' : 'Resend Verification Email'}
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setPendingVerificationEmail(null);
+                setMode('signin');
+              }}
+              className="w-full h-10 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium transition cursor-pointer"
+            >
+              Back to Sign In
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-md py-6 mx-auto">
@@ -113,7 +185,7 @@ export function CustomerSignupView({
           {mode === 'signup' && (
             <div className="pt-1">
               <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-pink-50 border border-pink-200 text-[#E0246A] text-[11px] font-semibold">
-                ✨ Free Plan: 10 Try-On Credits Included
+                Free Plan: 10 Try-On Credits Included
               </span>
             </div>
           )}
@@ -123,7 +195,11 @@ export function CustomerSignupView({
         <div className="grid grid-cols-2 p-1 bg-stone-100 rounded-2xl text-xs font-semibold">
           <button
             type="button"
-            onClick={() => setMode('signup')}
+            onClick={() => {
+              setMode('signup');
+              setErrorMessage('');
+              setCanResendConfirm(false);
+            }}
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               mode === 'signup'
                 ? 'bg-white text-stone-900 shadow-xs'
@@ -134,7 +210,11 @@ export function CustomerSignupView({
           </button>
           <button
             type="button"
-            onClick={() => setMode('signin')}
+            onClick={() => {
+              setMode('signin');
+              setErrorMessage('');
+              setCanResendConfirm(false);
+            }}
             className={`py-2 rounded-xl transition-all cursor-pointer ${
               mode === 'signin'
                 ? 'bg-white text-stone-900 shadow-xs'
@@ -147,8 +227,18 @@ export function CustomerSignupView({
 
         {/* Error Notice */}
         {errorMessage && (
-          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in">
-            {errorMessage}
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 text-center font-medium animate-in fade-in space-y-1.5">
+            <p>{errorMessage}</p>
+            {canResendConfirm && (
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={isSubmitting}
+                className="underline font-semibold text-[#E0246A] hover:text-[#BE185D] cursor-pointer"
+              >
+                {resendSuccess ? 'Verification link sent!' : 'Resend verification email'}
+              </button>
+            )}
           </div>
         )}
 
@@ -156,7 +246,8 @@ export function CustomerSignupView({
         <button
           type="button"
           onClick={handleGoogleAuth}
-          className="w-full h-11 px-4 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs sm:text-sm font-medium shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99]"
+          disabled={isSubmitting}
+          className="w-full h-11 px-4 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-800 text-xs sm:text-sm font-medium shadow-2xs transition-all flex items-center justify-center gap-2.5 cursor-pointer active:scale-[0.99] disabled:opacity-50"
         >
           <svg className="w-4 h-4 shrink-0" viewBox="0 0 24 24">
             <path
@@ -197,8 +288,9 @@ export function CustomerSignupView({
               </label>
               <input
                 type="text"
+                placeholder="Your name"
                 value={userName}
-                onChange={(e) => setUserName(e.target.value || 'Elena')}
+                onChange={(e) => setUserName(e.target.value)}
                 required
                 className="w-full h-10 px-3.5 rounded-xl bg-stone-50 border border-stone-200 font-sans text-xs text-stone-900 focus:outline-none focus:border-[#E0246A] focus:bg-white transition-all"
               />
@@ -211,10 +303,11 @@ export function CustomerSignupView({
             </label>
             <input
               type="email"
-              placeholder="elena@example.com"
+              placeholder="name@example.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
+              autoComplete="email"
               className="w-full h-10 px-3.5 rounded-xl bg-stone-50 border border-stone-200 font-sans text-xs text-stone-900 focus:outline-none focus:border-[#E0246A] focus:bg-white transition-all"
             />
           </div>
@@ -225,10 +318,12 @@ export function CustomerSignupView({
             </label>
             <input
               type="password"
-              placeholder="••••••••••••"
+              placeholder={mode === 'signup' ? 'Minimum 8 characters' : 'Enter password'}
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={mode === 'signup' ? 8 : 1}
+              autoComplete={mode === 'signup' ? 'new-password' : 'current-password'}
               className="w-full h-10 px-3.5 rounded-xl bg-stone-50 border border-stone-200 font-sans text-xs text-stone-900 focus:outline-none focus:border-[#E0246A] focus:bg-white transition-all"
             />
           </div>
@@ -236,10 +331,17 @@ export function CustomerSignupView({
           <div className="space-y-2 pt-1">
             <button
               type="submit"
-              className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-sans text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]"
+              disabled={isSubmitting}
+              className="w-full h-11 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white font-sans text-xs sm:text-sm font-semibold shadow-md shadow-[#E0246A]/20 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50"
             >
               <span>
-                {mode === 'signup' ? 'Create Account & Continue' : 'Sign In to Dashboard'}
+                {isSubmitting
+                  ? mode === 'signup'
+                    ? 'Creating account...'
+                    : 'Signing in...'
+                  : mode === 'signup'
+                  ? 'Create Account & Continue'
+                  : 'Sign In to Dashboard'}
               </span>
               <ArrowRight className="w-3.5 h-3.5" strokeWidth={1.5} />
             </button>
@@ -251,21 +353,6 @@ export function CustomerSignupView({
             >
               <span>Continue as Guest</span>
             </button>
-
-            {/* Quick-fill VIP Unlimited Pro Account */}
-            <div className="pt-2 border-t border-stone-100 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setMode('signin');
-                  setEmail(VIP_ACCOUNT.email);
-                  setPassword(VIP_ACCOUNT.password);
-                }}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-pink-50 hover:bg-pink-100 text-[#E0246A] text-[11px] font-semibold transition cursor-pointer"
-              >
-                <span>Use VIP Pro Account (Unlimited)</span>
-              </button>
-            </div>
           </div>
         </form>
       </div>

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminRpcSecret, verifyAdminRequest } from '@/lib/server/admin-auth';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -6,16 +7,29 @@ const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 // List all manicure sets with optional search & category filter
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const category = searchParams.get('category');
     const search = searchParams.get('search');
+
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_sets`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        p_category: category || null,
+        p_search: search || null,
+        p_admin_secret: getAdminRpcSecret(),
+      }),
+    });
+
+    if (rpcRes.ok) {
+      const sets = await rpcRes.json();
+      return NextResponse.json({ success: true, sets: Array.isArray(sets) ? sets : [] });
+    }
 
     let query = `${SUPABASE_URL}/rest/v1/nail_sets?select=*&order=created_at.desc`;
     if (category && category !== 'all') {
@@ -49,10 +63,8 @@ export async function GET(req: NextRequest) {
 // Create new manicure set or update existing
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -66,7 +78,36 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const cleanPassportCode = passportCode || `#FGL-${Math.floor(1000 + Math.random() * 9000)}`;
+    const cleanPassportCode = passportCode || `FGL-${Math.floor(1000 + Math.random() * 9000)}`;
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_upsert_set`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_id: id || null,
+        p_title: title,
+        p_category: category || 'glazed',
+        p_photo_url: photoUrl,
+        p_passport_code: cleanPassportCode,
+        p_is_curated: isCurated !== undefined ? isCurated : true,
+        p_likes_count: likesCount !== undefined ? likesCount : 150,
+        p_nails: nails || {},
+        p_admin_secret: getAdminRpcSecret(),
+      }),
+    });
+
+    if (rpcRes.ok) {
+      const saved = await rpcRes.json();
+      return NextResponse.json({ success: true, set: saved });
+    }
+
+    const rpcErr = await rpcRes.text();
+    if (!rpcErr.includes('PGRST202')) {
+      return NextResponse.json({ error: `Database error: ${rpcErr}` }, { status: rpcRes.status });
+    }
+
     const recordPayload = {
       title,
       category: category || 'glazed',
@@ -79,30 +120,18 @@ export async function POST(req: NextRequest) {
       nails: nails || {},
     };
 
-    let res;
-    if (id) {
-      // Update
-      res = await fetch(`${SUPABASE_URL}/rest/v1/nail_sets?id=eq.${id}`, {
-        method: 'PATCH',
+    const res = await fetch(
+      id ? `${SUPABASE_URL}/rest/v1/nail_sets?id=eq.${encodeURIComponent(id)}` : `${SUPABASE_URL}/rest/v1/nail_sets`,
+      {
+        method: id ? 'PATCH' : 'POST',
         headers: {
           apikey: SUPABASE_KEY,
           'Content-Type': 'application/json',
           Prefer: 'return=representation',
         },
         body: JSON.stringify(recordPayload),
-      });
-    } else {
-      // Insert
-      res = await fetch(`${SUPABASE_URL}/rest/v1/nail_sets`, {
-        method: 'POST',
-        headers: {
-          apikey: SUPABASE_KEY,
-          'Content-Type': 'application/json',
-          Prefer: 'return=representation',
-        },
-        body: JSON.stringify(recordPayload),
-      });
-    }
+      }
+    );
 
     if (!res.ok) {
       const errText = await res.text();
@@ -125,10 +154,8 @@ export async function POST(req: NextRequest) {
 // Delete set
 export async function DELETE(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -139,7 +166,28 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'id parameter is required' }, { status: 400 });
     }
 
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/nail_sets?id=eq.${id}`, {
+    const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_delete_set`, {
+      method: 'POST',
+      headers: {
+        apikey: SUPABASE_KEY,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        p_id: id,
+        p_admin_secret: getAdminRpcSecret(),
+      }),
+    });
+
+    if (rpcRes.ok) {
+      return NextResponse.json({ success: true, message: 'Set deleted successfully' });
+    }
+
+    const rpcErr = await rpcRes.text();
+    if (!rpcErr.includes('PGRST202')) {
+      return NextResponse.json({ error: 'Failed to delete set' }, { status: rpcRes.status });
+    }
+
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/nail_sets?id=eq.${encodeURIComponent(id)}`, {
       method: 'DELETE',
       headers: {
         apikey: SUPABASE_KEY,

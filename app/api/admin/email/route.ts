@@ -1,11 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { verifyAdminRequest } from '@/lib/server/admin-auth';
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

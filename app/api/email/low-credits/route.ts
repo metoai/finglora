@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResendClient, DEFAULT_FROM_EMAIL, getLowCreditsEmailHtml } from '@/lib/services/email';
+import { getVerifiedRequestUser, verifyAdminRequest } from '@/lib/server/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { email, name, remainingCredits } = body;
 
-    if (!email) {
+    if (!email || typeof email !== 'string') {
       return NextResponse.json(
         { error: 'Email is required' },
         { status: 400 }
@@ -23,6 +24,14 @@ export async function POST(req: NextRequest) {
 
     const credits = typeof remainingCredits === 'number' ? remainingCredits : 1;
     const cleanEmail = email.trim().toLowerCase();
+
+    const adminAuth = await verifyAdminRequest(req);
+    if (!adminAuth.authorized) {
+      const user = await getVerifiedRequestUser();
+      if (!user || user.email?.trim().toLowerCase() !== cleanEmail) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
 
     const { data, error } = await resend.emails.send({
       from: DEFAULT_FROM_EMAIL,

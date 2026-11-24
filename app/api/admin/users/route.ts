@@ -1,27 +1,52 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getAdminRpcSecret, verifyAdminRequest } from '@/lib/server/admin-auth';
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const SUPABASE_KEY = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export async function GET(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
     const userId = searchParams.get('userId');
+    const adminSecret = getAdminRpcSecret();
 
-    // 1. If specific userId requested, return full user drilldown with sets, try-ons, and favorites
+    // 1. Specific user drilldown
     if (userId) {
+      if (!UUID_REGEX.test(userId)) {
+        return NextResponse.json({ error: 'Invalid userId format' }, { status: 400 });
+      }
+
+      const rpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_user_detail`, {
+        method: 'POST',
+        headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ p_user_id: userId, p_admin_secret: adminSecret }),
+      });
+
+      if (rpcRes.ok) {
+        const rpcData = await rpcRes.json();
+        if (!rpcData?.success || !rpcData?.user) {
+          return NextResponse.json({ error: 'User not found' }, { status: 404 });
+        }
+        return NextResponse.json({ success: true, user: rpcData.user });
+      }
+
+      // Fallback only if hardened migration has not yet been executed
+      const rpcErr = await rpcRes.text();
+      if (!rpcErr.includes('PGRST202')) {
+        return NextResponse.json({ error: 'Failed to load user details' }, { status: rpcRes.status });
+      }
+
       const [profileRes, setsRes, tryOnsRes, favsRes] = await Promise.all([
-        fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
+        fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${encodeURIComponent(userId)}`, {
           headers: { apikey: SUPABASE_KEY },
         }),
-        fetch(`${SUPABASE_URL}/rest/v1/nail_sets?user_id=eq.${userId}&order=created_at.desc`, {
+        fetch(`${SUPABASE_URL}/rest/v1/nail_sets?user_id=eq.${encodeURIComponent(userId)}&order=created_at.desc`, {
           headers: { apikey: SUPABASE_KEY },
         }),
         fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_user_try_ons`, {
@@ -29,7 +54,7 @@ export async function GET(req: NextRequest) {
           headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
           body: JSON.stringify({ p_user_id: userId }),
         }),
-        fetch(`${SUPABASE_URL}/rest/v1/user_favorites?user_id=eq.${userId}&select=set_id,created_at`, {
+        fetch(`${SUPABASE_URL}/rest/v1/user_favorites?user_id=eq.${encodeURIComponent(userId)}&select=set_id,created_at`, {
           headers: { apikey: SUPABASE_KEY },
         }),
       ]);
@@ -52,15 +77,31 @@ export async function GET(req: NextRequest) {
           ...profile,
           setsCount: userSets.length,
           sets: userSets,
-          tryOnsCount: tryOns.length,
-          tryOns,
+          tryOnsCount: Array.isArray(tryOns) ? tryOns.length : 0,
+          tryOns: Array.isArray(tryOns) ? tryOns : [],
           favoritesCount: favorites.length,
           favorites,
         },
       });
     }
 
-    // 2. Otherwise return full users list with their creation counts
+    // 2. Full users list
+    const listRpcRes = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_list_profiles`, {
+      method: 'POST',
+      headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ p_admin_secret: adminSecret }),
+    });
+
+    if (listRpcRes.ok) {
+      const users = await listRpcRes.json();
+      return NextResponse.json({ success: true, users: Array.isArray(users) ? users : [] });
+    }
+
+    const listErr = await listRpcRes.text();
+    if (!listErr.includes('PGRST202')) {
+      return NextResponse.json({ error: 'Failed to fetch user profiles' }, { status: listRpcRes.status });
+    }
+
     const [profilesRes, allSetsRes] = await Promise.all([
       fetch(`${SUPABASE_URL}/rest/v1/profiles?select=*&order=created_at.desc`, {
         headers: { apikey: SUPABASE_KEY },
@@ -80,7 +121,6 @@ export async function GET(req: NextRequest) {
     const profiles = await profilesRes.json();
     const sets = allSetsRes.ok ? await allSetsRes.json() : [];
 
-    // Map sets count to each user
     const userSetsCountMap: Record<string, number> = {};
     sets.forEach((s: any) => {
       if (s.user_id) {
@@ -102,37 +142,60 @@ export async function GET(req: NextRequest) {
   }
 }
 
-// Update user profile properties (e.g., plan, credits, notes)
+// Update user profile properties (e.g., plan, credits)
 export async function PATCH(req: NextRequest) {
   try {
-    const authHeader = req.headers.get('authorization');
-    const cookieToken = req.cookies.get('finglora_admin_token')?.value;
-
-    if (!authHeader && !cookieToken) {
+    const auth = await verifyAdminRequest(req);
+    if (!auth.authorized) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { userId, isPro, credits, preferredShape, preferredLength } = await req.json();
 
-    if (!userId) {
-      return NextResponse.json({ error: 'userId is required' }, { status: 400 });
+    if (!userId || !UUID_REGEX.test(userId)) {
+      return NextResponse.json({ error: 'Valid userId is required' }, { status: 400 });
     }
 
-    // Call admin_update_profile SECURITY DEFINER function to bypass RLS and persist reliably
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_profile`, {
+    const adminSecret = getAdminRpcSecret();
+    const basePayload = {
+      target_user_id: userId,
+      new_is_pro: isPro !== undefined ? Boolean(isPro) : null,
+      new_credits: credits !== undefined ? Math.max(0, Number(credits)) : null,
+      new_shape: preferredShape || null,
+      new_length: preferredLength || null,
+    };
+
+    let res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_profile`, {
       method: 'POST',
       headers: {
         apikey: SUPABASE_KEY,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        target_user_id: userId,
-        new_is_pro: isPro !== undefined ? isPro : null,
-        new_credits: credits !== undefined ? credits : null,
-        new_shape: preferredShape || null,
-        new_length: preferredLength || null,
+        ...basePayload,
+        p_admin_secret: adminSecret,
       }),
     });
+
+    // Fallback to 5-arg legacy signature only if migration hasn't been applied yet
+    if (!res.ok) {
+      const errText = await res.text();
+      if (errText.includes('PGRST202')) {
+        res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_profile`, {
+          method: 'POST',
+          headers: {
+            apikey: SUPABASE_KEY,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(basePayload),
+        });
+      } else {
+        return NextResponse.json(
+          { error: `Database error: ${errText}` },
+          { status: res.status }
+        );
+      }
+    }
 
     if (!res.ok) {
       const errText = await res.text();

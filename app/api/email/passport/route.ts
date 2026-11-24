@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResendClient, DEFAULT_FROM_EMAIL, getPassportEmailHtml } from '@/lib/services/email';
+import { getVerifiedRequestUser, verifyAdminRequest } from '@/lib/server/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,10 +13,18 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    const adminAuth = await verifyAdminRequest(req);
+    if (!adminAuth.authorized) {
+      const user = await getVerifiedRequestUser();
+      if (!user) {
+        return NextResponse.json({ error: 'Please sign in to email design recipes' }, { status: 401 });
+      }
+    }
+
     const body = await req.json();
     const { email, name, passportCode, designName, shape, length, colors, imageUrl } = body;
 
-    if (!email || !passportCode) {
+    if (!email || typeof email !== 'string' || !passportCode) {
       return NextResponse.json(
         { error: 'Email and passportCode are required' },
         { status: 400 }

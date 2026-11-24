@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getResendClient, DEFAULT_FROM_EMAIL, getWelcomeEmailHtml } from '@/lib/services/email';
+import { getVerifiedRequestUser, verifyAdminRequest } from '@/lib/server/admin-auth';
 
 export async function POST(req: NextRequest) {
   try {
@@ -20,6 +21,14 @@ export async function POST(req: NextRequest) {
     }
 
     const cleanEmail = email.trim().toLowerCase();
+    const adminAuth = await verifyAdminRequest(req);
+    if (!adminAuth.authorized) {
+      const user = await getVerifiedRequestUser();
+      if (!user || user.email?.trim().toLowerCase() !== cleanEmail) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+    }
+
     const cleanName = (name || '').trim() || 'Manicure Enthusiast';
 
     const { data, error } = await resend.emails.send({

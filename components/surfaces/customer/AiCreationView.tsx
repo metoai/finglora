@@ -99,10 +99,15 @@ export function AiCreationView({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [shareModalImg, setShareModalImg] = useState<string | null>(null);
 
-  // Persistent Bare Hand Photo: Check customTryOnHandUrl, finglora_custom_hand_photo, finglora_user_hand_photo
+  // Persistent Bare Hand Photo: strictly use active user's customTryOnHandUrl when signed in
+  const isSignedInSession =
+    typeof window !== 'undefined' &&
+    Boolean(localStorage.getItem('finglora_session_owner_id')) &&
+    localStorage.getItem('finglora_session_owner_id') !== 'guest';
+
   const originalBareHandPhoto =
     customTryOnHandUrl ||
-    (typeof window !== 'undefined'
+    (!isSignedInSession && typeof window !== 'undefined'
       ? localStorage.getItem('finglora_custom_hand_photo') ||
         localStorage.getItem('finglora_user_hand_photo')
       : null) ||
@@ -115,7 +120,9 @@ export function AiCreationView({
     }
     return (
       initialHandDesignUrl ||
-      (typeof window !== 'undefined' ? localStorage.getItem('finglora_ai_base_hand_image') : null) ||
+      (!isSignedInSession && typeof window !== 'undefined'
+        ? localStorage.getItem('finglora_ai_base_hand_image')
+        : null) ||
       originalBareHandPhoto
     );
   });
@@ -124,8 +131,10 @@ export function AiCreationView({
     if (initialHandDesignUrl && (!initialPrompt || !initialPrompt.trim())) {
       setCurrentTryOnImage(initialHandDesignUrl);
       setCompareMode('after');
+    } else if (!initialHandDesignUrl && (!initialPrompt || !initialPrompt.trim())) {
+      setCurrentTryOnImage(originalBareHandPhoto);
     }
-  }, [initialHandDesignUrl, initialPrompt]);
+  }, [initialHandDesignUrl, initialPrompt, originalBareHandPhoto]);
 
   const [compareMode, setCompareMode] = useState<'after' | 'before'>('after');
 

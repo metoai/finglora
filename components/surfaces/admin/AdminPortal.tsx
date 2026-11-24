@@ -86,7 +86,8 @@ interface ManicureSet {
 }
 
 export default function AdminPortal() {
-  const [token, setToken] = useState<string | null>(null);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [adminEmail, setAdminEmail] = useState<string>('');
   const [authKey, setAuthKey] = useState('');
   const [authEmail, setAuthEmail] = useState('');
@@ -131,15 +132,34 @@ export default function AdminPortal() {
   const [sendingTestEmail, setSendingTestEmail] = useState(false);
   const [emailSuccessMsg, setEmailSuccessMsg] = useState<string | null>(null);
 
-  // Check stored auth on load
+  // Check server-verified httpOnly admin session on load
   useEffect(() => {
-    const savedToken = localStorage.getItem('finglora_admin_token');
-    const savedEmail = localStorage.getItem('finglora_admin_email');
-    if (savedToken) {
-      setToken(savedToken);
-      if (savedEmail) setAdminEmail(savedEmail);
-      fetchDashboardData(savedToken);
-    }
+    try {
+      localStorage.removeItem('finglora_admin_token');
+      localStorage.removeItem('finglora_admin_email');
+    } catch {}
+
+    let mounted = true;
+    fetch('/api/admin/auth')
+      .then(async (res) => {
+        if (!mounted) return;
+        if (res.ok) {
+          const data = await res.json();
+          if (data.authenticated) {
+            setIsAuthenticated(true);
+            if (data.email) setAdminEmail(data.email);
+            fetchDashboardData();
+          }
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (mounted) setCheckingAuth(false);
+      });
+
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -155,15 +175,14 @@ export default function AdminPortal() {
       });
 
       const data = await res.json();
-      if (!res.ok || !data.token) {
+      if (!res.ok || !data.success) {
         throw new Error(data.error || 'Authentication failed');
       }
 
-      setToken(data.token);
+      setIsAuthenticated(true);
       setAdminEmail(data.email || authEmail || 'admin@finglora.com');
-      localStorage.setItem('finglora_admin_token', data.token);
-      localStorage.setItem('finglora_admin_email', data.email || authEmail || 'admin@finglora.com');
-      fetchDashboardData(data.token);
+      setAuthKey('');
+      fetchDashboardData();
     } catch (err: any) {
       setAuthError(err.message || 'Invalid key or unauthorized email');
     } finally {
@@ -171,26 +190,32 @@ export default function AdminPortal() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('finglora_admin_token');
-    localStorage.removeItem('finglora_admin_email');
-    setToken(null);
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/admin/auth', { method: 'DELETE' });
+    } catch {}
+    setIsAuthenticated(false);
+    setAdminEmail('');
     setStats(null);
+    setUsers([]);
+    setSets([]);
   };
 
-  const fetchDashboardData = async (authToken: string) => {
+  const fetchDashboardData = async () => {
     setLoading(true);
     try {
-      const headers = { Authorization: `Bearer ${authToken}` };
-
-      // Parallel fetch
       const [statsRes, usersRes, setsRes, emailRes, sysRes] = await Promise.all([
-        fetch('/api/admin/stats', { headers }),
-        fetch('/api/admin/users', { headers }),
-        fetch('/api/admin/sets', { headers }),
-        fetch('/api/admin/email', { headers }),
-        fetch('/api/admin/system', { headers }),
+        fetch('/api/admin/stats'),
+        fetch('/api/admin/users'),
+        fetch('/api/admin/sets'),
+        fetch('/api/admin/email'),
+        fetch('/api/admin/system'),
       ]);
+
+      if ([statsRes, usersRes, setsRes, emailRes, sysRes].some((r) => r.status === 401)) {
+        setIsAuthenticated(false);
+        return;
+      }
 
       if (statsRes.ok) {
         const s = await statsRes.json();
@@ -225,13 +250,15 @@ export default function AdminPortal() {
     setEditIsPro(!!user.is_pro);
     setIsEditingUser(false);
     setSaveSuccessMsg(null);
-    if (!token) return;
+    if (!isAuthenticated) return;
 
     setLoadingUserDetail(true);
     try {
-      const res = await fetch(`/api/admin/users?userId=${user.id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`/api/admin/users?userId=${encodeURIComponent(user.id)}`);
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
       if (res.ok) {
         const data = await res.json();
         if (data.user) {
@@ -248,7 +275,7 @@ export default function AdminPortal() {
   };
 
   const handleSaveUserEdits = async () => {
-    if (!selectedUser || !token) return;
+    if (!selectedUser || !isAuthenticated) return;
     setIsSavingUser(true);
     setSaveSuccessMsg(null);
 
@@ -257,7 +284,6 @@ export default function AdminPortal() {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           userId: selectedUser.id,
@@ -266,15 +292,18 @@ export default function AdminPortal() {
         }),
       });
 
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
+
       if (res.ok) {
-        const data = await res.json();
         const updatedUser = {
           ...selectedUser,
           is_pro: editIsPro,
           credits: editIsPro ? 999999 : editCredits,
         };
         setSelectedUser(updatedUser);
-        // Also update the local users list
         setUsers((prev) =>
           prev.map((u) => (u.id === selectedUser.id ? { ...u, is_pro: editIsPro, credits: editIsPro ? 999999 : editCredits } : u))
         );
@@ -293,7 +322,7 @@ export default function AdminPortal() {
 
   const handleCreateSet = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle || !newPhotoUrl || !token) return;
+    if (!newTitle || !newPhotoUrl || !isAuthenticated) return;
 
     setIsSubmittingSet(true);
     try {
@@ -301,7 +330,6 @@ export default function AdminPortal() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
           title: newTitle,
@@ -312,14 +340,16 @@ export default function AdminPortal() {
         }),
       });
 
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
+
       if (res.ok) {
         setIsCreateSetOpen(false);
         setNewTitle('');
         setNewPhotoUrl('');
-        // Refresh sets
-        const setsRes = await fetch('/api/admin/sets', {
-          headers: { Authorization: `Bearer ${token}` },
-        });
+        const setsRes = await fetch('/api/admin/sets');
         if (setsRes.ok) {
           const s = await setsRes.json();
           setSets(s.sets || []);
@@ -333,14 +363,18 @@ export default function AdminPortal() {
   };
 
   const handleDeleteSet = async (id: string) => {
-    if (!token) return;
+    if (!isAuthenticated) return;
     if (!confirm('Are you sure you want to remove this manicure set?')) return;
 
     try {
-      const res = await fetch(`/api/admin/sets?id=${id}`, {
+      const res = await fetch(`/api/admin/sets?id=${encodeURIComponent(id)}`, {
         method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
       });
+
+      if (res.status === 401) {
+        setIsAuthenticated(false);
+        return;
+      }
 
       if (res.ok) {
         setSets((prev) => prev.filter((s) => s.id !== id));
@@ -423,8 +457,17 @@ export default function AdminPortal() {
     return nameMatch || emailMatch;
   });
 
+  // Loading state while verifying httpOnly admin session
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4">
+        <Loader2 className="w-6 h-6 animate-spin text-[#E0246A]" />
+      </div>
+    );
+  }
+
   // If not logged in, render minimal login screen
-  if (!token) {
+  if (!isAuthenticated) {
     return (
       <div className="min-h-screen bg-[#FAF7F2] flex items-center justify-center p-4">
         <div className="w-full max-w-sm bg-white rounded-2xl border border-stone-200/80 p-7 shadow-sm space-y-6">
@@ -436,7 +479,7 @@ export default function AdminPortal() {
               Admin Access
             </h1>
             <p className="text-xs text-stone-500">
-              Sign in with your master key or authorized admin email.
+              Sign in with your master security key.
             </p>
           </div>
 
@@ -524,7 +567,7 @@ export default function AdminPortal() {
         <div className="flex items-center gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={() => token && fetchDashboardData(token)}
+            onClick={() => isAuthenticated && fetchDashboardData()}
             disabled={loading}
             className="h-8.5 px-3 rounded-lg border border-stone-200 hover:bg-stone-50 text-xs font-semibold text-stone-700 inline-flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
           >

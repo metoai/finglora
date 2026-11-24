@@ -25,7 +25,13 @@ export function CustomerApp({
   userName,
   setUserName,
   userEmail,
+  userAvatarUrl,
+  setUserAvatarUrl,
+  userIsPro,
+  userCredits,
+  setUserCredits,
   supabaseUser,
+  onLogout,
   preferredShape,
   setPreferredShape,
   activeSample,
@@ -101,7 +107,13 @@ export function CustomerApp({
   userName: string;
   setUserName: (name: string) => void;
   userEmail?: string;
+  userAvatarUrl?: string | null;
+  setUserAvatarUrl?: (url: string | null) => void;
+  userIsPro?: boolean;
+  userCredits?: number;
+  setUserCredits?: (credits: number) => void;
   supabaseUser?: any;
+  onLogout?: () => void;
   preferredShape: NailShape;
   setPreferredShape?: (shape: NailShape) => void;
   activeSample?: ExploreDesignSet;
@@ -222,6 +234,7 @@ export function CustomerApp({
           onBrandClick={onBrandClick}
           favoritesCount={favoritesCount}
           userName={userName}
+          avatarUrl={userAvatarUrl}
           preferredShape={preferredShape}
         />
       )}
@@ -234,10 +247,11 @@ export function CustomerApp({
           onBrandClick={onBrandClick}
           favoritesCount={favoritesCount}
           userName={userName}
+          avatarUrl={userAvatarUrl}
           preferredShape={preferredShape}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
-          onLogout={onBrandClick}
+          onLogout={onLogout || onBrandClick}
         />
       </div>
 
@@ -388,10 +402,6 @@ export function CustomerApp({
                   const dataUrl = reader.result as string;
                   setCustomTryOnHandUrl(dataUrl);
                   setSynthesizedHandUrl?.(null);
-                  try {
-                    localStorage.setItem('finglora_custom_hand_photo', dataUrl);
-                    localStorage.setItem('finglora_user_hand_photo', dataUrl);
-                  } catch {}
                 };
                 reader.readAsDataURL(file);
               }}
@@ -484,6 +494,10 @@ export function CustomerApp({
               userName={userName}
               setUserName={setUserName}
               userEmail={userEmail}
+              userAvatarUrl={userAvatarUrl}
+              setUserAvatarUrl={setUserAvatarUrl}
+              userIsPro={userIsPro}
+              userCredits={userCredits}
               supabaseUser={supabaseUser}
               preferredShape={preferredShape}
               setPreferredShape={setPreferredShape}
@@ -514,7 +528,7 @@ export function CustomerApp({
               }
               customTryOnHandUrl={customTryOnHandUrl}
               setCustomTryOnHandUrl={setCustomTryOnHandUrl}
-              onLogout={onBrandClick}
+              onLogout={onLogout || onBrandClick}
             />
           )}
 

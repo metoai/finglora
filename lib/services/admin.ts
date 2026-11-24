@@ -1,6 +1,6 @@
 /**
- * Finglora Admin Authorization & Config
- * Admin allowed emails, master password, and session helpers
+ * Finglora Admin Allowlist Helpers
+ * Server authentication & secrets live strictly in lib/server/admin-auth.ts
  */
 
 export const ADMIN_EMAILS = [
@@ -12,17 +12,10 @@ export const ADMIN_EMAILS = [
   'finglora.vip.pro@gmail.com',
 ];
 
-export const ADMIN_MASTER_KEY = process.env.ADMIN_SECRET_KEY || 'finglora-admin-2026';
-
 export function isAuthorizedAdmin(email?: string | null): boolean {
   if (!email) return false;
   const clean = email.trim().toLowerCase();
-  return (
-    ADMIN_EMAILS.includes(clean) ||
-    clean.endsWith('@finglora.com') ||
-    clean === 'metoaipr@gmail.com' ||
-    clean === 'alazartesema1@gmail.com'
-  );
+  return ADMIN_EMAILS.includes(clean);
 }
 
 export const ADMIN_STORAGE_KEY = 'finglora_admin_auth_token';

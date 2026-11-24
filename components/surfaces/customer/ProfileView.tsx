@@ -20,7 +20,6 @@ import {
   Trash2,
   Search,
   Sparkles,
-  Shuffle,
   Crown,
   Settings,
   History,
@@ -42,9 +41,10 @@ import {
   sanitizeEditorialPhotoUrl,
 } from '@/constants/nail-data';
 import { signOutUser, getCurrentUser } from '@/lib/services/auth';
+import { isAuthorizedAdmin } from '@/lib/services/admin';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
-import { uploadUserHandPhoto } from '@/lib/services/storage';
+import { uploadUserHandPhoto, uploadUserAvatar } from '@/lib/services/storage';
 import { isVipEmail, getUserCreditStatus, PRO_PLANS } from '@/lib/services/credits';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
@@ -54,6 +54,10 @@ interface ProfileViewProps {
   userName: string;
   setUserName: (name: string) => void;
   userEmail?: string;
+  userAvatarUrl?: string | null;
+  setUserAvatarUrl?: (url: string | null) => void;
+  userIsPro?: boolean;
+  userCredits?: number;
   supabaseUser?: any;
   preferredShape?: NailShape;
   setPreferredShape?: (shape: NailShape) => void;
@@ -82,6 +86,10 @@ export function ProfileView({
   userName,
   setUserName,
   userEmail: propUserEmail,
+  userAvatarUrl: propUserAvatarUrl,
+  setUserAvatarUrl: propSetUserAvatarUrl,
+  userIsPro: propUserIsPro,
+  userCredits: propUserCredits,
   supabaseUser,
   preferredShape = 'almond',
   setPreferredShape,
@@ -117,49 +125,24 @@ export function ProfileView({
   }, [userName]);
 
   // Google OAuth / user metadata avatar if available
-  const authMetadataAvatar = supabaseUser?.user_metadata?.avatar_url || supabaseUser?.user_metadata?.picture || null;
+  const authMetadataAvatar =
+    supabaseUser?.user_metadata?.avatar_url || supabaseUser?.user_metadata?.picture || null;
 
-  // Stored avatar URL (custom upload or Google OAuth or random seed)
-  const [storedAvatarUrl, setStoredAvatarUrl] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('finglora_custom_avatar_photo') || localStorage.getItem('finglora_avatar_url') || null;
-    }
-    return null;
-  });
-
-  const [avatarSeed, setAvatarSeed] = useState(() => {
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('finglora_avatar_seed');
-      if (saved) return saved;
-    }
-    return 'Vivian';
-  });
-
-  const [customAvatarPhoto, setCustomAvatarPhoto] = useState<string | null>(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('finglora_custom_avatar_photo');
-    }
-    return null;
-  });
-
-  // Keep stored avatar in sync when Google session or metadata changes
-  useEffect(() => {
-    if (authMetadataAvatar) {
-      if (typeof window !== 'undefined' && !localStorage.getItem('finglora_custom_avatar_photo')) {
-        localStorage.setItem('finglora_avatar_url', authMetadataAvatar);
-        setStoredAvatarUrl(authMetadataAvatar);
-      }
-    }
-  }, [authMetadataAvatar]);
-
+  const [customAvatarPhoto, setCustomAvatarPhoto] = useState<string | null>(null);
   const [imageError, setImageError] = useState(false);
+
+  // Reset local preview when active authenticated user changes
+  useEffect(() => {
+    setCustomAvatarPhoto(null);
+    setImageError(false);
+  }, [supabaseUser?.id, propUserAvatarUrl]);
 
   const avatarUrl = useMemo(() => {
     if (customAvatarPhoto) return customAvatarPhoto;
-    if (storedAvatarUrl) return storedAvatarUrl;
+    if (propUserAvatarUrl) return propUserAvatarUrl;
     if (authMetadataAvatar) return authMetadataAvatar;
-    return `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=fde8ef`;
-  }, [avatarSeed, customAvatarPhoto, authMetadataAvatar, storedAvatarUrl]);
+    return null;
+  }, [customAvatarPhoto, propUserAvatarUrl, authMetadataAvatar]);
 
   // Reset imageError when avatarUrl changes
   useEffect(() => {
@@ -168,69 +151,69 @@ export function ProfileView({
 
   const profilePicFileInputRef = useRef<HTMLInputElement>(null);
 
-  const randomizeAvatar = () => {
-    const seeds = [
-      'Vivian', 'Elise', 'Chloe', 'Amelie', 'Camille', 'Juliette',
-      'Margaux', 'Giselle', 'Helene', 'Ines', 'Adele', 'Colette',
-      'Claire', 'Sasha', 'Nadia', 'Zoe', 'Leona', 'Celeste', 'Flora',
-      'Audrey', 'Maya', 'Sophie', 'Isla', 'Mila', 'Luna', 'Ruby'
-    ];
-    const next = seeds[Math.floor(Math.random() * seeds.length)] + '-' + Math.floor(Math.random() * 9999);
-    const newUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(next)}&backgroundColor=fde8ef`;
-    setAvatarSeed(next);
-    setCustomAvatarPhoto(null);
-    setStoredAvatarUrl(newUrl);
-    setImageError(false);
-    if (typeof window !== 'undefined') {
-      localStorage.setItem('finglora_avatar_seed', next);
-      localStorage.removeItem('finglora_custom_avatar_photo');
-      localStorage.setItem('finglora_avatar_url', newUrl);
-      window.dispatchEvent(new Event('finglora_avatar_updated'));
-    }
-    showToast('New aesthetic avatar rolled ✿');
-  };
-
-  const handleCustomAvatarSelected = (file: File) => {
+  const handleCustomAvatarSelected = async (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
       const dataUrl = reader.result as string;
       setCustomAvatarPhoto(dataUrl);
-      if (typeof window !== 'undefined') {
+      if (!supabaseUser?.id && typeof window !== 'undefined') {
         try {
-          localStorage.setItem('finglora_custom_avatar_photo', dataUrl);
           localStorage.setItem('finglora_avatar_url', dataUrl);
           window.dispatchEvent(new Event('finglora_avatar_updated'));
         } catch {}
       }
-      showToast('Custom profile picture updated');
     };
     reader.readAsDataURL(file);
+
+    try {
+      const user = await getCurrentUser();
+      if (user?.id) {
+        const uploadedUrl = await uploadUserAvatar(file, user.id);
+        await updateUserProfile(user.id, { avatarUrl: uploadedUrl });
+        setCustomAvatarPhoto(uploadedUrl);
+        propSetUserAvatarUrl?.(uploadedUrl);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('finglora_avatar_url', uploadedUrl);
+            window.dispatchEvent(new Event('finglora_avatar_updated'));
+          } catch {}
+        }
+        showToast('Profile picture updated');
+      } else {
+        showToast('Profile photo updated for guest session');
+      }
+    } catch (err) {
+      console.warn('Avatar upload failed:', err);
+      showToast('Could not upload avatar to cloud storage');
+    }
   };
 
-  // User Email state: prioritize prop > localStorage > fallback
+  // Verified email for signed-in accounts; guest indicator when signed out
   const [userEmail, setUserEmail] = useState(() => {
-    if (propUserEmail) return propUserEmail;
     if (supabaseUser?.email) return supabaseUser.email;
-    if (typeof window !== 'undefined') {
-      const saved = localStorage.getItem('finglora_user_email');
-      if (saved) return saved;
-    }
-    const slug = (userName || 'client').toLowerCase().replace(/[^a-z0-9]/g, '.');
-    return `${slug}@finglora.com`;
+    if (propUserEmail) return propUserEmail;
+    return '';
   });
 
-  // Keep userEmail in sync when prop changes (e.g. Supabase session loaded)
   useEffect(() => {
-    if (propUserEmail) {
-      setUserEmail(propUserEmail);
-    } else if (supabaseUser?.email) {
+    if (supabaseUser?.email) {
       setUserEmail(supabaseUser.email);
+    } else if (propUserEmail) {
+      setUserEmail(propUserEmail);
+    } else if (!supabaseUser?.id) {
+      setUserEmail('');
     }
-  }, [propUserEmail, supabaseUser?.email]);
+  }, [propUserEmail, supabaseUser?.id, supabaseUser?.email]);
 
-  const creditStatus = useMemo(() => getUserCreditStatus(), [userEmail]);
-  const isUserVip = isVipEmail(userEmail);
-  const isUserPro = creditStatus.isPro;
+  const guestCreditStatus = useMemo(() => getUserCreditStatus(), [userEmail, supabaseUser?.id]);
+  const isUserPro = supabaseUser?.id ? Boolean(propUserIsPro) : guestCreditStatus.isPro;
+  const isUserVip = Boolean(supabaseUser?.id && isUserPro && isVipEmail(userEmail));
+  const displayCredits = supabaseUser?.id
+    ? typeof propUserCredits === 'number'
+      ? propUserCredits
+      : guestCreditStatus.credits
+    : guestCreditStatus.credits;
+  const showAdminConsoleLink = Boolean(supabaseUser?.id && isAuthorizedAdmin(userEmail));
 
   // Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -278,34 +261,40 @@ export function ProfileView({
             .eq('user_id', user.id)
             .order('created_at', { ascending: false });
 
-          if (!error && data && data.length > 0 && isMounted) {
-            setTryOnHistory(data);
-            return;
+          if (!error && isMounted) {
+            setTryOnHistory(data || []);
+          }
+          return;
+        }
+
+        // Local fallback ONLY when viewing as guest
+        if (typeof window !== 'undefined' && isMounted) {
+          try {
+            const localItem = localStorage.getItem('finglora_synthesized_hand_url');
+            if (localItem) {
+              setTryOnHistory([
+                {
+                  id: 'local-active-tryon',
+                  image_url: localItem,
+                  mode: 'Local Studio',
+                  set_id: null,
+                  skin_tone_id: null,
+                  created_at: new Date().toISOString(),
+                },
+              ]);
+            } else {
+              setTryOnHistory([]);
+            }
+          } catch {
+            setTryOnHistory([]);
           }
         }
       } catch (err) {
         console.warn('Could not load online try-on history:', err);
+        if (isMounted) setTryOnHistory([]);
+      } finally {
+        if (isMounted) setLoadingHistory(false);
       }
-
-      // Local fallback if guest or offline
-      if (typeof window !== 'undefined' && isMounted) {
-        try {
-          const localItem = localStorage.getItem('finglora_synthesized_hand_url');
-          if (localItem) {
-            setTryOnHistory([
-              {
-                id: 'local-active-tryon',
-                image_url: localItem,
-                mode: 'Local Atelier',
-                set_id: null,
-                skin_tone_id: null,
-                created_at: new Date().toISOString(),
-              },
-            ]);
-          }
-        } catch {}
-      }
-      if (isMounted) setLoadingHistory(false);
     };
 
     fetchHistory();
@@ -340,12 +329,14 @@ export function ProfileView({
     const cleanName = nameInput.trim();
     if (cleanName) {
       setUserName(cleanName);
-    }
-    if (emailInput.trim()) {
-      setUserEmail(emailInput.trim());
       if (typeof window !== 'undefined') {
-        localStorage.setItem('finglora_user_email', emailInput.trim());
+        try {
+          localStorage.setItem('finglora_user_display_name', cleanName);
+        } catch {}
       }
+    }
+    if (!supabaseUser?.id && emailInput.trim()) {
+      setUserEmail(emailInput.trim());
     }
     setIsEditProfileOpen(false);
     showToast('Profile updated');
@@ -1029,7 +1020,7 @@ export function ProfileView({
                     )}
                   </div>
                   <p className="text-xs text-stone-500 font-mono truncate max-w-[200px] sm:max-w-xs">
-                    {userEmail}
+                    {userEmail || 'Guest studio session'}
                   </p>
                 </div>
               </div>
@@ -1038,12 +1029,12 @@ export function ProfileView({
               <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
                 <button
                   type="button"
-                  onClick={randomizeAvatar}
+                  onClick={() => profilePicFileInputRef.current?.click()}
                   className="h-8.5 px-3 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/50 hover:bg-pink-50 text-[#E0246A] text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-2xs"
-                  title="Generate a random avatar illustration"
+                  title="Upload custom profile photo"
                 >
-                  <Shuffle className="w-3.5 h-3.5" />
-                  <span>Random</span>
+                  <Camera className="w-3.5 h-3.5" />
+                  <span>Photo</span>
                 </button>
 
                 <button
@@ -1060,24 +1051,29 @@ export function ProfileView({
               </div>
             </div>
 
-            {/* Sub-bar if custom photo is uploaded */}
-            {customAvatarPhoto && (
+            {/* Sub-bar if custom photo is active */}
+            {avatarUrl && (
               <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 text-xs">
-                <span className="text-[11px] text-stone-500">Custom profile photo active</span>
+                <span className="text-[11px] text-stone-500">Profile photo active</span>
                 <button
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     setCustomAvatarPhoto(null);
+                    propSetUserAvatarUrl?.(null);
                     if (typeof window !== 'undefined') {
                       localStorage.removeItem('finglora_custom_avatar_photo');
+                      localStorage.removeItem('finglora_avatar_url');
                       window.dispatchEvent(new Event('finglora_avatar_updated'));
                     }
-                    showToast('Custom photo removed');
+                    if (supabaseUser?.id) {
+                      await updateUserProfile(supabaseUser.id, { avatarUrl: null }).catch(() => {});
+                    }
+                    showToast('Profile photo removed');
                   }}
                   className="text-[11px] font-medium text-stone-400 hover:text-red-500 transition cursor-pointer inline-flex items-center gap-1"
                 >
                   <Trash2 className="w-3 h-3" />
-                  <span>Remove custom photo</span>
+                  <span>Remove photo</span>
                 </button>
               </div>
             )}
@@ -1095,7 +1091,7 @@ export function ProfileView({
                     {isUserVip ? 'VIP Member (Unlimited)' : isUserPro ? 'Pro Member' : 'Free Plan'}
                   </span>
                   <span className="text-[11px] text-stone-500">
-                    {isUserVip || isUserPro ? 'Unlimited high-definition virtual try-ons' : `${creditStatus.credits} try-on credits remaining`}
+                    {isUserVip || isUserPro ? 'Unlimited high-definition virtual try-ons' : `${displayCredits} try-on credits remaining`}
                   </span>
                 </div>
               </div>
@@ -1312,26 +1308,28 @@ export function ProfileView({
               </div>
             </button>
 
-            {/* Admin Command Console */}
-            <Link
-              href="/admin"
-              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-            >
-              <div className="flex items-center gap-3 min-w-0">
-                <div className="w-7 h-7 rounded-lg bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-                  <Settings className="w-4 h-4" />
+            {/* Admin Command Console (Verified Allowlisted Admins Only) */}
+            {showAdminConsoleLink && (
+              <Link
+                href="/admin"
+                className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-7 h-7 rounded-lg bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+                    <Settings className="w-4 h-4" />
+                  </div>
+                  <div className="text-left min-w-0">
+                    <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                      Admin Command Console
+                    </span>
+                  </div>
                 </div>
-                <div className="text-left min-w-0">
-                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                    Admin Command Console
-                  </span>
+                <div className="flex items-center gap-1.5 text-[11px] text-[#E0246A] font-semibold">
+                  <span>Manage</span>
+                  <ChevronRight className="w-3.5 h-3.5 text-[#E0246A] transition-colors" />
                 </div>
-              </div>
-              <div className="flex items-center gap-1.5 text-[11px] text-[#E0246A] font-semibold">
-                <span>Manage</span>
-                <ChevronRight className="w-3.5 h-3.5 text-[#E0246A] transition-colors" />
-              </div>
-            </Link>
+              </Link>
+            )}
 
             {/* Sign Out */}
             <button
@@ -1590,11 +1588,20 @@ export function ProfileView({
                     type="email"
                     value={emailInput}
                     onChange={(e) => setEmailInput(e.target.value)}
-                    required
-                    placeholder="your.email@example.com"
-                    className="w-full pl-9 pr-3 h-10 rounded-xl border border-stone-200 text-xs sm:text-sm text-stone-900 focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
+                    readOnly={Boolean(supabaseUser?.id)}
+                    placeholder={supabaseUser?.id ? '' : 'Guest studio session (optional)'}
+                    className={`w-full pl-9 pr-3 h-10 rounded-xl border border-stone-200 text-xs sm:text-sm focus:outline-none ${
+                      supabaseUser?.id
+                        ? 'bg-stone-50 text-stone-500 cursor-not-allowed'
+                        : 'text-stone-900 focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]'
+                    }`}
                   />
                 </div>
+                {supabaseUser?.id && (
+                  <p className="text-[10px] text-stone-400 mt-1">
+                    Verified sign-in email cannot be changed here.
+                  </p>
+                )}
               </div>
 
               <div className="pt-2 flex gap-2">
