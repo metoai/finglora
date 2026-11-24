@@ -11,6 +11,7 @@ import {
   Settings,
 } from 'lucide-react';
 import { Finger, NailDesign, NailShape } from '@/types/nail';
+import { BrandLogoIcon } from '@/components/common/BrandLogo';
 
 export type CustomerRoute =
   | 'home'
@@ -89,15 +90,15 @@ export function CustomerSidebar({
       className="hidden md:flex w-14 sm:w-16 flex-col fixed inset-y-0 left-0 bg-white border-r border-stone-200/60 py-3.5 justify-between items-center z-40 select-none"
       aria-label="Atelier Navigation"
     >
-      {/* Top: Brand Flower Logo */}
+      {/* Top: Brand Logo */}
       <div className="flex flex-col items-center">
         <button
           type="button"
           onClick={onBrandClick}
-          className="w-10 h-10 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-2xs"
+          className="w-10 h-10 rounded-2xl bg-white hover:bg-stone-50 border border-stone-200/80 flex items-center justify-center transition-all cursor-pointer group active:scale-95 shadow-2xs p-1"
           title="Finglora Home"
         >
-          <span className="text-xl leading-none select-none font-bold -translate-y-[0.5px]">✿</span>
+          <BrandLogoIcon size="md" className="w-7 h-7" />
         </button>
       </div>
 

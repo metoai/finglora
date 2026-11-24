@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Check, Copy, Share2, ExternalLink } from 'lucide-react';
+import { BrandLogoIcon } from '@/components/common/BrandLogo';
 
 export interface SocialShareModalProps {
   isOpen: boolean;
@@ -95,8 +96,8 @@ export function SocialShareModal({
         {/* Header */}
         <div className="flex items-center justify-between pb-2 border-b border-stone-100">
           <div>
-            <div className="flex items-center gap-1.5">
-              <span className="text-[#E0246A] text-sm">✿</span>
+            <div className="flex items-center gap-2">
+              <BrandLogoIcon size="sm" className="w-5 h-5" />
               <span className="font-serif text-base font-semibold text-stone-900 tracking-tight">
                 Share Manicure
               </span>
