@@ -174,6 +174,7 @@ export function ProfileView({
   const [isCameraCaptureOpen, setIsCameraCaptureOpen] = useState(false);
   const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
   const [isPrivacyModalOpen, setIsPrivacyModalOpen] = useState(false);
+  const [isSignOutModalOpen, setIsSignOutModalOpen] = useState(false);
 
   // Inputs
   const [nameInput, setNameInput] = useState(userName);
@@ -976,15 +977,7 @@ export function ProfileView({
             {/* Sign Out */}
             <button
               type="button"
-              onClick={async () => {
-                try {
-                  await signOutUser();
-                } catch (e) {
-                  console.warn('Sign out error:', e);
-                }
-                showToast('Signed out successfully');
-                if (onLogout) onLogout();
-              }}
+              onClick={() => setIsSignOutModalOpen(true)}
               className="w-full h-11 px-3.5 rounded-2xl hover:bg-red-50/70 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
             >
               <div className="flex items-center gap-3">
@@ -1390,6 +1383,59 @@ export function ProfileView({
             >
               Close
             </button>
+          </div>
+        </div>
+      )}
+
+      {/* Sign Out Confirmation Modal */}
+      {isSignOutModalOpen && (
+        <div
+          className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-center justify-center p-4 animate-in fade-in duration-200"
+          onClick={() => setIsSignOutModalOpen(false)}
+        >
+          <div
+            className="bg-white rounded-3xl w-full max-w-sm p-6 shadow-2xl border border-stone-200 space-y-4 animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center mx-auto shadow-xs">
+              <LogOut className="w-6 h-6" />
+            </div>
+
+            <div className="text-center space-y-1">
+              <h3 className="font-serif text-lg font-normal text-stone-900">
+                Sign out of Finglora?
+              </h3>
+              <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
+                You will be returned to the guest view. Your saved hand photo and calibrated designs are safely stored in your account.
+              </p>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2.5 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsSignOutModalOpen(false)}
+                className="h-10 rounded-xl bg-stone-100 hover:bg-stone-200 text-stone-700 text-xs font-semibold cursor-pointer transition active:scale-95"
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                onClick={async () => {
+                  setIsSignOutModalOpen(false);
+                  try {
+                    await signOutUser();
+                  } catch (e) {
+                    console.warn('Sign out error:', e);
+                  }
+                  showToast('Signed out successfully');
+                  if (onLogout) onLogout();
+                }}
+                className="h-10 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold cursor-pointer transition active:scale-95 shadow-xs"
+              >
+                Sign Out
+              </button>
+            </div>
           </div>
         </div>
       )}
