@@ -17,8 +17,8 @@ export const DEFAULT_FROM_EMAIL =
 /**
  * Luxury Editorial Email Template for Finglora Welcome
  */
-export function getWelcomeEmailHtml(name: string = 'Manicure Enthusiast') {
-  const cleanName = name || 'Manicure Enthusiast';
+export function getWelcomeEmailHtml(name: string = 'Friend') {
+  const cleanName = name || 'Friend';
 
   return `
 <!DOCTYPE html>
@@ -26,150 +26,89 @@ export function getWelcomeEmailHtml(name: string = 'Manicure Enthusiast') {
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Welcome to Finglora Atelier</title>
-  <style>
-    body {
-      margin: 0;
-      padding: 0;
-      background-color: #FAF7F2;
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-      color: #1F1A1C;
-      -webkit-font-smoothing: antialiased;
-    }
-    .container {
-      max-width: 580px;
-      margin: 40px auto;
-      background: #FFFFFF;
-      border-radius: 24px;
-      border: 1px solid rgba(31, 26, 28, 0.08);
-      overflow: hidden;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.04);
-    }
-    .header {
-      padding: 36px 32px 24px;
-      text-align: center;
-      background: #FFFFFF;
-      border-bottom: 1px solid rgba(31, 26, 28, 0.06);
-    }
-    .logo-badge {
-      display: inline-block;
-      width: 44px;
-      height: 44px;
-      background: #FFF1F5;
-      border-radius: 50%;
-      line-height: 44px;
-      text-align: center;
-      margin-bottom: 12px;
-    }
-    .brand-title {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 26px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: #1F1A1C;
-      margin: 0 0 4px;
-      font-weight: 500;
-    }
-    .brand-sub {
-      font-size: 11px;
-      letter-spacing: 0.22em;
-      text-transform: uppercase;
-      color: #E0246A;
-      font-weight: 600;
-      margin: 0;
-    }
-    .content {
-      padding: 36px 32px;
-      line-height: 1.6;
-    }
-    .greeting {
-      font-family: Georgia, 'Times New Roman', serif;
-      font-size: 20px;
-      color: #1F1A1C;
-      margin: 0 0 14px;
-    }
-    .paragraph {
-      font-size: 14px;
-      color: #554D50;
-      margin: 0 0 20px;
-    }
-    .card-box {
-      background: #FAF7F2;
-      border: 1px solid rgba(31, 26, 28, 0.07);
-      border-radius: 16px;
-      padding: 20px;
-      margin: 24px 0;
-    }
-    .card-title {
-      font-size: 12px;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      color: #E0246A;
-      margin: 0 0 8px;
-    }
-    .feature-item {
-      font-size: 13px;
-      color: #3F3739;
-      margin: 6px 0;
-      display: flex;
-      align-items: center;
-    }
-    .cta-container {
-      text-align: center;
-      margin: 32px 0 16px;
-    }
-    .cta-btn {
-      display: inline-block;
-      background-color: #E0246A;
-      color: #FFFFFF !important;
-      text-decoration: none;
-      font-size: 13px;
-      font-weight: 600;
-      letter-spacing: 0.04em;
-      padding: 13px 28px;
-      border-radius: 12px;
-      box-shadow: 0 4px 14px rgba(224, 36, 106, 0.25);
-    }
-    .footer {
-      padding: 24px 32px;
-      background: #FAF7F2;
-      border-top: 1px solid rgba(31, 26, 28, 0.06);
-      text-align: center;
-      font-size: 11px;
-      color: #8C8085;
-      line-height: 1.5;
-    }
-  </style>
+  <title>Welcome to Finglora</title>
 </head>
-<body>
-  <div class="container">
-    <div class="header">
-      <div class="brand-title">Finglora</div>
-      <div class="brand-sub">Virtual Manicure Atelier</div>
-    </div>
-    <div class="content">
-      <h1 class="greeting">Welcome to the Atelier, ${cleanName}.</h1>
-      <p class="paragraph">
-        Your personal nail studio is calibrated and ready. Whether you are extracting custom manicure art from Instagram or Pinterest, previewing designs on your own hand, or crafting 5-finger bespoke sets, Finglora gives you precision down to every cuticle.
-      </p>
+<body style="margin:0;padding:0;background-color:#FAF9F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1c1917;-webkit-font-smoothing:antialiased;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#FAF9F6;padding:32px 16px;">
+    <tr>
+      <td align="center">
+        <table role="presentation" width="100%" style="max-width:480px;background:#ffffff;border-radius:24px;border:1px solid #f2e8ec;box-shadow:0 8px 24px rgba(0,0,0,0.03);overflow:hidden;" cellspacing="0" cellpadding="0">
+          
+          <!-- Logo & Header -->
+          <tr>
+            <td align="center" style="padding:36px 32px 20px;text-align:center;">
+              <!-- Finglora Luxury Nail Emblem Logo -->
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 14px;">
+                <tr>
+                  <td align="center" style="width:52px;height:52px;background:#FFF0F5;border:1px solid #FCE7F3;border-radius:16px;">
+                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <path d="M12 2C9.5 2 7.5 4 7.5 6.5V14C7.5 17.5 9.5 20.5 12 21.5C14.5 20.5 16.5 17.5 16.5 14V6.5C16.5 4 14.5 2 12 2Z" fill="#E0246A"/>
+                      <path d="M10 5.5C10 4.5 10.8 3.8 12 3.8C12.4 3.8 12.8 4 13.1 4.3C12.3 4.8 11.2 5.8 10.8 7.2L10 5.5Z" fill="#FFFFFF" opacity="0.6"/>
+                      <circle cx="12" cy="18" r="1.5" fill="#FFFFFF" opacity="0.8"/>
+                    </svg>
+                  </td>
+                </tr>
+              </table>
+              <div style="font-family:Georgia,serif;font-size:24px;font-weight:600;letter-spacing:0.08em;color:#1c1917;margin:0 0 4px;">FINGLORA</div>
+              <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#E0246A;">Virtual Nail Studio</div>
+            </td>
+          </tr>
 
-      <div class="card-box">
-        <div class="card-title">What you can create today</div>
-        <div class="feature-item">&#10003; <strong>Virtual Try-On:</strong> See how any polish, chrome, or French tip looks on your natural hand.</div>
-        <div class="feature-item">&#10003; <strong>Inspo Extraction:</strong> Upload any feed photo and break it down across all 5 individual fingers.</div>
-        <div class="feature-item">&#10003; <strong>Technician Passport:</strong> Exact pigment codes, apex layers, and cure times ready to show your nail artist.</div>
-      </div>
+          <!-- Welcome Body -->
+          <tr>
+            <td style="padding:10px 32px 32px;line-height:1.6;">
+              <h1 style="font-family:Georgia,serif;font-size:20px;font-weight:600;color:#1c1917;margin:0 0 12px;text-align:center;">
+                Welcome, ${cleanName}!
+              </h1>
+              
+              <p style="font-size:14px;color:#57534e;margin:0 0 20px;text-align:center;line-height:1.6;">
+                Your account is ready with <strong>10 Free Try-On Credits</strong>. You can now try on any manicure style directly on your own hand photo in 1 tap.
+              </p>
 
-      <div class="cta-container">
-        <a href="https://finglora.com" class="cta-btn">Enter Your Atelier &rarr;</a>
-      </div>
-    </div>
-    <div class="footer">
-      &copy; ${new Date().getFullYear()} Finglora Inc. Quiet Luxury Nail Artistry.<br>
-      Crafted for precision, beauty, and authentic self-expression.
-    </div>
-  </div>
+              <!-- 3 Simple Highlights -->
+              <table role="presentation" width="100%" style="background:#FAF9F6;border-radius:16px;padding:16px;margin:0 0 24px;border:1px solid #f5ede8;" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
+                    ✨ <strong>10 Free Try-Ons:</strong> Instant preview on your hand photo
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
+                    📸 <strong>Feed to Hand:</strong> Extract nail art from Instagram or Pinterest
+                  </td>
+                </tr>
+                <tr>
+                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
+                    💅 <strong>Save Your Favorites:</strong> Bookmarks ready for your next salon appointment
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Button CTA -->
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+                <tr>
+                  <td align="center" style="padding:6px 0 16px;">
+                    <a href="https://finglora.vercel.app" style="display:inline-block;background-color:#E0246A;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:12px;box-shadow:0 4px 12px rgba(224,36,106,0.25);">
+                      Open Finglora Studio &rarr;
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Clean Footer -->
+          <tr>
+            <td align="center" style="padding:18px 24px;background:#FAF9F6;border-top:1px solid #f5ede8;font-size:11px;color:#a8a29e;text-align:center;">
+              &copy; ${new Date().getFullYear()} Finglora • Virtual Manicure Studio<br>
+              Made for effortless, beautiful nails.
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
 </body>
 </html>
   `.trim();

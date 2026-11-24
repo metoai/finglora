@@ -25,7 +25,7 @@ export async function POST(req: NextRequest) {
     const { data, error } = await resend.emails.send({
       from: DEFAULT_FROM_EMAIL,
       to: cleanEmail,
-      subject: `Welcome to Finglora Atelier, ${cleanName}`,
+      subject: `Welcome to Finglora, ${cleanName}! 💅 Your 10 Free Try-On Credits`,
       html: getWelcomeEmailHtml(cleanName),
     });
 
