@@ -22,6 +22,12 @@ import {
   Sliders,
   DollarSign,
   Lock,
+  UserCheck,
+  CreditCard,
+  Camera,
+  CheckCircle2,
+  Calendar,
+  X,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -44,9 +50,22 @@ interface UserProfile {
   id: string;
   display_name: string;
   email: string | null;
+  avatar_url?: string | null;
+  custom_hand_url?: string | null;
+  hand_orientation?: string;
+  skin_tone_id?: string;
   created_at: string;
+  updated_at?: string;
   preferred_shape?: string;
   preferred_length?: string;
+  is_pro?: boolean;
+  credits?: number;
+  setsCount?: number;
+  sets?: any[];
+  tryOnsCount?: number;
+  tryOns?: any[];
+  favoritesCount?: number;
+  favorites?: any[];
 }
 
 interface ManicureSet {
@@ -82,6 +101,10 @@ export default function AdminPortal() {
   // Search & Filters
   const [searchQuery, setSearchQuery] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('all');
+
+  // Selected user for full detail modal/drawer
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
+  const [loadingUserDetail, setLoadingUserDetail] = useState(false);
 
   // New set modal state
   const [isCreateSetOpen, setIsCreateSetOpen] = useState(false);
@@ -182,6 +205,28 @@ export default function AdminPortal() {
       console.error('Failed to load dashboard data:', err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleViewUserDetail = async (user: UserProfile) => {
+    setSelectedUser(user);
+    if (!token) return;
+
+    setLoadingUserDetail(true);
+    try {
+      const res = await fetch(`/api/admin/users?userId=${user.id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          setSelectedUser(data.user);
+        }
+      }
+    } catch (err) {
+      console.error('Failed to load user details:', err);
+    } finally {
+      setLoadingUserDetail(false);
     }
   };
 
@@ -671,45 +716,87 @@ export default function AdminPortal() {
                     <tr>
                       <th className="py-3 px-4">Client</th>
                       <th className="py-3 px-4">Email</th>
+                      <th className="py-3 px-4">Membership / Credits</th>
                       <th className="py-3 px-4">Silhouette Preference</th>
+                      <th className="py-3 px-4">Created Sets</th>
                       <th className="py-3 px-4">Registered Date</th>
                       <th className="py-3 px-4 text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-stone-100">
                     {filteredUsers.map((u) => (
-                      <tr key={u.id} className="hover:bg-stone-50/50">
-                        <td className="py-3 px-4 font-semibold text-stone-900">
-                          {u.display_name || 'Client'}
+                      <tr
+                        key={u.id}
+                        onClick={() => handleViewUserDetail(u)}
+                        className="hover:bg-rose-50/30 transition cursor-pointer group"
+                      >
+                        <td className="py-3 px-4">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-7 h-7 rounded-full bg-stone-100 overflow-hidden border border-stone-200 shrink-0 flex items-center justify-center font-serif text-xs font-bold text-stone-700">
+                              {u.avatar_url ? (
+                                <img src={u.avatar_url} alt="" className="w-full h-full object-cover" />
+                              ) : (
+                                (u.display_name || 'C').charAt(0).toUpperCase()
+                              )}
+                            </div>
+                            <span className="font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors">
+                              {u.display_name || 'Client'}
+                            </span>
+                          </div>
                         </td>
                         <td className="py-3 px-4 text-stone-600 font-mono text-[11px]">
                           {u.email || '—'}
                         </td>
+                        <td className="py-3 px-4">
+                          {u.is_pro ? (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-rose-100 text-[#E0246A] font-semibold text-[10px]">
+                              Pro (Unlimited)
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-stone-100 text-stone-600 font-medium text-[10px]">
+                              Free ({u.credits !== undefined ? u.credits : 10} credits)
+                            </span>
+                          )}
+                        </td>
                         <td className="py-3 px-4 capitalize text-stone-700">
                           {u.preferred_shape ? `${u.preferred_shape} (${u.preferred_length || 'med'})` : 'Default'}
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className="font-mono text-xs font-semibold text-stone-800 bg-stone-100 px-2 py-0.5 rounded">
+                            {u.setsCount || 0}
+                          </span>
                         </td>
                         <td className="py-3 px-4 text-stone-400">
                           {new Date(u.created_at).toLocaleDateString()}
                         </td>
                         <td className="py-3 px-4 text-right">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (u.email) {
-                                setTestEmailAddress(u.email);
-                                setActiveTab('email');
-                              }
-                            }}
-                            className="text-xs font-semibold text-[#E0246A] hover:underline cursor-pointer"
-                          >
-                            Send Email
-                          </button>
+                          <div className="flex items-center justify-end gap-2" onClick={(e) => e.stopPropagation()}>
+                            <button
+                              type="button"
+                              onClick={() => handleViewUserDetail(u)}
+                              className="text-xs font-semibold text-stone-700 hover:text-stone-900 px-2 py-1 rounded-md hover:bg-stone-100 transition"
+                            >
+                              Details
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (u.email) {
+                                  setTestEmailAddress(u.email);
+                                  setActiveTab('email');
+                                }
+                              }}
+                              className="text-xs font-semibold text-[#E0246A] hover:underline cursor-pointer"
+                            >
+                              Email
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
                     {filteredUsers.length === 0 && (
                       <tr>
-                        <td colSpan={5} className="py-8 text-center text-stone-400 text-xs">
+                        <td colSpan={7} className="py-8 text-center text-stone-400 text-xs">
                           No users matched your search.
                         </td>
                       </tr>
@@ -1120,6 +1207,195 @@ export default function AdminPortal() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+      {/* USER DETAIL MODAL / DRAWER */}
+      {selectedUser && (
+        <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-3xl border border-stone-200/90 max-w-2xl w-full max-h-[90vh] overflow-y-auto shadow-2xl space-y-5 p-5 sm:p-7">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4 pb-4 border-b border-stone-100">
+              <div className="flex items-center gap-3.5">
+                <div className="w-13 h-13 sm:w-15 sm:h-15 rounded-2xl bg-stone-100 overflow-hidden border border-stone-200 shrink-0 flex items-center justify-center font-serif text-xl font-bold text-stone-800">
+                  {selectedUser.avatar_url ? (
+                    <img src={selectedUser.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (selectedUser.display_name || 'C').charAt(0).toUpperCase()
+                  )}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <h3 className="font-serif text-xl sm:text-2xl font-semibold text-stone-900">
+                      {selectedUser.display_name || 'Client Profile'}
+                    </h3>
+                    {selectedUser.is_pro ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-rose-100 text-[#E0246A] text-[10px] font-bold uppercase tracking-wider">
+                        Pro Member
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 text-[10px] font-semibold uppercase tracking-wider">
+                        Free Client
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs font-mono text-stone-500 mt-0.5">
+                    {selectedUser.email || 'No email registered'}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setSelectedUser(null)}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 flex items-center justify-center text-stone-500 transition cursor-pointer"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {loadingUserDetail && (
+              <div className="py-8 flex items-center justify-center gap-2 text-stone-400 text-xs">
+                <Loader2 className="w-4 h-4 animate-spin text-[#E0246A]" />
+                <span>Loading complete user activity & creations...</span>
+              </div>
+            )}
+
+            {!loadingUserDetail && (
+              <div className="space-y-5">
+                {/* 4-Item Quick Overview Grid */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
+                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                      Credits Balance
+                    </span>
+                    <span className="text-sm font-semibold text-stone-900">
+                      {selectedUser.is_pro ? 'Unlimited' : `${selectedUser.credits !== undefined ? selectedUser.credits : 10} Left`}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
+                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                      Preferred Shape
+                    </span>
+                    <span className="text-sm font-semibold text-stone-900 capitalize">
+                      {selectedUser.preferred_shape || 'Almond'} ({selectedUser.preferred_length || 'medium'})
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
+                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                      Hand Skin Tone
+                    </span>
+                    <span className="text-sm font-semibold text-stone-900 capitalize">
+                      {selectedUser.skin_tone_id || 'Warm Honey'}
+                    </span>
+                  </div>
+
+                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
+                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                      Client Joined
+                    </span>
+                    <span className="text-sm font-semibold text-stone-900">
+                      {new Date(selectedUser.created_at).toLocaleDateString()}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Custom Hand Photo Status */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-stone-800 flex items-center gap-1.5">
+                      <Camera className="w-4 h-4 text-[#E0246A]" />
+                      Uploaded Hand Viewfinder
+                    </span>
+                    <span className="text-[11px] text-stone-500 font-mono">
+                      Orientation: {selectedUser.hand_orientation || 'right'}
+                    </span>
+                  </div>
+
+                  {selectedUser.custom_hand_url ? (
+                    <div className="flex items-center gap-3 pt-1">
+                      <img
+                        src={selectedUser.custom_hand_url}
+                        alt="Hand"
+                        className="w-16 h-20 rounded-xl object-cover border border-stone-200 shadow-2xs"
+                      />
+                      <div className="space-y-1">
+                        <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                          Verified Custom Hand Active
+                        </span>
+                        <p className="text-[11px] text-stone-400">
+                          Used for real-time WebRTC and virtual try-ons.
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-stone-400 italic">
+                      No custom hand photo uploaded yet (using editorial model hand).
+                    </p>
+                  )}
+                </div>
+
+                {/* Manicure Sets Created by this User */}
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500">
+                      Saved & Created Looks ({selectedUser.sets?.length || 0})
+                    </h4>
+                  </div>
+
+                  {selectedUser.sets && selectedUser.sets.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
+                      {selectedUser.sets.map((s: any) => (
+                        <div
+                          key={s.id}
+                          className="p-2.5 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-1"
+                        >
+                          <span className="text-[10px] font-mono font-bold text-[#E0246A] block">
+                            {s.passport_code}
+                          </span>
+                          <p className="text-xs font-medium text-stone-900 truncate">
+                            {s.title}
+                          </p>
+                          <span className="text-[10px] text-stone-400 capitalize block">
+                            {s.category || 'Custom'} • {new Date(s.created_at).toLocaleDateString()}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="p-4 rounded-xl border border-dashed border-stone-200 text-center text-xs text-stone-400">
+                      This client has not created custom manicures yet.
+                    </div>
+                  )}
+                </div>
+
+                {/* Action Bar */}
+                <div className="pt-2 flex flex-wrap items-center justify-between gap-3 border-t border-stone-100">
+                  <div className="text-[11px] text-stone-400 font-mono">
+                    User UUID: {selectedUser.id}
+                  </div>
+
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (selectedUser.email) {
+                          setTestEmailAddress(selectedUser.email);
+                          setSelectedUser(null);
+                          setActiveTab('email');
+                        }
+                      }}
+                      className="h-9 px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1.5 transition active:scale-95 shadow-xs cursor-pointer"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>Send Direct Email</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
