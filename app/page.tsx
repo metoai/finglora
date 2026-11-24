@@ -259,6 +259,23 @@ export default function FingloraApp() {
           } catch {}
         }
 
+        // Send welcome email once upon initial signup (handles Google OAuth & email)
+        if (sessionEmail && typeof window !== 'undefined') {
+          const welcomeKey = `finglora_welcome_sent_${session.user.id}`;
+          const alreadySent = localStorage.getItem(welcomeKey);
+          if (!alreadySent) {
+            localStorage.setItem(welcomeKey, 'true');
+            fetch('/api/email/welcome', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email: sessionEmail,
+                name: userMetaName || 'Manicure Lover',
+              }),
+            }).catch((err) => console.warn('Welcome email error:', err));
+          }
+        }
+
         const profile = await fetchUserProfile(session.user.id);
         if (profile) {
           if (profile.displayName) setUserName(profile.displayName);
