@@ -253,7 +253,7 @@ export function CustomerApp({
           className={`flex-1 w-full ${
             customerRoute === 'ai-create'
               ? 'h-full p-0 bg-white overflow-hidden flex flex-col'
-              : customerRoute === 'explore' || customerRoute === 'home' || customerRoute === 'profile' || customerRoute === 'favorites'
+              : customerRoute === 'explore' || customerRoute === 'home' || customerRoute === 'profile' || customerRoute === 'favorites' || customerRoute === 'history'
               ? 'w-full p-0'
               : customerRoute === 'tryon'
               ? 'w-full max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-8 py-2 sm:py-4 pb-20 md:pb-8'

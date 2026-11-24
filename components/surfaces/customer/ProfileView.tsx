@@ -508,7 +508,13 @@ export function ProfileView({
   // -------------------------------------------------------------------------
   if (currentView === 'history') {
     return (
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
+      <div
+        className={`w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 text-stone-900 select-none animate-in fade-in duration-200 ${
+          tryOnHistory.length === 0
+            ? 'min-h-[calc(100dvh-5.5rem)] flex flex-col items-center justify-center'
+            : 'space-y-5 sm:space-y-6'
+        }`}
+      >
         {/* Toast */}
         {toastMessage && (
           <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -587,30 +593,32 @@ export function ProfileView({
             ))}
           </div>
         ) : (
-          /* Empty History State */
-          <div className="bg-white rounded-3xl p-8 sm:p-14 border border-stone-200 text-center space-y-4 max-w-lg mx-auto shadow-sm">
-            <div className="w-14 h-14 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center mx-auto shadow-2xs">
-              <Camera className="w-7 h-7 text-[#E0246A]" />
-            </div>
+          /* Empty History State - Centered in viewport */
+          <div className="w-full flex-1 flex items-center justify-center p-2">
+            <div className="w-full max-w-sm sm:max-w-md bg-white rounded-3xl p-7 sm:p-12 border border-stone-200 text-center space-y-4 shadow-sm mx-auto animate-in fade-in zoom-in-95 duration-200">
+              <div className="w-14 h-14 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center mx-auto shadow-2xs">
+                <Camera className="w-7 h-7 text-[#E0246A]" />
+              </div>
 
-            <div className="space-y-1">
-              <h3 className="text-base sm:text-lg font-serif font-medium text-stone-900">
-                No Try-On Photos Yet
-              </h3>
-              <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
-                When you try on any manicure set onto your hand, your AI-synthesized results will be safely saved here so you can revisit them anytime.
-              </p>
-            </div>
+              <div className="space-y-1.5">
+                <h3 className="text-base sm:text-lg font-serif font-medium text-stone-900">
+                  No Try-On Photos Yet
+                </h3>
+                <p className="text-xs text-stone-500 max-w-xs mx-auto leading-relaxed">
+                  When you try on any manicure set onto your hand, your AI-synthesized results will be safely saved here so you can revisit them anytime.
+                </p>
+              </div>
 
-            <div className="pt-2 flex justify-center">
-              <button
-                type="button"
-                onClick={() => onNavigateTryOn?.()}
-                className="h-10 px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-xs active:scale-95"
-              >
-                <Camera className="w-4 h-4" />
-                <span>Launch Virtual Try-On</span>
-              </button>
+              <div className="pt-2 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => onNavigateTryOn?.()}
+                  className="h-10 px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-xs active:scale-95"
+                >
+                  <Camera className="w-4 h-4" />
+                  <span>Launch Virtual Try-On</span>
+                </button>
+              </div>
             </div>
           </div>
         )}
