@@ -40,11 +40,14 @@ import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
 import { uploadUserHandPhoto } from '@/lib/services/storage';
+import { isVipEmail, getUserCreditStatus } from '@/lib/services/credits';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 
 interface ProfileViewProps {
   userName: string;
   setUserName: (name: string) => void;
+  userEmail?: string;
+  supabaseUser?: any;
   preferredShape?: NailShape;
   setPreferredShape?: (shape: NailShape) => void;
   skinToneId?: string;
@@ -71,6 +74,8 @@ interface ProfileViewProps {
 export function ProfileView({
   userName,
   setUserName,
+  userEmail: propUserEmail,
+  supabaseUser,
   preferredShape = 'almond',
   setPreferredShape,
   exploreDesigns = [],
@@ -103,6 +108,9 @@ export function ProfileView({
     return parts[0].slice(0, 2).toUpperCase();
   }, [userName]);
 
+  // Google OAuth / user metadata avatar if available
+  const authMetadataAvatar = supabaseUser?.user_metadata?.avatar_url || supabaseUser?.user_metadata?.picture || null;
+
   const [avatarSeed, setAvatarSeed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('finglora_avatar_seed');
@@ -120,8 +128,9 @@ export function ProfileView({
 
   const avatarUrl = useMemo(() => {
     if (customAvatarPhoto) return customAvatarPhoto;
+    if (authMetadataAvatar) return authMetadataAvatar;
     return `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=fde8ef`;
-  }, [avatarSeed, customAvatarPhoto]);
+  }, [avatarSeed, customAvatarPhoto, authMetadataAvatar]);
 
   const profilePicFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -161,8 +170,10 @@ export function ProfileView({
     reader.readAsDataURL(file);
   };
 
-  // User Email state
+  // User Email state: prioritize prop > localStorage > fallback
   const [userEmail, setUserEmail] = useState(() => {
+    if (propUserEmail) return propUserEmail;
+    if (supabaseUser?.email) return supabaseUser.email;
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('finglora_user_email');
       if (saved) return saved;
@@ -170,6 +181,19 @@ export function ProfileView({
     const slug = (userName || 'client').toLowerCase().replace(/[^a-z0-9]/g, '.');
     return `${slug}@finglora.com`;
   });
+
+  // Keep userEmail in sync when prop changes (e.g. Supabase session loaded)
+  useEffect(() => {
+    if (propUserEmail) {
+      setUserEmail(propUserEmail);
+    } else if (supabaseUser?.email) {
+      setUserEmail(supabaseUser.email);
+    }
+  }, [propUserEmail, supabaseUser?.email]);
+
+  const creditStatus = useMemo(() => getUserCreditStatus(), [userEmail]);
+  const isUserVip = isVipEmail(userEmail);
+  const isUserPro = creditStatus.isPro;
 
   // Modals
   const [isEditProfileOpen, setIsEditProfileOpen] = useState(false);
@@ -760,10 +784,21 @@ export function ProfileView({
                     <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
                       {userName}
                     </h2>
-                    <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
-                      <Crown className="w-2.5 h-2.5 fill-[#E0246A]" />
-                      <span>VIP Tier</span>
-                    </span>
+                    {isUserVip ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
+                        <Crown className="w-2.5 h-2.5 fill-[#E0246A]" />
+                        <span>VIP Tier</span>
+                      </span>
+                    ) : isUserPro ? (
+                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
+                        <Sparkles className="w-2.5 h-2.5" />
+                        <span>Pro Plan</span>
+                      </span>
+                    ) : (
+                      <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[10px] font-medium inline-flex items-center gap-1 shrink-0">
+                        <span>Free Plan</span>
+                      </span>
+                    )}
                   </div>
                   <p className="text-xs text-stone-500 font-mono truncate max-w-[200px] sm:max-w-xs">
                     {userEmail}

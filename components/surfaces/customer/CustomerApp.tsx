@@ -24,6 +24,8 @@ export function CustomerApp({
   mobilePreview,
   userName,
   setUserName,
+  userEmail,
+  supabaseUser,
   preferredShape,
   setPreferredShape,
   activeSample,
@@ -98,6 +100,8 @@ export function CustomerApp({
   mobilePreview: boolean;
   userName: string;
   setUserName: (name: string) => void;
+  userEmail?: string;
+  supabaseUser?: any;
   preferredShape: NailShape;
   setPreferredShape?: (shape: NailShape) => void;
   activeSample?: ExploreDesignSet;
@@ -479,6 +483,8 @@ export function CustomerApp({
             <ProfileView
               userName={userName}
               setUserName={setUserName}
+              userEmail={userEmail}
+              supabaseUser={supabaseUser}
               preferredShape={preferredShape}
               setPreferredShape={setPreferredShape}
               skinToneId={skinToneId}

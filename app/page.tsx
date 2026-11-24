@@ -60,6 +60,7 @@ export default function FingloraApp() {
 
   // User & 2-Step Visual Onboarding State
   const [userName, setUserName] = useState('Elena');
+  const [userEmail, setUserEmail] = useState<string>('');
   const [pendingPostSignupSetId, setPendingPostSignupSetId] = useState<string | null>(null);
   const [onboardingStep, setOnboardingStep] = useState<1 | 2>(1);
   const [onboardingSelectedIds, setOnboardingSelectedIds] = useState<string[]>(['set-blush-daisy']);
@@ -238,6 +239,15 @@ export default function FingloraApp() {
         setSupabaseUser(session.user);
         // Switch to the customer app studio upon successful login
         setSurface('customer');
+        const sessionEmail = session.user.email;
+        if (sessionEmail) {
+          setUserEmail(sessionEmail);
+          if (typeof window !== 'undefined') {
+            try {
+              localStorage.setItem('finglora_user_email', sessionEmail);
+            } catch {}
+          }
+        }
         const userMetaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
         if (userMetaName) setUserName(userMetaName);
 
@@ -1022,6 +1032,8 @@ export default function FingloraApp() {
             mobilePreview={mobilePreview}
             userName={userName}
             setUserName={setUserName}
+            userEmail={userEmail || supabaseUser?.email}
+            supabaseUser={supabaseUser}
             preferredShape={preferredShape}
             setPreferredShape={setPreferredShape}
             activeSample={activeSample}
