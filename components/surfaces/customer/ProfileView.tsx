@@ -384,7 +384,7 @@ export function ProfileView({
   // -------------------------------------------------------------------------
   if (currentView === 'favorites') {
     return (
-      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
         {/* Toast */}
         {toastMessage && (
           <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -694,7 +694,7 @@ export function ProfileView({
   // VIEW: MAIN PROFILE VIEW (Clean Profile Card + Account Settings)
   // -------------------------------------------------------------------------
   return (
-    <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 space-y-6 text-stone-900 animate-in fade-in duration-200">
+    <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 space-y-6 text-stone-900 animate-in fade-in duration-200">
       {/* Toast */}
       {toastMessage && (
         <div className="fixed top-4 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
