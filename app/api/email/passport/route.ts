@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { resend, DEFAULT_FROM_EMAIL, getPassportEmailHtml } from '@/lib/services/email';
+import { getResendClient, DEFAULT_FROM_EMAIL, getPassportEmailHtml } from '@/lib/services/email';
 
 export async function POST(req: NextRequest) {
   try {
+    const resend = getResendClient();
+    if (!resend) {
+      console.warn('[Resend Passport Email]: RESEND_API_KEY is not configured on this environment');
+      return NextResponse.json(
+        { error: 'Email service is not configured (missing RESEND_API_KEY)' },
+        { status: 503 }
+      );
+    }
+
     const body = await req.json();
     const { email, name, passportCode, designName, shape, length, colors, imageUrl } = body;
 
