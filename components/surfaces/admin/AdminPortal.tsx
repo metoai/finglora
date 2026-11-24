@@ -35,9 +35,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
-import { EditorialHandVisual } from '@/components/visuals/EditorialHandVisual';
-import { HAND_SKIN_TONES } from '@/constants/nail-data';
-import { Finger, NailDesign } from '@/types/nail';
+import { Finger } from '@/types/nail';
 
 interface AdminStats {
   totalUsers: number;
@@ -778,7 +776,6 @@ export default function AdminPortal() {
                   <thead className="bg-stone-50 border-b border-stone-100 text-stone-500 font-medium">
                     <tr>
                       <th className="py-3 px-4">Client</th>
-                      <th className="py-3 px-4">Calibrated Hand</th>
                       <th className="py-3 px-4">Email</th>
                       <th className="py-3 px-4">Membership / Credits</th>
                       <th className="py-3 px-4">Silhouette Preference</th>
@@ -807,24 +804,6 @@ export default function AdminPortal() {
                               {u.display_name || 'Client'}
                             </span>
                           </div>
-                        </td>
-                        <td className="py-3 px-4">
-                          {u.custom_hand_url ? (
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={u.custom_hand_url}
-                                alt="User Hand"
-                                className="w-9 h-11 rounded-lg object-cover border border-stone-200 shadow-2xs group-hover:scale-105 transition shrink-0"
-                              />
-                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-                                Uploaded
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="text-[10px] text-stone-400 italic">
-                              Default model
-                            </span>
-                          )}
                         </td>
                         <td className="py-3 px-4 text-stone-600 font-mono text-[11px]">
                           {u.email || '—'}
@@ -878,7 +857,7 @@ export default function AdminPortal() {
                     ))}
                     {filteredUsers.length === 0 && (
                       <tr>
-                        <td colSpan={8} className="py-8 text-center text-stone-400 text-xs">
+                        <td colSpan={7} className="py-8 text-center text-stone-400 text-xs">
                           No users matched your search.
                         </td>
                       </tr>
@@ -1536,151 +1515,51 @@ export default function AdminPortal() {
                   )}
                 </div>
 
-                {/* Applied Manicures Created by this User */}
+                {/* AI Applied Manicure Try-On Photos Stored in Supabase */}
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
-                      <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
-                      Created & Applied Manicures ({selectedUser.sets?.length || 0})
+                      <Camera className="w-3.5 h-3.5 text-[#E0246A]" />
+                      AI Applied Hand Photos ({selectedUser.tryOns?.length || 0})
                     </h4>
                   </div>
 
-                  {selectedUser.sets && selectedUser.sets.length > 0 ? (
-                    <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
-                      {selectedUser.sets.map((s: any) => {
-                        const setNails = s.nails || {};
-                        const fingerKeys: Finger[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
-                        const hasFingers = fingerKeys.some((f) => setNails[f]);
-
-                        return (
-                          <div
-                            key={s.id}
-                            className="p-3.5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3"
-                          >
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="flex items-center gap-3">
-                                {s.photo_url ? (
-                                  <img
-                                    src={s.photo_url}
-                                    alt={s.title}
-                                    className="w-12 h-16 rounded-xl object-cover border border-stone-200 shrink-0"
-                                  />
-                                ) : (
-                                  <div className="w-12 h-16 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center text-[10px] text-stone-400 shrink-0">
-                                    No photo
-                                  </div>
-                                )}
-                                <div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-[11px] font-mono font-bold text-[#E0246A]">
-                                      {s.passport_code}
-                                    </span>
-                                    <span className="text-[10px] uppercase font-semibold text-stone-400 px-1.5 py-0.2 rounded bg-stone-100">
-                                      {s.category || 'Custom'}
-                                    </span>
-                                  </div>
-                                  <h5 className="font-semibold text-xs text-stone-900 mt-0.5">
-                                    {s.title}
-                                  </h5>
-                                  <p className="text-[11px] text-stone-400">
-                                    Created: {new Date(s.created_at).toLocaleDateString()}
-                                  </p>
-                                </div>
-                              </div>
-
-                              <Link
-                                href="/"
-                                target="_blank"
-                                className="text-[11px] font-semibold text-stone-600 hover:text-[#E0246A] inline-flex items-center gap-1 shrink-0"
-                              >
-                                View Look <ArrowUpRight className="w-3 h-3" />
-                              </Link>
-                            </div>
-
-                            {/* FULL REALISTIC GENERATED HAND WEARING THIS MANICURE */}
-                            {hasFingers && (
-                              <div className="pt-2 border-t border-stone-100 space-y-3">
-                                <div className="flex items-center justify-between">
-                                  <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-500 block">
-                                    Generated Hand Visualizer (Try-On Preview)
-                                  </span>
-                                  <span className="text-[10px] text-stone-400 capitalize">
-                                    {selectedUser.preferred_shape || s.nails?.middle?.shape || 'Almond'} • {selectedUser.skin_tone_id || 'Warm Honey'}
-                                  </span>
-                                </div>
-
-                                <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 bg-stone-50/80 p-3 rounded-2xl border border-stone-200/80 items-center">
-                                  {/* Left: Complete Hand With Applied Manicure On Each Fingertip */}
-                                  <div className="sm:col-span-5 flex justify-center bg-white p-2.5 rounded-xl border border-stone-200/60 shadow-2xs">
-                                    {(() => {
-                                      const skinPreset =
-                                        HAND_SKIN_TONES.find((st) => st.id === selectedUser.skin_tone_id) ||
-                                        HAND_SKIN_TONES[1];
-                                      const isRightHand = (selectedUser.hand_orientation || 'right') === 'right';
-
-                                      return (
-                                        <div className="relative group">
-                                          <EditorialHandVisual
-                                            nails={setNails}
-                                            skinTone={skinPreset}
-                                            width={180}
-                                            height={190}
-                                            isRight={isRightHand}
-                                          />
-                                          <div className="absolute top-1.5 left-1.5 px-2 py-0.5 rounded-full bg-black/60 backdrop-blur-xs text-white text-[9px] font-medium">
-                                            Hand Preview
-                                          </div>
-                                        </div>
-                                      );
-                                    })()}
-                                  </div>
-
-                                  {/* Right: 5 Individual Fingertip Macro Cards */}
-                                  <div className="sm:col-span-7 space-y-1.5">
-                                    <span className="text-[10px] font-semibold text-stone-400 uppercase tracking-wider block">
-                                      5-Finger Lacquer & Shape Formulation
-                                    </span>
-                                    <div className="grid grid-cols-5 gap-1.5">
-                                      {fingerKeys.map((f) => {
-                                        const n = setNails[f];
-                                        if (!n) return null;
-                                        return (
-                                          <div
-                                            key={f}
-                                            className="p-1.5 rounded-xl bg-white border border-stone-200/80 flex flex-col items-center text-center space-y-1 shadow-2xs"
-                                          >
-                                            <span className="text-[9px] font-semibold text-stone-500 capitalize">
-                                              {f}
-                                            </span>
-                                            {/* Photographic Nail Canvas */}
-                                            <NailCanvasPreview
-                                              nail={n}
-                                              width={28}
-                                              height={44}
-                                              showCuticle={true}
-                                              skinColor="#FAF0EA"
-                                            />
-                                            <span className="text-[8.5px] font-mono text-stone-700 truncate max-w-full">
-                                              {n.baseColor}
-                                            </span>
-                                            <span className="text-[8px] text-stone-400 capitalize truncate max-w-full">
-                                              {n.finish || 'glossy'}
-                                            </span>
-                                          </div>
-                                        );
-                                      })}
-                                    </div>
-                                  </div>
-                                </div>
-                              </div>
-                            )}
+                  {selectedUser.tryOns && selectedUser.tryOns.length > 0 ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 max-h-72 overflow-y-auto pr-1">
+                      {selectedUser.tryOns.map((t: any) => (
+                        <div
+                          key={t.id}
+                          className="bg-white rounded-2xl border border-stone-200 overflow-hidden shadow-2xs group relative"
+                        >
+                          <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
+                            <img
+                              src={t.image_url}
+                              alt="Applied Try-On"
+                              className="w-full h-full object-cover group-hover:scale-103 transition duration-200"
+                            />
+                            <a
+                              href={t.image_url}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-[11px] font-medium"
+                            >
+                              Inspect Full Size ↗
+                            </a>
+                            <span className="absolute top-2 left-2 px-2 py-0.5 rounded-full bg-black/60 text-white text-[9px] font-mono">
+                              {t.mode || 'AI Try-On'}
+                            </span>
                           </div>
-                        );
-                      })}
+                          <div className="p-2 space-y-0.5">
+                            <p className="text-[10px] text-stone-500">
+                              Applied: {new Date(t.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   ) : (
-                    <div className="p-4 rounded-xl border border-dashed border-stone-200 text-center text-xs text-stone-400">
-                      This client has not created or applied custom manicures yet.
+                    <div className="p-4 rounded-xl bg-stone-50 border border-dashed border-stone-200 text-center text-xs text-stone-400">
+                      No AI applied try-on photos stored for this client yet.
                     </div>
                   )}
                 </div>

@@ -23,6 +23,9 @@ import {
   Shuffle,
   Crown,
   Settings,
+  History,
+  RotateCcw,
+  ExternalLink,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -43,6 +46,7 @@ import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
 import { uploadUserHandPhoto } from '@/lib/services/storage';
 import { isVipEmail, getUserCreditStatus, PRO_PLANS } from '@/lib/services/credits';
+import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 
@@ -68,7 +72,7 @@ interface ProfileViewProps {
   onNavigateLookbook?: () => void;
   onTuneVibeClick?: () => void;
   handOrientation?: 'left' | 'right';
-  initialView?: 'settings' | 'favorites';
+  initialView?: 'settings' | 'favorites' | 'history';
   customTryOnHandUrl?: string | null;
   setCustomTryOnHandUrl?: (url: string | null) => void;
   onLogout?: () => void;
@@ -85,14 +89,15 @@ export function ProfileView({
   setExploreDesigns,
   onSelectExploreDesign,
   onBackClick,
+  onNavigateTryOn,
   onNavigateLookbook,
   initialView = 'settings',
   customTryOnHandUrl,
   setCustomTryOnHandUrl,
   onLogout,
 }: ProfileViewProps) {
-  // Navigation inside Profile: 'settings' | 'favorites'
-  const [currentView, setCurrentView] = useState<'settings' | 'favorites'>(initialView);
+  // Navigation inside Profile: 'settings' | 'favorites' | 'history'
+  const [currentView, setCurrentView] = useState<'settings' | 'favorites' | 'history'>(initialView);
 
   useEffect(() => {
     if (initialView) {
@@ -246,6 +251,68 @@ export function ProfileView({
   // Favorite filter & search
   const [favoriteCategory, setFavoriteCategory] = useState<string>('All');
   const [favoriteSearch, setFavoriteSearch] = useState<string>('');
+
+  // Try-On History State
+  interface TryOnHistoryRecord {
+    id: string;
+    image_url: string;
+    mode: string;
+    set_id: string | null;
+    skin_tone_id: string | null;
+    created_at: string;
+  }
+  const [tryOnHistory, setTryOnHistory] = useState<TryOnHistoryRecord[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    const fetchHistory = async () => {
+      setLoadingHistory(true);
+      try {
+        const client = getSupabaseBrowserClient();
+        const user = await getCurrentUser();
+        if (user?.id) {
+          const { data, error } = await client
+            .from('try_on_history')
+            .select('*')
+            .eq('user_id', user.id)
+            .order('created_at', { ascending: false });
+
+          if (!error && data && data.length > 0 && isMounted) {
+            setTryOnHistory(data);
+            return;
+          }
+        }
+      } catch (err) {
+        console.warn('Could not load online try-on history:', err);
+      }
+
+      // Local fallback if guest or offline
+      if (typeof window !== 'undefined' && isMounted) {
+        try {
+          const localItem = localStorage.getItem('finglora_synthesized_hand_url');
+          if (localItem) {
+            setTryOnHistory([
+              {
+                id: 'local-active-tryon',
+                image_url: localItem,
+                mode: 'Local Atelier',
+                set_id: null,
+                skin_tone_id: null,
+                created_at: new Date().toISOString(),
+              },
+            ]);
+          }
+        } catch {}
+      }
+      if (isMounted) setLoadingHistory(false);
+    };
+
+    fetchHistory();
+    return () => {
+      isMounted = false;
+    };
+  }, [supabaseUser?.id, currentView]);
 
   // File input ref for hand photo upload
   const handFileInputRef = useRef<HTMLInputElement | null>(null);
@@ -435,6 +502,157 @@ export function ProfileView({
       }
     }
   };
+
+  // -------------------------------------------------------------------------
+  // VIEW: TRY-ON HISTORY TAB (User past applied manicures)
+  // -------------------------------------------------------------------------
+  if (currentView === 'history') {
+    return (
+      <div className="w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 space-y-5 sm:space-y-6 text-stone-900 select-none animate-in fade-in duration-200">
+        {/* Toast */}
+        {toastMessage && (
+          <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
+            <div className="bg-[#181416] text-white text-xs font-medium px-4 py-2.5 rounded-full shadow-xl border border-white/10 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+              <Check className="w-3.5 h-3.5 text-[#E0246A]" />
+              <span>{toastMessage}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Header with Subtitle & Back Button */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/80 pb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onBackClick}
+                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer"
+                title="Back to Studio"
+              >
+                <ArrowLeft className="w-4 h-4" />
+              </button>
+              <h1 className="font-serif text-xl sm:text-2xl font-normal text-stone-900">
+                Try-On History
+              </h1>
+              <span className="px-2.5 py-0.5 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] text-xs font-semibold">
+                {tryOnHistory.length}
+              </span>
+            </div>
+            <p className="text-xs text-stone-500 pl-10">
+              Every manicure you've ever synthesized onto your hand. Review, inspect full resolution, or re-try anytime.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-2 self-start sm:self-auto pl-10 sm:pl-0">
+            <button
+              type="button"
+              onClick={() => onNavigateTryOn?.()}
+              className="h-9 px-4 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
+            >
+              <Camera className="w-3.5 h-3.5" />
+              <span>New Try-On</span>
+            </button>
+          </div>
+        </div>
+
+        {/* History Grid or Empty State */}
+        {tryOnHistory.length > 0 ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
+            {tryOnHistory.map((item) => (
+              <div
+                key={item.id}
+                className="group relative bg-white rounded-2xl border border-stone-200/80 overflow-hidden shadow-2xs hover:shadow-md transition-all duration-300 flex flex-col"
+              >
+                {/* Photo Display */}
+                <div className="relative aspect-[3/4] bg-stone-100 overflow-hidden">
+                  <img
+                    src={item.image_url}
+                    alt="Applied Try-On"
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+
+                  {/* Mode Badge */}
+                  <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-mono border border-white/10">
+                    {item.mode || 'Virtual Try-On'}
+                  </span>
+
+                  {/* Inspect Full Size Link */}
+                  <a
+                    href={item.image_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 text-stone-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-xs hover:bg-white"
+                    title="View Full Resolution"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5" />
+                  </a>
+                </div>
+
+                {/* Card Details & Actions */}
+                <div className="p-3 space-y-2 flex-1 flex flex-col justify-between bg-white">
+                  <div className="space-y-0.5">
+                    <span className="text-[11px] font-medium text-stone-600 block">
+                      Applied Manicure
+                    </span>
+                    <span className="text-[10px] text-stone-400 block font-mono">
+                      {new Date(item.created_at).toLocaleDateString(undefined, {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+
+                  {item.set_id && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onSelectExploreDesign?.(item.set_id!);
+                      }}
+                      className="w-full h-8 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
+                      <span>Re-Apply Look</span>
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          /* Empty History State */
+          <div className="bg-white rounded-3xl p-8 sm:p-14 border border-stone-200 text-center space-y-4 max-w-lg mx-auto shadow-sm">
+            <div className="w-14 h-14 rounded-3xl bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] flex items-center justify-center mx-auto shadow-2xs">
+              <Camera className="w-7 h-7 text-[#E0246A]" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-base sm:text-lg font-serif font-medium text-stone-900">
+                No Try-On Photos Yet
+              </h3>
+              <p className="text-xs text-stone-500 max-w-sm mx-auto leading-relaxed">
+                When you try on any manicure set onto your hand, your AI-synthesized results will be safely saved here so you can revisit them anytime.
+              </p>
+            </div>
+
+            <div className="pt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={() => onNavigateTryOn?.()}
+                className="h-10 px-5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold transition cursor-pointer inline-flex items-center gap-1.5 shadow-xs active:scale-95"
+              >
+                <Camera className="w-4 h-4" />
+                <span>Launch Virtual Try-On</span>
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   // -------------------------------------------------------------------------
   // VIEW: FAVORITES / SAVED DESIGNS TAB

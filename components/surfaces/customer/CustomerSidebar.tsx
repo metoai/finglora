@@ -9,6 +9,7 @@ import {
   Heart,
   User,
   Settings,
+  Camera,
 } from 'lucide-react';
 import { Finger, NailDesign, NailShape } from '@/types/nail';
 import { BrandLogoIcon } from '@/components/common/BrandLogo';
@@ -22,6 +23,7 @@ export type CustomerRoute =
   | 'passport'
   | 'profile'
   | 'favorites'
+  | 'history'
   | 'signup';
 
 export interface CustomerSidebarProps {
@@ -48,6 +50,7 @@ export function CustomerSidebar({
   const isTryOnActive = currentRoute === 'tryon' || currentRoute === 'upload';
   const isStudioActive = currentRoute === 'ai-create';
   const isFavoritesActive = currentRoute === 'favorites';
+  const isHistoryActive = currentRoute === 'history';
   const isProfileActive = currentRoute === 'profile';
 
   const userInitials = userName && userName.trim()
@@ -200,6 +203,27 @@ export function CustomerSidebar({
           )}
           <span className="absolute left-14 px-2.5 py-1 bg-stone-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-md z-50">
             Saved ({favoritesCount})
+          </span>
+        </button>
+
+        {/* Try-On History (Camera Icon) */}
+        <button
+          type="button"
+          onClick={() => onNavigate('history')}
+          className={`w-11 h-11 rounded-full flex items-center justify-center transition-all cursor-pointer relative group ${
+            isHistoryActive
+              ? 'text-stone-950 font-bold bg-stone-100'
+              : 'text-stone-600 hover:text-stone-950 hover:bg-stone-100'
+          }`}
+          title="Try-On History"
+          aria-label="Try-On History"
+        >
+          <Camera
+            className="w-5.5 h-5.5"
+            strokeWidth={isHistoryActive ? 2.25 : 1.75}
+          />
+          <span className="absolute left-14 px-2.5 py-1 bg-stone-900 text-white text-[11px] font-medium rounded-md whitespace-nowrap opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity duration-150 shadow-md z-50">
+            Try-On History
           </span>
         </button>
       </nav>

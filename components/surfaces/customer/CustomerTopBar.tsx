@@ -15,6 +15,7 @@ import {
   Palette,
   Check,
   LogOut,
+  Camera,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { signOutUser } from '@/lib/services/auth';
@@ -52,6 +53,7 @@ export function CustomerTopBar({
     passport: 'Passport',
     upload: 'Try On',
     favorites: 'Saved',
+    history: 'Try-On History',
     profile: 'Profile',
     signup: 'Create Account',
   };
@@ -64,6 +66,7 @@ export function CustomerTopBar({
   }[] = [
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
+    { id: 'history', label: 'Try-On History', Icon: Camera },
     { id: 'explore', label: 'Explore', Icon: Compass },
     { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {
@@ -82,6 +85,7 @@ export function CustomerTopBar({
   }[] = [
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
+    { id: 'history', label: 'Try-On History', Icon: Camera },
     { id: 'explore', label: 'Explore', Icon: Compass },
     { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {

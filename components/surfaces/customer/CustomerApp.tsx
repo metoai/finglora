@@ -479,7 +479,7 @@ export function CustomerApp({
             />
           )}
 
-          {(customerRoute === 'profile' || customerRoute === 'favorites') && (
+          {(customerRoute === 'profile' || customerRoute === 'favorites' || customerRoute === 'history') && (
             <ProfileView
               userName={userName}
               setUserName={setUserName}
@@ -505,7 +505,13 @@ export function CustomerApp({
               onNavigateLookbook={() => setCustomerRoute('explore')}
               onTuneVibeClick={onTuneVibeClick}
               handOrientation={handOrientation}
-              initialView={customerRoute === 'favorites' ? 'favorites' : 'settings'}
+              initialView={
+                customerRoute === 'history'
+                  ? 'history'
+                  : customerRoute === 'favorites'
+                  ? 'favorites'
+                  : 'settings'
+              }
               customTryOnHandUrl={customTryOnHandUrl}
               setCustomTryOnHandUrl={setCustomTryOnHandUrl}
               onLogout={onBrandClick}

@@ -266,3 +266,78 @@ export async function uploadUserHandPhoto(
     return typeof input === 'string' ? input : URL.createObjectURL(input);
   }
 }
+
+/**
+ * Uploads an AI-synthesized applied manicure result to Supabase Storage ('try-on-captures')
+ * and records it into the try_on_history table via RPC.
+ */
+export async function uploadAppliedTryOnResult({
+  imageDataUrl,
+  userId,
+  setId,
+  skinToneId = 'warm-ivory',
+  mode = 'ai-synthesis',
+}: {
+  imageDataUrl: string;
+  userId?: string;
+  setId?: string;
+  skinToneId?: string;
+  mode?: string;
+}): Promise<string> {
+  const supabase = getSupabaseBrowserClient();
+
+  try {
+    let effectiveUserId = userId;
+    if (!effectiveUserId) {
+      try {
+        const { data } = await supabase.auth.getSession();
+        effectiveUserId = data.session?.user?.id;
+      } catch {}
+    }
+
+    // Convert base64 dataUrl to blob
+    const res = await fetch(imageDataUrl);
+    const blob = await res.blob();
+
+    const path = `${effectiveUserId || 'guest'}/${Date.now()}_applied_manicure.jpg`;
+
+    const { data, error } = await supabase.storage
+      .from('try-on-captures')
+      .upload(path, blob, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
+
+    if (error) {
+      console.warn('Failed to upload applied manicure to storage:', error.message);
+      return imageDataUrl;
+    }
+
+    const { data: publicData } = supabase.storage
+      .from('try-on-captures')
+      .getPublicUrl(data.path);
+
+    const publicUrl = publicData.publicUrl;
+
+    // Record into try_on_history table if user is authenticated
+    if (effectiveUserId) {
+      try {
+        await (supabase as any).rpc('save_try_on_result', {
+          p_user_id: effectiveUserId,
+          p_image_url: publicUrl,
+          p_mode: mode,
+          p_set_id: setId || null,
+          p_skin_tone_id: skinToneId,
+        });
+      } catch (rpcErr) {
+        console.warn('Could not record into try_on_history:', rpcErr);
+      }
+    }
+
+    return publicUrl;
+  } catch (err) {
+    console.warn('Error in uploadAppliedTryOnResult:', err);
+    return imageDataUrl;
+  }
+}
+

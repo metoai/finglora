@@ -21,7 +21,7 @@ import {
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, SkinTonePreset } from '@/types/nail';
 import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
-import { downscaleImageForVision } from '@/lib/services/storage';
+import { downscaleImageForVision, uploadAppliedTryOnResult } from '@/lib/services/storage';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
@@ -337,6 +337,15 @@ export function TryOnView({
           setSynthesizedHandUrl(data.imageUrl);
           setTryOnView('after');
           setIsRevealing(true);
+
+          // Asynchronously persist to Supabase Storage & try_on_history table
+          uploadAppliedTryOnResult({
+            imageDataUrl: data.imageUrl,
+            setId: activeSample?.id,
+            skinToneId: activeSkinTone?.id || 'warm-ivory',
+            mode: 'ai-synthesis',
+          }).catch((err) => console.warn('Background try-on upload notice:', err));
+
           try {
             navigator.vibrate?.(30);
           } catch {}

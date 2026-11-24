@@ -24,8 +24,10 @@ export async function GET(req: NextRequest) {
         fetch(`${SUPABASE_URL}/rest/v1/nail_sets?user_id=eq.${userId}&order=created_at.desc`, {
           headers: { apikey: SUPABASE_KEY },
         }),
-        fetch(`${SUPABASE_URL}/rest/v1/try_on_history?user_id=eq.${userId}&order=created_at.desc`, {
-          headers: { apikey: SUPABASE_KEY },
+        fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_get_user_try_ons`, {
+          method: 'POST',
+          headers: { apikey: SUPABASE_KEY, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ p_user_id: userId }),
         }),
         fetch(`${SUPABASE_URL}/rest/v1/user_favorites?user_id=eq.${userId}&select=set_id,created_at`, {
           headers: { apikey: SUPABASE_KEY },
