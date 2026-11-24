@@ -26,6 +26,43 @@ import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureMod
 import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 
+// Nails fill in one by one while the manicure is being generated (thumb -> pinky).
+// A stylized hand is used because we do not know where the nails are in the user's photo.
+const CURING_NAIL_DELAYS = [0.9, 2.1, 3.3, 4.5, 5.7];
+
+function CuringMiniHand() {
+  return (
+    <svg viewBox="0 0 250 300" className="w-[64px] h-[76px]" aria-hidden="true">
+      <g fill="#6a5a62">
+        <rect x="58" y="140" width="116" height="140" rx="48" />
+        <rect x="58" y="96" width="24" height="120" rx="12" />
+        <rect x="84" y="58" width="26" height="150" rx="13" />
+        <rect x="112" y="44" width="26" height="160" rx="13" />
+        <rect x="142" y="64" width="26" height="140" rx="13" />
+        <rect x="156" y="160" width="28" height="96" rx="14" transform="rotate(40 170 250)" />
+      </g>
+      <rect className="tryon-nail" style={{ animationDelay: `${CURING_NAIL_DELAYS[0]}s` }} x="161" y="162" width="18" height="26" rx="8" transform="rotate(40 170 250)" />
+      <rect className="tryon-nail" style={{ animationDelay: `${CURING_NAIL_DELAYS[1]}s` }} x="146" y="68" width="18" height="26" rx="8" />
+      <rect className="tryon-nail" style={{ animationDelay: `${CURING_NAIL_DELAYS[2]}s` }} x="116" y="48" width="18" height="26" rx="8" />
+      <rect className="tryon-nail" style={{ animationDelay: `${CURING_NAIL_DELAYS[3]}s` }} x="88" y="62" width="18" height="26" rx="8" />
+      <rect className="tryon-nail" style={{ animationDelay: `${CURING_NAIL_DELAYS[4]}s` }} x="61" y="100" width="18" height="24" rx="8" />
+    </svg>
+  );
+}
+
+function RevealSparkle({ left, top, delay }: { left: string; top: string; delay: string }) {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      className="tryon-spark absolute w-5 h-5 pointer-events-none"
+      style={{ left, top, animationDelay: delay }}
+      aria-hidden="true"
+    >
+      <path d="M12 2 L14 10 L22 12 L14 14 L12 22 L10 14 L2 12 L10 10 Z" fill="#ffffff" />
+    </svg>
+  );
+}
+
 export function TryOnView({
   tryOnMode = 'upload',
   setTryOnMode,
@@ -127,6 +164,27 @@ export function TryOnView({
   const [synthesisPhase, setSynthesisPhase] = useState<number>(0);
   const [synthesisError, setSynthesisError] = useState<string | null>(null);
   const [isLocallyCleared, setIsLocallyCleared] = useState(false);
+  const [isRevealing, setIsRevealing] = useState(false);
+  const [curePct, setCurePct] = useState(0);
+
+  // Smooth, never-frozen percentage: eases toward 99 and only the real result ends the wait
+  useEffect(() => {
+    if (!isSynthesizingHand) {
+      setCurePct(0);
+      return;
+    }
+    const id = setInterval(() => {
+      setCurePct((p) => Math.min(99, p + (99 - p) * 0.035 + 0.05));
+    }, 120);
+    return () => clearInterval(id);
+  }, [isSynthesizingHand]);
+
+  // Before/after wipe plays once when a new result lands, then settles
+  useEffect(() => {
+    if (!isRevealing) return;
+    const t = setTimeout(() => setIsRevealing(false), 2800);
+    return () => clearTimeout(t);
+  }, [isRevealing]);
 
   // Psychological salon phase sequencer while applying
   useEffect(() => {
@@ -146,23 +204,6 @@ export function TryOnView({
       clearTimeout(t3);
     };
   }, [isSynthesizingHand]);
-
-  const WAIT_LINES = [
-    'Locking in the shine…',
-    'Almost glossy…',
-    'Perfecting the finish…',
-    'Hold still, perfection loading',
-  ];
-  const [waitLineIdx, setWaitLineIdx] = useState(0);
-
-  useEffect(() => {
-    if (synthesisPhase < 4) return;
-    const id = setInterval(() => setWaitLineIdx((i) => (i + 1) % WAIT_LINES.length), 2200);
-    return () => clearInterval(id);
-  }, [synthesisPhase, WAIT_LINES.length]);
-
-  const PHASE_PCT = [0, 25, 55, 82, 98];
-  const displayPct = Math.min(PHASE_PCT[Math.min(synthesisPhase, 4)] + (synthesisPhase >= 4 ? Math.min(waitLineIdx, 1) : 0), 99);
 
   // Derived effective inspiration details
   const effectiveInspoUrl = !isLocallyCleared ? (activePhotoUrl || activeSample?.photoUrl || '') : '';
@@ -246,6 +287,8 @@ export function TryOnView({
   useEffect(() => {
     if (synthesizedHandUrl) {
       setTryOnView('after');
+    } else {
+      setIsRevealing(false);
     }
   }, [synthesizedHandUrl, setTryOnView]);
 
@@ -293,6 +336,10 @@ export function TryOnView({
         if (data.imageUrl) {
           setSynthesizedHandUrl(data.imageUrl);
           setTryOnView('after');
+          setIsRevealing(true);
+          try {
+            navigator.vibrate?.(30);
+          } catch {}
           return;
         }
       }
@@ -404,6 +451,22 @@ export function TryOnView({
 
   return (
     <div className="w-full max-w-[1700px] mx-auto space-y-4 sm:space-y-6 select-none animate-in fade-in duration-200">
+      <style>{`
+        @keyframes tryonNailFill { from { fill: #E9CDBE; } to { fill: #E0246A; } }
+        @keyframes tryonWipe { from { clip-path: inset(0 100% 0 0); } to { clip-path: inset(0 0 0 0); } }
+        @keyframes tryonLine { 0% { left: 0%; opacity: 1; } 88% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
+        @keyframes tryonSpark { 0% { opacity: 0; transform: scale(.3) rotate(0deg); } 50% { opacity: 1; transform: scale(1) rotate(30deg); } 100% { opacity: 0; transform: scale(.6) rotate(60deg); } }
+        @keyframes tryonChip { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+        .tryon-nail { fill: #E9CDBE; animation: tryonNailFill .6s ease-out forwards; }
+        .tryon-wipe { animation: tryonWipe 1.6s cubic-bezier(.65,0,.35,1) forwards; }
+        .tryon-line { animation: tryonLine 1.6s cubic-bezier(.65,0,.35,1) forwards; }
+        .tryon-spark { opacity: 0; animation: tryonSpark 1.4s ease-in-out forwards; }
+        .tryon-chip { opacity: 0; animation: tryonChip .4s ease-out 1.5s forwards; }
+        @media (prefers-reduced-motion: reduce) {
+          .tryon-nail, .tryon-wipe, .tryon-line, .tryon-spark, .tryon-chip { animation-duration: .01s !important; animation-delay: 0s !important; }
+        }
+      `}</style>
+
       {/* Toast Notifications */}
       {savedToast && (
         <div className="fixed top-5 inset-x-0 z-50 flex justify-center pointer-events-none px-4">
@@ -569,32 +632,61 @@ export function TryOnView({
                 </div>
               ) : (
                 <>
-                  {/* Single Hand Image (During application or when viewing result) */}
-                  <img
-                    key={displayedHandImage}
-                    src={isSynthesizingHand ? handSourceImageUrl : displayedHandImage}
-                    alt="Virtual Try-On Viewport"
-                    onClick={() => setIsZoomOpen(true)}
-                    className="w-full h-full object-cover transition-transform duration-500 cursor-pointer animate-in fade-in zoom-in-105 duration-700"
-                    title="Click to zoom in"
-                  />
+                  {/* Single hand image. After a result lands, play a one-time bare -> manicure wipe. */}
+                  {isRevealing && synthesizedHandUrl ? (
+                    <div className="absolute inset-0 overflow-hidden">
+                      <img
+                        src={handSourceImageUrl}
+                        alt="Bare hand"
+                        className="absolute inset-0 w-full h-full object-cover"
+                      />
+                      <img
+                        src={synthesizedHandUrl}
+                        alt="Virtual Try-On Viewport"
+                        onClick={() => setIsZoomOpen(true)}
+                        className="tryon-wipe absolute inset-0 w-full h-full object-cover cursor-pointer"
+                      />
+                      <div className="tryon-line absolute inset-y-0 w-0.5 -translate-x-1/2 bg-white shadow-[0_0_12px_rgba(255,255,255,0.8)] pointer-events-none">
+                        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 rounded-full bg-white shadow-lg flex items-center justify-center">
+                          <ArrowRight className="w-4 h-4 text-stone-900" strokeWidth={2.5} />
+                        </div>
+                      </div>
+                      <RevealSparkle left="58%" top="26%" delay="1.1s" />
+                      <RevealSparkle left="36%" top="18%" delay="1.5s" />
+                      <RevealSparkle left="72%" top="44%" delay="1.9s" />
+                      <div className="absolute top-4 inset-x-0 flex justify-center pointer-events-none">
+                        <span className="tryon-chip px-3.5 py-1.5 rounded-full bg-[#E0246A] text-white text-xs font-semibold shadow-lg">
+                          Your set is ready
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <img
+                      src={isSynthesizingHand ? handSourceImageUrl : displayedHandImage}
+                      alt="Virtual Try-On Viewport"
+                      onClick={() => setIsZoomOpen(true)}
+                      className="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
+                      title="Click to zoom in"
+                    />
+                  )}
 
-                  {/* ============================================================== */}
-                  {/* REWORKED ATELIER PROGRESS OVERLAY (CLEAR HAND + BIG METRIC)    */}
-                  {/* ============================================================== */}
+                  {/* Curing overlay: stage pill, nail-progress hand, big counter, segmented stages */}
                   {isSynthesizingHand && (
                     <div className="absolute inset-0 z-30 pointer-events-none select-none animate-in fade-in duration-300">
-                      {/* Dim only the edges so the hand stays clear and becomes the focus */}
-                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.65)_100%)]" />
+                      {/* Edge vignette only, so the hand stays clear */}
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(0,0,0,0.6)_100%)]" />
 
-                      {/* Curing beam sweeping over the nails */}
+                      {/* LED beam sweeping over the hand */}
                       <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-[#E0246A]/25 to-transparent animate-cure-beam" />
 
                       {/* Top: stage pill */}
                       <div className="absolute top-4 inset-x-0 flex justify-center">
                         <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/80 text-white backdrop-blur-md border border-white/10 text-xs font-medium">
-                          <span className="w-2 h-2 rounded-full bg-[#E0246A] animate-ping" />
-                          <span key={synthesisPhase}>
+                          <span className="relative flex w-2 h-2">
+                            <span className="absolute inline-flex w-full h-full rounded-full bg-[#E0246A] animate-ping" />
+                            <span className="relative inline-flex w-2 h-2 rounded-full bg-[#E0246A]" />
+                          </span>
+                          <span key={synthesisPhase} className="animate-in fade-in slide-in-from-bottom-1 duration-300">
                             {synthesisPhase <= 1 && 'Calibrating skin tone & cuticles'}
                             {synthesisPhase === 2 && `Sculpting ${nails.middle.shape} silhouette`}
                             {synthesisPhase === 3 && 'Infusing lacquer pigment'}
@@ -603,56 +695,60 @@ export function TryOnView({
                         </div>
                       </div>
 
-                      {/* Top-right: the look being applied, so users remember the payoff */}
-                      {effectiveInspoUrl && (
-                        <div className="absolute top-14 right-3 sm:right-4 w-16 sm:w-20 rounded-2xl overflow-hidden border-2 border-white/80 shadow-xl rotate-3">
-                          <img src={effectiveInspoUrl} alt="" className="w-full aspect-square object-cover" />
-                          <div className="bg-white/95 text-[9px] font-semibold text-stone-800 text-center py-0.5 truncate px-1">
-                            {effectiveInspoTitle || 'Your look'}
+                      {/* Top right: ghost hand whose nails fill in one by one */}
+                      <div className="absolute top-14 right-3 sm:right-4 w-[84px] rounded-2xl bg-black/35 backdrop-blur-md border border-white/20 p-2 flex flex-col items-center gap-1">
+                        <CuringMiniHand />
+                        <span className="w-full text-center text-[10px] font-semibold text-white/90 truncate">
+                          {effectiveInspoTitle || 'Your look'}
+                        </span>
+                      </div>
+
+                      {/* Bottom: big counter + segmented stage bar */}
+                      <div className="absolute bottom-0 inset-x-0 px-5 sm:px-6 pt-10 pb-5 bg-gradient-to-t from-black/75 to-transparent">
+                        <div className="flex items-end justify-between gap-4">
+                          <div className="flex items-baseline gap-1 text-white">
+                            <span className="font-serif font-light text-6xl leading-none tabular-nums">{Math.floor(curePct)}</span>
+                            <span className="font-serif text-2xl text-pink-300">%</span>
+                          </div>
+                          <div className="text-right pb-1.5 min-w-0">
+                            <p className="text-sm font-semibold text-white truncate">{effectiveInspoTitle || 'Custom Look'}</p>
+                            <p className="text-xs text-white/75">Painting finger by finger</p>
                           </div>
                         </div>
-                      )}
-
-                      {/* Bottom: big percentage + rotating copy + progress */}
-                      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-6 bg-gradient-to-t from-black/70 to-transparent">
-                        <div className="max-w-xs mx-auto text-center space-y-2">
-                          <div className="text-5xl sm:text-6xl font-serif font-light text-white tabular-nums tracking-tight">
-                            {displayPct}
-                            <span className="text-2xl text-pink-300 ml-0.5">%</span>
-                          </div>
-
-                          <p key={waitLineIdx + '-' + synthesisPhase} className="text-xs text-white/90 font-medium h-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
-                            {synthesisPhase >= 4 ? WAIT_LINES[waitLineIdx] : 'Applying your custom look'}
-                          </p>
-
-                          <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-gradient-to-r from-[#E0246A] via-[#F43F5E] to-pink-300 rounded-full transition-all duration-700 ease-out relative overflow-hidden"
-                              style={{ width: `${displayPct}%` }}
-                            >
-                              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" />
+                        <div className="flex gap-1.5 mt-4">
+                          {[1, 2, 3, 4].map((step) => (
+                            <div key={step} className="flex-1 h-1 rounded-full bg-white/20 overflow-hidden">
+                              <div
+                                className="h-full origin-left bg-gradient-to-r from-[#E0246A] to-pink-300"
+                                style={{
+                                  transform: `scaleX(${synthesisPhase >= step ? 1 : 0})`,
+                                  transition: 'transform 1800ms linear',
+                                }}
+                              />
                             </div>
-                          </div>
+                          ))}
                         </div>
                       </div>
                     </div>
                   )}
 
                   {/* Floating Top Badge */}
-                  <div className="absolute top-3.5 left-3.5 z-20">
-                    <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
-                      <span className={`w-1.5 h-1.5 rounded-full ${synthesizedHandUrl ? 'bg-emerald-400 animate-pulse' : 'bg-pink-400'}`} />
-                      <span>
-                        {synthesizedHandUrl && tryOnView === 'after'
-                          ? (effectiveInspoTitle || 'Applied Look')
-                          : isSynthesizingHand
-                          ? 'Atelier Curing in Progress...'
-                          : customTryOnHandUrl
-                          ? 'Your Hand · Ready for Inspo'
-                          : 'Studio Hand · Ready'}
+                  {!isSynthesizingHand && !isRevealing && (
+                    <div className="absolute top-3.5 left-3.5 z-20">
+                      <span className="px-2.5 py-1 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-medium tracking-wide flex items-center gap-1.5 border border-white/10">
+                        <span className={`w-1.5 h-1.5 rounded-full ${synthesizedHandUrl ? 'bg-emerald-400 animate-pulse' : 'bg-pink-400'}`} />
+                        <span>
+                          {synthesizedHandUrl && tryOnView === 'after'
+                            ? (effectiveInspoTitle || 'Applied Look')
+                            : isSynthesizingHand
+                            ? 'Atelier Curing in Progress...'
+                            : customTryOnHandUrl
+                            ? 'Your Hand · Ready for Inspo'
+                            : 'Studio Hand · Ready'}
+                        </span>
                       </span>
-                    </span>
-                  </div>
+                    </div>
+                  )}
 
                   {/* Floating Compare Button on bottom - only when a manicure is synthesized */}
                   {synthesizedHandUrl && !isSynthesizingHand && (
