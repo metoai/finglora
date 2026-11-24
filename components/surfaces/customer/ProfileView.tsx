@@ -19,6 +19,9 @@ import {
   UploadCloud,
   Trash2,
   Search,
+  Sparkles,
+  Shuffle,
+  Crown,
 } from 'lucide-react';
 import {
   ExploreDesignSet,
@@ -741,47 +744,59 @@ export function ProfileView({
                   />
                 </div>
 
-                <div className="min-w-0">
-                  <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
-                    {userName}
-                  </h2>
-                  <p className="text-xs text-stone-500 font-mono truncate mt-0.5 max-w-[170px] xs:max-w-[210px] sm:max-w-none">
+                <div className="min-w-0 space-y-0.5">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
+                      {userName}
+                    </h2>
+                    <span className="px-2 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shadow-2xs">
+                      <Crown className="w-2.5 h-2.5 fill-[#E0246A]" />
+                      <span>VIP Tier</span>
+                    </span>
+                  </div>
+                  <p className="text-xs text-stone-500 font-mono truncate max-w-[170px] xs:max-w-[210px] sm:max-w-none">
                     {userEmail}
                   </p>
                 </div>
               </div>
 
-              {/* Edit Profile Button */}
-              <button
-                type="button"
-                onClick={() => {
-                  setNameInput(userName);
-                  setEmailInput(userEmail);
-                  setIsEditProfileOpen(true);
-                }}
-                className="h-8.5 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
-              >
-                Edit
-              </button>
+              {/* Top Right Controls */}
+              <div className="flex items-center gap-1.5 shrink-0">
+                {/* Randomize Avatar Icon Button */}
+                <button
+                  type="button"
+                  onClick={randomizeAvatar}
+                  title="Randomize avatar"
+                  className="w-8.5 h-8.5 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/60 hover:bg-pink-100/70 text-[#E0246A] transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                  aria-label="Roll random profile picture"
+                >
+                  <Shuffle className="w-4 h-4" />
+                </button>
+
+                {/* Edit Profile Button */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setNameInput(userName);
+                    setEmailInput(userEmail);
+                    setIsEditProfileOpen(true);
+                  }}
+                  className="h-8.5 px-3 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                >
+                  Edit
+                </button>
+              </div>
             </div>
 
-            {/* Photo Customization Actions */}
-            <div className="flex items-center gap-2 pt-2 border-t border-stone-100/90 text-xs">
-              <button
-                type="button"
-                onClick={randomizeAvatar}
-                className="h-8 px-3 rounded-lg bg-pink-50 hover:bg-pink-100 text-[#E0246A] font-semibold text-xs transition cursor-pointer active:scale-95 flex items-center gap-1"
-                title="Roll a new random avatar illustration"
-              >
-                <span>Roll Random Pic</span>
-              </button>
-
+            {/* Custom Photo Upload / Reset Bar */}
+            <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 text-xs">
               <button
                 type="button"
                 onClick={() => profilePicFileInputRef.current?.click()}
-                className="h-8 px-3 rounded-lg bg-stone-100 hover:bg-stone-200/70 text-stone-700 font-medium text-xs transition cursor-pointer active:scale-95 flex items-center gap-1"
+                className="text-[11px] font-medium text-stone-600 hover:text-[#E0246A] transition cursor-pointer inline-flex items-center gap-1.5"
               >
-                <span>Upload Custom</span>
+                <Camera className="w-3.5 h-3.5 text-stone-400" />
+                <span>{customAvatarPhoto ? 'Change photo' : 'Upload custom photo'}</span>
               </button>
 
               {customAvatarPhoto && (
@@ -795,23 +810,12 @@ export function ProfileView({
                     }
                     showToast('Custom photo removed');
                   }}
-                  className="h-8 px-2.5 rounded-lg text-stone-400 hover:text-red-500 transition cursor-pointer text-xs"
+                  className="text-[11px] font-medium text-stone-400 hover:text-red-500 transition cursor-pointer inline-flex items-center gap-1"
                 >
-                  <span>Reset</span>
+                  <Trash2 className="w-3 h-3" />
+                  <span>Remove</span>
                 </button>
               )}
-            </div>
-
-            {/* Badges: Shape & Tier */}
-            <div className="pt-2 border-t border-stone-100 flex items-center gap-2 flex-wrap">
-              <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-[11px] font-medium inline-flex items-center gap-1 capitalize">
-                <span>Shape:</span>
-                <span className="font-semibold text-stone-900">{preferredShape}</span>
-              </span>
-              <span className="px-2.5 py-1 rounded-full bg-pink-50 text-[#E0246A] text-[11px] font-medium inline-flex items-center gap-1">
-                <span>Tier:</span>
-                <span className="font-semibold">VIP Unlimited</span>
-              </span>
             </div>
           </div>
 
