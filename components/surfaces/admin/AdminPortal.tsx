@@ -776,6 +776,7 @@ export default function AdminPortal() {
                   <thead className="bg-stone-50 border-b border-stone-100 text-stone-500 font-medium">
                     <tr>
                       <th className="py-3 px-4">Client</th>
+                      <th className="py-3 px-4">Calibrated Hand</th>
                       <th className="py-3 px-4">Email</th>
                       <th className="py-3 px-4">Membership / Credits</th>
                       <th className="py-3 px-4">Silhouette Preference</th>
@@ -804,6 +805,24 @@ export default function AdminPortal() {
                               {u.display_name || 'Client'}
                             </span>
                           </div>
+                        </td>
+                        <td className="py-3 px-4">
+                          {u.custom_hand_url ? (
+                            <div className="flex items-center gap-2">
+                              <img
+                                src={u.custom_hand_url}
+                                alt="User Hand"
+                                className="w-9 h-11 rounded-lg object-cover border border-stone-200 shadow-2xs group-hover:scale-105 transition shrink-0"
+                              />
+                              <span className="text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+                                Uploaded
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="text-[10px] text-stone-400 italic">
+                              Default model
+                            </span>
+                          )}
                         </td>
                         <td className="py-3 px-4 text-stone-600 font-mono text-[11px]">
                           {u.email || '—'}
@@ -857,7 +876,7 @@ export default function AdminPortal() {
                     ))}
                     {filteredUsers.length === 0 && (
                       <tr>
-                        <td colSpan={7} className="py-8 text-center text-stone-400 text-xs">
+                        <td colSpan={8} className="py-8 text-center text-stone-400 text-xs">
                           No users matched your search.
                         </td>
                       </tr>
