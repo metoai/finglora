@@ -181,7 +181,7 @@ const PINTEREST_MANICURE_PINS: ManicurePin[] = [
   },
   {
     id: 'pin-atelier-hero',
-    title: 'Atelier Nude Minimal Square Daily Silhouette',
+    title: 'Studio Nude Minimal Square Daily Silhouette',
     photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_chrome_french_08.jpg',
     aspectClass: 'aspect-[3/4]',
     tags: ['short', 'simple', 'square'],

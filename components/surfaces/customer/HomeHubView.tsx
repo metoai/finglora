@@ -97,7 +97,7 @@ const FEATURED_ATELIER_LOOKS: FeaturedLook[] = [
   },
   {
     id: 'feat-atelier-nude',
-    title: 'Atelier Nude Minimal',
+    title: 'Studio Nude Minimal',
     category: 'minimal',
     displayCategory: 'Minimal',
     photoUrl: 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_vanilla_squoval_05.jpg',

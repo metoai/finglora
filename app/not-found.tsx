@@ -12,7 +12,7 @@ export default function NotFound() {
   const SHADES = [
     { name: 'Signature Pink', from: '#E0246A', to: '#BE185D', hasTip: true },
     { name: 'Bordeaux Glaze', from: '#801A35', to: '#5C1225', hasTip: false },
-    { name: 'Atelier Nude', from: '#E8D5C8', to: '#D8C3B4', hasTip: true },
+    { name: 'Studio Nude', from: '#E8D5C8', to: '#D8C3B4', hasTip: true },
     { name: 'Pearl Chrome', from: '#FAF4EF', to: '#EAD7CD', hasTip: false },
   ];
 
@@ -107,7 +107,7 @@ export default function NotFound() {
 
       {/* Minimal Footer */}
       <footer className="w-full max-w-4xl mx-auto px-6 py-6 text-center text-[11px] text-[#8C8085]">
-        <span>Finglora Nail Atelier</span>
+        <span>Finglora</span>
       </footer>
     </div>
   );

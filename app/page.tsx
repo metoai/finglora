@@ -1209,7 +1209,7 @@ export default function FingloraApp() {
                   </span>
                   <div>
                     <span className="font-serif text-xs tracking-wider uppercase font-medium text-white block leading-none">
-                      Atelier Preview Navigator
+                      Preview Navigator
                     </span>
                     <span className="text-[9.5px] text-white/50 block mt-0.5">
                       Surface switcher & device toggle

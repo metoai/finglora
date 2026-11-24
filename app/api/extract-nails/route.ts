@@ -177,7 +177,7 @@ export async function POST(request: Request) {
     if (body.generateImages !== false && parsed?.nails) {
       try {
         const nailShape = (parsed.nails as any)?.middle?.shape || 'almond';
-        const title = parsed.title || 'Luxury Atelier Manicure';
+        const title = parsed.title || 'Luxury Studio Manicure';
         const imagePrompt = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: "${title}". Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish.`;
 
         const imageCandidateModels = ['gemini-3.1-flash-image', 'gemini-3-pro-image'];

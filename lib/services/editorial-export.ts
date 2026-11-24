@@ -26,7 +26,7 @@ export async function generateBrandedEditorialImage(
   options: EditorialExportOptions = {}
 ): Promise<BrandedImageResult> {
   const {
-    filename = 'finglora-atelier-look.jpg',
+    filename = 'finglora-studio-look.jpg',
     storyAspect = false,
   } = options;
 
@@ -189,7 +189,7 @@ export async function downloadEditorialImage(
 ): Promise<void> {
   const result = await generateBrandedEditorialImage(imageUrl, options);
   const link = document.createElement('a');
-  link.download = options.filename || 'finglora-atelier-look.jpg';
+  link.download = options.filename || 'finglora-studio-look.jpg';
   link.href = URL.createObjectURL(result.blob);
   document.body.appendChild(link);
   link.click();
@@ -227,7 +227,7 @@ export async function shareToStoryOrSocial(
       ? window.location.origin
       : 'https://finglora.com';
   const shareTitle = options.designTitle ? `${options.designTitle} · Finglora` : 'Finglora Manicure Look';
-  const shareText = options.shareText || `Bespoke manicure created with Finglora Atelier (finglora.com)`;
+  const shareText = options.shareText || `Bespoke manicure created with Finglora (finglora.com)`;
 
   // Check if native Web Share is supported
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {

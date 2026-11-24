@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       // Image-to-Image with Reference Nail Design + User's Real Hand
       parts.push({
         text: `Image 1 is the reference inspiration manicure photograph. Image 2 is the photograph of the user's human hand.
-You are an expert salon atelier AI.
+You are an expert salon studio AI.
 
 TASK:
 Flawlessly transfer and apply ONLY the nail design (colors, nail art, finish, and ${nailShape} shape) from Image 1 onto the fingernails of the hand in Image 2.
@@ -115,7 +115,7 @@ CRITICAL CONSTRAINTS:
       });
     } else if (finalHandBase64) {
       parts.push({
-        text: `You are an expert salon atelier AI. Generate an ultra-photorealistic editorial salon photograph of this exact human hand showcasing this manicure design: "${prompt}".
+        text: `You are an expert salon studio AI. Generate an ultra-photorealistic editorial salon photograph of this exact human hand showcasing this manicure design: "${prompt}".
 
 CRITICAL CONSTRAINTS:
 1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Modify ONLY the fingernails. Do not add any rings, jewelry, bracelets, accessories, or foreign props.
@@ -130,7 +130,7 @@ CRITICAL CONSTRAINTS:
       });
     } else if (finalReferenceBase64) {
       parts.push({
-        text: `You are an expert salon atelier AI. Generate an ultra-photorealistic salon photograph of a real human hand wearing the exact manicure design from this reference image: "${prompt}".
+        text: `You are an expert salon studio AI. Generate an ultra-photorealistic salon photograph of a real human hand wearing the exact manicure design from this reference image: "${prompt}".
 
 CRITICAL CONSTRAINTS:
 1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Copy ONLY the nail design (colors, patterns, finish, shape). If the reference image has rings, jewelry, accessories, bracelets, sleeves, props, or background objects, DO NOT include them. Only render the human hand and the manicured fingernails.
@@ -146,9 +146,9 @@ CRITICAL CONSTRAINTS:
     } else {
       let promptText = '';
       if (mode === '5-nail-set') {
-        promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone atelier background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish. No vaseline, no petroleum jelly, no foreign objects.`;
+        promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone studio background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish. No vaseline, no petroleum jelly, no foreign objects.`;
       } else {
-        promptText = `You are an expert salon atelier AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Clean, natural, dry skin under and around the fingernails with no vaseline, petroleum jelly, or greasy residue. Nail design only, no jewelry, rings, or foreign objects. Natural lighting, crisp cuticle margin, realistic skin texture.`;
+        promptText = `You are an expert salon studio AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Clean, natural, dry skin under and around the fingernails with no vaseline, petroleum jelly, or greasy residue. Nail design only, no jewelry, rings, or foreign objects. Natural lighting, crisp cuticle margin, realistic skin texture.`;
       }
       parts.push({ text: promptText });
     }

@@ -245,7 +245,7 @@ export function AiCreationView({
       const geminiErr: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: 'gemini',
-        text: 'Connection error while contacting AI atelier. Please try again.',
+        text: 'Connection error while contacting AI studio. Please try again.',
         timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
       };
       setMessages((prev) => [...prev, geminiErr]);
@@ -304,7 +304,7 @@ export function AiCreationView({
         designTitle: title || 'Custom AI Manicure',
         filename: `finglora-${(title || 'ai-manicure').toLowerCase().replace(/\s+/g, '-')}.jpg`,
       });
-      setExportToast('High-resolution manicure photo saved with Finglora atelier brand');
+      setExportToast('High-resolution manicure photo saved with Finglora');
       setTimeout(() => setExportToast(null), 3000);
     } catch {
       setExportToast('Could not download image. Please try again.');

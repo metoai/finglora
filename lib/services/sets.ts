@@ -69,7 +69,7 @@ export async function saveUserManicureSet({
   passportCode,
   title,
   category = 'Custom',
-  subtitle = 'Custom Atelier Design',
+  subtitle = 'Custom Studio Design',
   photoUrl,
   nails,
   skinToneId = 'warm-ivory',
