@@ -28,8 +28,14 @@ import {
   CheckCircle2,
   Calendar,
   X,
+  Crown,
+  Edit3,
+  Save,
+  Check,
 } from 'lucide-react';
 import Link from 'next/link';
+import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
+import { Finger } from '@/types/nail';
 
 interface AdminStats {
   totalUsers: number;
@@ -105,6 +111,11 @@ export default function AdminPortal() {
   // Selected user for full detail modal/drawer
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null);
   const [loadingUserDetail, setLoadingUserDetail] = useState(false);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editCredits, setEditCredits] = useState<number>(10);
+  const [editIsPro, setEditIsPro] = useState<boolean>(false);
+  const [isSavingUser, setIsSavingUser] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState<string | null>(null);
 
   // New set modal state
   const [isCreateSetOpen, setIsCreateSetOpen] = useState(false);
@@ -210,6 +221,10 @@ export default function AdminPortal() {
 
   const handleViewUserDetail = async (user: UserProfile) => {
     setSelectedUser(user);
+    setEditCredits(user.credits !== undefined ? user.credits : (user.is_pro ? 999999 : 10));
+    setEditIsPro(!!user.is_pro);
+    setIsEditingUser(false);
+    setSaveSuccessMsg(null);
     if (!token) return;
 
     setLoadingUserDetail(true);
@@ -221,12 +236,58 @@ export default function AdminPortal() {
         const data = await res.json();
         if (data.user) {
           setSelectedUser(data.user);
+          setEditCredits(data.user.credits !== undefined ? data.user.credits : (data.user.is_pro ? 999999 : 10));
+          setEditIsPro(!!data.user.is_pro);
         }
       }
     } catch (err) {
       console.error('Failed to load user details:', err);
     } finally {
       setLoadingUserDetail(false);
+    }
+  };
+
+  const handleSaveUserEdits = async () => {
+    if (!selectedUser || !token) return;
+    setIsSavingUser(true);
+    setSaveSuccessMsg(null);
+
+    try {
+      const res = await fetch('/api/admin/users', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          userId: selectedUser.id,
+          isPro: editIsPro,
+          credits: editIsPro ? 999999 : editCredits,
+        }),
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        const updatedUser = {
+          ...selectedUser,
+          is_pro: editIsPro,
+          credits: editIsPro ? 999999 : editCredits,
+        };
+        setSelectedUser(updatedUser);
+        // Also update the local users list
+        setUsers((prev) =>
+          prev.map((u) => (u.id === selectedUser.id ? { ...u, is_pro: editIsPro, credits: editIsPro ? 999999 : editCredits } : u))
+        );
+        setIsEditingUser(false);
+        setSaveSuccessMsg('Tier and credits updated successfully!');
+        setTimeout(() => setSaveSuccessMsg(null), 3000);
+      } else {
+        alert('Failed to save user tier/credits');
+      }
+    } catch (err) {
+      console.error('Failed to update user profile:', err);
+    } finally {
+      setIsSavingUser(false);
     }
   };
 
@@ -1263,110 +1324,297 @@ export default function AdminPortal() {
 
             {!loadingUserDetail && (
               <div className="space-y-5">
-                {/* 4-Item Quick Overview Grid */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
-                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
-                      Credits Balance
+                {/* Client Tier & Credit Controls (Admin Override) */}
+                <div className="p-4 rounded-2xl bg-gradient-to-r from-stone-50 via-rose-50/30 to-stone-50 border border-stone-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-stone-900 flex items-center gap-1.5">
+                      <CreditCard className="w-4 h-4 text-[#E0246A]" />
+                      Membership Tier & Credits Allocation
                     </span>
-                    <span className="text-sm font-semibold text-stone-900">
-                      {selectedUser.is_pro ? 'Unlimited' : `${selectedUser.credits !== undefined ? selectedUser.credits : 10} Left`}
-                    </span>
+                    {!isEditingUser ? (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingUser(true)}
+                        className="text-xs font-semibold text-[#E0246A] hover:underline inline-flex items-center gap-1 cursor-pointer"
+                      >
+                        <Edit3 className="w-3.5 h-3.5" />
+                        <span>Edit Tier / Credits</span>
+                      </button>
+                    ) : (
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingUser(false)}
+                        className="text-xs font-semibold text-stone-500 hover:text-stone-800"
+                      >
+                        Cancel
+                      </button>
+                    )}
                   </div>
 
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
-                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
-                      Preferred Shape
-                    </span>
-                    <span className="text-sm font-semibold text-stone-900 capitalize">
-                      {selectedUser.preferred_shape || 'Almond'} ({selectedUser.preferred_length || 'medium'})
-                    </span>
-                  </div>
+                  {saveSuccessMsg && (
+                    <p className="text-xs text-emerald-700 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200 font-medium">
+                      ✓ {saveSuccessMsg}
+                    </p>
+                  )}
 
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
-                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
-                      Hand Skin Tone
-                    </span>
-                    <span className="text-sm font-semibold text-stone-900 capitalize">
-                      {selectedUser.skin_tone_id || 'Warm Honey'}
-                    </span>
-                  </div>
+                  {!isEditingUser ? (
+                    <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
+                      <div className="p-2.5 rounded-xl bg-white border border-stone-200/70 space-y-0.5">
+                        <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                          Current Tier
+                        </span>
+                        <span className="text-sm font-semibold text-stone-900">
+                          {selectedUser.is_pro ? 'Pro Member' : 'Free Plan'}
+                        </span>
+                      </div>
 
-                  <div className="p-3 rounded-xl bg-stone-50 border border-stone-100 space-y-0.5">
-                    <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
-                      Client Joined
-                    </span>
-                    <span className="text-sm font-semibold text-stone-900">
-                      {new Date(selectedUser.created_at).toLocaleDateString()}
-                    </span>
-                  </div>
+                      <div className="p-2.5 rounded-xl bg-white border border-stone-200/70 space-y-0.5">
+                        <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                          Available Credits
+                        </span>
+                        <span className="text-sm font-semibold text-[#E0246A]">
+                          {selectedUser.is_pro ? 'Unlimited (999,999)' : `${selectedUser.credits !== undefined ? selectedUser.credits : 10}`}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white border border-stone-200/70 space-y-0.5">
+                        <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                          Preferred Shape
+                        </span>
+                        <span className="text-sm font-semibold text-stone-900 capitalize">
+                          {selectedUser.preferred_shape || 'Almond'}
+                        </span>
+                      </div>
+
+                      <div className="p-2.5 rounded-xl bg-white border border-stone-200/70 space-y-0.5">
+                        <span className="text-[10px] text-stone-400 font-semibold uppercase tracking-wider block">
+                          Registered Date
+                        </span>
+                        <span className="text-sm font-semibold text-stone-900">
+                          {new Date(selectedUser.created_at).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="space-y-3 p-3 bg-white rounded-xl border border-stone-200 shadow-2xs">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-[11px] font-semibold text-stone-700 mb-1">
+                            Plan Level
+                          </label>
+                          <select
+                            value={editIsPro ? 'pro' : 'free'}
+                            onChange={(e) => {
+                              const isP = e.target.value === 'pro';
+                              setEditIsPro(isP);
+                              if (isP) setEditCredits(999999);
+                              else if (editCredits > 100) setEditCredits(10);
+                            }}
+                            className="w-full h-9 px-2.5 rounded-lg border border-stone-300 text-xs focus:outline-none focus:border-[#E0246A]"
+                          >
+                            <option value="free">Free Tier (Credit Based)</option>
+                            <option value="pro">Pro Member (Unlimited Credits)</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="block text-[11px] font-semibold text-stone-700 mb-1">
+                            Credits Allocation
+                          </label>
+                          <input
+                            type="number"
+                            disabled={editIsPro}
+                            value={editIsPro ? 999999 : editCredits}
+                            onChange={(e) => setEditCredits(parseInt(e.target.value, 10) || 0)}
+                            className="w-full h-9 px-2.5 rounded-lg border border-stone-300 text-xs focus:outline-none focus:border-[#E0246A] disabled:bg-stone-100 disabled:text-stone-400 font-mono"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end gap-2 pt-1">
+                        <button
+                          type="button"
+                          onClick={() => setIsEditingUser(false)}
+                          className="h-8 px-3 rounded-lg text-xs font-semibold text-stone-600 hover:bg-stone-100"
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          onClick={handleSaveUserEdits}
+                          disabled={isSavingUser}
+                          className="h-8 px-4 rounded-lg bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold inline-flex items-center gap-1.5 shadow-xs disabled:opacity-50 cursor-pointer"
+                        >
+                          {isSavingUser ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Saving...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="w-3 h-3" />
+                              Save Changes
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
-                {/* Custom Hand Photo Status */}
-                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-2">
+                {/* Client's Hand Photo & Live Calibration */}
+                <div className="p-4 rounded-2xl bg-stone-50 border border-stone-200/80 space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-stone-800 flex items-center gap-1.5">
                       <Camera className="w-4 h-4 text-[#E0246A]" />
                       Uploaded Hand Viewfinder
                     </span>
                     <span className="text-[11px] text-stone-500 font-mono">
-                      Orientation: {selectedUser.hand_orientation || 'right'}
+                      Orientation: {selectedUser.hand_orientation || 'right'} • Skin: {selectedUser.skin_tone_id || 'warm-ivory'}
                     </span>
                   </div>
 
                   {selectedUser.custom_hand_url ? (
-                    <div className="flex items-center gap-3 pt-1">
-                      <img
-                        src={selectedUser.custom_hand_url}
-                        alt="Hand"
-                        className="w-16 h-20 rounded-xl object-cover border border-stone-200 shadow-2xs"
-                      />
-                      <div className="space-y-1">
-                        <span className="text-xs font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                          Verified Custom Hand Active
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 pt-1">
+                      <div className="relative group shrink-0">
+                        <img
+                          src={selectedUser.custom_hand_url}
+                          alt="Client Hand"
+                          className="w-24 h-32 sm:w-28 sm:h-36 rounded-2xl object-cover border border-stone-200 shadow-sm"
+                        />
+                        <a
+                          href={selectedUser.custom_hand_url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="absolute inset-0 bg-black/40 rounded-2xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition text-white text-xs font-medium"
+                        >
+                          View Full Size ↗
+                        </a>
+                      </div>
+                      <div className="space-y-1.5">
+                        <span className="inline-block text-xs font-medium text-emerald-700 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
+                          ✓ Verified Custom Hand Active
                         </span>
-                        <p className="text-[11px] text-stone-400">
-                          Used for real-time WebRTC and virtual try-ons.
+                        <p className="text-xs text-stone-600 leading-relaxed">
+                          This client has completed step 1 of onboarding. Their hand is saved and calibrated for virtual manicure try-ons.
+                        </p>
+                        <p className="text-[11px] text-stone-400 font-mono break-all">
+                          {selectedUser.custom_hand_url}
                         </p>
                       </div>
                     </div>
                   ) : (
-                    <p className="text-xs text-stone-400 italic">
-                      No custom hand photo uploaded yet (using editorial model hand).
-                    </p>
+                    <div className="p-4 rounded-xl bg-white border border-dashed border-stone-200 text-center space-y-1">
+                      <p className="text-xs text-stone-500 font-medium">
+                        No custom hand photo uploaded yet
+                      </p>
+                      <p className="text-[11px] text-stone-400">
+                        Client is currently using Finglora's default editorial model hand ({selectedUser.skin_tone_id || 'Warm Honey'}).
+                      </p>
+                    </div>
                   )}
                 </div>
 
-                {/* Manicure Sets Created by this User */}
-                <div className="space-y-2.5">
+                {/* Applied Manicures Created by this User */}
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-500">
-                      Saved & Created Looks ({selectedUser.sets?.length || 0})
+                    <h4 className="text-xs font-semibold uppercase tracking-wider text-stone-600 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-[#E0246A]" />
+                      Created & Applied Manicures ({selectedUser.sets?.length || 0})
                     </h4>
                   </div>
 
                   {selectedUser.sets && selectedUser.sets.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-56 overflow-y-auto pr-1">
-                      {selectedUser.sets.map((s: any) => (
-                        <div
-                          key={s.id}
-                          className="p-2.5 rounded-xl bg-white border border-stone-200 shadow-2xs space-y-1"
-                        >
-                          <span className="text-[10px] font-mono font-bold text-[#E0246A] block">
-                            {s.passport_code}
-                          </span>
-                          <p className="text-xs font-medium text-stone-900 truncate">
-                            {s.title}
-                          </p>
-                          <span className="text-[10px] text-stone-400 capitalize block">
-                            {s.category || 'Custom'} • {new Date(s.created_at).toLocaleDateString()}
-                          </span>
-                        </div>
-                      ))}
+                    <div className="space-y-3 max-h-80 overflow-y-auto pr-1">
+                      {selectedUser.sets.map((s: any) => {
+                        const setNails = s.nails || {};
+                        const fingerKeys: Finger[] = ['thumb', 'index', 'middle', 'ring', 'pinky'];
+                        const hasFingers = fingerKeys.some((f) => setNails[f]);
+
+                        return (
+                          <div
+                            key={s.id}
+                            className="p-3.5 rounded-2xl bg-white border border-stone-200 shadow-2xs space-y-3"
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="flex items-center gap-3">
+                                {s.photo_url ? (
+                                  <img
+                                    src={s.photo_url}
+                                    alt={s.title}
+                                    className="w-12 h-16 rounded-xl object-cover border border-stone-200 shrink-0"
+                                  />
+                                ) : (
+                                  <div className="w-12 h-16 rounded-xl bg-stone-100 border border-stone-200 flex items-center justify-center text-[10px] text-stone-400 shrink-0">
+                                    No photo
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-mono font-bold text-[#E0246A]">
+                                      {s.passport_code}
+                                    </span>
+                                    <span className="text-[10px] uppercase font-semibold text-stone-400 px-1.5 py-0.2 rounded bg-stone-100">
+                                      {s.category || 'Custom'}
+                                    </span>
+                                  </div>
+                                  <h5 className="font-semibold text-xs text-stone-900 mt-0.5">
+                                    {s.title}
+                                  </h5>
+                                  <p className="text-[11px] text-stone-400">
+                                    Created: {new Date(s.created_at).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              </div>
+
+                              <Link
+                                href="/"
+                                target="_blank"
+                                className="text-[11px] font-semibold text-stone-600 hover:text-[#E0246A] inline-flex items-center gap-1 shrink-0"
+                              >
+                                View Look <ArrowUpRight className="w-3 h-3" />
+                              </Link>
+                            </div>
+
+                            {/* 5-Finger Applied Breakdown */}
+                            {hasFingers && (
+                              <div className="pt-2 border-t border-stone-100">
+                                <span className="text-[10px] font-semibold uppercase tracking-wider text-stone-400 block mb-1.5">
+                                  Applied 5-Finger Formulation
+                                </span>
+                                <div className="grid grid-cols-5 gap-1.5 sm:gap-2">
+                                  {fingerKeys.map((f) => {
+                                    const n = setNails[f];
+                                    if (!n) return null;
+                                    return (
+                                      <div
+                                        key={f}
+                                        className="p-1.5 rounded-xl bg-stone-50 border border-stone-200/60 flex flex-col items-center text-center space-y-1"
+                                      >
+                                        <span className="text-[9px] font-semibold text-stone-500 capitalize">
+                                          {f}
+                                        </span>
+                                        <div
+                                          className="w-4 h-6 rounded-md shadow-inner border border-black/10"
+                                          style={{ backgroundColor: n.baseColor || '#F9D8E0' }}
+                                          title={`Base: ${n.baseColor}`}
+                                        />
+                                        <span className="text-[9px] font-mono text-stone-600 truncate max-w-full">
+                                          {n.baseColor}
+                                        </span>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
                     </div>
                   ) : (
                     <div className="p-4 rounded-xl border border-dashed border-stone-200 text-center text-xs text-stone-400">
-                      This client has not created custom manicures yet.
+                      This client has not created or applied custom manicures yet.
                     </div>
                   )}
                 </div>
