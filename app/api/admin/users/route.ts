@@ -116,33 +116,32 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: 'userId is required' }, { status: 400 });
     }
 
-    const updatePayload: Record<string, any> = {
-      updated_at: new Date().toISOString(),
-    };
-    if (isPro !== undefined) updatePayload.is_pro = isPro;
-    if (credits !== undefined) updatePayload.credits = credits;
-    if (preferredShape !== undefined) updatePayload.preferred_shape = preferredShape;
-    if (preferredLength !== undefined) updatePayload.preferred_length = preferredLength;
-
-    const res = await fetch(`${SUPABASE_URL}/rest/v1/profiles?id=eq.${userId}`, {
-      method: 'PATCH',
+    // Call admin_update_profile SECURITY DEFINER function to bypass RLS and persist reliably
+    const res = await fetch(`${SUPABASE_URL}/rest/v1/rpc/admin_update_profile`, {
+      method: 'POST',
       headers: {
         apikey: SUPABASE_KEY,
         'Content-Type': 'application/json',
-        Prefer: 'return=representation',
       },
-      body: JSON.stringify(updatePayload),
+      body: JSON.stringify({
+        target_user_id: userId,
+        new_is_pro: isPro !== undefined ? isPro : null,
+        new_credits: credits !== undefined ? credits : null,
+        new_shape: preferredShape || null,
+        new_length: preferredLength || null,
+      }),
     });
 
     if (!res.ok) {
+      const errText = await res.text();
       return NextResponse.json(
-        { error: 'Failed to update user profile' },
+        { error: `Database error: ${errText}` },
         { status: res.status }
       );
     }
 
-    const updated = await res.json();
-    return NextResponse.json({ success: true, user: updated[0] || updated });
+    const data = await res.json();
+    return NextResponse.json({ success: true, user: data.user || data });
   } catch (err: any) {
     return NextResponse.json(
       { error: err.message || 'Server error' },
