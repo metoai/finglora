@@ -233,6 +233,7 @@ export function CustomerApp({
           preferredShape={preferredShape}
           mobileMenuOpen={mobileMenuOpen}
           setMobileMenuOpen={setMobileMenuOpen}
+          onLogout={onBrandClick}
         />
       </div>
 

@@ -14,8 +14,10 @@ import {
   Bell,
   Palette,
   Check,
+  LogOut,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
+import { signOutUser } from '@/lib/services/auth';
 import { NailShape } from '@/types/nail';
 import { CustomerRoute } from './CustomerSidebar';
 
@@ -23,6 +25,7 @@ export interface CustomerTopBarProps {
   currentRoute: CustomerRoute;
   onNavigate: (route: CustomerRoute) => void;
   onBrandClick: () => void;
+  onLogout?: () => void;
   favoritesCount?: number;
   userName?: string;
   preferredShape?: NailShape;
@@ -39,6 +42,7 @@ export function CustomerTopBar({
   preferredShape = 'almond',
   mobileMenuOpen,
   setMobileMenuOpen,
+  onLogout,
 }: CustomerTopBarProps) {
   const routeBreadcrumbs: Record<CustomerRoute, string> = {
     home: 'Home',
@@ -439,6 +443,33 @@ export function CustomerTopBar({
               </button>
             );
           })}
+
+          {/* Sign Out Button in Mobile Menu */}
+          <div className="pt-1.5 mt-1 border-t border-stone-100">
+            <button
+              type="button"
+              onClick={async () => {
+                setMobileMenuOpen(false);
+                try {
+                  await signOutUser();
+                } catch (e) {
+                  console.warn('Sign out error:', e);
+                }
+                if (onLogout) {
+                  onLogout();
+                } else {
+                  window.location.href = '/';
+                }
+              }}
+              className="w-full h-10 px-3 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50/70 transition flex items-center justify-between cursor-pointer active:scale-95"
+            >
+              <div className="flex items-center gap-2.5">
+                <LogOut className="w-4 h-4 text-rose-600" />
+                <span>Sign Out</span>
+              </div>
+              <ChevronRight className="w-3.5 h-3.5 text-rose-400" />
+            </button>
+          </div>
         </div>
       )}
 

@@ -701,34 +701,6 @@ export function ProfileView({
         </div>
       )}
 
-      {/* Top Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-stone-200/80">
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            onClick={onBackClick}
-            className="w-9 h-9 rounded-full bg-white hover:bg-stone-100 border border-stone-200/80 text-stone-700 flex items-center justify-center transition cursor-pointer active:scale-95 shadow-2xs shrink-0"
-            title="Return to Home"
-          >
-            <ArrowLeft className="w-4 h-4" />
-          </button>
-          <div>
-            <h1 className="font-serif text-2xl font-normal text-stone-900 tracking-tight">
-              Profile & Settings
-            </h1>
-            <p className="text-xs text-stone-500 mt-0.5">
-              Atelier client identity, hand photo calibration & signature style
-            </p>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-2 self-start sm:self-auto">
-          <span className="inline-flex items-center px-3 py-1 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3] text-xs font-semibold">
-            <span>VIP Atelier Access</span>
-          </span>
-        </div>
-      </div>
-
       {/* Balanced 2-Column Grid on Desktop (50/50 single-screen layout) */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 sm:gap-6 items-start">
         {/* ===================================================================
@@ -739,8 +711,8 @@ export function ProfileView({
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-3.5 min-w-0">
-                {/* Avatar with custom upload or random pic */}
-                <div className="relative shrink-0 group">
+                {/* Profile Picture */}
+                <div className="relative shrink-0">
                   <div
                     onClick={() => profilePicFileInputRef.current?.click()}
                     className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
@@ -772,47 +744,13 @@ export function ProfileView({
                   <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
                     {userName}
                   </h2>
-                  <p className="text-xs text-stone-500 font-mono truncate mt-0.5">{userEmail}</p>
-                  <div className="mt-1.5 flex items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={randomizeAvatar}
-                      className="text-xs text-[#E0246A] hover:text-[#BE185D] font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
-                      title="Roll a new random profile picture"
-                    >
-                      <span>Roll Random Pic</span>
-                    </button>
-                    <span className="text-stone-300">·</span>
-                    <button
-                      type="button"
-                      onClick={() => profilePicFileInputRef.current?.click()}
-                      className="text-xs text-stone-600 hover:text-stone-900 font-medium cursor-pointer inline-flex items-center gap-1 active:scale-95 transition"
-                    >
-                      <span>Upload Custom</span>
-                    </button>
-                    {customAvatarPhoto && (
-                      <>
-                        <span className="text-stone-300">·</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCustomAvatarPhoto(null);
-                            if (typeof window !== 'undefined') {
-                              localStorage.removeItem('finglora_custom_avatar_photo');
-                              window.dispatchEvent(new Event('finglora_avatar_updated'));
-                            }
-                            showToast('Custom photo removed');
-                          }}
-                          className="text-xs text-stone-400 hover:text-red-500 transition cursor-pointer"
-                        >
-                          <span>Reset</span>
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <p className="text-xs text-stone-500 font-mono truncate mt-0.5 max-w-[170px] xs:max-w-[210px] sm:max-w-none">
+                    {userEmail}
+                  </p>
                 </div>
               </div>
 
+              {/* Edit Profile Button */}
               <button
                 type="button"
                 onClick={() => {
@@ -820,13 +758,50 @@ export function ProfileView({
                   setEmailInput(userEmail);
                   setIsEditProfileOpen(true);
                 }}
-                className="h-9 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
+                className="h-8.5 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer shrink-0 flex items-center justify-center active:scale-95 shadow-2xs"
               >
                 Edit
               </button>
             </div>
 
-            {/* Quick Member Badges */}
+            {/* Photo Customization Actions */}
+            <div className="flex items-center gap-2 pt-2 border-t border-stone-100/90 text-xs">
+              <button
+                type="button"
+                onClick={randomizeAvatar}
+                className="h-8 px-3 rounded-lg bg-pink-50 hover:bg-pink-100 text-[#E0246A] font-semibold text-xs transition cursor-pointer active:scale-95 flex items-center gap-1"
+                title="Roll a new random avatar illustration"
+              >
+                <span>Roll Random Pic</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => profilePicFileInputRef.current?.click()}
+                className="h-8 px-3 rounded-lg bg-stone-100 hover:bg-stone-200/70 text-stone-700 font-medium text-xs transition cursor-pointer active:scale-95 flex items-center gap-1"
+              >
+                <span>Upload Custom</span>
+              </button>
+
+              {customAvatarPhoto && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setCustomAvatarPhoto(null);
+                    if (typeof window !== 'undefined') {
+                      localStorage.removeItem('finglora_custom_avatar_photo');
+                      window.dispatchEvent(new Event('finglora_avatar_updated'));
+                    }
+                    showToast('Custom photo removed');
+                  }}
+                  className="h-8 px-2.5 rounded-lg text-stone-400 hover:text-red-500 transition cursor-pointer text-xs"
+                >
+                  <span>Reset</span>
+                </button>
+              )}
+            </div>
+
+            {/* Badges: Shape & Tier */}
             <div className="pt-2 border-t border-stone-100 flex items-center gap-2 flex-wrap">
               <span className="px-2.5 py-1 rounded-full bg-stone-100 text-stone-700 text-[11px] font-medium inline-flex items-center gap-1 capitalize">
                 <span>Shape:</span>
