@@ -236,6 +236,11 @@ export default function FingloraApp() {
     const subscription = subscribeToAuthChanges(async (event, session) => {
       if (session?.user) {
         setSupabaseUser(session.user);
+        // Switch to the customer app studio upon successful login
+        setSurface('customer');
+        const userMetaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
+        if (userMetaName) setUserName(userMetaName);
+
         const profile = await fetchUserProfile(session.user.id);
         if (profile) {
           if (profile.displayName) setUserName(profile.displayName);
