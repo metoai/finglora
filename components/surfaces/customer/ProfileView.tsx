@@ -22,7 +22,9 @@ import {
   Sparkles,
   Shuffle,
   Crown,
+  Settings,
 } from 'lucide-react';
+import Link from 'next/link';
 import {
   ExploreDesignSet,
   Finger,
@@ -1119,6 +1121,27 @@ export function ProfileView({
                 <ChevronRight className="w-3.5 h-3.5 text-stone-400 group-hover:text-stone-700 transition-colors" />
               </div>
             </button>
+
+            {/* Admin Command Console */}
+            <Link
+              href="/admin"
+              className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-7 h-7 rounded-lg bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
+                  <Settings className="w-4 h-4" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
+                    Admin Command Console
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 text-[11px] text-[#E0246A] font-semibold">
+                <span>Manage</span>
+                <ChevronRight className="w-3.5 h-3.5 text-[#E0246A] transition-colors" />
+              </div>
+            </Link>
 
             {/* Sign Out */}
             <button
