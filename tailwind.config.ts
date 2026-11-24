@@ -88,10 +88,14 @@ const config: Config = {
         "pulse-subtle": "pulseSubtle 3s ease-in-out infinite",
         "step-progress": "stepProgress 3.5s linear infinite",
         "laser-scan": "laserScan 2.4s ease-in-out infinite",
-        "curtain-reveal": "curtainReveal 3.5s ease-in-out infinite",
         "cure-beam": "cureBeam 2.8s ease-in-out infinite",
+        shimmer: "shimmer 1.4s infinite",
       },
       keyframes: {
+        shimmer: {
+          '0%': { transform: 'translateX(-100%)' },
+          '100%': { transform: 'translateX(100%)' },
+        },
         curtainReveal: {
           '0%': { transform: 'scaleX(0)', opacity: '0.9' },
           '50%': { transform: 'scaleX(1)', opacity: '1' },

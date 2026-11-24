@@ -147,6 +147,23 @@ export function TryOnView({
     };
   }, [isSynthesizingHand]);
 
+  const WAIT_LINES = [
+    'Locking in the shine…',
+    'Almost glossy…',
+    'Perfecting the finish…',
+    'Hold still, perfection loading',
+  ];
+  const [waitLineIdx, setWaitLineIdx] = useState(0);
+
+  useEffect(() => {
+    if (synthesisPhase < 4) return;
+    const id = setInterval(() => setWaitLineIdx((i) => (i + 1) % WAIT_LINES.length), 2200);
+    return () => clearInterval(id);
+  }, [synthesisPhase, WAIT_LINES.length]);
+
+  const PHASE_PCT = [0, 25, 55, 82, 98];
+  const displayPct = Math.min(PHASE_PCT[Math.min(synthesisPhase, 4)] + (synthesisPhase >= 4 ? Math.min(waitLineIdx, 1) : 0), 99);
+
   // Derived effective inspiration details
   const effectiveInspoUrl = !isLocallyCleared ? (activePhotoUrl || activeSample?.photoUrl || '') : '';
   const effectiveInspoTitle = !isLocallyCleared ? (activeSample?.title || (activePhotoUrl ? 'Custom Inspo Look' : '')) : '';
@@ -554,23 +571,30 @@ export function TryOnView({
                 <>
                   {/* Single Hand Image (During application or when viewing result) */}
                   <img
+                    key={displayedHandImage}
                     src={isSynthesizingHand ? handSourceImageUrl : displayedHandImage}
                     alt="Virtual Try-On Viewport"
                     onClick={() => setIsZoomOpen(true)}
-                    className="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
+                    className="w-full h-full object-cover transition-transform duration-500 cursor-pointer animate-in fade-in zoom-in-105 duration-700"
                     title="Click to zoom in"
                   />
 
                   {/* ============================================================== */}
-                  {/* CLEAN ATELIER SALON APPLYING OVERLAY (NO DUPLICATES, NO SLOP)  */}
+                  {/* REWORKED ATELIER PROGRESS OVERLAY (CLEAR HAND + BIG METRIC)    */}
                   {/* ============================================================== */}
                   {isSynthesizingHand && (
-                    <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 sm:p-5 bg-black/35 backdrop-blur-[1px] transition-all duration-300 select-none animate-in fade-in">
-                      {/* Top Quiet Stage Pill */}
-                      <div className="flex justify-center">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/90 text-white backdrop-blur-md shadow-lg border border-white/10 text-xs font-medium">
+                    <div className="absolute inset-0 z-30 pointer-events-none select-none animate-in fade-in duration-300">
+                      {/* Dim only the edges so the hand stays clear and becomes the focus */}
+                      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_35%,rgba(0,0,0,0.65)_100%)]" />
+
+                      {/* Curing beam sweeping over the nails */}
+                      <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-[#E0246A]/25 to-transparent animate-cure-beam" />
+
+                      {/* Top: stage pill */}
+                      <div className="absolute top-4 inset-x-0 flex justify-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/80 text-white backdrop-blur-md border border-white/10 text-xs font-medium">
                           <span className="w-2 h-2 rounded-full bg-[#E0246A] animate-ping" />
-                          <span>
+                          <span key={synthesisPhase}>
                             {synthesisPhase <= 1 && 'Calibrating skin tone & cuticles'}
                             {synthesisPhase === 2 && `Sculpting ${nails.middle.shape} silhouette`}
                             {synthesisPhase === 3 && 'Infusing lacquer pigment'}
@@ -579,37 +603,36 @@ export function TryOnView({
                         </div>
                       </div>
 
-                      {/* Ambient Warm Salon Light Glow */}
-                      <div className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-[#E0246A]/10 to-transparent animate-cure-beam pointer-events-none" />
-
-                      {/* Bottom Focused Progress Pill */}
-                      <div className="w-full max-w-xs mx-auto space-y-1.5 z-20">
-                        <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden p-0.5 backdrop-blur-xs">
-                          <div
-                            className="h-full bg-gradient-to-r from-[#E0246A] to-[#F43F5E] rounded-full transition-all duration-700 ease-out shadow-xs"
-                            style={{
-                              width:
-                                synthesisPhase <= 1
-                                  ? '25%'
-                                  : synthesisPhase === 2
-                                  ? '55%'
-                                  : synthesisPhase === 3
-                                  ? '82%'
-                                  : '98%',
-                            }}
-                          />
+                      {/* Top-right: the look being applied, so users remember the payoff */}
+                      {effectiveInspoUrl && (
+                        <div className="absolute top-14 right-3 sm:right-4 w-16 sm:w-20 rounded-2xl overflow-hidden border-2 border-white/80 shadow-xl rotate-3">
+                          <img src={effectiveInspoUrl} alt="" className="w-full aspect-square object-cover" />
+                          <div className="bg-white/95 text-[9px] font-semibold text-stone-800 text-center py-0.5 truncate px-1">
+                            {effectiveInspoTitle || 'Your look'}
+                          </div>
                         </div>
+                      )}
 
-                        <div className="flex items-center justify-between text-[11px] text-white/90 font-medium px-1">
-                          <span className="truncate max-w-[200px]">
-                            {effectiveInspoTitle || 'Custom Look'}
-                          </span>
-                          <span className="font-mono text-pink-300">
-                            {synthesisPhase <= 1 && '25%'}
-                            {synthesisPhase === 2 && '55%'}
-                            {synthesisPhase === 3 && '82%'}
-                            {synthesisPhase >= 4 && '98%'}
-                          </span>
+                      {/* Bottom: big percentage + rotating copy + progress */}
+                      <div className="absolute bottom-0 inset-x-0 p-4 sm:p-6 bg-gradient-to-t from-black/70 to-transparent">
+                        <div className="max-w-xs mx-auto text-center space-y-2">
+                          <div className="text-5xl sm:text-6xl font-serif font-light text-white tabular-nums tracking-tight">
+                            {displayPct}
+                            <span className="text-2xl text-pink-300 ml-0.5">%</span>
+                          </div>
+
+                          <p key={waitLineIdx + '-' + synthesisPhase} className="text-xs text-white/90 font-medium h-4 animate-in fade-in slide-in-from-bottom-1 duration-500">
+                            {synthesisPhase >= 4 ? WAIT_LINES[waitLineIdx] : 'Applying your custom look'}
+                          </p>
+
+                          <div className="h-2 w-full bg-white/20 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-[#E0246A] via-[#F43F5E] to-pink-300 rounded-full transition-all duration-700 ease-out relative overflow-hidden"
+                              style={{ width: `${displayPct}%` }}
+                            >
+                              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/50 to-transparent animate-shimmer" />
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </div>
