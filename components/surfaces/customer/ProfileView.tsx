@@ -519,42 +519,6 @@ export function ProfileView({
           </div>
         )}
 
-        {/* Header with Subtitle & Back Button */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-stone-200/80 pb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onBackClick}
-                className="w-8 h-8 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-700 flex items-center justify-center transition active:scale-95 cursor-pointer"
-                title="Back to Studio"
-              >
-                <ArrowLeft className="w-4 h-4" />
-              </button>
-              <h1 className="font-serif text-xl sm:text-2xl font-normal text-stone-900">
-                Try-On History
-              </h1>
-              <span className="px-2.5 py-0.5 rounded-full bg-[#FDF2F8] border border-[#FCE7F3] text-[#E0246A] text-xs font-semibold">
-                {tryOnHistory.length}
-              </span>
-            </div>
-            <p className="text-xs text-stone-500 pl-10">
-              Every manicure you've ever synthesized onto your hand. Review, inspect full resolution, or re-try anytime.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 self-start sm:self-auto pl-10 sm:pl-0">
-            <button
-              type="button"
-              onClick={() => onNavigateTryOn?.()}
-              className="h-9 px-4 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold shadow-xs flex items-center gap-1.5 transition active:scale-95 cursor-pointer"
-            >
-              <Camera className="w-3.5 h-3.5" />
-              <span>New Try-On</span>
-            </button>
-          </div>
-        </div>
-
         {/* History Grid or Empty State */}
         {tryOnHistory.length > 0 ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-3.5 sm:gap-4">
