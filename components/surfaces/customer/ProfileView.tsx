@@ -713,13 +713,13 @@ export function ProfileView({
         <div className="lg:col-span-6 space-y-4 sm:space-y-5">
           {/* Card 1: Client Atelier Identity */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-3.5 min-w-0">
-                {/* Profile Picture */}
-                <div className="relative shrink-0">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-3.5 sm:gap-4 min-w-0">
+                {/* Profile Picture with hover overlay */}
+                <div className="relative shrink-0 group">
                   <div
                     onClick={() => profilePicFileInputRef.current?.click()}
-                    className="w-14 h-14 sm:w-16 sm:h-16 rounded-full overflow-hidden border border-stone-200 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-transform hover:scale-105"
+                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-stone-200/80 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-all duration-200 group-hover:scale-102 group-hover:shadow-md"
                     title={customAvatarPhoto ? 'Click to change photo' : 'Click to upload custom picture'}
                   >
                     <img
@@ -731,6 +731,16 @@ export function ProfileView({
                       }}
                     />
                   </div>
+
+                  {/* Quick Camera Overlay Pill on hover */}
+                  <button
+                    type="button"
+                    onClick={() => profilePicFileInputRef.current?.click()}
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white border border-stone-200 shadow-xs flex items-center justify-center text-stone-600 hover:text-[#E0246A] transition cursor-pointer"
+                    title="Change photo"
+                  >
+                    <Camera className="w-3 h-3" />
+                  </button>
 
                   <input
                     ref={profilePicFileInputRef}
@@ -744,36 +754,35 @@ export function ProfileView({
                   />
                 </div>
 
-                <div className="min-w-0 space-y-0.5">
-                  <div className="flex items-center gap-2 flex-wrap">
+                {/* Identity Info */}
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2">
                     <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
                       {userName}
                     </h2>
-                    <span className="px-2 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shadow-2xs">
+                    <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
                       <Crown className="w-2.5 h-2.5 fill-[#E0246A]" />
                       <span>VIP Tier</span>
                     </span>
                   </div>
-                  <p className="text-xs text-stone-500 font-mono truncate max-w-[170px] xs:max-w-[210px] sm:max-w-none">
+                  <p className="text-xs text-stone-500 font-mono truncate max-w-[200px] sm:max-w-xs">
                     {userEmail}
                   </p>
                 </div>
               </div>
 
-              {/* Top Right Controls */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {/* Randomize Avatar Icon Button */}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
                 <button
                   type="button"
                   onClick={randomizeAvatar}
-                  title="Randomize avatar"
-                  className="w-8.5 h-8.5 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/60 hover:bg-pink-100/70 text-[#E0246A] transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
-                  aria-label="Roll random profile picture"
+                  className="h-8.5 px-3 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/50 hover:bg-pink-50 text-[#E0246A] text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-2xs"
+                  title="Generate a random avatar illustration"
                 >
-                  <Shuffle className="w-4 h-4" />
+                  <Shuffle className="w-3.5 h-3.5" />
+                  <span>Random</span>
                 </button>
 
-                {/* Edit Profile Button */}
                 <button
                   type="button"
                   onClick={() => {
@@ -781,25 +790,17 @@ export function ProfileView({
                     setEmailInput(userEmail);
                     setIsEditProfileOpen(true);
                   }}
-                  className="h-8.5 px-3 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                  className="h-8.5 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
                 >
                   Edit
                 </button>
               </div>
             </div>
 
-            {/* Custom Photo Upload / Reset Bar */}
-            <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 text-xs">
-              <button
-                type="button"
-                onClick={() => profilePicFileInputRef.current?.click()}
-                className="text-[11px] font-medium text-stone-600 hover:text-[#E0246A] transition cursor-pointer inline-flex items-center gap-1.5"
-              >
-                <Camera className="w-3.5 h-3.5 text-stone-400" />
-                <span>{customAvatarPhoto ? 'Change photo' : 'Upload custom photo'}</span>
-              </button>
-
-              {customAvatarPhoto && (
+            {/* Sub-bar if custom photo is uploaded */}
+            {customAvatarPhoto && (
+              <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 text-xs">
+                <span className="text-[11px] text-stone-500">Custom profile photo active</span>
                 <button
                   type="button"
                   onClick={() => {
@@ -813,10 +814,10 @@ export function ProfileView({
                   className="text-[11px] font-medium text-stone-400 hover:text-red-500 transition cursor-pointer inline-flex items-center gap-1"
                 >
                   <Trash2 className="w-3 h-3" />
-                  <span>Remove</span>
+                  <span>Remove custom photo</span>
                 </button>
-              )}
-            </div>
+              </div>
+            )}
           </div>
 
           {/* Card 2: Hand Photo Studio Station */}
@@ -996,113 +997,29 @@ export function ProfileView({
         </div>
 
         {/* ===================================================================
-            RIGHT COLUMN (6 Cols): Silhouette, Saved Moodboard Shortcut & Guarantee
+            RIGHT COLUMN (6 Cols): Saved Moodboard Shortcut & Studio Preferences
             =================================================================== */}
         <div className="lg:col-span-6 space-y-4 sm:space-y-5">
-          {/* Card 1: Signature Nail Silhouette & Studio Preferences */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-stone-900">
-                  Signature Nail Silhouette
-                </h3>
-              </div>
-              <p className="text-[11px] text-stone-500 mt-0.5">
-                Finglora customizes all studio designs to your signature nail shape
-              </p>
-            </div>
-
-            {/* Shape Selector Pills */}
-            <div className="flex items-center gap-2 flex-wrap">
-              {(['almond', 'coffin', 'oval', 'square', 'stiletto'] as NailShape[]).map((shape) => {
-                const active = preferredShape.toLowerCase() === shape.toLowerCase();
-                return (
-                  <button
-                    key={shape}
-                    type="button"
-                    onClick={() => {
-                      if (setPreferredShape) {
-                        setPreferredShape(shape);
-                      }
-                      if (typeof window !== 'undefined') {
-                        try {
-                          localStorage.setItem('finglora_preferred_shape', shape);
-                        } catch {}
-                      }
-                      showToast(`Signature shape set to ${shape.charAt(0).toUpperCase() + shape.slice(1)}`);
-                    }}
-                    className={`h-9 px-3.5 sm:px-4 rounded-xl text-xs font-semibold capitalize transition cursor-pointer active:scale-95 flex items-center gap-1.5 ${
-                      active
-                        ? 'bg-[#E0246A] text-white shadow-xs'
-                        : 'bg-stone-50 hover:bg-stone-100 text-stone-700 border border-stone-200/80'
-                    }`}
-                  >
-                    {active && <Check className="w-3.5 h-3.5" />}
-                    <span>{shape}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Divider */}
-            <div className="border-t border-stone-100 pt-3">
-              {/* Notifications Toggle */}
-              <div className="w-full flex items-center justify-between">
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-8 h-8 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
-                    <Bell className="w-4 h-4" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                      Seasonal Drops & Updates
-                    </span>
-                    <span className="text-[11px] text-stone-500 truncate block">
-                      New style drops, color releases & studio updates
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  type="button"
-                  onClick={() => {
-                    setNotificationsEnabled(!notificationsEnabled);
-                    showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
-                  }}
-                  className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
-                    notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
-                  }`}
-                  aria-label="Toggle notifications"
-                >
-                  <span
-                    className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
-                      notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Card 2: Saved Looks Shortcut to Full Moodboard (Clean, compact, NO photo clutter) */}
+          {/* Card 1: Saved Looks Shortcut to Full Moodboard */}
           <button
             type="button"
             onClick={() => setCurrentView('favorites')}
-            className="w-full p-4 sm:p-4.5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center justify-between transition group cursor-pointer active:scale-[0.99]"
+            className="w-full p-4 sm:p-5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center justify-between transition group cursor-pointer active:scale-[0.99]"
           >
             <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-10 h-10 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+              <div className="w-11 h-11 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
                 <Heart className="w-5 h-5 fill-[#E0246A]" />
               </div>
               <div className="text-left min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight">
+                  <span className="text-sm sm:text-base font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight">
                     Saved Looks
                   </span>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
                     {savedDesigns.length}
                   </span>
                 </div>
-                <p className="text-[11px] text-stone-500 mt-0.5 truncate">
+                <p className="text-xs text-stone-500 mt-0.5 truncate">
                   View your bookmarked styles in the full moodboard
                 </p>
               </div>
@@ -1113,20 +1030,40 @@ export function ProfileView({
             </div>
           </button>
 
-          {/* Card 3: Atelier Security & Privacy Guarantee */}
-          <div className="bg-stone-50/80 rounded-3xl p-4 sm:p-5 border border-stone-200/70 space-y-2.5">
-            <span className="text-[11px] font-semibold text-stone-500 uppercase tracking-wider block">
-              Atelier Guarantee
-            </span>
-            <div className="space-y-2 text-xs text-stone-700">
-              <div className="flex items-center gap-2">
-                <Check className="w-3.5 h-3.5 text-[#E0246A] shrink-0" />
-                <span>Unlimited 1-tap virtual try-ons across all 100 styles</span>
+          {/* Card 2: Notifications Preferences */}
+          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs">
+            <div className="w-full flex items-center justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                  <Bell className="w-4.5 h-4.5" />
+                </div>
+                <div className="text-left min-w-0">
+                  <span className="text-xs font-semibold text-stone-900 block leading-tight">
+                    Seasonal Drops & Updates
+                  </span>
+                  <span className="text-[11px] text-stone-500 truncate block mt-0.5">
+                    New style drops, color releases & studio updates
+                  </span>
+                </div>
               </div>
-              <div className="flex items-center gap-2">
-                <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                <span>Private on-device photo synthesis and encrypted storage</span>
-              </div>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setNotificationsEnabled(!notificationsEnabled);
+                  showToast(!notificationsEnabled ? 'Notifications enabled' : 'Notifications muted');
+                }}
+                className={`w-11 h-6 rounded-full transition-colors relative cursor-pointer focus:outline-none shrink-0 ${
+                  notificationsEnabled ? 'bg-[#E0246A]' : 'bg-stone-200'
+                }`}
+                aria-label="Toggle notifications"
+              >
+                <span
+                  className={`block w-4 h-4 rounded-full bg-white shadow-xs transition-transform transform ${
+                    notificationsEnabled ? 'translate-x-6' : 'translate-x-1'
+                  }`}
+                />
+              </button>
             </div>
           </div>
         </div>
