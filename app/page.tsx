@@ -251,6 +251,14 @@ export default function FingloraApp() {
         const userMetaName = session.user.user_metadata?.full_name || session.user.user_metadata?.name;
         if (userMetaName) setUserName(userMetaName);
 
+        const userAvatar = session.user.user_metadata?.avatar_url || session.user.user_metadata?.picture;
+        if (userAvatar && typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('finglora_avatar_url', userAvatar);
+            window.dispatchEvent(new Event('finglora_avatar_updated'));
+          } catch {}
+        }
+
         const profile = await fetchUserProfile(session.user.id);
         if (profile) {
           if (profile.displayName) setUserName(profile.displayName);

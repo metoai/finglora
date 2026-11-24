@@ -112,6 +112,14 @@ export function ProfileView({
   // Google OAuth / user metadata avatar if available
   const authMetadataAvatar = supabaseUser?.user_metadata?.avatar_url || supabaseUser?.user_metadata?.picture || null;
 
+  // Stored avatar URL (custom upload or Google OAuth or random seed)
+  const [storedAvatarUrl, setStoredAvatarUrl] = useState<string | null>(() => {
+    if (typeof window !== 'undefined') {
+      return localStorage.getItem('finglora_custom_avatar_photo') || localStorage.getItem('finglora_avatar_url') || null;
+    }
+    return null;
+  });
+
   const [avatarSeed, setAvatarSeed] = useState(() => {
     if (typeof window !== 'undefined') {
       const saved = localStorage.getItem('finglora_avatar_seed');
@@ -127,11 +135,29 @@ export function ProfileView({
     return null;
   });
 
+  // Keep stored avatar in sync when Google session or metadata changes
+  useEffect(() => {
+    if (authMetadataAvatar) {
+      if (typeof window !== 'undefined' && !localStorage.getItem('finglora_custom_avatar_photo')) {
+        localStorage.setItem('finglora_avatar_url', authMetadataAvatar);
+        setStoredAvatarUrl(authMetadataAvatar);
+      }
+    }
+  }, [authMetadataAvatar]);
+
+  const [imageError, setImageError] = useState(false);
+
   const avatarUrl = useMemo(() => {
     if (customAvatarPhoto) return customAvatarPhoto;
+    if (storedAvatarUrl) return storedAvatarUrl;
     if (authMetadataAvatar) return authMetadataAvatar;
     return `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(avatarSeed)}&backgroundColor=fde8ef`;
-  }, [avatarSeed, customAvatarPhoto, authMetadataAvatar]);
+  }, [avatarSeed, customAvatarPhoto, authMetadataAvatar, storedAvatarUrl]);
+
+  // Reset imageError when avatarUrl changes
+  useEffect(() => {
+    setImageError(false);
+  }, [avatarUrl]);
 
   const profilePicFileInputRef = useRef<HTMLInputElement>(null);
 
@@ -139,19 +165,22 @@ export function ProfileView({
     const seeds = [
       'Vivian', 'Elise', 'Chloe', 'Amelie', 'Camille', 'Juliette',
       'Margaux', 'Giselle', 'Helene', 'Ines', 'Adele', 'Colette',
-      'Claire', 'Sasha', 'Nadia', 'Zoe', 'Leona', 'Celeste', 'Flora'
+      'Claire', 'Sasha', 'Nadia', 'Zoe', 'Leona', 'Celeste', 'Flora',
+      'Audrey', 'Maya', 'Sophie', 'Isla', 'Mila', 'Luna', 'Ruby'
     ];
-    const next = seeds[Math.floor(Math.random() * seeds.length)] + '-' + Math.floor(Math.random() * 999);
+    const next = seeds[Math.floor(Math.random() * seeds.length)] + '-' + Math.floor(Math.random() * 9999);
     const newUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${encodeURIComponent(next)}&backgroundColor=fde8ef`;
     setAvatarSeed(next);
     setCustomAvatarPhoto(null);
+    setStoredAvatarUrl(newUrl);
+    setImageError(false);
     if (typeof window !== 'undefined') {
       localStorage.setItem('finglora_avatar_seed', next);
       localStorage.removeItem('finglora_custom_avatar_photo');
       localStorage.setItem('finglora_avatar_url', newUrl);
       window.dispatchEvent(new Event('finglora_avatar_updated'));
     }
-    showToast('New random profile pic rolled ✿');
+    showToast('New aesthetic avatar rolled ✿');
   };
 
   const handleCustomAvatarSelected = (file: File) => {
@@ -745,17 +774,22 @@ export function ProfileView({
                 <div className="relative shrink-0 group">
                   <div
                     onClick={() => profilePicFileInputRef.current?.click()}
-                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-stone-200/80 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-all duration-200 group-hover:scale-102 group-hover:shadow-md"
+                    className="w-16 h-16 sm:w-18 sm:h-18 rounded-2xl overflow-hidden border border-stone-200/80 bg-[#FDF2F8] shadow-xs flex items-center justify-center cursor-pointer transition-all duration-200 group-hover:scale-102 group-hover:shadow-md relative"
                     title={customAvatarPhoto ? 'Click to change photo' : 'Click to upload custom picture'}
                   >
-                    <img
-                      src={avatarUrl}
-                      alt={userName}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLElement).style.display = 'none';
-                      }}
-                    />
+                    {!imageError && avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt={userName}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-tr from-[#E0246A] to-rose-400 text-white font-serif font-bold text-lg sm:text-xl">
+                        {userInitials}
+                      </div>
+                    )}
                   </div>
 
                   {/* Quick Camera Overlay Pill on hover */}

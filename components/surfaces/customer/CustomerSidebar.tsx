@@ -222,10 +222,9 @@ export function CustomerSidebar({
             <img
               src={sidebarAvatarUrl}
               alt={userName}
+              referrerPolicy="no-referrer"
               className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLElement).style.display = 'none';
-              }}
+              onError={() => setSidebarAvatarUrl(null)}
             />
           ) : (
             <span className="text-stone-700">{userInitials}</span>
