@@ -900,7 +900,7 @@ export function ProfileView({
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-stone-900 block leading-tight">
-                    {isUserVip ? 'VIP Atelier (Unlimited)' : isUserPro ? 'Pro Atelier Plan' : 'Free Atelier Plan'}
+                    {isUserVip ? 'VIP Member (Unlimited)' : isUserPro ? 'Pro Member' : 'Free Plan'}
                   </span>
                   <span className="text-[11px] text-stone-500">
                     {isUserVip || isUserPro ? 'Unlimited high-definition virtual try-ons' : `${creditStatus.credits} try-on credits remaining`}
@@ -1536,7 +1536,7 @@ export function ProfileView({
         onClose={() => setIsPaywallOpen(false)}
         onSuccess={() => {
           setIsPaywallOpen(false);
-          showToast('Pro Atelier Access activated! Enjoy unlimited try-ons.');
+          showToast('Pro Access activated! Enjoy unlimited try-ons.');
         }}
       />
     </div>

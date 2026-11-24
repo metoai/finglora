@@ -631,7 +631,7 @@ export default function FingloraApp() {
       setUserName('VIP Creator');
       showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
     } else {
-      showToast(`Welcome back! Opening your personal atelier...`);
+      showToast(`Welcome back! Opening your studio...`);
     }
     navigateCustomer('home');
   };

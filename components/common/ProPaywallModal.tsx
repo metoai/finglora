@@ -104,7 +104,7 @@ export function ProPaywallModal({
 
         <div className="space-y-1.5">
           <span className="px-3 py-1 rounded-full bg-[#E0246A]/10 text-[#E0246A] text-[11px] font-semibold tracking-wider uppercase">
-            Finglora Pro Atelier
+            Finglora Pro
           </span>
           <h2 className="font-serif text-2xl sm:text-3xl font-medium text-stone-900 tracking-tight">
             Unlimited Photorealistic Try-Ons

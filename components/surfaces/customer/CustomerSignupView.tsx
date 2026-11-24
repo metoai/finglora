@@ -108,7 +108,7 @@ export function CustomerSignupView({
           <p className="font-sans text-xs text-stone-500">
             {mode === 'signup'
               ? 'Get 10 complimentary virtual try-on credits to style any manicure on your hand.'
-              : 'Sign in to access your saved manicures and personal atelier.'}
+              : 'Sign in to access your saved manicures and custom sets.'}
           </p>
           {mode === 'signup' && (
             <div className="pt-1">

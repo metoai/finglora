@@ -12,13 +12,13 @@ export function getResendClient(): Resend | null {
 }
 
 export const DEFAULT_FROM_EMAIL =
-  process.env.RESEND_FROM_EMAIL || 'Finglora Atelier <onboarding@resend.dev>';
+  process.env.RESEND_FROM_EMAIL || 'Finglora <onboarding@resend.dev>';
 
 /**
  * Luxury Editorial Email Template for Finglora Welcome
  */
-export function getWelcomeEmailHtml(name: string = 'Friend') {
-  const cleanName = name || 'Friend';
+export function getWelcomeEmailHtml(name: string = 'there') {
+  const cleanName = (name || '').trim() || 'there';
 
   return `
 <!DOCTYPE html>
@@ -28,80 +28,74 @@ export function getWelcomeEmailHtml(name: string = 'Friend') {
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Welcome to Finglora</title>
 </head>
-<body style="margin:0;padding:0;background-color:#FAF9F6;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;color:#1c1917;-webkit-font-smoothing:antialiased;">
-  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color:#FAF9F6;padding:32px 16px;">
+<body style="margin: 0; padding: 0; background-color: #fafafa; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; color: #171717; line-height: 1.6;">
+  <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="background-color: #fafafa; padding: 40px 16px;">
     <tr>
       <td align="center">
-        <table role="presentation" width="100%" style="max-width:480px;background:#ffffff;border-radius:24px;border:1px solid #f2e8ec;box-shadow:0 8px 24px rgba(0,0,0,0.03);overflow:hidden;" cellspacing="0" cellpadding="0">
+        <table role="presentation" width="100%" style="max-width: 520px; background: #ffffff; border-radius: 12px; border: 1px solid #e5e5e5; overflow: hidden; text-align: left;" cellspacing="0" cellpadding="0">
           
-          <!-- Logo & Header -->
+          <!-- Header: Clean Wordmark -->
           <tr>
-            <td align="center" style="padding:36px 32px 20px;text-align:center;">
-              <!-- Finglora Luxury Nail Emblem Logo -->
-              <table role="presentation" cellspacing="0" cellpadding="0" style="margin:0 auto 14px;">
-                <tr>
-                  <td align="center" style="width:52px;height:52px;background:#FFF0F5;border:1px solid #FCE7F3;border-radius:16px;">
-                    <svg width="28" height="28" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                      <path d="M12 2C9.5 2 7.5 4 7.5 6.5V14C7.5 17.5 9.5 20.5 12 21.5C14.5 20.5 16.5 17.5 16.5 14V6.5C16.5 4 14.5 2 12 2Z" fill="#E0246A"/>
-                      <path d="M10 5.5C10 4.5 10.8 3.8 12 3.8C12.4 3.8 12.8 4 13.1 4.3C12.3 4.8 11.2 5.8 10.8 7.2L10 5.5Z" fill="#FFFFFF" opacity="0.6"/>
-                      <circle cx="12" cy="18" r="1.5" fill="#FFFFFF" opacity="0.8"/>
-                    </svg>
-                  </td>
-                </tr>
-              </table>
-              <div style="font-family:Georgia,serif;font-size:24px;font-weight:600;letter-spacing:0.08em;color:#1c1917;margin:0 0 4px;">FINGLORA</div>
-              <div style="font-size:11px;font-weight:600;letter-spacing:0.18em;text-transform:uppercase;color:#E0246A;">Virtual Nail Studio</div>
+            <td style="padding: 32px 36px 20px; border-bottom: 1px solid #f0f0f0;">
+              <span style="font-size: 20px; font-weight: 700; letter-spacing: 0.05em; color: #E0246A; text-decoration: none;">FINGLORA</span>
             </td>
           </tr>
 
-          <!-- Welcome Body -->
+          <!-- Main Content -->
           <tr>
-            <td style="padding:10px 32px 32px;line-height:1.6;">
-              <h1 style="font-family:Georgia,serif;font-size:20px;font-weight:600;color:#1c1917;margin:0 0 12px;text-align:center;">
-                Welcome, ${cleanName}!
-              </h1>
+            <td style="padding: 32px 36px 36px;">
+              <p style="font-size: 16px; font-weight: 600; color: #171717; margin: 0 0 16px;">
+                Hi ${cleanName},
+              </p>
               
-              <p style="font-size:14px;color:#57534e;margin:0 0 20px;text-align:center;line-height:1.6;">
-                Your account is ready with <strong>10 Free Try-On Credits</strong>. You can now try on any manicure style directly on your own hand photo in 1 tap.
+              <p style="font-size: 15px; color: #404040; margin: 0 0 16px;">
+                Thanks for joining Finglora. Your account is active and you have <strong>10 complimentary virtual try-on credits</strong> ready to use.
               </p>
 
-              <!-- 3 Simple Highlights -->
-              <table role="presentation" width="100%" style="background:#FAF9F6;border-radius:16px;padding:16px;margin:0 0 24px;border:1px solid #f5ede8;" cellspacing="0" cellpadding="0">
+              <p style="font-size: 15px; color: #404040; margin: 0 0 20px;">
+                Here is what you can do right now:
+              </p>
+
+              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="margin: 0 0 28px;">
                 <tr>
-                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
-                    ✨ <strong>10 Free Try-Ons:</strong> Instant preview on your hand photo
+                  <td style="padding: 10px 0; border-top: 1px solid #f5f5f5; font-size: 14px; color: #404040;">
+                    <strong style="color: #171717;">Virtual Try-On</strong> &mdash; Upload a photo of your hand to test any shape, length, and polish in real time.
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
-                    📸 <strong>Feed to Hand:</strong> Extract nail art from Instagram or Pinterest
+                  <td style="padding: 10px 0; border-top: 1px solid #f5f5f5; font-size: 14px; color: #404040;">
+                    <strong style="color: #171717;">Inspiration Extraction</strong> &mdash; Upload any Instagram or Pinterest nail photo to isolate and replicate the design.
                   </td>
                 </tr>
                 <tr>
-                  <td style="padding:6px 0;font-size:13px;color:#44403c;">
-                    💅 <strong>Save Your Favorites:</strong> Bookmarks ready for your next salon appointment
+                  <td style="padding: 10px 0; border-top: 1px solid #f5f5f5; border-bottom: 1px solid #f5f5f5; font-size: 14px; color: #404040;">
+                    <strong style="color: #171717;">Saved Designs</strong> &mdash; Keep your preferred manicures organized for your next salon visit.
                   </td>
                 </tr>
               </table>
 
               <!-- Button CTA -->
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0">
+              <table role="presentation" cellspacing="0" cellpadding="0" style="margin: 0 0 24px;">
                 <tr>
-                  <td align="center" style="padding:6px 0 16px;">
-                    <a href="https://finglora.vercel.app" style="display:inline-block;background-color:#E0246A;color:#FFFFFF;text-decoration:none;font-size:14px;font-weight:600;padding:12px 28px;border-radius:12px;box-shadow:0 4px 12px rgba(224,36,106,0.25);">
-                      Open Finglora Studio &rarr;
+                  <td align="left">
+                    <a href="https://finglora.vercel.app" style="display: inline-block; background-color: #E0246A; color: #ffffff; text-decoration: none; font-size: 14px; font-weight: 600; padding: 12px 24px; border-radius: 8px;">
+                      Open Finglora
                     </a>
                   </td>
                 </tr>
               </table>
+
+              <p style="font-size: 14px; color: #737373; margin: 0;">
+                If you have any questions or feedback, simply reply directly to this email.
+              </p>
             </td>
           </tr>
 
-          <!-- Clean Footer -->
+          <!-- Footer -->
           <tr>
-            <td align="center" style="padding:18px 24px;background:#FAF9F6;border-top:1px solid #f5ede8;font-size:11px;color:#a8a29e;text-align:center;">
-              &copy; ${new Date().getFullYear()} Finglora • Virtual Manicure Studio<br>
-              Made for effortless, beautiful nails.
+            <td style="padding: 20px 36px; background: #fafafa; border-top: 1px solid #f0f0f0; font-size: 12px; color: #888888;">
+              Finglora &bull; Virtual Manicure Studio<br>
+              <a href="https://finglora.vercel.app" style="color: #888888; text-decoration: underline;">finglora.vercel.app</a>
             </td>
           </tr>
 
