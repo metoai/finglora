@@ -484,8 +484,8 @@ export function TryOnView({
                 : 'bg-stone-100 aspect-[3/4] max-h-[560px] lg:max-h-[620px]'
             }`}>
 
-              {/* Viewport Content: Side-by-Side if staged and not yet synthesized, otherwise single hand */}
-              {hasActiveInspo && !synthesizedHandUrl ? (
+              {/* Viewport Content: When applying, focus strictly on user's single hand. Otherwise show side-by-side if inspo staged */}
+              {hasActiveInspo && !synthesizedHandUrl && !isSynthesizingHand ? (
                 <div className="relative w-full h-full grid grid-cols-2 gap-1.5 sm:gap-2.5">
                   {/* Left Side: Your Hand */}
                   <div className="relative h-full rounded-xl sm:rounded-2xl overflow-hidden bg-white border border-stone-200/80 shadow-2xs flex items-center justify-center group/hand">
@@ -502,7 +502,6 @@ export function TryOnView({
                         <span>{customTryOnHandUrl ? 'Your Hand' : 'Studio Hand'}</span>
                       </span>
                     </div>
-
                   </div>
 
                   {/* Right Side: Picked Inspo */}
@@ -524,20 +523,6 @@ export function TryOnView({
                       </span>
                     </div>
 
-                    {/* Extracted Color Swatches at bottom left */}
-                    <div className="absolute bottom-2.5 left-2.5 z-10 hidden sm:flex items-center gap-1 px-2 py-1 rounded-full bg-white/95 backdrop-blur-md border border-stone-200/90 shadow-xs">
-                      <span
-                        className="w-2.5 h-2.5 rounded-full border border-stone-300 shadow-2xs"
-                        style={{ backgroundColor: nails.middle.baseColor || '#F5ECE3' }}
-                        title="Base Lacquer"
-                      />
-                      <span
-                        className="w-2.5 h-2.5 rounded-full border border-stone-300 shadow-2xs"
-                        style={{ backgroundColor: nails.middle.accentColor || '#D4AF37' }}
-                        title="Accent Lacquer"
-                      />
-                    </div>
-
                     {/* Change Inspo (Shuffle) Button */}
                     <div className="absolute bottom-2 inset-x-2 sm:bottom-2.5 sm:inset-x-2.5 flex items-center justify-center z-10">
                       <button
@@ -552,141 +537,83 @@ export function TryOnView({
                     </div>
                   </div>
 
-                  {/* Center Floating "Apply" Badge / Action Button (when not synthesizing) */}
-                  {!isSynthesizingHand && (
-                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
-                      <button
-                        type="button"
-                        onClick={handleSynthesizeHand}
-                        className="group pointer-events-auto px-3.5 sm:px-5 py-1.5 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-2 sm:ring-4 ring-white shadow-[0_4px_16px_rgba(224,36,106,0.35)] hover:shadow-[0_6px_24px_rgba(224,36,106,0.5)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1 sm:gap-1.5 hover:scale-105"
-                        title="Apply manicure inspiration to your hand"
-                      >
-                        <span>Apply</span>
-                        <ArrowRight className="w-3 h-3 sm:w-3.5 sm:h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
-                      </button>
-                    </div>
-                  )}
+                  {/* Center Floating "Apply" Badge / Action Button */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
+                    <button
+                      type="button"
+                      onClick={handleSynthesizeHand}
+                      className="group pointer-events-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-4 ring-white shadow-[0_4px_20px_rgba(224,36,106,0.4)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1.5 hover:scale-105"
+                      title="Apply manicure inspiration to your hand"
+                    >
+                      <span>Apply</span>
+                      <ArrowRight className="w-3.5 h-3.5 transition-transform duration-200 group-hover:translate-x-0.5" strokeWidth={2.5} />
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  {/* Single Hand Image (During application or when viewing result) */}
+                  <img
+                    src={isSynthesizingHand ? handSourceImageUrl : displayedHandImage}
+                    alt="Virtual Try-On Viewport"
+                    onClick={() => setIsZoomOpen(true)}
+                    className="w-full h-full object-cover transition-transform duration-500 cursor-pointer"
+                    title="Click to zoom in"
+                  />
 
                   {/* ============================================================== */}
-                  {/* PSYCHOLOGICAL SALON ATELIER TRANSFORMATION (ENGAGING & LUXURY) */}
+                  {/* CLEAN ATELIER SALON APPLYING OVERLAY (NO DUPLICATES, NO SLOP)  */}
                   {/* ============================================================== */}
                   {isSynthesizingHand && (
-                    <div className="absolute inset-0 z-30 pointer-events-none overflow-hidden select-none">
-                      {/* 1. Dynamic Inspo Bleed / Polish Sweep on the Hand */}
-                      <div className="absolute inset-0 overflow-hidden">
-                        <div
-                          className="absolute inset-0 bg-cover bg-center transition-all duration-1000 ease-in-out opacity-45 mix-blend-color"
-                          style={{
-                            backgroundImage: `url(${effectiveInspoUrl || '/assets/designs/glazed_pearl_almond_01.webp'})`,
-                            clipPath:
-                              synthesisPhase === 1
-                                ? 'polygon(0 0, 30% 0, 15% 100%, 0% 100%)'
-                                : synthesisPhase === 2
-                                ? 'polygon(0 0, 60% 0, 45% 100%, 0% 100%)'
-                                : synthesisPhase === 3
-                                ? 'polygon(0 0, 85% 0, 75% 100%, 0% 100%)'
-                                : 'polygon(0 0, 100% 0, 100% 100%, 0% 100%)',
-                          }}
-                        />
-
-                        {/* Liquid Polish Infusion Seam */}
-                        <div
-                          className="absolute top-0 bottom-0 w-1 bg-gradient-to-b from-white/90 via-[#E0246A] to-white/90 shadow-[0_0_20px_#E0246A] transition-all duration-1000 ease-out"
-                          style={{
-                            left:
-                              synthesisPhase === 1
-                                ? '22%'
-                                : synthesisPhase === 2
-                                ? '52%'
-                                : synthesisPhase === 3
-                                ? '80%'
-                                : '98%',
-                          }}
-                        />
-                      </div>
-
-                      {/* 2. Soft Salon LED Curing Light Beam */}
-                      <div className="absolute inset-x-0 h-28 bg-gradient-to-b from-transparent via-[#E0246A]/15 to-transparent animate-cure-beam pointer-events-none blur-sm" />
-
-                      {/* 3. Top Floating Atelier Stage Pill */}
-                      <div className="absolute top-3.5 inset-x-0 flex justify-center z-20">
-                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/90 text-white backdrop-blur-md shadow-lg border border-white/10">
-                          {/* Active Color Lacquer Swatch */}
-                          <span
-                            className="w-2.5 h-2.5 rounded-full ring-1 ring-white/60 shadow-xs animate-ping"
-                            style={{ backgroundColor: nails.middle.accentColor || '#E0246A' }}
-                          />
-                          <span className="text-xs font-medium tracking-tight">
-                            {synthesisPhase <= 1 && '1/4 Calibrating Nail Apex & Cuticles'}
-                            {synthesisPhase === 2 && `2/4 Sculpting ${nails.middle.shape} Architecture`}
-                            {synthesisPhase === 3 && `3/4 Infusing ${effectiveInspoTitle || 'Lacquer'} Pigment`}
-                            {synthesisPhase >= 4 && '4/4 LED High-Gloss Clearcoat Curing'}
+                    <div className="absolute inset-0 z-30 pointer-events-none flex flex-col justify-between p-4 sm:p-5 bg-black/35 backdrop-blur-[1px] transition-all duration-300 select-none animate-in fade-in">
+                      {/* Top Quiet Stage Pill */}
+                      <div className="flex justify-center">
+                        <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-stone-900/90 text-white backdrop-blur-md shadow-lg border border-white/10 text-xs font-medium">
+                          <span className="w-2 h-2 rounded-full bg-[#E0246A] animate-ping" />
+                          <span>
+                            {synthesisPhase <= 1 && 'Calibrating skin tone & cuticles'}
+                            {synthesisPhase === 2 && `Sculpting ${nails.middle.shape} silhouette`}
+                            {synthesisPhase === 3 && 'Infusing lacquer pigment'}
+                            {synthesisPhase >= 4 && 'LED gel clearcoat curing'}
                           </span>
                         </div>
                       </div>
 
-                      {/* 4. Bottom Tactile Salon Craftsmanship Card */}
-                      <div className="absolute bottom-3.5 inset-x-3.5 sm:inset-x-8 flex justify-center z-20">
-                        <div className="w-full max-w-sm bg-white/95 backdrop-blur-md p-2.5 sm:p-3 rounded-2xl border border-stone-200/90 shadow-[0_12px_32px_rgba(24,18,22,0.14)] space-y-2">
-                          <div className="flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <img
-                                src={effectiveInspoUrl || '/assets/designs/glazed_pearl_almond_01.webp'}
-                                alt="Inspo"
-                                className="w-6 h-6 rounded-lg object-cover border border-stone-200 shrink-0"
-                              />
-                              <span className="font-semibold text-stone-900 truncate">
-                                {effectiveInspoTitle || 'Manicure Design'}
-                              </span>
-                            </div>
+                      {/* Ambient Warm Salon Light Glow */}
+                      <div className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-[#E0246A]/10 to-transparent animate-cure-beam pointer-events-none" />
 
-                            <span className="font-mono text-[#E0246A] text-xs font-semibold">
-                              {synthesisPhase <= 1 && '25%'}
-                              {synthesisPhase === 2 && '55%'}
-                              {synthesisPhase === 3 && '82%'}
-                              {synthesisPhase >= 4 && '98%'}
-                            </span>
-                          </div>
+                      {/* Bottom Focused Progress Pill */}
+                      <div className="w-full max-w-xs mx-auto space-y-1.5 z-20">
+                        <div className="h-1.5 w-full bg-white/20 rounded-full overflow-hidden p-0.5 backdrop-blur-xs">
+                          <div
+                            className="h-full bg-gradient-to-r from-[#E0246A] to-[#F43F5E] rounded-full transition-all duration-700 ease-out shadow-xs"
+                            style={{
+                              width:
+                                synthesisPhase <= 1
+                                  ? '25%'
+                                  : synthesisPhase === 2
+                                  ? '55%'
+                                  : synthesisPhase === 3
+                                  ? '82%'
+                                  : '98%',
+                            }}
+                          />
+                        </div>
 
-                          {/* Fluid Progress Bar */}
-                          <div className="h-1.5 w-full bg-stone-100 rounded-full overflow-hidden p-0.5">
-                            <div
-                              className="h-full bg-gradient-to-r from-[#E0246A] via-[#F43F5E] to-[#E0246A] rounded-full transition-all duration-700 ease-out shadow-xs"
-                              style={{
-                                width:
-                                  synthesisPhase <= 1
-                                    ? '25%'
-                                    : synthesisPhase === 2
-                                    ? '55%'
-                                    : synthesisPhase === 3
-                                    ? '82%'
-                                    : '98%',
-                              }}
-                            />
-                          </div>
-
-                          <div className="flex items-center justify-between text-[10px] text-stone-500 font-medium pt-0.5">
-                            <span className="capitalize">{nails.middle.shape} silhouette</span>
-                            <span>•</span>
-                            <span className="capitalize">{nails.middle.finish} finish</span>
-                            <span>•</span>
-                            <span>5-finger match</span>
-                          </div>
+                        <div className="flex items-center justify-between text-[11px] text-white/90 font-medium px-1">
+                          <span className="truncate max-w-[200px]">
+                            {effectiveInspoTitle || 'Custom Look'}
+                          </span>
+                          <span className="font-mono text-pink-300">
+                            {synthesisPhase <= 1 && '25%'}
+                            {synthesisPhase === 2 && '55%'}
+                            {synthesisPhase === 3 && '82%'}
+                            {synthesisPhase >= 4 && '98%'}
+                          </span>
                         </div>
                       </div>
                     </div>
                   )}
-                </div>
-              ) : (
-                <>
-                  {/* Single Hand Image */}
-                  <img
-                    src={displayedHandImage}
-                    alt="Virtual Try-On Viewport"
-                    onClick={() => setIsZoomOpen(true)}
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-102 cursor-pointer"
-                    title="Click to zoom in"
-                  />
 
                   {/* Floating Top Badge */}
                   <div className="absolute top-3.5 left-3.5 z-20">
@@ -695,6 +622,8 @@ export function TryOnView({
                       <span>
                         {synthesizedHandUrl && tryOnView === 'after'
                           ? (effectiveInspoTitle || 'Applied Look')
+                          : isSynthesizingHand
+                          ? 'Atelier Curing in Progress...'
                           : customTryOnHandUrl
                           ? 'Your Hand · Ready for Inspo'
                           : 'Studio Hand · Ready'}
@@ -703,7 +632,7 @@ export function TryOnView({
                   </div>
 
                   {/* Floating Compare Button on bottom - only when a manicure is synthesized */}
-                  {synthesizedHandUrl && (
+                  {synthesizedHandUrl && !isSynthesizingHand && (
                     <div className="absolute bottom-3.5 inset-x-0 flex justify-center z-20 pointer-events-none">
                       <button
                         type="button"
