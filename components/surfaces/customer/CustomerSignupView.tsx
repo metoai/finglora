@@ -59,6 +59,13 @@ export function CustomerSignupView({
         const cleanEmail = email.trim();
         await signUpWithEmail(cleanEmail, password, cleanName);
 
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('finglora_user_email', cleanEmail);
+            localStorage.setItem('finglora_user_display_name', cleanName);
+          } catch {}
+        }
+
         // Send welcome email via Resend in background
         if (cleanEmail) {
           fetch('/api/email/welcome', {
@@ -73,6 +80,11 @@ export function CustomerSignupView({
       } else {
         const cleanEmail = email.trim();
         await signInWithEmail(cleanEmail, password);
+        if (typeof window !== 'undefined') {
+          try {
+            localStorage.setItem('finglora_user_email', cleanEmail);
+          } catch {}
+        }
         setIsSubmitting(false);
         if (onSignInSuccess) onSignInSuccess();
         else onSubmit();

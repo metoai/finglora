@@ -563,6 +563,12 @@ export default function FingloraApp() {
   const handleAuthSignUpSuccess = ({ name, email }: { name: string; email: string }) => {
     const chosenName = name || 'Elena';
     setUserName(chosenName);
+    if (typeof window !== 'undefined' && email) {
+      try {
+        localStorage.setItem('finglora_user_email', email);
+        localStorage.setItem('finglora_user_display_name', chosenName);
+      } catch {}
+    }
     if (isVipEmail(email)) {
       activateProSubscription();
       showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
@@ -570,17 +576,22 @@ export default function FingloraApp() {
       grantSignupCreditBonus();
       showToast(`Account created, ${chosenName}! +1 Free Try-On Credit added.`);
     }
-    navigateCustomer('tryon');
+    navigateCustomer('home');
   };
 
   const handleAuthSignInSuccess = (user?: { email?: string }) => {
     const email = user?.email || (typeof window !== 'undefined' ? localStorage.getItem('finglora_user_email') : '');
+    if (email && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('finglora_user_email', email);
+      } catch {}
+    }
     if (email && isVipEmail(email)) {
       activateProSubscription();
       setUserName('VIP Creator');
       showToast(`Welcome VIP Creator! Unlimited Pro Studio & Try-On Access Active`);
     } else {
-      showToast(`Welcome back, ${userName}! Opening your dashboard...`);
+      showToast(`Welcome back! Opening your personal atelier...`);
     }
     navigateCustomer('home');
   };
