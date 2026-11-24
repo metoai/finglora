@@ -88,7 +88,7 @@ export function CustomerSidebar({
   return (
     <aside
       className="hidden md:flex w-14 sm:w-16 flex-col fixed inset-y-0 left-0 bg-white border-r border-stone-200/60 py-3.5 justify-between items-center z-40 select-none"
-      aria-label="Atelier Navigation"
+      aria-label="Studio Navigation"
     >
       {/* Top: Brand Logo */}
       <div className="flex flex-col items-center">
@@ -102,7 +102,7 @@ export function CustomerSidebar({
         </button>
       </div>
 
-      {/* Center: Reverted Finglora Atelier Icons (Home, Explore, Try On, AI Studio, Saved) */}
+      {/* Center: Reverted Finglora Studio Icons (Home, Explore, Try On, AI Studio, Saved) */}
       <nav className="flex flex-col items-center gap-2">
         {/* Home */}
         <button

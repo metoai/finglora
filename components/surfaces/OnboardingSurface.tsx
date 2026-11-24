@@ -419,7 +419,7 @@ export function OnboardingSurface({
 
       {/* Footer Info */}
       <footer className="w-full max-w-4xl mx-auto text-center py-2 text-[11px] text-stone-400">
-        Finglora Nail Atelier · Zero salon regrets
+        Finglora · Zero salon regrets
       </footer>
     </div>
   );

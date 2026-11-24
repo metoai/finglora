@@ -26,7 +26,7 @@ export function SocialShareModal({
 
   const resolvedUrl =
     shareUrl || (typeof window !== 'undefined' ? window.location.href : 'https://finglora.com');
-  const shareText = `Check out this bespoke manicure created with Finglora Atelier (finglora.com)`;
+  const shareText = `Check out this bespoke manicure created with Finglora (finglora.com)`;
 
   const handleCopyLink = async () => {
     try {

@@ -215,7 +215,7 @@ export function NailMascot({
   if (variant === 'callout') {
     return (
       <aside
-        aria-label="Flora Atelier Callout"
+        aria-label="Flora Studio Callout"
         className={`relative bg-[#FFFFFF] border border-[#18181B]/08 rounded-2xl p-4 sm:p-5 shadow-[0_2px_12px_-2px_rgba(31,26,28,0.04)] flex items-start gap-4 transition-all hover:border-[#18181B]/14 ${className}`}
       >
         <div className="relative w-12 h-12 rounded-xl overflow-hidden border border-[#C59B27]/40 ring-2 ring-[#FAFAFA] shrink-0">
@@ -252,7 +252,7 @@ export function NailMascot({
   if (variant === 'floating') {
     return (
       <aside
-        aria-label="Flora Atelier Muse"
+        aria-label="Flora Studio Muse"
         className={`fixed bottom-6 right-6 z-50 flex items-center gap-3 p-2 pr-4 bg-[#FFFFFF] border border-[#18181B]/10 rounded-full shadow-[0_8px_24px_-4px_rgba(31,26,28,0.12)] transition-all duration-200 hover:-translate-y-0.5 ${className}`}
       >
         <div className="relative w-10 h-10 rounded-full overflow-hidden border border-[#C59B27]/40 ring-2 ring-[#FAFAFA] shrink-0">
@@ -281,7 +281,7 @@ export function NailMascot({
   if (variant === 'banner') {
     return (
       <aside
-        aria-label="Flora Atelier Muse"
+        aria-label="Flora Studio Muse"
         className={`w-full bg-[#FAFAFA] border border-[#18181B]/08 rounded-2xl p-4 sm:p-5 flex items-center justify-between gap-4 transition-all ${className}`}
       >
         <div className="flex items-center gap-3.5">
@@ -324,7 +324,7 @@ export function NailMascot({
   // DEFAULT EDITORIAL CARD & SPEECH BUBBLE
   return (
     <aside
-      aria-label="Flora Atelier Muse"
+      aria-label="Flora Studio Muse"
       className={`relative bg-[#FFFFFF] border border-[#18181B]/08 rounded-2xl p-5 sm:p-6 shadow-[0_4px_20px_-2px_rgba(31,26,28,0.05)] transition-all duration-200 hover:shadow-[0_8px_28px_-4px_rgba(31,26,28,0.08)] ${className}`}
     >
       <div className="flex items-start gap-4">
@@ -332,7 +332,7 @@ export function NailMascot({
         <button
           type="button"
           onClick={() => setShowSecondary(!showSecondary)}
-          title="Click to toggle alternate atelier advice"
+          title="Click to toggle alternate studio advice"
           className="group relative w-14 h-14 sm:w-16 sm:h-16 rounded-2xl overflow-hidden border border-[#C59B27]/45 ring-4 ring-[#FAFAFA] shrink-0 transition-transform duration-200 hover:scale-[1.03] cursor-pointer"
         >
           <Image

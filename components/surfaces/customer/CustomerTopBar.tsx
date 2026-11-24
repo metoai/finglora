@@ -107,7 +107,7 @@ export function CustomerTopBar({
     description: string;
     time: string;
     read: boolean;
-    type: 'silhouette' | 'trend' | 'hand' | 'atelier';
+    type: 'silhouette' | 'trend' | 'hand' | 'studio';
     route?: CustomerRoute;
   }
 
@@ -540,7 +540,7 @@ export function CustomerTopBar({
                       {item.type === 'silhouette' && <Hand className="w-3.5 h-3.5" />}
                       {item.type === 'trend' && <Compass className="w-3.5 h-3.5" />}
                       {item.type === 'hand' && <Check className="w-3.5 h-3.5" />}
-                      {item.type === 'atelier' && <Palette className="w-3.5 h-3.5" />}
+                      {item.type === 'studio' && <Palette className="w-3.5 h-3.5" />}
                     </div>
 
                     <div className="flex-1 min-w-0">

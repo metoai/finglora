@@ -39,7 +39,7 @@ const FEATURED_PAIRS: TryOnPair[] = [
   {
     id: 'blush-french',
     title: 'Blush Micro French',
-    category: 'French Atelier',
+    category: 'French Studio',
     shape: 'Almond',
     finish: 'Glossy Sheer',
     beforeUrl: BARE_HAND_URL,
