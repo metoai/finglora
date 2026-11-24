@@ -58,6 +58,16 @@ export function CustomerSignupView({
         const cleanName = userName.trim() || 'Elena';
         const cleanEmail = email.trim();
         await signUpWithEmail(cleanEmail, password, cleanName);
+
+        // Send welcome email via Resend in background
+        if (cleanEmail) {
+          fetch('/api/email/welcome', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ email: cleanEmail, name: cleanName }),
+          }).catch((e) => console.warn('Welcome email error:', e));
+        }
+
         setIsSubmitting(false);
         onSubmit();
       } else {
