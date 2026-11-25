@@ -492,7 +492,7 @@ export default function AdminPortal() {
                 type="email"
                 value={authEmail}
                 onChange={(e) => setAuthEmail(e.target.value)}
-                placeholder="metoaipr@gmail.com"
+                placeholder="alazartesema1@gmail.com"
                 className="w-full h-10 px-3 rounded-xl border border-stone-300 text-sm focus:outline-none focus:border-[#E0246A] focus:ring-1 focus:ring-[#E0246A]"
               />
             </div>

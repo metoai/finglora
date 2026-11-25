@@ -4,12 +4,7 @@
  */
 
 export const ADMIN_EMAILS = [
-  'metoaipr@gmail.com',
   'alazartesema1@gmail.com',
-  'admin@finglora.com',
-  'pro@finglora.com',
-  'vip@finglora.com',
-  'finglora.vip.pro@gmail.com',
 ];
 
 export function isAuthorizedAdmin(email?: string | null): boolean {
