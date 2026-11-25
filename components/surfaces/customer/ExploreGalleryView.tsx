@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import {
   Heart,
   Search,
@@ -249,6 +249,27 @@ export function ExploreGalleryView({
 }) {
   const [activeFilterId, setActiveFilterId] = useState<string>('all');
   const [savedPins, setSavedPins] = useState<Record<string, boolean>>({});
+  const [visibleCount, setVisibleCount] = useState<number>(24);
+  const loadMoreRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    setVisibleCount(24);
+  }, [activeFilterId, exploreSearch]);
+
+  useEffect(() => {
+    const el = loadMoreRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) {
+          setVisibleCount((prev) => prev + 24);
+        }
+      },
+      { rootMargin: '600px' }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [activeFilterId, exploreSearch]);
 
   // Transform exploreDesigns from Supabase into display pins, fallback to curated pins
   const allPins = useMemo(() => {
@@ -442,7 +463,7 @@ export function ExploreGalleryView({
           </div>
         ) : (
           <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 xl:columns-6 2xl:columns-7 gap-3.5 sm:gap-4 space-y-3.5 sm:space-y-4">
-            {filteredPins.map((pin, idx) => {
+            {filteredPins.slice(0, visibleCount).map((pin, idx) => {
               const isSaved = Boolean(savedPins[pin.id]);
 
               return (
@@ -452,16 +473,20 @@ export function ExploreGalleryView({
                   onClick={() => handleLaunchTryOn(pin)}
                 >
                   {/* Photo Pin Container */}
-                  <div className="relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300">
+                  <div className={`relative rounded-2xl sm:rounded-3xl overflow-hidden bg-stone-100 shadow-2xs hover:shadow-lg transition-all duration-300 ${pin.aspectClass}`}>
                     <img
                       src={sanitizeEditorialPhotoUrl(pin.photoUrl, idx)}
                       alt={pin.title || 'Manicure inspiration'}
-                      loading="lazy"
+                      loading={idx < 8 ? 'eager' : 'lazy'}
+                      decoding="async"
                       onError={(e) => {
-                        (e.target as HTMLImageElement).src =
-                          EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                        const target = e.currentTarget as HTMLImageElement;
+                        if (!target.dataset.fallbackApplied) {
+                          target.dataset.fallbackApplied = 'true';
+                          target.src = EDITORIAL_ASSET_PHOTOS[idx % EDITORIAL_ASSET_PHOTOS.length];
+                        }
                       }}
-                      className={`w-full object-cover group-hover:scale-102 transition-transform duration-300 ${pin.aspectClass}`}
+                      className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                     />
 
                     {/* Gradient Scrim on hover */}
@@ -535,6 +560,11 @@ export function ExploreGalleryView({
                 </div>
               );
             })}
+          </div>
+        )}
+        {filteredPins.length > visibleCount && (
+          <div ref={loadMoreRef} className="h-10 w-full flex items-center justify-center py-6">
+            <span className="text-xs text-stone-400">Loading more styles...</span>
           </div>
         )}
       </div>

@@ -22,38 +22,90 @@ function mapRowToExploreSet(row: any, isSaved = false): ExploreDesignSet {
   };
 }
 
+const SETS_CACHE_TTL_MS = 5 * 60 * 1000;
+const memorySetsCache = new Map<string, { ts: number; data: ExploreDesignSet[] }>();
+
+function getCacheKey(currentUserId?: string) {
+  return `finglora_explore_sets_v2_${currentUserId || 'guest'}`;
+}
+
+export function getCachedExploreSets(currentUserId?: string): ExploreDesignSet[] | null {
+  const key = getCacheKey(currentUserId);
+  const mem = memorySetsCache.get(key);
+  if (mem && Date.now() - mem.ts < SETS_CACHE_TTL_MS && mem.data.length > 0) {
+    return mem.data;
+  }
+  if (typeof window !== 'undefined') {
+    try {
+      const raw = window.sessionStorage.getItem(key);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (parsed?.ts && Date.now() - parsed.ts < SETS_CACHE_TTL_MS && Array.isArray(parsed.data)) {
+          memorySetsCache.set(key, parsed);
+          return parsed.data;
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }
+  return null;
+}
+
 export async function fetchExploreSets(currentUserId?: string): Promise<ExploreDesignSet[]> {
   const supabase = getSupabaseBrowserClient();
 
-  // 1. Fetch curated sets (plus active user's own custom sets if authenticated)
+  // 1. Fetch curated sets (plus active user's own custom sets if authenticated) in parallel with favorites
   const filterClause = currentUserId
     ? `is_curated.eq.true,user_id.eq.${currentUserId}`
     : 'is_curated.eq.true';
 
-  const { data: sets, error } = await supabase
+  const setsPromise = supabase
     .from('nail_sets')
-    .select('*')
+    .select('id,passport_code,title,category,subtitle,photo_url,likes_count,skin_tone_id,backdrop,chair_minutes,nails,is_curated')
     .or(filterClause)
     .order('likes_count', { ascending: false });
 
+  const favsPromise = currentUserId
+    ? supabase.from('user_favorites').select('set_id').eq('user_id', currentUserId)
+    : Promise.resolve({ data: null } as { data: any[] | null });
+
+  const [{ data: sets, error }, { data: favs }] = await Promise.all([setsPromise, favsPromise]);
+
   if (error || !sets) {
     console.warn('Failed to fetch sets from Supabase:', error?.message);
-    return [];
+    return getCachedExploreSets(currentUserId) || [];
   }
 
-  // 2. Fetch user favorites if logged in
-  let favIds = new Set<string>();
-  if (currentUserId) {
-    const { data: favs } = await supabase
-      .from('user_favorites')
-      .select('set_id')
-      .eq('user_id', currentUserId);
-    if (favs) {
-      favIds = new Set((favs as any[]).map((f) => f.set_id));
+  const favIds = new Set<string>(favs ? (favs as any[]).map((f) => f.set_id) : []);
+
+  // 2. Sort curated first, filter empty photos, and deduplicate redundant auto-saved rows
+  const seenKeys = new Set<string>();
+  const uniqueSets = (sets as any[])
+    .filter((s) => Boolean(s.photo_url && String(s.photo_url).trim()))
+    .sort((a, b) => Number(Boolean(b.is_curated)) - Number(Boolean(a.is_curated)))
+    .filter((s) => {
+      const key = `${String(s.title || '').trim().toLowerCase()}|${String(s.photo_url || '').trim()}`;
+      if (seenKeys.has(key)) return false;
+      seenKeys.add(key);
+      return true;
+    });
+
+  const mapped = uniqueSets.map((s) => mapRowToExploreSet(s, favIds.has(s.id)));
+
+  // 3. Cache for instant subsequent renders
+  const key = getCacheKey(currentUserId);
+  const entry = { ts: Date.now(), data: mapped };
+  memorySetsCache.set(key, entry);
+  if (typeof window !== 'undefined') {
+    try {
+      window.sessionStorage.setItem(key, JSON.stringify(entry));
+    } catch {
+      // ignore storage quota errors
     }
   }
 
-  return (sets as any[]).map((s) => mapRowToExploreSet(s, favIds.has(s.id)));
+  return mapped;
 }
 
 export async function getSetByPassportCode(passportCode: string): Promise<ExploreDesignSet | null> {

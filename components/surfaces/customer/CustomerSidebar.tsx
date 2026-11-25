@@ -9,7 +9,7 @@ import {
   Heart,
   User,
   Settings,
-  Camera,
+  GalleryHorizontalEnd,
 } from 'lucide-react';
 import { Finger, NailDesign, NailShape } from '@/types/nail';
 import { BrandLogoIcon } from '@/components/common/BrandLogo';
@@ -199,7 +199,7 @@ export function CustomerSidebar({
           title="Try-On History"
           aria-label="Try-On History"
         >
-          <Camera
+          <GalleryHorizontalEnd
             className="w-5.5 h-5.5"
             strokeWidth={isHistoryActive ? 2.25 : 1.75}
           />

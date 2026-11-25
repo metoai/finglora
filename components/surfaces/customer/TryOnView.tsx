@@ -25,6 +25,8 @@ import { downscaleImageForVision, uploadAppliedTryOnResult } from '@/lib/service
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
+import { getUserCreditStatus, syncCreditsFromProfile, useTryOnCredit } from '@/lib/services/credits';
+import { buildSharedLookUrl, buildSimpleTechSummary } from '@/lib/services/share-look';
 
 // Nails fill in one by one while the manicure is being generated (thumb -> pinky).
 // A stylized hand is used because we do not know where the nails are in the user's photo.
@@ -98,6 +100,7 @@ export function TryOnView({
   onSelectExploreDesign,
   onResetInspo,
   onExploreClick,
+  onCreditPaywall,
 }: {
   tryOnMode?: 'camera' | 'upload' | 'sample';
   setTryOnMode?: (mode: 'camera' | 'upload' | 'sample') => void;
@@ -139,6 +142,7 @@ export function TryOnView({
   onCustomizeWithAi?: (handUrl: string) => void;
   onResetInspo?: () => void;
   onExploreClick?: () => void;
+  onCreditPaywall?: (isGuestFirstTry: boolean) => void;
 }) {
   const [savedToast, setSavedToast] = useState(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
@@ -154,9 +158,11 @@ export function TryOnView({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   const [internalSynthesizedHandUrl, setInternalSynthesizedHandUrl] = useState<string | null>(null);
+  const [uploadedCaptureUrl, setUploadedCaptureUrl] = useState<string | null>(null);
   const synthesizedHandUrl = propSynthesizedHandUrl !== undefined ? propSynthesizedHandUrl : internalSynthesizedHandUrl;
   const setSynthesizedHandUrl = (url: string | null) => {
     setInternalSynthesizedHandUrl(url);
+    if (!url) setUploadedCaptureUrl(null);
     propSetSynthesizedHandUrl?.(url);
   };
 
@@ -295,6 +301,13 @@ export function TryOnView({
   const handleSynthesizeHand = async () => {
     const sourceHand = customTryOnHandUrl || capturedFrameUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
     if (!sourceHand) return;
+
+    const creditStatus = getUserCreditStatus();
+    if (!creditStatus.isPro && creditStatus.credits <= 0) {
+      onCreditPaywall?.(creditStatus.hasUsedGuestCredit && !creditStatus.hasReceivedSignupBonus);
+      return;
+    }
+
     setIsSynthesizingHand(true);
     setSynthesisError(null);
     setInternalSynthesizedHandUrl(null);
@@ -305,7 +318,7 @@ export function TryOnView({
       if (sourceHand.startsWith('data:image/')) {
         handBase64 = sourceHand;
       } else {
-        handBase64 = await downscaleImageForVision(sourceHand, 768, 0.72);
+        handBase64 = await downscaleImageForVision(sourceHand, 1024, 0.85);
       }
 
       let refBase64: string | undefined = undefined;
@@ -314,25 +327,40 @@ export function TryOnView({
         if (refSource.startsWith('data:image/')) {
           refBase64 = refSource;
         } else {
-          refBase64 = await downscaleImageForVision(refSource, 768, 0.72);
+          refBase64 = await downscaleImageForVision(refSource, 768, 0.78);
         }
       }
 
-      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not include any rings, jewelry, or external objects from the reference inspo.`;
+      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}.`;
 
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'hand-tryon',
+          nailShape: nails.middle.shape,
           handImageBase64: handBase64 || undefined,
           referenceImageBase64: refBase64 || undefined,
           prompt,
         }),
       });
 
+      if (res.status === 402) {
+        const paywallData = await res.json().catch(() => ({}));
+        if (typeof paywallData.credits === 'number') {
+          syncCreditsFromProfile(Boolean(paywallData.isPro), paywallData.credits);
+        }
+        onCreditPaywall?.(false);
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
+        if (data.creditStatus) {
+          syncCreditsFromProfile(Boolean(data.creditStatus.isPro), data.creditStatus.credits);
+        } else {
+          useTryOnCredit();
+        }
         if (data.imageUrl) {
           setSynthesizedHandUrl(data.imageUrl);
           setTryOnView('after');
@@ -343,8 +371,14 @@ export function TryOnView({
             imageDataUrl: data.imageUrl,
             setId: activeSample?.id,
             skinToneId: activeSkinTone?.id || 'warm-ivory',
-            mode: 'ai-synthesis',
-          }).catch((err) => console.warn('Background try-on upload notice:', err));
+            mode: customTryOnHandUrl ? 'upload' : capturedFrameUrl ? 'camera' : 'sample',
+          })
+            .then((publicUrl) => {
+              if (publicUrl && publicUrl.startsWith('https://')) {
+                setUploadedCaptureUrl(publicUrl);
+              }
+            })
+            .catch((err) => console.warn('Background try-on upload notice:', err));
 
           try {
             navigator.vibrate?.(30);
@@ -354,9 +388,13 @@ export function TryOnView({
       }
 
       const errJson = await res.json().catch(() => ({}));
+      if (errJson?.paywall) {
+        onCreditPaywall?.(Boolean(errJson.paywall && !creditStatus.hasReceivedSignupBonus));
+        return;
+      }
       const is429 = res.status === 429 || errJson?.isRateLimit || errJson?.error?.includes('RESOURCE_EXHAUSTED');
       if (is429) {
-        setSynthesisError('Service is experiencing high demand. Please try again in a moment.');
+        setSynthesisError(errJson?.error || 'Service is experiencing high demand. Please try again in a moment.');
       } else {
         setSynthesisError(errJson?.error || 'Could not generate manicure. Please try again.');
       }
@@ -705,11 +743,8 @@ export function TryOnView({
                       </div>
 
                       {/* Top right: ghost hand whose nails fill in one by one */}
-                      <div className="absolute top-14 right-3 sm:right-4 w-[84px] rounded-2xl bg-black/35 backdrop-blur-md border border-white/20 p-2 flex flex-col items-center gap-1">
+                      <div className="absolute top-14 right-3 sm:right-4 rounded-2xl bg-black/35 backdrop-blur-md border border-white/15 p-2.5 flex items-center justify-center">
                         <CuringMiniHand />
-                        <span className="w-full text-center text-[10px] font-semibold text-white/90 truncate">
-                          {effectiveInspoTitle || 'Your look'}
-                        </span>
                       </div>
 
                       {/* Bottom: big counter + segmented stage bar */}
@@ -1381,13 +1416,21 @@ export function TryOnView({
       )}
 
       {/* Social Share Options Modal */}
-      <SocialShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        imageUrl={displayedHandImage}
-        designTitle={activeSample?.title || 'Finglora Manicure'}
-        onDownloadFallback={handleDownloadBrandedLook}
-      />
+      {(() => {
+        const techSummary = buildSimpleTechSummary(nails, activeSample?.title);
+        const sharePhoto = uploadedCaptureUrl || (displayedHandImage.startsWith('https://') ? displayedHandImage : effectiveInspoUrl);
+        return (
+          <SocialShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            imageUrl={displayedHandImage}
+            designTitle={techSummary.title}
+            techSummary={techSummary}
+            shareUrl={buildSharedLookUrl(sharePhoto, techSummary)}
+            onDownloadFallback={handleDownloadBrandedLook}
+          />
+        );
+      })()}
     </div>
   );
 }

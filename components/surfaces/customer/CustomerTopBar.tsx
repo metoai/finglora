@@ -15,7 +15,7 @@ import {
   Palette,
   Check,
   LogOut,
-  Camera,
+  GalleryHorizontalEnd,
 } from 'lucide-react';
 import { BrandLogo } from '@/components/common/BrandLogo';
 import { signOutUser } from '@/lib/services/auth';
@@ -68,7 +68,7 @@ export function CustomerTopBar({
   }[] = [
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
-    { id: 'history', label: 'Try-On History', Icon: Camera },
+    { id: 'history', label: 'Try-On History', Icon: GalleryHorizontalEnd },
     { id: 'explore', label: 'Explore', Icon: Compass },
     { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {
@@ -87,7 +87,7 @@ export function CustomerTopBar({
   }[] = [
     { id: 'home', label: 'Home', Icon: Home },
     { id: 'tryon', label: 'Try On', Icon: Hand },
-    { id: 'history', label: 'Try-On History', Icon: Camera },
+    { id: 'history', label: 'Try-On History', Icon: GalleryHorizontalEnd },
     { id: 'explore', label: 'Explore', Icon: Compass },
     { id: 'ai-create', label: 'AI Studio', Icon: Paintbrush },
     {
@@ -450,132 +450,128 @@ export function CustomerTopBar({
         </div>
       )}
 
-      {/* Working Notifications Modal / Popover */}
-      {isNotificationsOpen && (
-        <div
-          className="fixed inset-0 z-50 flex items-start justify-center sm:justify-end sm:pr-6 sm:pt-16 p-3 sm:p-4 bg-stone-900/35 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => setIsNotificationsOpen(false)}
-        >
-          <div
-            className="w-full max-w-sm bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-stone-200/90 overflow-hidden animate-in zoom-in-95 duration-150 flex flex-col max-h-[85vh] mt-2 sm:mt-0"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Header */}
-            <div className="p-3.5 sm:p-4 border-b border-stone-100 flex items-center justify-between bg-stone-50/70">
-              <div className="flex items-center gap-2">
-                <div className="w-7 h-7 rounded-full bg-pink-100/90 text-[#E0246A] flex items-center justify-center">
-                  <Bell className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <h3 className="font-semibold text-xs sm:text-sm text-stone-900 leading-tight">
-                    Notifications
-                  </h3>
-                  <p className="text-[10px] text-stone-400">
-                    {unreadCount > 0 ? `${unreadCount} unread update${unreadCount > 1 ? 's' : ''}` : 'All caught up'}
-                  </p>
-                </div>
-              </div>
+    </header>
 
-              <div className="flex items-center gap-2">
-                {unreadCount > 0 && (
-                  <button
-                    type="button"
-                    onClick={markAllAsRead}
-                    className="text-[11px] font-semibold text-[#E0246A] hover:underline cursor-pointer active:scale-95"
-                  >
-                    Mark read
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={() => setIsNotificationsOpen(false)}
-                  className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200 text-stone-600 flex items-center justify-center cursor-pointer transition active:scale-95"
-                  aria-label="Close notifications"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
-              </div>
+    {/* Notifications Popover - Rendered outside header so it drops cleanly below the top bar on mobile & desktop */}
+    {isNotificationsOpen && (
+      <div
+        className="fixed inset-0 z-[100] flex items-start justify-end pt-16 sm:pt-[72px] px-3 sm:px-6 pb-4 bg-black/20 backdrop-blur-[1px] animate-in fade-in duration-150"
+        onClick={() => setIsNotificationsOpen(false)}
+      >
+        <div
+          className="w-full max-w-[360px] bg-white rounded-2xl shadow-[0_18px_48px_rgba(24,20,22,0.14)] border border-stone-200/90 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150 flex flex-col max-h-[75vh]"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Header */}
+          <div className="px-4 py-3 border-b border-stone-100 flex items-center justify-between bg-white">
+            <div className="flex items-center gap-2">
+              <h3 className="font-semibold text-sm text-stone-900">
+                Notifications
+              </h3>
+              {unreadCount > 0 && (
+                <span className="px-1.5 py-0.5 rounded-full bg-[#FDE8EF] text-[#E0246A] text-[10px] font-semibold leading-none">
+                  {unreadCount} new
+                </span>
+              )}
             </div>
 
-            {/* Notification List */}
-            <div className="p-2 sm:p-2.5 overflow-y-auto space-y-1.5 divide-y divide-stone-100/80">
-              {notifications.length === 0 ? (
-                <div className="py-8 text-center text-xs text-stone-400">
-                  No notifications yet.
-                </div>
-              ) : (
-                notifications.map((item) => (
+            <div className="flex items-center gap-2.5">
+              {unreadCount > 0 && (
+                <button
+                  type="button"
+                  onClick={markAllAsRead}
+                  className="text-[11px] font-medium text-stone-500 hover:text-[#E0246A] transition cursor-pointer"
+                >
+                  Mark read
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsNotificationsOpen(false)}
+                className="w-7 h-7 rounded-full bg-stone-100 hover:bg-stone-200/80 text-stone-500 hover:text-stone-800 flex items-center justify-center cursor-pointer transition active:scale-95"
+                aria-label="Close notifications"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Notification List */}
+          <div className="overflow-y-auto divide-y divide-stone-100">
+            {notifications.length === 0 ? (
+              <div className="py-10 text-center text-xs text-stone-400">
+                All caught up
+              </div>
+            ) : (
+              notifications.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => handleNotificationClick(item)}
+                  className={`w-full px-4 py-3.5 transition cursor-pointer flex items-start gap-3 text-left group ${
+                    item.read
+                      ? 'bg-white hover:bg-stone-50'
+                      : 'bg-[#FDF2F8]/50 hover:bg-[#FDF2F8]/85'
+                  }`}
+                >
                   <div
-                    key={item.id}
-                    onClick={() => handleNotificationClick(item)}
-                    className={`p-3 rounded-xl sm:rounded-2xl transition cursor-pointer flex items-start gap-2.5 sm:gap-3 text-left ${
+                    className={`w-8 h-8 rounded-xl shrink-0 flex items-center justify-center mt-0.5 transition-colors ${
                       item.read
-                        ? 'hover:bg-stone-50/80 opacity-75'
-                        : 'bg-pink-50/40 hover:bg-pink-50/70 border border-pink-100/70'
+                        ? 'bg-stone-100 text-stone-500'
+                        : 'bg-[#FDE8EF] text-[#E0246A]'
                     }`}
                   >
-                    <div
-                      className={`w-7.5 h-7.5 sm:w-8 sm:h-8 rounded-full shrink-0 flex items-center justify-center mt-0.5 ${
-                        item.read
-                          ? 'bg-stone-100 text-stone-500'
-                          : 'bg-[#E0246A] text-white shadow-xs'
-                      }`}
-                    >
-                      {item.type === 'silhouette' && <Hand className="w-3.5 h-3.5" />}
-                      {item.type === 'trend' && <Compass className="w-3.5 h-3.5" />}
-                      {item.type === 'hand' && <Check className="w-3.5 h-3.5" />}
-                      {item.type === 'studio' && <Palette className="w-3.5 h-3.5" />}
-                    </div>
+                    {item.type === 'silhouette' && <Hand className="w-4 h-4" strokeWidth={1.75} />}
+                    {item.type === 'trend' && <Compass className="w-4 h-4" strokeWidth={1.75} />}
+                    {item.type === 'hand' && <Check className="w-4 h-4" strokeWidth={2} />}
+                    {item.type === 'studio' && <Palette className="w-4 h-4" strokeWidth={1.75} />}
+                  </div>
 
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between gap-1">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2">
+                      <div className="flex items-center gap-1.5 min-w-0">
                         <h4
-                          className={`text-xs font-semibold truncate ${
-                            item.read ? 'text-stone-800' : 'text-stone-900'
+                          className={`text-xs truncate ${
+                            item.read ? 'font-medium text-stone-700' : 'font-semibold text-stone-900'
                           }`}
                         >
                           {item.title}
                         </h4>
-                        <span className="text-[10px] text-stone-400 shrink-0 font-mono">
-                          {item.time}
-                        </span>
+                        {!item.read && (
+                          <span className="w-1.5 h-1.5 rounded-full bg-[#E0246A] shrink-0" />
+                        )}
                       </div>
-                      <p className="text-[11px] text-stone-500 mt-0.5 leading-snug line-clamp-2">
-                        {item.description}
-                      </p>
-                      {item.route && (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-[#E0246A] mt-1 hover:underline">
-                          <span>Open in {routeBreadcrumbs[item.route] || 'App'}</span>
-                          <ChevronRight className="w-2.5 h-2.5" />
-                        </span>
-                      )}
+                      <span className="text-[10px] text-stone-400 shrink-0 tabular-nums">
+                        {item.time}
+                      </span>
                     </div>
-
-                    {!item.read && (
-                      <span className="w-2 h-2 rounded-full bg-[#E0246A] shrink-0 mt-1.5 ring-2 ring-pink-100" />
-                    )}
+                    <p className="text-[11px] text-stone-500 mt-0.5 leading-relaxed line-clamp-2">
+                      {item.description}
+                    </p>
                   </div>
-                ))
-              )}
-            </div>
 
-            {/* Footer */}
-            <div className="p-2.5 sm:p-3 border-t border-stone-100 bg-stone-50/40 text-center">
-              <button
-                type="button"
-                onClick={() => {
-                  setIsNotificationsOpen(false);
-                  onNavigate('profile');
-                }}
-                className="text-[11px] font-medium text-stone-500 hover:text-[#E0246A] transition cursor-pointer"
-              >
-                Manage alert preferences in Settings →
-              </button>
-            </div>
+                  <ChevronRight className="w-3.5 h-3.5 text-stone-300 group-hover:text-stone-500 shrink-0 self-center transition-colors" />
+                </button>
+              ))
+            )}
+          </div>
+
+          {/* Footer */}
+          <div className="px-4 py-2.5 border-t border-stone-100 bg-stone-50/50 text-center">
+            <button
+              type="button"
+              onClick={() => {
+                setIsNotificationsOpen(false);
+                onNavigate('profile');
+              }}
+              className="text-[11px] font-medium text-stone-500 hover:text-stone-900 transition cursor-pointer"
+            >
+              Manage alert preferences in Settings →
+            </button>
           </div>
         </div>
-      )}
-    </header>
+      </div>
+    )}
 
     {/* Sign Out Confirmation Modal - Rendered outside header to prevent mobile clipping */}
     {isSignOutModalOpen && (

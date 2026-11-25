@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Home, Compass, Hand, Paintbrush } from 'lucide-react';
+import { Home, Compass, Hand, Paintbrush, GalleryHorizontalEnd } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { ExploreDesignSet, Finger, NailDesign, NailShape, SkinTonePreset } from '@/types/nail';
 
@@ -366,13 +366,6 @@ export function CustomerApp({
               onUploadClick={() => setCustomerRoute('upload')}
               onSelectDesign={onSelectExploreDesign}
               onTryOnClick={(designId) => {
-                const status = getUserCreditStatus();
-                if (status.credits <= 0 && !status.isPro) {
-                  setIsGuestFirstTry(status.hasUsedGuestCredit && !status.hasReceivedSignupBonus);
-                  setPaywallOpen(true);
-                  return;
-                }
-                useTryOnCredit();
                 if (designId) {
                   onSelectExploreDesign(designId);
                 }
@@ -486,6 +479,10 @@ export function CustomerApp({
                 } catch {}
                 setCustomerRoute('ai-create');
               }}
+              onCreditPaywall={(isGuestFirst: boolean) => {
+                setIsGuestFirstTry(isGuestFirst);
+                setPaywallOpen(true);
+              }}
             />
           )}
 
@@ -550,17 +547,19 @@ export function CustomerApp({
 
       {/* Mobile Bottom Navigation - Modern Floating Capsule with Fluid Sliding Active Shape */}
       {(() => {
-        const activeNavTab: 'home' | 'tryon' | 'explore' | 'studio' =
+        const activeNavTab: 'home' | 'tryon' | 'explore' | 'studio' | 'history' =
           customerRoute === 'tryon' || customerRoute === 'upload'
             ? 'tryon'
             : customerRoute === 'explore'
             ? 'explore'
             : customerRoute === 'ai-create'
             ? 'studio'
+            : customerRoute === 'history'
+            ? 'history'
             : 'home';
 
         const mobileNavTabs: {
-          id: 'home' | 'tryon' | 'explore' | 'studio';
+          id: 'home' | 'tryon' | 'explore' | 'studio' | 'history';
           label: string;
           Icon: React.ComponentType<{ className?: string; strokeWidth?: number }>;
           route: CustomerRoute;
@@ -568,14 +567,15 @@ export function CustomerApp({
           { id: 'home', label: 'Home', Icon: Home, route: 'home' },
           { id: 'tryon', label: 'Try On', Icon: Hand, route: 'tryon' },
           { id: 'explore', label: 'Explore', Icon: Compass, route: 'explore' },
-          { id: 'studio', label: 'AI Studio', Icon: Paintbrush, route: 'ai-create' },
+          { id: 'studio', label: 'Studio', Icon: Paintbrush, route: 'ai-create' },
+          { id: 'history', label: 'History', Icon: GalleryHorizontalEnd, route: 'history' },
         ];
 
         return (
           <nav
             className={`${
               mobilePreview ? 'flex' : 'flex md:hidden'
-            } fixed bottom-3 sm:bottom-4 inset-x-3 sm:inset-x-6 max-w-[370px] mx-auto z-40 h-[60px] items-center justify-between p-1.5 rounded-full bg-white/90 backdrop-blur-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] select-none`}
+            } fixed bottom-3 sm:bottom-4 inset-x-2 sm:inset-x-4 max-w-[440px] mx-auto z-40 h-[60px] items-center justify-between p-1.5 rounded-full bg-white/90 backdrop-blur-2xl border border-stone-200/90 shadow-[0_12px_36px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.04)] select-none`}
             aria-label="Mobile Navigation"
           >
             <div className="relative w-full h-full flex items-center justify-between gap-1">

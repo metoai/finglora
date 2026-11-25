@@ -231,13 +231,11 @@ export async function shareToStoryOrSocial(
 
   // Check if native Web Share is supported
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-    // 1. Attempt sharing with image file (supported on mobile iOS Safari, Android Chrome)
+    // 1. Share ONLY the photo file when supported (iOS Safari, Android Chrome)
     if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [result.file] })) {
       try {
         await navigator.share({
           files: [result.file],
-          title: shareTitle,
-          text: shareText,
         });
         return {
           success: true,
@@ -258,40 +256,12 @@ export async function shareToStoryOrSocial(
             shareText,
           };
         }
-        // If file sharing was blocked or unsupported, fallback to sharing text + URL
-      }
-    }
-
-    // 2. Attempt sharing URL & text directly to OS share dialog
-    try {
-      await navigator.share({
-        title: shareTitle,
-        text: shareText,
-        url: shareUrl,
-      });
-      return {
-        success: true,
-        mode: 'shared',
-        file: result.file,
-        dataUrl: result.dataUrl,
-        shareUrl,
-        shareText,
-      };
-    } catch (err: unknown) {
-      if ((err as Error)?.name === 'AbortError') {
-        return {
-          success: false,
-          mode: 'cancelled',
-          file: result.file,
-          dataUrl: result.dataUrl,
-          shareUrl,
-          shareText,
-        };
+        // If file sharing was blocked or unsupported, fallback to modal
       }
     }
   }
 
-  // 3. Fallback: Return dialog mode (so UI presents the native social share modal)
+  // 2. Fallback: Return dialog mode (modal lets user save/share photo or copy clean link)
   // NEVER silently trigger a file download when user requested to share!
   return {
     success: true,

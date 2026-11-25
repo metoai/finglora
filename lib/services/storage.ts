@@ -331,7 +331,6 @@ export async function uploadAppliedTryOnResult({
       .from('try-on-captures')
       .upload(path, blob, {
         contentType: 'image/jpeg',
-        upsert: true,
       });
 
     if (error) {
@@ -345,24 +344,42 @@ export async function uploadAppliedTryOnResult({
 
     const publicUrl = publicData.publicUrl;
 
+    const normalizedMode =
+      mode === 'camera' || mode === 'upload' || mode === 'sample' ? mode : 'upload';
+
     // Insert under authenticated user's own RLS ("Users can insert own try-ons")
-    const { error: insertError } = await supabase.from('try_on_history').insert({
+    let { error: insertError } = await supabase.from('try_on_history').insert({
       user_id: effectiveUserId,
       image_url: publicUrl,
-      mode,
+      mode: normalizedMode,
       set_id: setId || null,
       skin_tone_id: skinToneId,
     } as any);
 
+    // If set_id is a curated preset or local ID absent from nail_sets(id), retry with set_id: null
+    if (insertError && setId) {
+      const retry = await supabase.from('try_on_history').insert({
+        user_id: effectiveUserId,
+        image_url: publicUrl,
+        mode: normalizedMode,
+        set_id: null,
+        skin_tone_id: skinToneId,
+      } as any);
+      insertError = retry.error;
+    }
+
     if (insertError) {
-      // Fallback to RPC if direct insert had policy conflict
-      await (supabase as any).rpc('save_try_on_result', {
+      // Final fallback to RPC if direct insert had policy conflict
+      const rpcRes = await (supabase as any).rpc('save_try_on_result', {
         p_user_id: effectiveUserId,
         p_image_url: publicUrl,
-        p_mode: mode,
-        p_set_id: setId || null,
+        p_mode: normalizedMode,
+        p_set_id: null,
         p_skin_tone_id: skinToneId,
       });
+      if (rpcRes?.error) {
+        console.warn('Failed to insert try_on_history row:', rpcRes.error.message);
+      }
     }
 
     return publicUrl;

@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
+import { getVerifiedRequestUser } from '@/lib/server/admin-auth';
+import { getSupabaseServerClient } from '@/lib/supabase/server';
+import {
+  checkRateLimit,
+  getClientIp,
+  isAllowedBrowserOrigin,
+  safeFetchRemoteImageBase64,
+} from '@/lib/server/api-guard';
 
 interface GenerateRequestBody {
   prompt?: string;
@@ -12,8 +20,49 @@ interface GenerateRequestBody {
   nailShape?: string;
 }
 
+function resolvePublicImageBase64(relUrl: string): { base64: string; mimeType: string } | null {
+  try {
+    const publicRoot = path.resolve(process.cwd(), 'public');
+    const resolved = path.resolve(publicRoot, relUrl.replace(/^\/+/, ''));
+    if (!resolved.startsWith(publicRoot + path.sep)) return null;
+    if (!fs.existsSync(resolved)) return null;
+    const buf = fs.readFileSync(resolved);
+    return {
+      base64: buf.toString('base64'),
+      mimeType: resolved.endsWith('.png') ? 'image/png' : 'image/jpeg',
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function POST(request: Request) {
   try {
+    if (!isAllowedBrowserOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden origin' }, { status: 403 });
+    }
+
+    const user = await getVerifiedRequestUser();
+    const clientIp = getClientIp(request);
+
+    // Rate limit per user or per IP for guests
+    const rate = user
+      ? checkRateLimit(`gen:user:${user.id}`, 25, 10 * 60 * 1000)
+      : checkRateLimit(`gen:ip:${clientIp}`, 4, 30 * 60 * 1000);
+
+    if (!rate.allowed) {
+      return NextResponse.json(
+        {
+          error: user
+            ? 'Rate limit reached. Please wait a moment before generating again.'
+            : 'Guest preview limit reached. Create a free account for 10 try-on credits.',
+          paywall: !user,
+          isRateLimit: true,
+        },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+      );
+    }
+
     const body: GenerateRequestBody = await request.json();
     const {
       prompt = 'Apply reference manicure to user hand',
@@ -33,29 +82,51 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Vertex API key is not configured' }, { status: 500 });
     }
 
+    // Server-side credit enforcement for authenticated users in virtual try-on mode
+    let serverCreditStatus: { credits: number; isPro: boolean } | null = null;
+    if (user && mode === 'hand-tryon') {
+      try {
+        const supabase = await getSupabaseServerClient();
+        const { data: creditData, error: creditErr } = await (supabase as any).rpc('consume_tryon_credit');
+        if (!creditErr && creditData && typeof creditData.allowed === 'boolean') {
+          if (!creditData.allowed) {
+            return NextResponse.json(
+              {
+                error: 'No try-on credits remaining. Upgrade to Finglora Pro for unlimited try-ons.',
+                paywall: true,
+                credits: 0,
+                isPro: false,
+              },
+              { status: 402 }
+            );
+          }
+          serverCreditStatus = {
+            credits: typeof creditData.credits === 'number' ? creditData.credits : 0,
+            isPro: Boolean(creditData.is_pro),
+          };
+        }
+      } catch {
+        // Proceed gracefully if RPC unavailable
+      }
+    }
+
     // Resolve Hand Base64 & Mime
     let finalHandBase64 = handImageBase64?.replace(/^data:image\/\w+;base64,/, '');
     let handMimeType = handImageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
     if (!finalHandBase64 && handImageUrl) {
       if (handImageUrl.startsWith('/')) {
-        try {
-          const localPath = path.join(process.cwd(), 'public', handImageUrl);
-          if (fs.existsSync(localPath)) {
-            const buf = fs.readFileSync(localPath);
-            finalHandBase64 = buf.toString('base64');
-            handMimeType = handImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
-          }
-        } catch {}
-      } else if (handImageUrl.startsWith('http://') || handImageUrl.startsWith('https://')) {
-        try {
-          const hRes = await fetch(handImageUrl, { signal: AbortSignal.timeout(6000) });
-          if (hRes.ok) {
-            const buf = await hRes.arrayBuffer();
-            finalHandBase64 = Buffer.from(buf).toString('base64');
-            handMimeType = hRes.headers.get('content-type') || 'image/jpeg';
-          }
-        } catch {}
+        const local = resolvePublicImageBase64(handImageUrl);
+        if (local) {
+          finalHandBase64 = local.base64;
+          handMimeType = local.mimeType;
+        }
+      } else if (handImageUrl.startsWith('https://')) {
+        const remote = await safeFetchRemoteImageBase64(handImageUrl);
+        if (remote) {
+          finalHandBase64 = remote.base64;
+          handMimeType = remote.mimeType;
+        }
       }
     }
 
@@ -65,47 +136,49 @@ export async function POST(request: Request) {
 
     if (!finalReferenceBase64 && referenceImageUrl) {
       if (referenceImageUrl.startsWith('/')) {
-        try {
-          const localPath = path.join(process.cwd(), 'public', referenceImageUrl);
-          if (fs.existsSync(localPath)) {
-            const buf = fs.readFileSync(localPath);
-            finalReferenceBase64 = buf.toString('base64');
-            referenceMimeType = referenceImageUrl.endsWith('.png') ? 'image/png' : 'image/jpeg';
-          }
-        } catch {}
-      } else if (referenceImageUrl.startsWith('http://') || referenceImageUrl.startsWith('https://')) {
-        try {
-          const rRes = await fetch(referenceImageUrl, { signal: AbortSignal.timeout(6000) });
-          if (rRes.ok) {
-            const buf = await rRes.arrayBuffer();
-            finalReferenceBase64 = Buffer.from(buf).toString('base64');
-            referenceMimeType = rRes.headers.get('content-type') || 'image/jpeg';
-          }
-        } catch {}
+        const local = resolvePublicImageBase64(referenceImageUrl);
+        if (local) {
+          finalReferenceBase64 = local.base64;
+          referenceMimeType = local.mimeType;
+        }
+      } else if (referenceImageUrl.startsWith('https://')) {
+        const remote = await safeFetchRemoteImageBase64(referenceImageUrl);
+        if (remote) {
+          finalReferenceBase64 = remote.base64;
+          referenceMimeType = remote.mimeType;
+        }
       }
     }
 
     const parts: any[] = [];
 
     if (finalReferenceBase64 && finalHandBase64) {
-      // Image-to-Image with Reference Nail Design + User's Real Hand
+      // Image-to-Image with User's Real Hand (IMAGE 1 = locked base canvas) + Reference Nail Design (IMAGE 2 = design only)
+      const detailNote =
+        prompt && prompt !== 'Apply reference manicure to user hand'
+          ? `\nAdditional manicure details: ${prompt}`
+          : '';
+
       parts.push({
-        text: `Image 1 is the reference inspiration manicure photograph. Image 2 is the photograph of the user's human hand.
-You are an expert salon studio AI.
+        text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT (localized virtual nail try-on).
+
+IMAGE 1 is the EXACT target photograph of the user's hand. Treat IMAGE 1 as an immutable base layer where ONLY the 5 fingernail regions are editable.
+IMAGE 2 is ONLY the manicure design reference.
 
 TASK:
-Flawlessly transfer and apply ONLY the nail design (colors, nail art, finish, and ${nailShape} shape) from Image 1 onto the fingernails of the hand in Image 2.
+Apply ONLY the nail polish colors, nail art patterns, finish, and ${nailShape} tip style from IMAGE 2 onto the fingernails of the hand in IMAGE 1, scaled strictly to fit IMAGE 1's slim finger width.${detailNote}
 
-CRITICAL CONSTRAINTS:
-1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Extract strictly the nail design from Image 1. If Image 1 contains ANY other objects, accessories, rings, jewelry, bracelets, watches, sleeves, fabrics, bottles, flowers, props, or background items, DO NOT copy, transfer, or include them. Absolutely NO jewelry, rings, or foreign objects. Only the fingernails should be modified.
-2. CLEAN, DRY SKIN - NO VASELINE OR GREASY RESIDUE: The skin under the fingernails (hyponychium), around the cuticles, and on the finger pads must remain clean, natural, and dry skin. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO glossy gel spills under or around the nails. The lacquer/gel must be cleanly bounded to the top surface of the nail plate with crisp, clean cuticle margins.
-3. PRESERVE THE USER'S REAL HAND: Retain the user's exact hand pose, finger anatomy, skin tone, skin texture, knuckles, lighting, and natural background from Image 2.`
+ABSOLUTE HAND & SLIMNESS PRESERVATION RULES (HIGHEST PRIORITY):
+1. ZERO FINGER WIDENING OR PLUMPING: Every finger shaft, thumb, fingertip, knuckle, palm, and wrist MUST keep the exact same slim pixel width as IMAGE 1. NEVER widen, thicken, plump, swell, puff, or bloat any finger or hand edge.
+2. LOCK INTER-FINGER GAPS & SILHOUETTE: The empty background spaces/gaps between thumb, index, middle, ring, and pinky fingers MUST stay the exact same width and contour as IMAGE 1. Keep every hand and finger outline strictly pixel-aligned with IMAGE 1.
+3. FIT NAILS TO USER'S SLIM NAIL BEDS (DO NOT ENLARGE FINGERS TO FIT NAILS): Shrink and narrow the width of each nail design from IMAGE 2 so the left and right nail sidewalls sit strictly within the user's exact natural nail bed width in IMAGE 1. Never flare the nail sides wider than the fingertip skin, and never expand fingertip flesh to accommodate wider salon nails from IMAGE 2.
+4. ZERO CHANGES TO SKIN TEXTURE OR TONE: Retain the user's exact skin tone, undertones, shadows, highlights, pores, wrinkles, knuckle creases, veins, freckles, fine hairs, and cuticle skin from IMAGE 1. Do NOT airbrush, smooth, soften, brighten, lighten, darken, sharpen, or color-grade the skin.
+5. ZERO CHANGES TO BACKGROUND, LIGHTING, OR FRAMING: Keep the exact original background, camera perspective, zoom, crop, aspect ratio, ambient lighting, and color temperature of IMAGE 1 untouched. Do NOT re-light or re-photograph the hand.
+6. NO FOREIGN ELEMENTS FROM IMAGE 2: Extract strictly the nail design from IMAGE 2. Do NOT transfer IMAGE 2's hand anatomy, finger thickness, skin tone, lighting, background, sleeves, flowers, bottles, props, rings, bracelets, or jewelry. Keep whatever original background or accessories already exist in IMAGE 1.
+7. CLEAN, DRY SKIN AROUND NAILS: The skin under the fingernails (hyponychium), around the cuticles, and on the finger pads must remain clean, natural, dry skin matching IMAGE 1. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO gel residue outside the nail plates.`,
       });
       parts.push({
-        inlineData: {
-          mimeType: referenceMimeType,
-          data: finalReferenceBase64,
-        },
+        text: 'IMAGE 1 — TARGET BASE PHOTO (User Hand — preserve 100% of slim finger widths, inter-finger gaps, anatomy, skin texture, pose, lighting, and background pixel-identically):',
       });
       parts.push({
         inlineData: {
@@ -113,14 +186,34 @@ CRITICAL CONSTRAINTS:
           data: finalHandBase64,
         },
       });
+      parts.push({
+        text: 'IMAGE 2 — MANICURE DESIGN REFERENCE ONLY (Copy ONLY the polish art/colors/finish; shrink nail width to fit IMAGE 1 fingers):',
+      });
+      parts.push({
+        inlineData: {
+          mimeType: referenceMimeType,
+          data: finalReferenceBase64,
+        },
+      });
     } else if (finalHandBase64) {
       parts.push({
-        text: `You are an expert salon studio AI. Generate an ultra-photorealistic editorial salon photograph of this exact human hand showcasing this manicure design: "${prompt}".
+        text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT (localized virtual nail try-on) on IMAGE 1 (the user's hand photograph).
 
-CRITICAL CONSTRAINTS:
-1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Modify ONLY the fingernails. Do not add any rings, jewelry, bracelets, accessories, or foreign props.
-2. CLEAN, DRY SKIN - NO VASELINE OR GREASE: The skin under the fingernails (hyponychium) and around the cuticles must remain completely clean, natural, dry skin. Absolutely NO vaseline, NO petroleum jelly, NO shiny grease, NO cuticle oil pooling, and NO gel spillage under or around the nails. The lacquer must be neatly confined to the nail plate with crisp, sharp cuticle lines.
-3. PRESERVE USER'S REAL HAND: Preserve the exact hand pose, finger proportions, skin tone, knuckles, and background from the photo.`
+Treat IMAGE 1 as an immutable base layer where ONLY the 5 fingernail regions are editable. Do NOT generate a new editorial photograph or re-render the scene.
+
+TASK:
+Apply ONLY this manicure design onto the fingernails of the hand in IMAGE 1, sized strictly to fit IMAGE 1's existing nail beds: "${prompt}".
+
+ABSOLUTE HAND & SLIMNESS PRESERVATION RULES (HIGHEST PRIORITY):
+1. ZERO FINGER WIDENING OR PLUMPING: Every finger shaft, thumb, fingertip, knuckle, palm, and wrist MUST keep the exact same slim pixel width as IMAGE 1. NEVER widen, thicken, plump, swell, puff, or bloat any finger or hand edge.
+2. LOCK INTER-FINGER GAPS & SILHOUETTE: Preserve the exact empty background gap widths between every pair of fingers and keep the output strictly pixel-aligned with IMAGE 1.
+3. ZERO CHANGES TO SKIN TEXTURE OR TONE: Retain the user's exact skin tone, undertones, shadows, highlights, pores, wrinkles, knuckle creases, veins, freckles, fine hairs, and cuticle skin from IMAGE 1. Do NOT airbrush, smooth, soften, brighten, sharpen, or color-grade the skin.
+4. ZERO CHANGES TO BACKGROUND, LIGHTING, OR FRAMING: Keep the exact original background, camera perspective, zoom, crop, aspect ratio, ambient lighting, and color temperature of IMAGE 1 untouched.
+5. NAIL PLATE BOUNDARY LOCK & NO FOREIGN OBJECTS: Modify ONLY the fingernail plates (narrowly fitted within IMAGE 1's existing nail bed sidewalls). Do NOT add any rings, jewelry, bracelets, or foreign props.
+6. CLEAN, DRY SKIN AROUND NAILS: The skin under the fingernails (hyponychium) and around the cuticles must remain clean, natural, dry skin matching IMAGE 1. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO gel spillage on skin.`,
+      });
+      parts.push({
+        text: 'IMAGE 1 — TARGET BASE PHOTO (User Hand — preserve 100% of hand anatomy, skin texture, pose, lighting, and background pixel-identically):',
       });
       parts.push({
         inlineData: {
@@ -203,6 +296,7 @@ CRITICAL CONSTRAINTS:
       return NextResponse.json({
         success: true,
         imageUrl: generatedImageData,
+        creditStatus: serverCreditStatus,
       });
     }
 

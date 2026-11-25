@@ -25,6 +25,10 @@ import {
   History,
   RotateCcw,
   ExternalLink,
+  Dices,
+  Maximize2,
+  Download,
+  Share2,
 } from 'lucide-react';
 import Link from 'next/link';
 import {
@@ -44,11 +48,14 @@ import { signOutUser, getCurrentUser } from '@/lib/services/auth';
 import { isAuthorizedAdmin } from '@/lib/services/admin';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { updateUserProfile } from '@/lib/services/profile';
-import { uploadUserHandPhoto, uploadUserAvatar } from '@/lib/services/storage';
+import { downscaleImageForVision, uploadUserAvatar } from '@/lib/services/storage';
 import { isVipEmail, getUserCreditStatus, PRO_PLANS } from '@/lib/services/credits';
 import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
+import { SocialShareModal } from '@/components/common/SocialShareModal';
+import { shareToStoryOrSocial } from '@/lib/services/editorial-export';
+import { buildSharedLookUrl, buildSimpleTechSummary, SimpleTechSummary } from '@/lib/services/share-look';
 
 interface ProfileViewProps {
   userName: string;
@@ -246,6 +253,65 @@ export function ProfileView({
   }
   const [tryOnHistory, setTryOnHistory] = useState<TryOnHistoryRecord[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
+  const [fullscreenHistoryItem, setFullscreenHistoryItem] = useState<TryOnHistoryRecord | null>(null);
+  const [shareHistoryItem, setShareHistoryItem] = useState<TryOnHistoryRecord | null>(null);
+
+  const getHistoryTechSummary = (item: TryOnHistoryRecord): SimpleTechSummary => {
+    const matchedDesign = item.set_id
+      ? exploreDesigns?.find((d) => d.id === item.set_id) ||
+        CURATED_EDITORIAL_DESIGNS.find((d) => d.id === item.set_id)
+      : undefined;
+
+    if (matchedDesign?.nails) {
+      return buildSimpleTechSummary(matchedDesign.nails, matchedDesign.title);
+    }
+
+    return {
+      title: matchedDesign?.title || 'Applied Manicure',
+      shape: preferredShape || 'almond',
+      length: 'medium',
+      finish: 'glossy',
+      colors: [],
+      description: `${preferredShape || 'almond'} shape manicure try-on created in Finglora.`,
+    };
+  };
+
+  const downloadHistoryItemPhoto = async (item: TryOnHistoryRecord) => {
+    try {
+      const res = await fetch(item.image_url, { mode: 'cors', credentials: 'omit' });
+      if (!res.ok) throw new Error('fetch failed');
+      const blob = await res.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = blobUrl;
+      link.download = `finglora-tryon-${item.id.slice(0, 6)}.jpg`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(blobUrl);
+      showToast('Photo downloaded');
+    } catch {
+      window.open(item.image_url, '_blank');
+    }
+  };
+
+  const handleShareHistoryItem = async (item: TryOnHistoryRecord) => {
+    try {
+      const summary = getHistoryTechSummary(item);
+      const res = await shareToStoryOrSocial(item.image_url, {
+        designTitle: summary.title,
+        filename: `finglora-tryon-${item.id.slice(0, 6)}.jpg`,
+        storyAspect: true,
+      });
+      if (res.mode === 'dialog') {
+        setShareHistoryItem(item);
+      } else if (res.mode === 'shared') {
+        showToast('Opening share options...');
+      }
+    } catch {
+      setShareHistoryItem(item);
+    }
+  };
 
   useEffect(() => {
     let isMounted = true;
@@ -355,39 +421,12 @@ export function ProfileView({
   const handleHandPhotoSelected = async (file: File) => {
     const reader = new FileReader();
     reader.onload = async () => {
-      const result = reader.result as string;
+      const rawDataUrl = reader.result as string;
+      const optimized = await downscaleImageForVision(rawDataUrl, 1280, 0.88).catch(() => rawDataUrl);
       if (setCustomTryOnHandUrl) {
-        setCustomTryOnHandUrl(result);
-      }
-      try {
-        if (typeof window !== 'undefined') {
-          localStorage.setItem('finglora_custom_hand_photo', result);
-          localStorage.setItem('finglora_user_hand_photo', result);
-        }
-      } catch {
-        // storage quota fallback
+        setCustomTryOnHandUrl(optimized);
       }
       showToast('Hand photo saved — ready for 1-tap try-on');
-
-      // Upload to Supabase Storage and update profiles in DB
-      try {
-        const user = await getCurrentUser();
-        if (user?.id) {
-          const uploadedUrl = await uploadUserHandPhoto(file, user.id);
-          if (uploadedUrl && uploadedUrl.startsWith('http')) {
-            await updateUserProfile(user.id, { customHandUrl: uploadedUrl });
-            if (setCustomTryOnHandUrl) setCustomTryOnHandUrl(uploadedUrl);
-            if (typeof window !== 'undefined') {
-              try {
-                localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
-                localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
-              } catch {}
-            }
-          }
-        }
-      } catch (err) {
-        console.warn('Profile hand sync skipped:', err);
-      }
     };
     reader.readAsDataURL(file);
   };
@@ -396,54 +435,14 @@ export function ProfileView({
     if (setCustomTryOnHandUrl) {
       setCustomTryOnHandUrl(dataUrl);
     }
-    try {
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('finglora_custom_hand_photo', dataUrl);
-        localStorage.setItem('finglora_user_hand_photo', dataUrl);
-      }
-    } catch {
-      // storage quota fallback
-    }
     showToast('Hand photo saved — ready for 1-tap try-on');
-
-    try {
-      const user = await getCurrentUser();
-      if (user?.id) {
-        const uploadedUrl = await uploadUserHandPhoto(dataUrl, user.id);
-        if (uploadedUrl && uploadedUrl.startsWith('http')) {
-          await updateUserProfile(user.id, { customHandUrl: uploadedUrl });
-          if (setCustomTryOnHandUrl) setCustomTryOnHandUrl(uploadedUrl);
-          if (typeof window !== 'undefined') {
-            try {
-              localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
-              localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
-            } catch {}
-          }
-        }
-      }
-    } catch (err) {
-      console.warn('Profile camera hand sync skipped:', err);
-    }
   };
 
   const handleRemoveHandPhoto = async () => {
     if (setCustomTryOnHandUrl) {
       setCustomTryOnHandUrl(null);
     }
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('finglora_custom_hand_photo');
-      localStorage.removeItem('finglora_user_hand_photo');
-    }
     showToast('Hand photo removed');
-
-    try {
-      const user = await getCurrentUser();
-      if (user?.id) {
-        await updateUserProfile(user.id, { customHandUrl: null });
-      }
-    } catch (err) {
-      console.warn('Profile hand removal skipped:', err);
-    }
   };
 
   // Saved designs list
@@ -499,6 +498,7 @@ export function ProfileView({
   // -------------------------------------------------------------------------
   if (currentView === 'history') {
     return (
+      <>
       <div
         className={`w-full px-4 sm:px-6 lg:px-8 py-4 sm:py-6 pb-28 sm:pb-32 md:pb-12 text-stone-900 select-none animate-in fade-in duration-200 ${
           tryOnHistory.length === 0
@@ -529,25 +529,55 @@ export function ProfileView({
                   <img
                     src={item.image_url}
                     alt="Applied Try-On"
-                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103"
+                    onClick={() => setFullscreenHistoryItem(item)}
+                    className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-103 cursor-pointer"
                   />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-80 pointer-events-none" />
 
                   {/* Mode Badge */}
                   <span className="absolute top-2.5 left-2.5 px-2.5 py-0.5 rounded-full bg-black/60 backdrop-blur-md text-white text-[10px] font-mono border border-white/10">
                     {item.mode || 'Virtual Try-On'}
                   </span>
 
-                  {/* Inspect Full Size Link */}
-                  <a
-                    href={item.image_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="absolute top-2.5 right-2.5 w-7 h-7 rounded-full bg-white/90 text-stone-800 flex items-center justify-center opacity-0 group-hover:opacity-100 transition shadow-xs hover:bg-white"
-                    title="View Full Resolution"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                  </a>
+                  {/* Card Top-Right Actions: Share, Download & Fullscreen */}
+                  <div className="absolute top-2.5 right-2.5 flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleShareHistoryItem(item);
+                      }}
+                      className="w-7 h-7 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-xs hover:bg-white cursor-pointer transition"
+                      title="Share Look"
+                      aria-label="Share Look"
+                    >
+                      <Share2 className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        downloadHistoryItemPhoto(item);
+                      }}
+                      className="w-7 h-7 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-xs hover:bg-white cursor-pointer transition"
+                      title="Download Photo"
+                      aria-label="Download Photo"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setFullscreenHistoryItem(item);
+                      }}
+                      className="w-7 h-7 rounded-full bg-white/90 text-stone-800 flex items-center justify-center shadow-xs hover:bg-white cursor-pointer transition"
+                      title="Open Fullscreen"
+                      aria-label="Open Fullscreen"
+                    >
+                      <Maximize2 className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Card Details & Actions */}
@@ -614,6 +644,81 @@ export function ProfileView({
           </div>
         )}
       </div>
+
+      {/* In-App Fullscreen Lightbox */}
+      {fullscreenHistoryItem && (
+        <div
+          onClick={() => setFullscreenHistoryItem(null)}
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-lg w-full flex flex-col items-center gap-3"
+          >
+            <div className="w-full flex items-center justify-between gap-2">
+              <span className="text-xs text-white/75 font-mono">
+                {new Date(fullscreenHistoryItem.created_at).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => handleShareHistoryItem(fullscreenHistoryItem)}
+                  className="h-9 px-3.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>Share</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => downloadHistoryItemPhoto(fullscreenHistoryItem)}
+                  className="h-9 px-3.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFullscreenHistoryItem(null)}
+                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer"
+                  aria-label="Close fullscreen preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="w-full rounded-3xl overflow-hidden bg-stone-950 border border-white/10 shadow-2xl">
+              <img
+                src={fullscreenHistoryItem.image_url}
+                alt="Applied Try-On Fullscreen"
+                className="w-full max-h-[78vh] object-contain mx-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* History Social Share Modal */}
+      {shareHistoryItem && (() => {
+        const techSummary = getHistoryTechSummary(shareHistoryItem);
+        return (
+          <SocialShareModal
+            isOpen={Boolean(shareHistoryItem)}
+            onClose={() => setShareHistoryItem(null)}
+            imageUrl={shareHistoryItem.image_url}
+            designTitle={techSummary.title}
+            techSummary={techSummary}
+            shareUrl={buildSharedLookUrl(shareHistoryItem.image_url, techSummary)}
+            onDownloadFallback={() => downloadHistoryItemPhoto(shareHistoryItem)}
+          />
+        );
+      })()}
+    </>
     );
   }
 
@@ -975,66 +1080,73 @@ export function ProfileView({
                     )}
                   </div>
 
-                  {/* Quick Camera Overlay Pill on hover */}
+                  {/* Quick Dice Randomizer Overlay */}
                   <button
                     type="button"
-                    onClick={() => profilePicFileInputRef.current?.click()}
-                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white border border-stone-200 shadow-xs flex items-center justify-center text-stone-600 hover:text-[#E0246A] transition cursor-pointer"
-                    title="Change photo"
-                  >
-                    <Camera className="w-3 h-3" />
-                  </button>
-
-                  <input
-                    ref={profilePicFileInputRef}
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => {
-                      const f = e.target.files?.[0];
-                      if (f) handleCustomAvatarSelected(f);
+                    onClick={async () => {
+                      const seed = Math.random().toString(36).substring(2, 10);
+                      const newUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${seed}&backgroundColor=fde8ef,faf7f2,f4efeb`;
+                      setCustomAvatarPhoto(newUrl);
+                      propSetUserAvatarUrl?.(newUrl);
+                      if (supabaseUser?.id) {
+                        await updateUserProfile(supabaseUser.id, { avatarUrl: newUrl }).catch(() => {});
+                      }
+                      showToast('New avatar generated');
                     }}
-                  />
+                    className="absolute -bottom-1 -right-1 w-6 h-6 rounded-lg bg-white border border-stone-200 shadow-xs flex items-center justify-center text-stone-600 hover:text-[#E0246A] transition cursor-pointer"
+                    title="Randomize avatar"
+                  >
+                    <Dices className="w-3 h-3" />
+                  </button>
                 </div>
 
                 {/* Identity Info */}
                 <div className="min-w-0 space-y-1">
-                  <div className="flex items-center gap-2">
-                    <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
-                      {userName}
-                    </h2>
+                  <h2 className="text-base sm:text-lg font-semibold text-stone-900 truncate leading-tight">
+                    {userName}
+                  </h2>
+                  <p className="text-xs text-stone-500 font-mono truncate max-w-[200px] sm:max-w-xs">
+                    {userEmail || 'Guest studio session'}
+                  </p>
+                  <div className="pt-0.5">
                     {isUserVip ? (
-                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
+                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1">
                         <Crown className="w-2.5 h-2.5 fill-[#E0246A]" />
                         <span>VIP Tier</span>
                       </span>
                     ) : isUserPro ? (
-                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1 shrink-0">
+                      <span className="px-2.5 py-0.5 rounded-full bg-pink-50 text-[#E0246A] border border-[#FCE7F3] text-[10px] font-semibold inline-flex items-center gap-1">
                         <Sparkles className="w-2.5 h-2.5" />
                         <span>Pro Plan</span>
                       </span>
                     ) : (
-                      <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[10px] font-medium inline-flex items-center gap-1 shrink-0">
+                      <span className="px-2.5 py-0.5 rounded-full bg-stone-100 text-stone-600 border border-stone-200 text-[10px] font-medium inline-flex items-center gap-1">
                         <span>Free Plan</span>
                       </span>
                     )}
                   </div>
-                  <p className="text-xs text-stone-500 font-mono truncate max-w-[200px] sm:max-w-xs">
-                    {userEmail || 'Guest studio session'}
-                  </p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-2 self-start sm:self-center shrink-0">
+              <div className="grid grid-cols-2 sm:flex items-center gap-2 w-full sm:w-auto shrink-0">
                 <button
                   type="button"
-                  onClick={() => profilePicFileInputRef.current?.click()}
-                  className="h-8.5 px-3 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/50 hover:bg-pink-50 text-[#E0246A] text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 active:scale-95 shadow-2xs"
-                  title="Upload custom profile photo"
+                  onClick={async () => {
+                    const seed = Math.random().toString(36).substring(2, 10);
+                    const newUrl = `https://api.dicebear.com/9.x/lorelei/svg?seed=${seed}&backgroundColor=fde8ef,faf7f2,f4efeb`;
+                    setCustomAvatarPhoto(newUrl);
+                    propSetUserAvatarUrl?.(newUrl);
+                    if (supabaseUser?.id) {
+                      await updateUserProfile(supabaseUser.id, { avatarUrl: newUrl }).catch(() => {});
+                    }
+                    showToast('New avatar generated');
+                  }}
+                  className="h-9 px-3.5 rounded-xl border border-stone-200/80 hover:border-pink-300 bg-pink-50/60 hover:bg-pink-50 text-[#E0246A] text-xs font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 active:scale-95 shadow-2xs"
+                  title="Generate random avatar"
                 >
-                  <Camera className="w-3.5 h-3.5" />
-                  <span>Photo</span>
+                  <Dices className="w-3.5 h-3.5" />
+                  <span>Randomize</span>
                 </button>
 
                 <button
@@ -1044,47 +1156,20 @@ export function ProfileView({
                     setEmailInput(userEmail);
                     setIsEditProfileOpen(true);
                   }}
-                  className="h-8.5 px-3.5 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
+                  className="h-9 px-4 rounded-xl border border-stone-200/80 hover:bg-stone-50 text-xs font-semibold text-stone-700 transition cursor-pointer flex items-center justify-center active:scale-95 shadow-2xs"
                 >
                   Edit
                 </button>
               </div>
             </div>
-
-            {/* Sub-bar if custom photo is active */}
-            {avatarUrl && (
-              <div className="flex items-center justify-between pt-2.5 border-t border-stone-100 text-xs">
-                <span className="text-[11px] text-stone-500">Profile photo active</span>
-                <button
-                  type="button"
-                  onClick={async () => {
-                    setCustomAvatarPhoto(null);
-                    propSetUserAvatarUrl?.(null);
-                    if (typeof window !== 'undefined') {
-                      localStorage.removeItem('finglora_custom_avatar_photo');
-                      localStorage.removeItem('finglora_avatar_url');
-                      window.dispatchEvent(new Event('finglora_avatar_updated'));
-                    }
-                    if (supabaseUser?.id) {
-                      await updateUserProfile(supabaseUser.id, { avatarUrl: null }).catch(() => {});
-                    }
-                    showToast('Profile photo removed');
-                  }}
-                  className="text-[11px] font-medium text-stone-400 hover:text-red-500 transition cursor-pointer inline-flex items-center gap-1"
-                >
-                  <Trash2 className="w-3 h-3" />
-                  <span>Remove photo</span>
-                </button>
-              </div>
-            )}
           </div>
 
           {/* Card: Plan & Credits Station */}
           <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs space-y-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2.5">
-                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUserVip || isUserPro ? 'bg-pink-50 text-[#E0246A]' : 'bg-stone-100 text-stone-700'}`}>
-                  {isUserVip || isUserPro ? <Crown className="w-4 h-4 fill-[#E0246A]" /> : <Sparkles className="w-4 h-4 text-[#E0246A]" />}
+                <div className={`w-8 h-8 rounded-xl flex items-center justify-center shrink-0 ${isUserVip || isUserPro ? 'bg-pink-50 text-[#E0246A]' : 'bg-stone-100 text-stone-600'}`}>
+                  {isUserVip || isUserPro ? <Crown className="w-4 h-4 fill-[#E0246A]" /> : <Crown className="w-4 h-4 text-stone-500" />}
                 </div>
                 <div>
                   <span className="text-xs font-semibold text-stone-900 block leading-tight">
@@ -1115,35 +1200,35 @@ export function ProfileView({
 
             {/* Pricing Highlights for Free Users */}
             {!isUserPro && !isUserVip && (
-              <div className="pt-3 border-t border-stone-100 grid grid-cols-3 gap-2 text-center">
+              <div className="pt-3.5 border-t border-stone-100 grid grid-cols-3 gap-2 text-center">
                 <div
                   onClick={() => setIsPaywallOpen(true)}
-                  className="p-2 rounded-xl bg-stone-50 hover:bg-pink-50/50 border border-stone-200/60 transition cursor-pointer"
+                  className="pt-3 pb-2.5 px-2 rounded-xl bg-stone-50 hover:bg-pink-50/50 border border-stone-200/60 transition cursor-pointer"
                 >
                   <div className="text-[10px] text-stone-500">Monthly</div>
                   <div className="text-xs font-bold text-stone-900 mt-0.5">$7<span className="text-[9px] font-normal text-stone-400">/mo</span></div>
                 </div>
                 <div
                   onClick={() => setIsPaywallOpen(true)}
-                  className="p-2 rounded-xl bg-pink-50/70 hover:bg-pink-50 border border-pink-200 transition cursor-pointer relative"
+                  className="pt-3 pb-2.5 px-2 rounded-xl bg-pink-50/70 hover:bg-pink-50 border border-pink-200 transition cursor-pointer relative"
                 >
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-[#E0246A] text-white text-[7px] font-bold">
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-[#E0246A] text-white text-[8px] font-bold whitespace-nowrap leading-none">
                     POPULAR
                   </span>
                   <div className="text-[10px] text-stone-600">6 Months</div>
                   <div className="text-xs font-bold text-[#E0246A] mt-0.5">$29</div>
-                  <div className="text-[8px] text-stone-400">$4.83/mo</div>
+                  <div className="text-[9px] text-stone-400">$4.83/mo</div>
                 </div>
                 <div
                   onClick={() => setIsPaywallOpen(true)}
-                  className="p-2 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200 transition cursor-pointer relative"
+                  className="pt-3 pb-2.5 px-2 rounded-xl bg-emerald-50/50 hover:bg-emerald-50 border border-emerald-200 transition cursor-pointer relative"
                 >
-                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-1.5 py-0.2 rounded-full bg-emerald-600 text-white text-[7px] font-bold">
+                  <span className="absolute -top-2 left-1/2 -translate-x-1/2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[8px] font-bold whitespace-nowrap leading-none">
                     BEST VALUE
                   </span>
                   <div className="text-[10px] text-stone-600">Yearly</div>
                   <div className="text-xs font-bold text-emerald-700 mt-0.5">$49</div>
-                  <div className="text-[8px] text-stone-400">$4.08/mo</div>
+                  <div className="text-[9px] text-stone-400">$4.08/mo</div>
                 </div>
               </div>
             )}
@@ -1161,7 +1246,7 @@ export function ProfileView({
                     Hand Photo Calibration
                   </span>
                   <span className="text-[11px] text-stone-500">
-                    Used to render manicures directly onto your hand
+                    Render manicures on your hand
                   </span>
                 </div>
               </div>
@@ -1308,28 +1393,6 @@ export function ProfileView({
               </div>
             </button>
 
-            {/* Admin Command Console (Verified Allowlisted Admins Only) */}
-            {showAdminConsoleLink && (
-              <Link
-                href="/admin"
-                className="w-full h-11 px-3.5 rounded-2xl hover:bg-stone-50 transition flex items-center justify-between cursor-pointer group active:scale-[0.99]"
-              >
-                <div className="flex items-center gap-3 min-w-0">
-                  <div className="w-7 h-7 rounded-lg bg-[#FDF2F8] text-[#E0246A] flex items-center justify-center shrink-0">
-                    <Settings className="w-4 h-4" />
-                  </div>
-                  <div className="text-left min-w-0">
-                    <span className="text-xs font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors block leading-tight">
-                      Admin Command Console
-                    </span>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 text-[11px] text-[#E0246A] font-semibold">
-                  <span>Manage</span>
-                  <ChevronRight className="w-3.5 h-3.5 text-[#E0246A] transition-colors" />
-                </div>
-              </Link>
-            )}
 
             {/* Sign Out */}
             <button
@@ -1356,45 +1419,45 @@ export function ProfileView({
           <button
             type="button"
             onClick={() => setCurrentView('favorites')}
-            className="w-full p-4 sm:p-5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center justify-between transition group cursor-pointer active:scale-[0.99]"
+            className="w-full p-4 sm:p-5 rounded-3xl bg-white hover:bg-stone-50/80 border border-stone-200/80 shadow-2xs flex items-center justify-between gap-3 transition group cursor-pointer active:scale-[0.99]"
           >
-            <div className="flex items-center gap-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-2xl bg-pink-50 text-[#E0246A] flex items-center justify-center shrink-0">
                 <Heart className="w-5 h-5 fill-[#E0246A]" />
               </div>
               <div className="text-left min-w-0">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm sm:text-base font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight">
+                  <span className="text-sm font-semibold text-stone-900 group-hover:text-[#E0246A] transition-colors leading-tight">
                     Saved Looks
                   </span>
                   <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[#FDF2F8] text-[#E0246A] border border-[#FCE7F3]">
                     {savedDesigns.length}
                   </span>
                 </div>
-                <p className="text-xs text-stone-500 mt-0.5 truncate">
-                  View your bookmarked styles in the full moodboard
+                <p className="text-[11px] text-stone-500 mt-0.5">
+                  Your bookmarked nail styles
                 </p>
               </div>
             </div>
             <div className="flex items-center gap-1 text-xs font-semibold text-[#E0246A] shrink-0">
-              <span>Open Moodboard</span>
+              <span>Moodboard</span>
               <ChevronRight className="w-4 h-4" />
             </div>
           </button>
 
           {/* Card 2: Notifications Preferences */}
-          <div className="bg-white rounded-3xl p-5 sm:p-6 border border-stone-200/80 shadow-2xs">
-            <div className="w-full flex items-center justify-between">
+          <div className="bg-white rounded-3xl p-4 sm:p-5 border border-stone-200/80 shadow-2xs">
+            <div className="w-full flex items-center justify-between gap-3">
               <div className="flex items-center gap-3 min-w-0">
-                <div className="w-9 h-9 rounded-xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-2xl bg-stone-100 text-stone-700 flex items-center justify-center shrink-0">
                   <Bell className="w-4.5 h-4.5" />
                 </div>
                 <div className="text-left min-w-0">
                   <span className="text-xs font-semibold text-stone-900 block leading-tight">
                     Seasonal Drops & Updates
                   </span>
-                  <span className="text-[11px] text-stone-500 truncate block mt-0.5">
-                    New style drops, color releases & studio updates
+                  <span className="text-[11px] text-stone-500 block mt-0.5">
+                    New drops, colors & studio updates
                   </span>
                 </div>
               </div>
@@ -1526,22 +1589,24 @@ export function ProfileView({
                 </p>
               </div>
             )}
-
-            <input
-              type="file"
-              ref={handFileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={(e) => {
-                const file = e.target.files?.[0];
-                if (file) {
-                  handleHandPhotoSelected(file);
-                }
-              }}
-            />
           </div>
         </div>
       )}
+
+      {/* Always-mounted file input for Hand Photo Upload (accessible from both Settings card and Modal) */}
+      <input
+        type="file"
+        ref={handFileInputRef}
+        accept="image/*"
+        className="hidden"
+        onChange={(e) => {
+          const file = e.target.files?.[0];
+          e.target.value = '';
+          if (file) {
+            handleHandPhotoSelected(file);
+          }
+        }}
+      />
 
       {/* ---------------------------------------------------------------------
           MODAL: EDIT ACCOUNT DETAILS
@@ -1759,6 +1824,71 @@ export function ProfileView({
           showToast('Pro Access activated! Enjoy unlimited try-ons.');
         }}
       />
+      {/* In-App Fullscreen Lightbox for Try-On History */}
+      {fullscreenHistoryItem && (
+        <div
+          onClick={() => setFullscreenHistoryItem(null)}
+          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="relative max-w-lg w-full flex flex-col items-center gap-3"
+          >
+            <div className="w-full flex items-center justify-between gap-2">
+              <span className="text-xs text-white/75 font-mono">
+                {new Date(fullscreenHistoryItem.created_at).toLocaleDateString(undefined, {
+                  month: 'short',
+                  day: 'numeric',
+                  year: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={async () => {
+                    try {
+                      const res = await fetch(fullscreenHistoryItem.image_url);
+                      const blob = await res.blob();
+                      const blobUrl = URL.createObjectURL(blob);
+                      const link = document.createElement('a');
+                      link.href = blobUrl;
+                      link.download = `finglora-tryon-${fullscreenHistoryItem.id.slice(0, 6)}.jpg`;
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
+                      URL.revokeObjectURL(blobUrl);
+                      showToast('Photo downloaded');
+                    } catch {
+                      window.open(fullscreenHistoryItem.image_url, '_blank');
+                    }
+                  }}
+                  className="h-9 px-3.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Download</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setFullscreenHistoryItem(null)}
+                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer"
+                  aria-label="Close fullscreen preview"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+            <div className="w-full rounded-3xl overflow-hidden bg-stone-950 border border-white/10 shadow-2xl">
+              <img
+                src={fullscreenHistoryItem.image_url}
+                alt="Applied Try-On Fullscreen"
+                className="w-full max-h-[78vh] object-contain mx-auto"
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

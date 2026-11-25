@@ -39,7 +39,7 @@ import { OnboardingSurface } from '@/components/surfaces/OnboardingSurface';
 import { CustomerApp } from '@/components/surfaces/customer/CustomerApp';
 import { CustomerRoute } from '@/components/surfaces/customer/CustomerSidebar';
 import { subscribeToAuthChanges, getCurrentUser, clearUserLocalSessionData, signOutUser } from '@/lib/services/auth';
-import { fetchExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
+import { fetchExploreSets, getCachedExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { ensureAndFetchUserProfile, updateUserProfile } from '@/lib/services/profile';
 import { uploadInspoPhoto, uploadTryOnCapture, uploadUserHandPhoto, downscaleImageForVision } from '@/lib/services/storage';
@@ -162,30 +162,30 @@ export default function FingloraApp() {
     }
 
     // Persist to Supabase Storage and public.profiles database table
-    if (url) {
-      if (supabaseUser?.id) {
-        uploadUserHandPhoto(url, supabaseUser.id)
-          .then(async (uploadedUrl) => {
-            if (uploadedUrl && uploadedUrl !== url) {
-              setCustomTryOnHandUrl(uploadedUrl);
-              if (typeof window !== 'undefined') {
-                try {
-                  localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
-                  localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
-                } catch {}
-              }
+    const syncHandToSupabase = async () => {
+      try {
+        const activeUserId = supabaseUser?.id || (await getCurrentUser())?.id;
+        if (!activeUserId) return;
+        if (url) {
+          const uploadedUrl = await uploadUserHandPhoto(url, activeUserId);
+          if (uploadedUrl && uploadedUrl !== url) {
+            setCustomTryOnHandUrl(uploadedUrl);
+            if (typeof window !== 'undefined') {
+              try {
+                localStorage.setItem('finglora_user_hand_photo', uploadedUrl);
+                localStorage.setItem('finglora_custom_hand_photo', uploadedUrl);
+              } catch {}
             }
-            await updateUserProfile(supabaseUser.id, { customHandUrl: uploadedUrl });
-          })
-          .catch((err) => console.warn('Supabase profile hand photo sync failed:', err));
+          }
+          await updateUserProfile(activeUserId, { customHandUrl: uploadedUrl });
+        } else {
+          await updateUserProfile(activeUserId, { customHandUrl: null });
+        }
+      } catch (err) {
+        console.warn('Supabase profile hand photo sync failed:', err);
       }
-    } else {
-      if (supabaseUser?.id) {
-        updateUserProfile(supabaseUser.id, { customHandUrl: null }).catch((err) =>
-          console.warn('Supabase profile hand removal failed:', err)
-        );
-      }
-    }
+    };
+    void syncHandToSupabase();
   };
   const [tryOnView, setTryOnView] = useState<'after' | 'before'>('after');
   const [tryOnZoom, setTryOnZoom] = useState(false);
@@ -235,11 +235,11 @@ export default function FingloraApp() {
   };
 
   const hydrateAuthenticatedUser = async (authUser: any) => {
-    const seq = ++authSeqRef.current;
-
     if (hydratedUserIdRef.current === authUser.id) {
       return;
     }
+
+    const seq = ++authSeqRef.current;
 
     let pendingGuestHand: string | null = null;
     let pendingGuestNails: any = null;
@@ -402,6 +402,12 @@ export default function FingloraApp() {
       }
     }
 
+    // Instant cached paint while refreshing latest curated sets + favorites
+    const cachedSets = getCachedExploreSets(authUser.id);
+    if (cachedSets && cachedSets.length > 0) {
+      setExploreDesigns(cachedSets);
+    }
+
     // Fetch explore sets scoped to curated sets + this user's own sets + favorites
     const userSets = await fetchExploreSets(authUser.id);
     if (seq !== authSeqRef.current) return;
@@ -430,6 +436,12 @@ export default function FingloraApp() {
   // Hydrate Design Session from localStorage (guest-only) and verified Supabase Auth on Mount
   useEffect(() => {
     let active = true;
+
+    // Instant paint for curated sets from sessionStorage/memory cache while auth bootstraps
+    const initialCached = getCachedExploreSets();
+    if (initialCached && initialCached.length > 0) {
+      setExploreDesigns(initialCached);
+    }
 
     const bootstrapSession = async () => {
       const verifiedUser = await getCurrentUser();
@@ -1155,7 +1167,11 @@ export default function FingloraApp() {
   };
 
   const copyShareLink = () => {
-    const url = `https://finglora.app/p/${activePassportCode}`;
+    const origin =
+      typeof window !== 'undefined' && window.location?.origin
+        ? window.location.origin
+        : 'https://finglora.app';
+    const url = `${origin}/p/${activePassportCode}`;
     navigator.clipboard?.writeText(url).catch(() => {});
     showToast(`Copied shareable link: ${url}`);
   };

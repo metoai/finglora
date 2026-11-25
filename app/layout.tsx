@@ -17,6 +17,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preconnect" href="https://xwfazcaxniogiyyaovau.supabase.co" crossOrigin="anonymous" />
+        <link rel="dns-prefetch" href="https://xwfazcaxniogiyyaovau.supabase.co" />
+      </head>
       <body>{children}</body>
     </html>
   );

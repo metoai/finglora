@@ -644,7 +644,7 @@ export function HomeHubView({
           ref={carouselRef}
           className="flex gap-3.5 sm:gap-5 overflow-x-auto scrollbar-none py-2 px-1 snap-x snap-mandatory scroll-smooth"
         >
-          {displayedLooks.map((look) => (
+          {displayedLooks.map((look, idx) => (
             <div
               key={look.id}
               onClick={() => {
@@ -656,6 +656,8 @@ export function HomeHubView({
               <img
                 src={look.photoUrl}
                 alt={look.title}
+                loading={idx < 4 ? 'eager' : 'lazy'}
+                decoding="async"
                 className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
 

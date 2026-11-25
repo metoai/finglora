@@ -1,4 +1,11 @@
 import { NextResponse } from 'next/server';
+import { getVerifiedRequestUser } from '@/lib/server/admin-auth';
+import {
+  checkRateLimit,
+  getClientIp,
+  isAllowedBrowserOrigin,
+  safeFetchRemoteImageBase64,
+} from '@/lib/server/api-guard';
 
 interface ExtractionRequestBody {
   imageUrl?: string;
@@ -64,6 +71,23 @@ function extractJSON(text: string): Record<string, unknown> | null {
 
 export async function POST(request: Request) {
   try {
+    if (!isAllowedBrowserOrigin(request)) {
+      return NextResponse.json({ error: 'Forbidden origin' }, { status: 403 });
+    }
+
+    const user = await getVerifiedRequestUser();
+    const clientIp = getClientIp(request);
+    const rate = user
+      ? checkRateLimit(`extract:user:${user.id}`, 30, 10 * 60 * 1000)
+      : checkRateLimit(`extract:ip:${clientIp}`, 6, 30 * 60 * 1000);
+
+    if (!rate.allowed) {
+      return NextResponse.json(
+        { error: 'Rate limit reached. Please try again shortly.', isRateLimit: true },
+        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+      );
+    }
+
     const body: ExtractionRequestBody = await request.json();
     const { imageUrl, imageBase64 } = body;
 
@@ -74,20 +98,14 @@ export async function POST(request: Request) {
       );
     }
 
-
     let finalBase64 = imageBase64?.replace(/^data:image\/\w+;base64,/, '');
     let finalMimeType = imageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
 
-    if (!finalBase64 && imageUrl) {
-      try {
-        const imgRes = await fetch(imageUrl, { signal: AbortSignal.timeout(12000) });
-        if (imgRes.ok) {
-          const buffer = await imgRes.arrayBuffer();
-          finalBase64 = Buffer.from(buffer).toString('base64');
-          finalMimeType = imgRes.headers.get('content-type') || 'image/jpeg';
-        }
-      } catch {
-        // Continue if fetch failed
+    if (!finalBase64 && imageUrl && imageUrl.startsWith('https://')) {
+      const remote = await safeFetchRemoteImageBase64(imageUrl);
+      if (remote) {
+        finalBase64 = remote.base64;
+        finalMimeType = remote.mimeType;
       }
     }
 

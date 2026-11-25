@@ -18,7 +18,7 @@ import {
   MessageSquare,
 } from 'lucide-react';
 import { Finger, NailDesign } from '@/types/nail';
-import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
+import { useTryOnCredit, getUserCreditStatus, syncCreditsFromProfile } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 import { downscaleImageForVision } from '@/lib/services/storage';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
@@ -184,7 +184,6 @@ export function AiCreationView({
       return;
     }
 
-    useTryOnCredit();
     setIsIterating(true);
 
     try {
@@ -194,13 +193,13 @@ export function AiCreationView({
       if (baseSource.startsWith('data:image/')) {
         handBase64 = baseSource;
       } else {
-        handBase64 = await downscaleImageForVision(baseSource, 768, 0.72);
+        handBase64 = await downscaleImageForVision(baseSource, 1024, 0.85);
       }
 
       // 2. Call /api/generate-nail-art in hand-tryon mode
       const promptInstruction = isInitialCreation
-        ? `On this human hand, generate and apply this custom manicure design: "${trimmed}". Preserve the natural hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto each fingernail. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not add rings, jewelry, or foreign objects.`
-        : `On this human hand with manicure, update and customize the manicure according to this request: "${trimmed}". Preserve the hand pose, finger positions, skin tone, and background. Seamlessly apply the requested nail shapes, colors, and art onto the fingernails. Clean, natural, dry skin under and around all nails with no vaseline, petroleum jelly, or greasy residue. Nail design only, do not add rings, jewelry, or foreign objects.`;
+        ? trimmed
+        : `Update ONLY the existing manicure on the fingernails to: "${trimmed}"`;
 
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',
@@ -212,8 +211,23 @@ export function AiCreationView({
         }),
       });
 
+      if (res.status === 402) {
+        const errData = await res.json().catch(() => ({}));
+        if (typeof errData.credits === 'number') {
+          syncCreditsFromProfile(Boolean(errData.isPro), errData.credits);
+        }
+        setIsGuestFirstTry(false);
+        setPaywallOpen(true);
+        return;
+      }
+
       if (res.ok) {
         const data = await res.json();
+        if (data?.creditStatus) {
+          syncCreditsFromProfile(Boolean(data.creditStatus.isPro), data.creditStatus.credits);
+        } else {
+          useTryOnCredit();
+        }
         if (data?.imageUrl) {
           setCurrentTryOnImage(data.imageUrl);
           setCompareMode('after');
@@ -853,13 +867,42 @@ export function AiCreationView({
       />
 
       {/* Social Share Options Modal */}
-      <SocialShareModal
-        isOpen={isShareModalOpen}
-        onClose={() => setIsShareModalOpen(false)}
-        imageUrl={shareModalImg || currentTryOnImage}
-        designTitle="Custom AI Manicure"
-        onDownloadFallback={() => handleDownloadBrandedLook(shareModalImg || currentTryOnImage)}
-      />
+      {(() => {
+        const shareImg = shareModalImg || currentTryOnImage;
+        const simpleSummary = {
+          title: 'Custom Manicure',
+          shape: 'almond',
+          length: 'medium',
+          finish: 'glossy',
+          colors: [] as string[],
+          description: 'Custom salon manicure preview generated in Finglora Studio.',
+        };
+        const origin =
+          typeof window !== 'undefined' && window.location?.origin
+            ? window.location.origin
+            : 'https://finglora.app';
+        const params = new URLSearchParams({
+          t: simpleSummary.title,
+          s: simpleSummary.shape,
+          l: simpleSummary.length,
+          f: simpleSummary.finish,
+          n: simpleSummary.description,
+        });
+        if (shareImg && shareImg.startsWith('https://')) {
+          params.set('img', shareImg);
+        }
+        return (
+          <SocialShareModal
+            isOpen={isShareModalOpen}
+            onClose={() => setIsShareModalOpen(false)}
+            imageUrl={shareImg}
+            designTitle={simpleSummary.title}
+            techSummary={simpleSummary}
+            shareUrl={`${origin}/look?${params.toString()}`}
+            onDownloadFallback={() => handleDownloadBrandedLook(shareImg)}
+          />
+        );
+      })()}
     </div>
   );
 }
