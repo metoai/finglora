@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { X, Check, Copy, Share2, Maximize2 } from 'lucide-react';
+import { X, Check, Copy, Share2, Maximize2, MessageCircle } from 'lucide-react';
 import { SimpleTechSummary } from '@/lib/services/share-look';
 
 export interface ShowToTechModalProps {
@@ -10,6 +10,7 @@ export interface ShowToTechModalProps {
   imageUrl: string;
   inspoImageUrl?: string | null;
   summary: SimpleTechSummary;
+  shareUrl?: string;
   onShareClick?: () => void;
 }
 
@@ -19,6 +20,7 @@ export function ShowToTechModal({
   imageUrl,
   inspoImageUrl,
   summary,
+  shareUrl,
   onShareClick,
 }: ShowToTechModalProps) {
   const [copied, setCopied] = useState(false);
@@ -27,11 +29,16 @@ export function ShowToTechModal({
   if (!isOpen || !imageUrl) return null;
 
   const techNoteText = [
+    `Hi! Here is the manicure look I'd like for my appointment:`,
     `Look: ${summary.title}`,
     `• Shape: ${summary.shape} (${summary.length} length)`,
     `• Finish: ${summary.finish}`,
     `• Technique: ${summary.technique}`,
+    ...(summary.colors.length > 0 ? [`• Shades: ${summary.colors.join(', ')}`] : []),
+    ...(shareUrl ? [`Preview & salon spec: ${shareUrl}`] : []),
   ].join('\n');
+
+  const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(techNoteText)}`;
 
   const handleCopyTechNotes = async () => {
     try {
@@ -154,7 +161,7 @@ export function ShowToTechModal({
 
             <div className="p-3.5 rounded-2xl bg-[#FAF7F2] border border-stone-200/80 space-y-2">
               <span className="text-[10px] font-mono uppercase tracking-wider text-stone-500 block">
-                3 · Technique
+                3 · Technique &amp; Palette
               </span>
               <p className="text-xs sm:text-sm font-medium text-stone-900 leading-relaxed">
                 {summary.technique}
@@ -180,33 +187,45 @@ export function ShowToTechModal({
           </div>
         </div>
 
-        {/* Bottom High-Contrast Actions */}
-        <footer className="grid grid-cols-2 gap-2.5 pb-2">
-          <button
-            type="button"
-            onClick={handleCopyTechNotes}
-            className="h-11 rounded-2xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-900 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer active:scale-95"
+        {/* Bottom High-Contrast Actions: 1-Tap WhatsApp + Copy + Done */}
+        <footer className="space-y-2 pb-2">
+          <a
+            href={whatsappUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="w-full h-11 rounded-2xl bg-[#168A47] hover:bg-[#13743C] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
           >
-            {copied ? (
-              <>
-                <Check className="w-4 h-4 text-emerald-600" />
-                <span>Notes Copied</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-4 h-4 text-[#E0246A]" />
-                <span>Copy Tech Notes</span>
-              </>
-            )}
-          </button>
+            <MessageCircle className="w-4 h-4 shrink-0" />
+            <span>Send to Nail Tech on WhatsApp</span>
+          </a>
 
-          <button
-            type="button"
-            onClick={onClose}
-            className="h-11 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-semibold flex items-center justify-center transition cursor-pointer active:scale-95 shadow-xs"
-          >
-            Done
-          </button>
+          <div className="grid grid-cols-2 gap-2.5">
+            <button
+              type="button"
+              onClick={handleCopyTechNotes}
+              className="h-11 rounded-2xl bg-white hover:bg-stone-100 border border-stone-200 text-stone-900 text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-2xs transition cursor-pointer active:scale-95"
+            >
+              {copied ? (
+                <>
+                  <Check className="w-4 h-4 text-emerald-600" />
+                  <span>Notes Copied</span>
+                </>
+              ) : (
+                <>
+                  <Copy className="w-4 h-4 text-[#E0246A]" />
+                  <span>Copy Tech Notes</span>
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              className="h-11 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-semibold flex items-center justify-center transition cursor-pointer active:scale-95 shadow-xs"
+            >
+              Done
+            </button>
+          </div>
         </footer>
       </div>
     </div>

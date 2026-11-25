@@ -369,6 +369,12 @@ export function LandingSurface({
       {/* Footer */}
       <footer className="w-full max-w-6xl mx-auto px-5 sm:px-8 py-4 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-stone-400 z-10 border-t border-stone-200/60">
         <span>© {new Date().getFullYear()} Finglora</span>
+        <a
+          href="/finder"
+          className="text-stone-500 hover:text-[#E0246A] font-medium transition-colors"
+        >
+          Free Nail Shape &amp; Tone Finder →
+        </a>
       </footer>
     </main>
   );

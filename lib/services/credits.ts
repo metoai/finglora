@@ -62,6 +62,39 @@ export const PRO_PLANS: Record<ProPlanType, PlanPricing> = {
   },
 };
 
+export type CreditPackType = 'pack15' | 'pack50';
+
+export interface CreditPackPricing {
+  id: CreditPackType;
+  name: string;
+  credits: number;
+  price: string;
+  perTryPrice: string;
+  subtitle: string;
+  badge?: string;
+}
+
+export const CREDIT_PACKS: Record<CreditPackType, CreditPackPricing> = {
+  pack15: {
+    id: 'pack15',
+    name: '15 Try-Ons',
+    credits: 15,
+    price: '$3.99',
+    perTryPrice: '$0.27 / try-on',
+    subtitle: 'Never expires · Ideal before your appointment',
+    badge: 'MOST POPULAR',
+  },
+  pack50: {
+    id: 'pack50',
+    name: '50 Try-Ons',
+    credits: 50,
+    price: '$7.99',
+    perTryPrice: '$0.16 / try-on',
+    subtitle: 'Never expires · Save 40% per look',
+    badge: 'BEST VALUE',
+  },
+};
+
 export const VIP_EMAILS = [
   'finglora.vip.pro@gmail.com',
   'metoaipr@gmail.com',

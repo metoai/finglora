@@ -890,6 +890,7 @@ export function AiCreationView({
           [...messages].reverse().find((m) => m.sender === 'gemini' && m.appliedDesignTitle)?.appliedDesignTitle ||
           'Custom Manicure';
         const simpleSummary = buildSimpleTechSummary(nails, latestAppliedTitle);
+        const lookShareUrl = buildSharedLookUrl(shareImg, simpleSummary);
         return (
           <>
             <ShowToTechModal
@@ -897,6 +898,7 @@ export function AiCreationView({
               onClose={() => setIsTechCardOpen(false)}
               imageUrl={currentTryOnImage}
               summary={simpleSummary}
+              shareUrl={lookShareUrl}
               onShareClick={() => {
                 setIsTechCardOpen(false);
                 handleShareToStory(currentTryOnImage, simpleSummary.title);
@@ -908,7 +910,7 @@ export function AiCreationView({
               imageUrl={shareImg}
               designTitle={simpleSummary.title}
               techSummary={simpleSummary}
-              shareUrl={buildSharedLookUrl(shareImg, simpleSummary)}
+              shareUrl={lookShareUrl}
               onDownloadFallback={() => handleDownloadBrandedLook(shareImg)}
             />
           </>

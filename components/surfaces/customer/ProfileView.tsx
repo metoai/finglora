@@ -762,6 +762,7 @@ export function ProfileView({
             imageUrl={techCardItem.image_url}
             inspoImageUrl={matched?.photoUrl}
             summary={techSummary}
+            shareUrl={buildSharedLookUrl(techCardItem.image_url, techSummary)}
             onShareClick={() => {
               const target = techCardItem;
               setTechCardItem(null);

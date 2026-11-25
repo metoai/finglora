@@ -1602,6 +1602,7 @@ export function TryOnView({
       {(() => {
         const techSummary = buildSimpleTechSummary(nails, activeSample?.title);
         const sharePhoto = uploadedCaptureUrl || (displayedHandImage.startsWith('https://') ? displayedHandImage : effectiveInspoUrl);
+        const lookShareUrl = buildSharedLookUrl(sharePhoto, techSummary);
         return (
           <>
             <ShowToTechModal
@@ -1610,6 +1611,7 @@ export function TryOnView({
               imageUrl={displayedHandImage}
               inspoImageUrl={effectiveInspoUrl}
               summary={techSummary}
+              shareUrl={lookShareUrl}
               onShareClick={() => {
                 setIsTechCardOpen(false);
                 handleShareToStory();
@@ -1621,7 +1623,7 @@ export function TryOnView({
               imageUrl={displayedHandImage}
               designTitle={techSummary.title}
               techSummary={techSummary}
-              shareUrl={buildSharedLookUrl(sharePhoto, techSummary)}
+              shareUrl={lookShareUrl}
               onDownloadFallback={handleDownloadBrandedLook}
             />
           </>

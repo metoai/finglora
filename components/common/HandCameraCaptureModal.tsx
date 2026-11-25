@@ -11,6 +11,7 @@ import {
   Loader2,
   AlertCircle,
   Flashlight,
+  Hand,
 } from 'lucide-react';
 import { HandPhotoGuidance } from '@/components/common/HandPhotoGuidance';
 
@@ -37,6 +38,7 @@ export function HandCameraCaptureModal({
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
   const [torchSupported, setTorchSupported] = useState(false);
   const [torchOn, setTorchOn] = useState(false);
+  const [showPoseGuide, setShowPoseGuide] = useState(true);
 
   // Stop current active media stream tracks & turn off hardware torch if active
   const stopStream = useCallback(() => {
@@ -255,6 +257,23 @@ export function HandCameraCaptureModal({
           </span>
 
           <div className="flex items-center gap-2">
+            {cameraState === 'live' && (
+              <button
+                type="button"
+                onClick={() => setShowPoseGuide((v) => !v)}
+                className={`h-8 px-2.5 rounded-full text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                  showPoseGuide
+                    ? 'bg-white/20 text-white'
+                    : 'bg-white/10 hover:bg-white/20 text-white/70 hover:text-white'
+                }`}
+                title={showPoseGuide ? 'Hide hand guide' : 'Show hand guide'}
+                aria-label="Toggle hand pose guide"
+              >
+                <Hand className="w-3.5 h-3.5" />
+                <span>Guide</span>
+              </button>
+            )}
+
             {cameraState === 'live' && torchSupported && (
               <button
                 type="button"
@@ -308,21 +327,44 @@ export function HandCameraCaptureModal({
             />
           )}
 
-          {/* Subtle Pro Viewfinder Framing Brackets + Live Quality Guidance */}
+          {/* Subtle Pro Viewfinder Framing Brackets + Ghost Hand Pose Guide */}
           {cameraState === 'live' && (
             <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4 sm:p-6 z-10">
               <div>
-                {torchOn && (
+                {torchOn ? (
                   <span className="px-2.5 py-1 rounded-full bg-amber-400/90 text-stone-950 text-[10px] font-semibold shadow-sm">
                     Flashlight on · Hold 20–30 cm back to avoid glare
                   </span>
+                ) : (
+                  showPoseGuide && (
+                    <span className="px-2.5 py-1 rounded-full bg-black/55 backdrop-blur-md text-white/90 text-[10px] font-medium border border-white/15">
+                      Relaxed back of hand · Keep 5 nails apart
+                    </span>
+                  )
                 )}
               </div>
-              <div className="relative w-56 h-64 sm:w-64 sm:h-72 max-w-[85%] max-h-[75%]">
-                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/35 rounded-tl-lg" />
-                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/35 rounded-tr-lg" />
-                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/35 rounded-bl-lg" />
-                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/35 rounded-br-lg" />
+              <div className="relative w-56 h-64 sm:w-64 sm:h-72 max-w-[85%] max-h-[75%] flex items-center justify-center">
+                <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/40 rounded-tl-lg" />
+                <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/40 rounded-tr-lg" />
+                <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/40 rounded-bl-lg" />
+                <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/40 rounded-br-lg" />
+                {showPoseGuide && (
+                  <svg
+                    viewBox="0 0 220 260"
+                    className="w-44 h-52 sm:w-52 sm:h-60 opacity-45"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M66 245 L62 178 C46 168 29 144 26 126 C24 114 35 108 45 117 L64 139 L63 72 C63 59 79 58 81 71 L87 122 L95 42 C96 28 114 28 115 42 L117 118 L128 48 C130 35 147 37 146 51 L141 124 L157 74 C161 62 177 67 173 80 L156 155 C154 180 144 205 142 245"
+                      stroke="white"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeDasharray="5 5"
+                    />
+                  </svg>
+                )}
               </div>
               <HandPhotoGuidance variant="dark" />
             </div>

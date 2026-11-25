@@ -111,11 +111,25 @@ export default async function SharedLookPage({
           <p className="text-xs sm:text-sm text-stone-600 leading-relaxed pt-1 border-t border-stone-100">
             {note}
           </p>
+
+          <Link
+            href="/tryon"
+            className="w-full h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95"
+          >
+            <Sparkles className="w-4 h-4 shrink-0" />
+            <span>Try This Look on Your Own Hand</span>
+          </Link>
         </div>
       </main>
 
-      <footer className="w-full max-w-md mx-auto text-center text-[11px] text-stone-400 py-2">
-        finglora.app
+      <footer className="w-full max-w-md mx-auto flex items-center justify-center gap-3 text-[11px] text-stone-400 py-2">
+        <Link href="/" className="hover:text-stone-700 transition">
+          finglora.app
+        </Link>
+        <span>·</span>
+        <Link href="/finder" className="hover:text-[#E0246A] transition">
+          Nail Shape &amp; Tone Finder
+        </Link>
       </footer>
     </div>
   );

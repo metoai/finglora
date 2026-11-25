@@ -465,6 +465,16 @@ export default function FingloraApp() {
       setExploreDesigns(initialCached);
     }
 
+    const urlParams =
+      typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+    const urlSetId = urlParams?.get('set') || null;
+    const urlShapeRaw = urlParams?.get('shape') || null;
+    const validShapes: NailShape[] = ['almond', 'coffin', 'oval', 'square', 'stiletto'];
+    const urlShape =
+      urlShapeRaw && validShapes.includes(urlShapeRaw as NailShape)
+        ? (urlShapeRaw as NailShape)
+        : null;
+
     const bootstrapSession = async () => {
       const verifiedUser = await getCurrentUser();
       if (!active) return;
@@ -482,14 +492,14 @@ export default function FingloraApp() {
           clearUserLocalSessionData(false);
         } else {
           const saved = window.localStorage.getItem('finglora_session_v1');
-          if (saved) {
+          if (saved && !urlSetId) {
             const parsed = JSON.parse(saved);
             if (parsed.nails) setNails(parsed.nails);
             if (parsed.activeSetName) setActiveSetName(parsed.activeSetName);
             if (parsed.activeSetId) setActiveSetId(parsed.activeSetId);
             if (parsed.activePassportCode) setActivePassportCode(parsed.activePassportCode);
             if (parsed.activePhotoUrl) setActivePhotoUrl(parsed.activePhotoUrl);
-            if (parsed.preferredShape) setPreferredShape(parsed.preferredShape);
+            if (parsed.preferredShape && !urlShape) setPreferredShape(parsed.preferredShape);
             if (parsed.userName) setUserName(parsed.userName);
           }
           const savedHand =
@@ -539,10 +549,9 @@ export default function FingloraApp() {
       await hydrateAuthenticatedUser(verifiedUser);
     });
 
-    // Check for passport code in URL query (?passport=FGL-XXXX or ?code=FGL-XXXX)
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const code = params.get('passport') || params.get('code');
+    // Check for passport code or finder match (?set=...&shape=...) in URL query
+    if (typeof window !== 'undefined' && urlParams) {
+      const code = urlParams.get('passport') || urlParams.get('code');
       if (code) {
         getSetByPassportCode(code).then((foundSet) => {
           if (active && foundSet) {
@@ -556,6 +565,33 @@ export default function FingloraApp() {
             navigateCustomer('tryon');
           }
         });
+      } else if (urlSetId || urlShape) {
+        if (urlShape) {
+          setPreferredShape(urlShape);
+        }
+        if (urlSetId) {
+          const matchedSet = INITIAL_EXPLORE_DESIGNS.find((s) => s.id === urlSetId);
+          if (matchedSet) {
+            hasCustomSetEditsRef.current = false;
+            setActiveSetId(matchedSet.id);
+            setActivePassportCode(matchedSet.passportCode);
+            setActiveSetName(matchedSet.title);
+            setActivePhotoUrl(matchedSet.photoUrl);
+            const nextNails = JSON.parse(JSON.stringify(matchedSet.nails)) as Record<Finger, NailDesign>;
+            if (urlShape) {
+              FINGER_KEYS.forEach((f) => {
+                if (nextNails[f]) nextNails[f].shape = urlShape;
+              });
+            }
+            setNails(nextNails);
+            showToast(`Loaded ${matchedSet.title}${urlShape ? ` (${urlShape})` : ''}`);
+          }
+        }
+        setSurface('customer');
+        setCustomerRoute('tryon');
+        try {
+          window.history.replaceState({ surface: 'customer', route: 'tryon' }, '', '/tryon');
+        } catch {}
       }
     }
 
