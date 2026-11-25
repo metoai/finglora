@@ -187,6 +187,7 @@ export function CustomerApp({
   const [paywallOpen, setPaywallOpen] = useState(false);
   const [isGuestFirstTry, setIsGuestFirstTry] = useState(false);
   const [aiCreationBaseImage, setAiCreationBaseImage] = useState<string | null>(null);
+  const [autoApplyNonce, setAutoApplyNonce] = useState(0);
 
   const favoritesCount = exploreDesigns.filter((d) => d.isSaved).length;
 
@@ -196,6 +197,7 @@ export function CustomerApp({
     if (prevCustomerRouteRef.current === 'tryon' && customerRoute !== 'tryon') {
       setSynthesizedHandUrl?.(null);
       setTryOnView?.('after');
+      setAutoApplyNonce(0);
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('finglora_synthesized_hand_url');
@@ -211,6 +213,7 @@ export function CustomerApp({
       setActivePhotoUrl?.('');
       setSynthesizedHandUrl?.(null);
       setTryOnView?.('before');
+      setAutoApplyNonce(0);
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('finglora_synthesized_hand_url');
@@ -218,6 +221,13 @@ export function CustomerApp({
       }
     }
     setCustomerRoute(route);
+  };
+
+  const handlePickExploreDesign = (id: string) => {
+    onSelectExploreDesign(id);
+    if (customTryOnHandUrl || capturedFrameUrl) {
+      setAutoApplyNonce((n) => n + 1);
+    }
   };
 
   return (
@@ -288,6 +298,7 @@ export function CustomerApp({
               userName={userName}
               setUserName={setUserName}
               onSubmit={onCustomerSignUpSubmit}
+              onContinueAsGuest={() => setCustomerRoute('home')}
               onSignInSuccess={() => setCustomerRoute('home')}
             />
           )}
@@ -305,12 +316,12 @@ export function CustomerApp({
               setAiStudioPrompt={setAiStudioPrompt}
               mobilePreview={mobilePreview}
               exploreDesigns={exploreDesigns}
-              onSelectExploreDesign={onSelectExploreDesign}
+              onSelectExploreDesign={handlePickExploreDesign}
               onTuneVibeClick={onTuneVibeClick}
               onSelectFinger={() => {
-                handleNavToRoute('tryon');
+                setCustomerRoute('tryon');
               }}
-              onTryOnClick={() => handleNavToRoute('tryon')}
+              onTryOnClick={() => setCustomerRoute('tryon')}
               onCustomizeClick={() => setCustomerRoute('ai-create')}
               onUploadClick={() => setCustomerRoute('upload')}
               onExploreClick={(query?: string) => {
@@ -332,7 +343,7 @@ export function CustomerApp({
                 if (savedHand) {
                   setAiCreationBaseImage(savedHand);
                 } else {
-                  setAiCreationBaseImage('https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg');
+                  setAiCreationBaseImage('/assets/bare_hand.webp');
                 }
                 setCustomerRoute('ai-create');
               }}
@@ -364,12 +375,8 @@ export function CustomerApp({
               setExploreSearch={setExploreSearch}
               mobilePreview={mobilePreview}
               onUploadClick={() => setCustomerRoute('upload')}
-              onSelectDesign={onSelectExploreDesign}
-              onTryOnClick={(designId) => {
-                if (designId) {
-                  onSelectExploreDesign(designId);
-                }
-              }}
+              onSelectDesign={handlePickExploreDesign}
+              onTryOnClick={() => setCustomerRoute('tryon')}
             />
           )}
 
@@ -483,6 +490,8 @@ export function CustomerApp({
                 setIsGuestFirstTry(isGuestFirst);
                 setPaywallOpen(true);
               }}
+              onSignUpClick={() => setCustomerRoute('signup')}
+              autoApplyNonce={autoApplyNonce}
             />
           )}
 
@@ -507,7 +516,7 @@ export function CustomerApp({
               exploreDesigns={exploreDesigns}
               setExploreDesigns={setExploreDesigns}
               onSelectExploreDesign={(id) => {
-                onSelectExploreDesign?.(id);
+                handlePickExploreDesign(id);
                 setCustomerRoute('tryon');
               }}
               onBackClick={() => setCustomerRoute('home')}

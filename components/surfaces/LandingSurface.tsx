@@ -124,10 +124,10 @@ export function LandingSurface({
   }, []);
 
   const handleLaunchTryOn = () => {
-    if (onSignUpClick) onSignUpClick();
-    else if (onTryOnClick) onTryOnClick();
+    if (onTryOnClick) onTryOnClick();
     else if (onStudioClick) onStudioClick();
     else if (onOnboardingClick) onOnboardingClick();
+    else if (onSignUpClick) onSignUpClick();
   };
 
   return (

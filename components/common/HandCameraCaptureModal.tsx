@@ -10,7 +10,9 @@ import {
   FlipHorizontal,
   Loader2,
   AlertCircle,
+  Flashlight,
 } from 'lucide-react';
+import { HandPhotoGuidance } from '@/components/common/HandPhotoGuidance';
 
 interface HandCameraCaptureModalProps {
   isOpen: boolean;
@@ -33,16 +35,29 @@ export function HandCameraCaptureModal({
   const [cameraState, setCameraState] = useState<'starting' | 'live' | 'captured' | 'error'>('starting');
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [capturedDataUrl, setCapturedDataUrl] = useState<string | null>(null);
+  const [torchSupported, setTorchSupported] = useState(false);
+  const [torchOn, setTorchOn] = useState(false);
 
-  // Stop current active media stream tracks
+  // Stop current active media stream tracks & turn off hardware torch if active
   const stopStream = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getTracks().forEach((track) => track.stop());
+      streamRef.current.getTracks().forEach((track) => {
+        try {
+          if (track.kind === 'video' && typeof track.applyConstraints === 'function') {
+            void track.applyConstraints({ advanced: [{ torch: false } as MediaTrackConstraintSet & { torch?: boolean }] }).catch(() => {});
+          }
+        } catch {
+          // ignore
+        }
+        track.stop();
+      });
       streamRef.current = null;
     }
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
+    setTorchOn(false);
+    setTorchSupported(false);
   }, []);
 
   // Initialize and start live camera stream
@@ -77,6 +92,21 @@ export function HandCameraCaptureModal({
       }
 
       streamRef.current = stream;
+
+      // Detect hardware flashlight / torch capability (primarily Android Chrome rear camera)
+      const videoTrack = stream.getVideoTracks()[0];
+      if (videoTrack && typeof videoTrack.getCapabilities === 'function') {
+        try {
+          const caps = videoTrack.getCapabilities() as MediaTrackCapabilities & { torch?: boolean };
+          setTorchSupported(Boolean(caps?.torch));
+        } catch {
+          setTorchSupported(false);
+        }
+      } else {
+        setTorchSupported(false);
+      }
+      setTorchOn(false);
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
         await videoRef.current.play().catch(() => {});
@@ -91,6 +121,22 @@ export function HandCameraCaptureModal({
       }
     }
   }, [stopStream]);
+
+  // Toggle hardware flashlight on/off when supported
+  const handleToggleTorch = async () => {
+    const videoTrack = streamRef.current?.getVideoTracks()[0];
+    if (!videoTrack || !torchSupported) return;
+    const next = !torchOn;
+    try {
+      await videoTrack.applyConstraints({
+        advanced: [{ torch: next } as MediaTrackConstraintSet & { torch?: boolean }],
+      });
+      setTorchOn(next);
+    } catch {
+      setTorchOn(false);
+      setTorchSupported(false);
+    }
+  };
 
   // Handle modal open/close lifecycle
   useEffect(() => {
@@ -112,17 +158,29 @@ export function HandCameraCaptureModal({
   const handleToggleFacingMode = () => {
     const nextMode = facingMode === 'environment' ? 'user' : 'environment';
     setFacingMode(nextMode);
-    startCamera(nextMode);
   };
 
-  // Capture current video frame to canvas
+  // Capture current video frame to canvas (scaled cleanly to max 1024px for fast AI try-on)
   const handleSnapPhoto = () => {
     if (!videoRef.current || videoRef.current.videoWidth === 0) return;
 
     const video = videoRef.current;
+    const maxDim = 1024;
+    let width = video.videoWidth;
+    let height = video.videoHeight;
+    if (width > maxDim || height > maxDim) {
+      if (width > height) {
+        height = Math.round((height * maxDim) / width);
+        width = maxDim;
+      } else {
+        width = Math.round((width * maxDim) / height);
+        height = maxDim;
+      }
+    }
+
     const canvas = document.createElement('canvas');
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
+    canvas.width = Math.max(1, width);
+    canvas.height = Math.max(1, height);
 
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -134,7 +192,7 @@ export function HandCameraCaptureModal({
     }
 
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.86);
 
     setCapturedDataUrl(dataUrl);
     setCameraState('captured');
@@ -196,17 +254,36 @@ export function HandCameraCaptureModal({
             {cameraState === 'captured' ? 'Review Photo' : 'Capture Hand'}
           </span>
 
-          <button
-            type="button"
-            onClick={() => {
-              stopStream();
-              onClose();
-            }}
-            className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
-            title="Close"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            {cameraState === 'live' && torchSupported && (
+              <button
+                type="button"
+                onClick={handleToggleTorch}
+                className={`h-8 px-2.5 rounded-full text-[11px] font-medium inline-flex items-center gap-1 transition-colors cursor-pointer ${
+                  torchOn
+                    ? 'bg-amber-400 text-stone-950 shadow-xs'
+                    : 'bg-white/10 hover:bg-white/20 text-white/80 hover:text-white'
+                }`}
+                title={torchOn ? 'Turn off flashlight' : 'Turn on flashlight'}
+                aria-label={torchOn ? 'Turn off flashlight' : 'Turn on flashlight'}
+              >
+                <Flashlight className="w-3.5 h-3.5" />
+                <span>{torchOn ? 'Flash On' : 'Flash'}</span>
+              </button>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                stopStream();
+                onClose();
+              }}
+              className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white/70 hover:text-white transition-colors cursor-pointer"
+              title="Close"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Clean Viewfinder Viewport */}
@@ -231,15 +308,23 @@ export function HandCameraCaptureModal({
             />
           )}
 
-          {/* Subtle Pro Viewfinder Framing Brackets */}
+          {/* Subtle Pro Viewfinder Framing Brackets + Live Quality Guidance */}
           {cameraState === 'live' && (
-            <div className="absolute inset-0 pointer-events-none flex items-center justify-center p-8 z-10">
-              <div className="relative w-56 h-72 sm:w-64 sm:h-80 max-w-[85%] max-h-[85%]">
+            <div className="absolute inset-0 pointer-events-none flex flex-col items-center justify-between p-4 sm:p-6 z-10">
+              <div>
+                {torchOn && (
+                  <span className="px-2.5 py-1 rounded-full bg-amber-400/90 text-stone-950 text-[10px] font-semibold shadow-sm">
+                    Flashlight on · Hold 20–30 cm back to avoid glare
+                  </span>
+                )}
+              </div>
+              <div className="relative w-56 h-64 sm:w-64 sm:h-72 max-w-[85%] max-h-[75%]">
                 <div className="absolute top-0 left-0 w-6 h-6 border-t-2 border-l-2 border-white/35 rounded-tl-lg" />
                 <div className="absolute top-0 right-0 w-6 h-6 border-t-2 border-r-2 border-white/35 rounded-tr-lg" />
                 <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-white/35 rounded-bl-lg" />
                 <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-white/35 rounded-br-lg" />
               </div>
+              <HandPhotoGuidance variant="dark" />
             </div>
           )}
 

@@ -24,9 +24,20 @@ import { CURATED_EDITORIAL_DESIGNS } from '@/constants/nail-data';
 import { downscaleImageForVision, uploadAppliedTryOnResult } from '@/lib/services/storage';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
+import { ShowToTechModal } from '@/components/common/ShowToTechModal';
+import { HandPhotoGuidance, validateHandImageFile } from '@/components/common/HandPhotoGuidance';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 import { getUserCreditStatus, syncCreditsFromProfile, useTryOnCredit } from '@/lib/services/credits';
 import { buildSharedLookUrl, buildSimpleTechSummary } from '@/lib/services/share-look';
+import {
+  buildTryOnCacheKey,
+  getCachedTryOnResult,
+  prepareVisionImagePayload,
+  setCachedTryOnResult,
+  updateCachedTryOnPublicUrl,
+} from '@/lib/services/tryon-cache';
+
+let lastConsumedAutoApplyNonce = 0;
 
 // Nails fill in one by one while the manicure is being generated (thumb -> pinky).
 // A stylized hand is used because we do not know where the nails are in the user's photo.
@@ -101,6 +112,8 @@ export function TryOnView({
   onResetInspo,
   onExploreClick,
   onCreditPaywall,
+  onSignUpClick,
+  autoApplyNonce = 0,
 }: {
   tryOnMode?: 'camera' | 'upload' | 'sample';
   setTryOnMode?: (mode: 'camera' | 'upload' | 'sample') => void;
@@ -143,16 +156,22 @@ export function TryOnView({
   onResetInspo?: () => void;
   onExploreClick?: () => void;
   onCreditPaywall?: (isGuestFirstTry: boolean) => void;
+  onSignUpClick?: () => void;
+  autoApplyNonce?: number;
 }) {
   const [savedToast, setSavedToast] = useState(false);
   const [exportToast, setExportToast] = useState<string | null>(null);
   const [isExporting, setIsExporting] = useState(false);
   const [isZoomOpen, setIsZoomOpen] = useState(false);
+  const [isTechCardOpen, setIsTechCardOpen] = useState(false);
   const [activeCategoryFilter, setActiveCategoryFilter] = useState<string>('All');
   const [isSavedFavorite, setIsSavedFavorite] = useState<boolean>(activeSample?.isSaved || false);
+  const [creditSnapshot, setCreditSnapshot] = useState(() => getUserCreditStatus());
 
   const changeHandInputRef = useRef<HTMLInputElement>(null);
   const changeRefInspoInputRef = useRef<HTMLInputElement>(null);
+  const lastAutoAppliedNonceRef = useRef<number>(0);
+  const synthInFlightRef = useRef<boolean>(false);
   const [isCameraModalOpen, setIsCameraModalOpen] = useState(false);
   const [isHandSourceModalOpen, setIsHandSourceModalOpen] = useState(false);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -298,70 +317,105 @@ export function TryOnView({
     }
   }, [synthesizedHandUrl, setTryOnView]);
 
-  const handleSynthesizeHand = async () => {
-    const sourceHand = customTryOnHandUrl || capturedFrameUrl || 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
+  const handleSynthesizeHand = async (
+    forceRefresh = false,
+    inspoOverride?: {
+      id?: string;
+      url: string;
+      title: string;
+      shape?: string;
+      nails?: Record<Finger, NailDesign>;
+    }
+  ) => {
+    if (synthInFlightRef.current) return;
+    const sourceHand = customTryOnHandUrl || capturedFrameUrl || '/assets/bare_hand.webp';
     if (!sourceHand) return;
 
+    const refSource = inspoOverride?.url || effectiveInspoUrl;
+    const targetNails = inspoOverride?.nails || nails;
+    const targetShape = inspoOverride?.shape || targetNails.middle.shape;
+    const prompt = `Complete manicure with ${targetShape} shape: Thumb has ${targetNails.thumb.title}, Index has ${targetNails.index.title}, Middle has ${targetNails.middle.title}, Ring has ${targetNails.ring.title}, Pinky has ${targetNails.pinky.title}.`;
+
+    const cacheKey = buildTryOnCacheKey({
+      handSource: sourceHand,
+      inspoSource: refSource,
+      nailShape: targetShape,
+      prompt,
+    });
+
+    if (!forceRefresh) {
+      const cached = getCachedTryOnResult(cacheKey);
+      if (cached) {
+        setSynthesisError(null);
+        setSynthesizedHandUrl(cached.imageUrl);
+        if (cached.publicUrl) setUploadedCaptureUrl(cached.publicUrl);
+        setTryOnView('after');
+        setIsRevealing(true);
+        return;
+      }
+    }
+
     const creditStatus = getUserCreditStatus();
+    setCreditSnapshot(creditStatus);
     if (!creditStatus.isPro && creditStatus.credits <= 0) {
-      onCreditPaywall?.(creditStatus.hasUsedGuestCredit && !creditStatus.hasReceivedSignupBonus);
+      onCreditPaywall?.(creditStatus.isGuest || (creditStatus.hasUsedGuestCredit && !creditStatus.hasReceivedSignupBonus));
       return;
     }
 
+    synthInFlightRef.current = true;
     setIsSynthesizingHand(true);
     setSynthesisError(null);
     setInternalSynthesizedHandUrl(null);
     propSetSynthesizedHandUrl?.(null);
 
     try {
-      let handBase64 = '';
-      if (sourceHand.startsWith('data:image/')) {
-        handBase64 = sourceHand;
-      } else {
-        handBase64 = await downscaleImageForVision(sourceHand, 1024, 0.85);
-      }
-
-      let refBase64: string | undefined = undefined;
-      const refSource = effectiveInspoUrl;
-      if (refSource) {
-        if (refSource.startsWith('data:image/')) {
-          refBase64 = refSource;
-        } else {
-          refBase64 = await downscaleImageForVision(refSource, 768, 0.78);
-        }
-      }
-
-      const prompt = `Complete manicure with ${nails.middle.shape} shape: Thumb has ${nails.thumb.title}, Index has ${nails.index.title}, Middle has ${nails.middle.title}, Ring has ${nails.ring.title}, Pinky has ${nails.pinky.title}.`;
+      const [handPayload, refPayload] = await Promise.all([
+        prepareVisionImagePayload(sourceHand, 1024, 0.88),
+        refSource
+          ? prepareVisionImagePayload(refSource, 896, 0.85)
+          : Promise.resolve<{ imageBase64?: string; imageUrl?: string }>({}),
+      ]);
 
       const res = await fetch('/api/generate-nail-art', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'hand-tryon',
-          nailShape: nails.middle.shape,
-          handImageBase64: handBase64 || undefined,
-          referenceImageBase64: refBase64 || undefined,
+          nailShape: targetShape,
+          handImageBase64: handPayload.imageBase64,
+          handImageUrl: handPayload.imageUrl,
+          referenceImageBase64: refPayload.imageBase64,
+          referenceImageUrl: refPayload.imageUrl,
           prompt,
         }),
       });
 
       if (res.status === 402) {
         const paywallData = await res.json().catch(() => ({}));
+        const isGuestBlocked = Boolean(paywallData.isGuestFirstTry || creditStatus.isGuest);
         if (typeof paywallData.credits === 'number') {
-          syncCreditsFromProfile(Boolean(paywallData.isPro), paywallData.credits);
+          syncCreditsFromProfile(Boolean(paywallData.isPro), paywallData.credits, isGuestBlocked);
+          setCreditSnapshot(getUserCreditStatus());
         }
-        onCreditPaywall?.(false);
+        onCreditPaywall?.(isGuestBlocked);
         return;
       }
 
       if (res.ok) {
         const data = await res.json();
         if (data.creditStatus) {
-          syncCreditsFromProfile(Boolean(data.creditStatus.isPro), data.creditStatus.credits);
+          syncCreditsFromProfile(
+            Boolean(data.creditStatus.isPro),
+            data.creditStatus.credits,
+            Boolean(data.creditStatus.isGuest)
+          );
         } else {
           useTryOnCredit();
         }
+        setCreditSnapshot(getUserCreditStatus());
+
         if (data.imageUrl) {
+          setCachedTryOnResult(cacheKey, data.imageUrl);
           setSynthesizedHandUrl(data.imageUrl);
           setTryOnView('after');
           setIsRevealing(true);
@@ -369,13 +423,14 @@ export function TryOnView({
           // Asynchronously persist to Supabase Storage & try_on_history table
           uploadAppliedTryOnResult({
             imageDataUrl: data.imageUrl,
-            setId: activeSample?.id,
+            setId: inspoOverride?.id || activeSample?.id,
             skinToneId: activeSkinTone?.id || 'warm-ivory',
             mode: customTryOnHandUrl ? 'upload' : capturedFrameUrl ? 'camera' : 'sample',
           })
             .then((publicUrl) => {
               if (publicUrl && publicUrl.startsWith('https://')) {
                 setUploadedCaptureUrl(publicUrl);
+                updateCachedTryOnPublicUrl(cacheKey, publicUrl);
               }
             })
             .catch((err) => console.warn('Background try-on upload notice:', err));
@@ -389,21 +444,49 @@ export function TryOnView({
 
       const errJson = await res.json().catch(() => ({}));
       if (errJson?.paywall) {
-        onCreditPaywall?.(Boolean(errJson.paywall && !creditStatus.hasReceivedSignupBonus));
+        onCreditPaywall?.(Boolean(errJson.isGuestFirstTry || creditStatus.isGuest));
         return;
       }
-      const is429 = res.status === 429 || errJson?.isRateLimit || errJson?.error?.includes('RESOURCE_EXHAUSTED');
+      const rawError = typeof errJson?.error === 'string' ? errJson.error : '';
+      const looksInternal =
+        /https?:\/\/|resource[_ ]?exhausted|vertex|googleapis|aiplatform|http \d{3}/i.test(rawError);
+      const is429 =
+        res.status === 429 ||
+        Boolean(errJson?.isRateLimit) ||
+        /resource[_ ]?exhausted|resource exhausted/i.test(rawError);
       if (is429) {
-        setSynthesisError(errJson?.error || 'Service is experiencing high demand. Please try again in a moment.');
+        setSynthesisError('Our studio is momentarily busy. Please wait a few seconds and tap Retry.');
       } else {
-        setSynthesisError(errJson?.error || 'Could not generate manicure. Please try again.');
+        setSynthesisError(
+          !rawError || looksInternal
+            ? 'Could not apply this manicure right now. Please tap Retry.'
+            : rawError
+        );
       }
     } catch {
       setSynthesisError('Connection error while generating manicure.');
     } finally {
+      synthInFlightRef.current = false;
       setIsSynthesizingHand(false);
     }
   };
+
+  useEffect(() => {
+    if (
+      autoApplyNonce > 0 &&
+      autoApplyNonce !== lastConsumedAutoApplyNonce &&
+      autoApplyNonce !== lastAutoAppliedNonceRef.current &&
+      (customTryOnHandUrl || capturedFrameUrl) &&
+      effectiveInspoUrl
+    ) {
+      const timer = setTimeout(() => {
+        lastConsumedAutoApplyNonce = autoApplyNonce;
+        lastAutoAppliedNonceRef.current = autoApplyNonce;
+        void handleSynthesizeHand(false);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [autoApplyNonce, customTryOnHandUrl, capturedFrameUrl, effectiveInspoUrl]);
 
   // Whenever exiting Try-On, reset all generated state so user always starts fresh next time
   useEffect(() => {
@@ -413,6 +496,7 @@ export function TryOnView({
       setIsSynthesizingHand(false);
       setSynthesisError(null);
       setIsZoomOpen(false);
+      setIsTechCardOpen(false);
       if (typeof window !== 'undefined') {
         try {
           localStorage.removeItem('finglora_synthesized_hand_url');
@@ -425,7 +509,7 @@ export function TryOnView({
   const handSourceImageUrl =
     customTryOnHandUrl ||
     capturedFrameUrl ||
-    'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
+    '/assets/bare_hand.webp';
 
   const displayedHandImage =
     tryOnView === 'after' && synthesizedHandUrl
@@ -541,8 +625,16 @@ export function TryOnView({
         <div className="lg:col-span-7 space-y-3 sm:space-y-4">
           <div className="bg-white rounded-3xl p-3 sm:p-5 border border-stone-200/90 shadow-sm space-y-3.5">
             {/* Viewport Top Toolbar */}
-            <div className={`flex items-center ${hasActiveInspo && !synthesizedHandUrl ? 'justify-end' : 'justify-between'} gap-2`}>
-              {hasActiveInspo && !synthesizedHandUrl ? null : (
+            <div className="flex items-center justify-between gap-2">
+              {hasActiveInspo && !synthesizedHandUrl ? (
+                creditSnapshot.isGuest && creditSnapshot.credits > 0 ? (
+                  <span className="px-2.5 py-1 rounded-full bg-rose-50 border border-rose-200/80 text-[#E0246A] text-[10px] font-semibold">
+                    1 Free Guest Try-On
+                  </span>
+                ) : (
+                  <div />
+                )
+              ) : (
                 /* Natural vs Manicure Pill Toggle */
                 <div className="inline-flex rounded-full bg-stone-100 p-0.5 border border-stone-200/80 shadow-2xs">
                   <button
@@ -574,6 +666,15 @@ export function TryOnView({
               <div className="flex items-center gap-1.5">
                 {synthesizedHandUrl && (
                   <>
+                    <button
+                      type="button"
+                      onClick={() => setIsTechCardOpen(true)}
+                      className="h-8 px-2.5 rounded-full bg-[#FAF7F2] hover:bg-stone-100 border border-stone-200 text-stone-900 shadow-2xs flex items-center justify-center gap-1 cursor-pointer transition active:scale-95 text-[11px] font-semibold"
+                      title="Show to Nail Technician"
+                    >
+                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                      <span className="hidden xs:inline">Show to Tech</span>
+                    </button>
                     <button
                       type="button"
                       onClick={handleDownloadBrandedLook}
@@ -668,7 +769,7 @@ export function TryOnView({
                   <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-20">
                     <button
                       type="button"
-                      onClick={handleSynthesizeHand}
+                      onClick={() => void handleSynthesizeHand(false)}
                       className="group pointer-events-auto px-4 sm:px-6 py-2 sm:py-2.5 rounded-full bg-[#E0246A] hover:bg-[#CE1B5D] text-white ring-4 ring-white shadow-[0_4px_20px_rgba(224,36,106,0.4)] text-xs sm:text-sm font-semibold tracking-wide transition-all duration-200 active:scale-95 cursor-pointer flex items-center gap-1.5 hover:scale-105"
                       title="Apply manicure inspiration to your hand"
                     >
@@ -815,7 +916,7 @@ export function TryOnView({
                 <span>{synthesisError}</span>
                 <button
                   type="button"
-                  onClick={handleSynthesizeHand}
+                  onClick={() => void handleSynthesizeHand(true)}
                   className="font-semibold underline hover:no-underline text-[#E0246A] shrink-0"
                 >
                   Retry
@@ -825,18 +926,29 @@ export function TryOnView({
 
             {/* Primary Action Dock */}
             {synthesizedHandUrl ? (
-              <div className="space-y-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onCustomizeWithAi) {
-                      onCustomizeWithAi(displayedHandImage);
-                    }
-                  }}
-                  className="w-full h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
-                >
-                  <span>Customize in AI Studio →</span>
-                </button>
+              <div className="space-y-2.5 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTechCardOpen(true)}
+                    className="h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                  >
+                    <Hand className="w-4 h-4 text-[#E0246A]" />
+                    <span>Show to Tech</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onCustomizeWithAi) {
+                        onCustomizeWithAi(displayedHandImage);
+                      }
+                    }}
+                    className="h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                  >
+                    <span>Customize in AI Studio →</span>
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -857,28 +969,57 @@ export function TryOnView({
                     <span>Change Inspo</span>
                   </button>
                 </div>
+
+                {creditSnapshot.isGuest && creditSnapshot.credits <= 0 && (
+                  <div className="p-3 rounded-2xl bg-[#FFF5F8] border border-pink-200/80 flex items-center justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-xs font-semibold text-stone-900 truncate">
+                        Save your hand &amp; unlock 10 free try-ons
+                      </p>
+                      <p className="text-[11px] text-stone-600 truncate">
+                        Free account · Keep your look history
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (onSignUpClick) onSignUpClick();
+                        else onCreditPaywall?.(true);
+                      }}
+                      className="h-8 px-3 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-[11px] font-semibold shrink-0 cursor-pointer transition active:scale-95 shadow-2xs"
+                    >
+                      Unlock 10 Free
+                    </button>
+                  </div>
+                )}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-2 sm:gap-2.5 pt-1">
-                <button
-                  type="button"
-                  onClick={() => setIsHandSourceModalOpen(true)}
-                  className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
-                  title="Change Hand Photo"
-                >
-                  <UploadCloud className="w-4 h-4 shrink-0" />
-                  <span className="truncate">Change Hand</span>
-                </button>
+              <div className="space-y-2.5 pt-1">
+                <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
+                  <button
+                    type="button"
+                    onClick={() => setIsHandSourceModalOpen(true)}
+                    className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
+                    title="Change Hand Photo"
+                  >
+                    <UploadCloud className="w-4 h-4 shrink-0" />
+                    <span className="truncate">{customTryOnHandUrl || capturedFrameUrl ? 'Change Hand' : 'Upload My Hand'}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={() => changeRefInspoInputRef.current?.click()}
-                  className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
-                  title="Upload Inspiration Photo"
-                >
-                  <ImagePlus className="w-4 h-4 text-[#E0246A] shrink-0" />
-                  <span className="truncate text-[#E0246A]">Upload Inspo</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => changeRefInspoInputRef.current?.click()}
+                    className="h-10 sm:h-11 px-3 sm:px-4 rounded-xl bg-white hover:bg-stone-50 text-stone-800 border border-stone-200 text-xs sm:text-sm font-semibold inline-flex items-center justify-center gap-2 shadow-2xs transition active:scale-95 cursor-pointer hover:border-[#E0246A]/40"
+                    title="Upload Inspiration Photo"
+                  >
+                    <ImagePlus className="w-4 h-4 text-[#E0246A] shrink-0" />
+                    <span className="truncate text-[#E0246A]">Upload Inspo</span>
+                  </button>
+                </div>
+
+                {!customTryOnHandUrl && !capturedFrameUrl && (
+                  <HandPhotoGuidance variant="compact" />
+                )}
               </div>
             )}
           </div>
@@ -980,7 +1121,7 @@ export function TryOnView({
               <div className="space-y-2 pt-1">
                 <button
                   type="button"
-                  onClick={handleSynthesizeHand}
+                  onClick={() => void handleSynthesizeHand(false)}
                   disabled={isSynthesizingHand}
                   className="w-full h-12 sm:h-13 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition active:scale-95 cursor-pointer disabled:opacity-50"
                 >
@@ -1067,17 +1208,28 @@ export function TryOnView({
 
               {/* Primary Actions */}
               <div className="space-y-2 pt-1">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (onCustomizeWithAi) {
-                      onCustomizeWithAi(displayedHandImage);
-                    }
-                  }}
-                  className="w-full h-11 sm:h-12 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-2 shadow-xs transition active:scale-95 cursor-pointer"
-                >
-                  <span>Customize Look →</span>
-                </button>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsTechCardOpen(true)}
+                    className="h-11 rounded-2xl bg-stone-900 hover:bg-stone-800 text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                  >
+                    <Hand className="w-4 h-4 text-[#E0246A]" />
+                    <span>Show to Tech</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onCustomizeWithAi) {
+                        onCustomizeWithAi(displayedHandImage);
+                      }
+                    }}
+                    className="h-11 rounded-2xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs sm:text-sm font-semibold flex items-center justify-center gap-1.5 shadow-xs transition active:scale-95 cursor-pointer"
+                  >
+                    <span>Customize →</span>
+                  </button>
+                </div>
 
                 <div className="grid grid-cols-2 gap-2">
                   <button
@@ -1092,7 +1244,7 @@ export function TryOnView({
 
                   <button
                     type="button"
-                    onClick={handleSynthesizeHand}
+                    onClick={() => void handleSynthesizeHand(true)}
                     disabled={isSynthesizingHand}
                     className="h-9 px-2 rounded-xl border border-stone-200 hover:bg-stone-50 text-stone-700 text-xs font-medium flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer disabled:opacity-50"
                   >
@@ -1146,10 +1298,20 @@ export function TryOnView({
                     type="button"
                     onClick={() => {
                       setIsLocallyCleared(false);
-                      setInternalSynthesizedHandUrl(null);
-                      propSetSynthesizedHandUrl?.(null);
-                      setTryOnView('before');
                       onSelectExploreDesign?.(design.id);
+                      if (customTryOnHandUrl || capturedFrameUrl) {
+                        void handleSynthesizeHand(false, {
+                          id: design.id,
+                          url: design.photoUrl,
+                          title: design.title,
+                          shape: design.nails?.middle?.shape,
+                          nails: design.nails,
+                        });
+                      } else {
+                        setInternalSynthesizedHandUrl(null);
+                        propSetSynthesizedHandUrl?.(null);
+                        setTryOnView('before');
+                      }
                     }}
                     className={`flex items-center gap-2 p-2 rounded-xl border text-left transition-all cursor-pointer group active:scale-95 ${
                       isSelected
@@ -1196,7 +1358,14 @@ export function TryOnView({
         className="hidden"
         onChange={async (e) => {
           const f = e.target.files?.[0];
+          e.target.value = '';
           if (f) {
+            const check = await validateHandImageFile(f);
+            if (!check.valid) {
+              setExportToast(check.reason);
+              setTimeout(() => setExportToast(null), 3200);
+              return;
+            }
             const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
             const finalUrl = dataUrl || URL.createObjectURL(f);
             setCustomTryOnHandUrl(finalUrl);
@@ -1212,6 +1381,7 @@ export function TryOnView({
         className="hidden"
         onChange={async (e) => {
           const f = e.target.files?.[0];
+          e.target.value = '';
           if (f) {
             const dataUrl = await downscaleImageForVision(f, 1000, 0.85);
             const finalUrl = dataUrl || URL.createObjectURL(f);
@@ -1223,7 +1393,7 @@ export function TryOnView({
         }}
       />
 
-      {/* Hand Source Selection Modal (Camera vs Choose from Photos) */}
+      {/* Hand Source Selection Modal (Upload Photo vs Live Camera + Quality Guide) */}
       {isHandSourceModalOpen && (
         <div
           role="dialog"
@@ -1238,10 +1408,10 @@ export function TryOnView({
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="font-serif text-base sm:text-lg font-medium text-stone-900 tracking-tight">
-                  Change Hand Photo
+                  Your Hand Photo
                 </h3>
                 <p className="text-xs text-stone-500 mt-0.5">
-                  Select how you would like to provide your hand photo
+                  Upload or snap a clear photo once
                 </p>
               </div>
               <button
@@ -1254,7 +1424,30 @@ export function TryOnView({
             </div>
 
             <div className="space-y-2.5 pt-1">
-              {/* Option 1: Live Camera Capture */}
+              {/* Option 1: Choose from Photos / Files */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsHandSourceModalOpen(false);
+                  changeHandInputRef.current?.click();
+                }}
+                className="w-full p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F4EFEB] border border-stone-200/80 text-left transition active:scale-98 cursor-pointer flex items-center gap-3.5 group shadow-2xs"
+              >
+                <div className="w-10 h-10 rounded-xl bg-[#E0246A] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition shrink-0">
+                  <UploadCloud className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <span className="text-xs sm:text-sm font-semibold text-stone-900 block">
+                    Upload Hand Photo
+                  </span>
+                  <span className="text-[11px] text-stone-500 block truncate">
+                    Browse camera roll, photo library, or files
+                  </span>
+                </div>
+                <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5 transition" />
+              </button>
+
+              {/* Option 2: Live Camera Capture */}
               <button
                 type="button"
                 onClick={() => {
@@ -1276,30 +1469,9 @@ export function TryOnView({
                 </div>
                 <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5 transition" />
               </button>
-
-              {/* Option 2: Choose from Photos / Files */}
-              <button
-                type="button"
-                onClick={() => {
-                  setIsHandSourceModalOpen(false);
-                  changeHandInputRef.current?.click();
-                }}
-                className="w-full p-3.5 rounded-2xl bg-[#FAF7F2] hover:bg-[#F4EFEB] border border-stone-200/80 text-left transition active:scale-98 cursor-pointer flex items-center gap-3.5 group shadow-2xs"
-              >
-                <div className="w-10 h-10 rounded-xl bg-[#E0246A] text-white flex items-center justify-center shadow-xs group-hover:scale-105 transition shrink-0">
-                  <UploadCloud className="w-5 h-5" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <span className="text-xs sm:text-sm font-semibold text-stone-900 block">
-                    Choose from Photos
-                  </span>
-                  <span className="text-[11px] text-stone-500 block truncate">
-                    Browse camera roll, photo library, or files
-                  </span>
-                </div>
-                <ArrowRight className="w-4 h-4 text-stone-400 group-hover:text-stone-700 group-hover:translate-x-0.5 transition" />
-              </button>
             </div>
+
+            <HandPhotoGuidance />
           </div>
         </div>
       )}
@@ -1344,11 +1516,22 @@ export function TryOnView({
                   </button>
                   <button
                     type="button"
+                    onClick={() => {
+                      setIsZoomOpen(false);
+                      setIsTechCardOpen(true);
+                    }}
+                    className="px-3 py-1 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95"
+                  >
+                    <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                    <span className="hidden sm:inline">Show to Tech</span>
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleDownloadBrandedLook}
                     disabled={isExporting}
-                    className="px-3 py-1 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
+                    className="px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-semibold transition cursor-pointer flex items-center gap-1.5 shadow-sm active:scale-95 disabled:opacity-50"
                   >
-                    <Download className="w-3.5 h-3.5 text-stone-900" />
+                    <Download className="w-3.5 h-3.5 text-white" />
                     <span className="hidden sm:inline">Download HD</span>
                   </button>
                   <button
@@ -1415,20 +1598,33 @@ export function TryOnView({
         </div>
       )}
 
-      {/* Social Share Options Modal */}
+      {/* Show to Tech 1-Tap Fullscreen Salon Card & Social Share Modal */}
       {(() => {
         const techSummary = buildSimpleTechSummary(nails, activeSample?.title);
         const sharePhoto = uploadedCaptureUrl || (displayedHandImage.startsWith('https://') ? displayedHandImage : effectiveInspoUrl);
         return (
-          <SocialShareModal
-            isOpen={isShareModalOpen}
-            onClose={() => setIsShareModalOpen(false)}
-            imageUrl={displayedHandImage}
-            designTitle={techSummary.title}
-            techSummary={techSummary}
-            shareUrl={buildSharedLookUrl(sharePhoto, techSummary)}
-            onDownloadFallback={handleDownloadBrandedLook}
-          />
+          <>
+            <ShowToTechModal
+              isOpen={isTechCardOpen}
+              onClose={() => setIsTechCardOpen(false)}
+              imageUrl={displayedHandImage}
+              inspoImageUrl={effectiveInspoUrl}
+              summary={techSummary}
+              onShareClick={() => {
+                setIsTechCardOpen(false);
+                handleShareToStory();
+              }}
+            />
+            <SocialShareModal
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              imageUrl={displayedHandImage}
+              designTitle={techSummary.title}
+              techSummary={techSummary}
+              shareUrl={buildSharedLookUrl(sharePhoto, techSummary)}
+              onDownloadFallback={handleDownloadBrandedLook}
+            />
+          </>
         );
       })()}
     </div>

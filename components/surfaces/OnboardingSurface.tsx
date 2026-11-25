@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { BrandLogo } from '@/components/common/BrandLogo';
-import { useTryOnCredit, getUserCreditStatus } from '@/lib/services/credits';
+import { HandPhotoGuidance, validateHandImageFile } from '@/components/common/HandPhotoGuidance';
 import { downscaleImageForVision } from '@/lib/services/storage';
 import { NailCanvasPreview } from '@/components/visuals/NailCanvasPreview';
 
@@ -92,7 +92,7 @@ export function OnboardingSurface({
   onBrandClick?: () => void;
   onSaveHandPhoto?: (url: string) => void;
 }) {
-  // Step 1: Upload Hand -> Step 2: Pick Inspo -> Step 3: Instant Try-On Reveal
+  // Step 1: Upload Hand -> Step 2: Pick Inspo -> Step 3: Instant Try-On Launch
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [handPhotoUrl, setHandPhotoUrl] = useState<string>(() => {
     if (typeof window !== 'undefined') {
@@ -100,6 +100,7 @@ export function OnboardingSurface({
     }
     return '';
   });
+  const [uploadError, setUploadError] = useState<string | null>(null);
   const [selectedInspo, setSelectedInspo] = useState(TRENDING_INSPO_PRESETS[0]);
   const [isRevealing, setIsRevealing] = useState(false);
   const [revealTryOnUrl, setRevealTryOnUrl] = useState<string>('https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg');
@@ -109,6 +110,13 @@ export function OnboardingSurface({
   const inspoInputRef = useRef<HTMLInputElement>(null);
 
   const handleHandUpload = async (file: File) => {
+    setUploadError(null);
+    const check = await validateHandImageFile(file);
+    if (!check.valid) {
+      setUploadError(check.reason);
+      return;
+    }
+
     let dataUrl = '';
     try {
       dataUrl = await downscaleImageForVision(file, 1000, 0.85);
@@ -158,26 +166,8 @@ export function OnboardingSurface({
   };
 
   const startReveal = (inspo = selectedInspo) => {
-    setIsRevealing(true);
-    setStep(3);
-
-    // Deduct 1st guest credit (no signup required!)
-    useTryOnCredit();
-
-    // Map to highest fidelity render
-    let result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
-    if (inspo.id.includes('pink-heart')) {
-      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/coquette/coquette_pearl_bow_01.jpg';
-    } else if (inspo.id.includes('bordeaux')) {
-      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/french/french_cherry_wine_04.jpg';
-    } else {
-      result = 'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
-    }
-    setRevealTryOnUrl(result);
-
-    setTimeout(() => {
-      setIsRevealing(false);
-    }, 1200);
+    onSelectInspoSet(inspo.id, inspo.inspoUrl);
+    onContinueToStudio?.();
   };
 
   return (
@@ -219,6 +209,12 @@ export function OnboardingSurface({
               className="hidden"
             />
 
+            {uploadError && (
+              <div className="p-3 rounded-2xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-medium max-w-md mx-auto">
+                {uploadError}
+              </div>
+            )}
+
             {/* Upload Box */}
             <div
               onClick={() => handInputRef.current?.click()}
@@ -242,6 +238,8 @@ export function OnboardingSurface({
                 Add Hand Photo
               </button>
             </div>
+
+            <HandPhotoGuidance className="max-w-md mx-auto text-left" />
 
             {/* Or choose sample hand */}
             <div className="space-y-2.5 pt-2">

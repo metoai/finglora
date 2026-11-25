@@ -18,8 +18,80 @@ export interface BrandedImageResult {
 }
 
 /**
+ * Loads any local/data/remote image safely for HTMLCanvasElement rendering without CORS cache taint.
+ */
+async function loadImageForCanvas(imageUrl: string): Promise<HTMLImageElement> {
+  let objectUrlToRevoke: string | null = null;
+  let resolvedSrc = imageUrl;
+
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
+      const res = await fetch(imageUrl, { mode: 'cors', credentials: 'omit' });
+      if (res.ok) {
+        const blob = await res.blob();
+        objectUrlToRevoke = URL.createObjectURL(blob);
+        resolvedSrc = objectUrlToRevoke;
+      }
+    } catch {
+      // Fall back to direct image load with crossOrigin below
+    }
+  }
+
+  const img = new Image();
+  if (!resolvedSrc.startsWith('blob:') && !resolvedSrc.startsWith('data:')) {
+    img.crossOrigin = 'anonymous';
+  }
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error('Failed to load image for export'));
+      img.src = resolvedSrc;
+    });
+    return img;
+  } finally {
+    if (objectUrlToRevoke) {
+      // Delay revocation slightly so browser decoder retains bitmap cleanly
+      setTimeout(() => {
+        try {
+          URL.revokeObjectURL(objectUrlToRevoke!);
+        } catch {
+          // ignore
+        }
+      }, 1000);
+    }
+  }
+}
+
+function drawRoundedRectPath(
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r: number
+) {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, w, h, radius);
+    return;
+  }
+  ctx.moveTo(x + radius, y);
+  ctx.lineTo(x + w - radius, y);
+  ctx.quadraticCurveTo(x + w, y, x + w, y + radius);
+  ctx.lineTo(x + w, y + h - radius);
+  ctx.quadraticCurveTo(x + w, y + h, x + w - radius, y + h);
+  ctx.lineTo(x + radius, y + h);
+  ctx.quadraticCurveTo(x, y + h, x, y + h - radius);
+  ctx.lineTo(x, y + radius);
+  ctx.quadraticCurveTo(x, y, x + radius, y);
+  ctx.closePath();
+}
+
+/**
  * Renders a high-resolution canvas with the manicured hand image
- * and the luxury Finglora editorial watermark & brand typography.
+ * and the subtle luxury Finglora editorial watermark.
  */
 export async function generateBrandedEditorialImage(
   imageUrl: string,
@@ -30,15 +102,7 @@ export async function generateBrandedEditorialImage(
     storyAspect = false,
   } = options;
 
-  // Load image
-  const img = new Image();
-  img.crossOrigin = 'anonymous';
-
-  await new Promise<void>((resolve, reject) => {
-    img.onload = () => resolve();
-    img.onerror = () => reject(new Error('Failed to load image for export'));
-    img.src = imageUrl;
-  });
+  const img = await loadImageForCanvas(imageUrl);
 
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
@@ -52,11 +116,9 @@ export async function generateBrandedEditorialImage(
     canvas.width = 1080;
     canvas.height = 1920;
 
-    // Draw luxury neutral background
     ctx.fillStyle = '#181416';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-    // Compute center-fit crop
     const imgAspect = (img.naturalWidth || 1) / (img.naturalHeight || 1);
     const targetAspect = 1080 / 1920;
 
@@ -85,13 +147,12 @@ export async function generateBrandedEditorialImage(
   const w = canvas.width;
   const h = canvas.height;
 
-  // Luxury Editorial Finglora Watermark (Larger brand presence + website name)
-  const badgeHeight = Math.max(58, Math.round(w * 0.062));
-  const flowerSize = Math.round(badgeHeight * 0.54);
-  const titleSize = Math.round(badgeHeight * 0.44);
-  const domainSize = Math.round(badgeHeight * 0.32);
+  // Subtle Luxury Editorial Finglora Watermark
+  const badgeHeight = Math.max(54, Math.round(w * 0.056));
+  const flowerSize = Math.round(badgeHeight * 0.52);
+  const titleSize = Math.round(badgeHeight * 0.42);
+  const domainSize = Math.round(badgeHeight * 0.31);
 
-  // Pre-measure dimensions for pixel-perfect pill container
   ctx.font = `600 ${titleSize}px "Playfair Display", Georgia, serif`;
   const titleWidth = ctx.measureText('Finglora').width;
 
@@ -100,32 +161,29 @@ export async function generateBrandedEditorialImage(
   const dotWidth = ctx.measureText('·').width;
 
   const gap = Math.round(badgeHeight * 0.18);
-  const padX = Math.round(badgeHeight * 0.45);
+  const padX = Math.round(badgeHeight * 0.42);
   const totalContentWidth = flowerSize + gap + titleWidth + gap + dotWidth + gap + domainWidth;
   const badgeWidth = Math.round(totalContentWidth + padX * 2);
 
   // Position: centered at bottom with comfortable margin (above story safe zone when in 9:16)
   const badgeX = Math.round((w - badgeWidth) / 2);
   const badgeY = storyAspect
-    ? h - badgeHeight - 140 // Instagram Stories safe zone
-    : h - badgeHeight - Math.round(w * 0.045); // Standard portrait margin
+    ? h - badgeHeight - 140
+    : h - badgeHeight - Math.round(w * 0.042);
 
   ctx.save();
 
-  // Clean luxury frosted pill background
-  ctx.fillStyle = 'rgba(20, 16, 18, 0.78)';
-  ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+  ctx.fillStyle = 'rgba(20, 16, 18, 0.72)';
+  ctx.strokeStyle = 'rgba(255, 255, 255, 0.22)';
   ctx.lineWidth = 1.5;
-  ctx.shadowColor = 'rgba(0, 0, 0, 0.45)';
-  ctx.shadowBlur = 14;
-  ctx.shadowOffsetY = 4;
+  ctx.shadowColor = 'rgba(0, 0, 0, 0.38)';
+  ctx.shadowBlur = 12;
+  ctx.shadowOffsetY = 3;
 
-  ctx.beginPath();
-  ctx.roundRect(badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
+  drawRoundedRectPath(ctx, badgeX, badgeY, badgeWidth, badgeHeight, badgeHeight / 2);
   ctx.fill();
   ctx.stroke();
 
-  // Reset shadow for razor-sharp typography rendering
   ctx.shadowColor = 'transparent';
   ctx.shadowBlur = 0;
   ctx.shadowOffsetY = 0;
@@ -133,7 +191,6 @@ export async function generateBrandedEditorialImage(
   const centerY = badgeY + badgeHeight / 2;
   let curX = badgeX + padX;
 
-  // 1. Draw Brand Flower Mark (✿)
   ctx.fillStyle = '#E0246A';
   ctx.font = `600 ${flowerSize}px serif`;
   ctx.textAlign = 'left';
@@ -141,28 +198,22 @@ export async function generateBrandedEditorialImage(
   ctx.fillText('✿', curX, centerY);
   curX += flowerSize + gap;
 
-  // 2. Draw 'Finglora' Wordmark
   ctx.fillStyle = '#FFFFFF';
   ctx.font = `600 ${titleSize}px "Playfair Display", Georgia, serif`;
-  ctx.textAlign = 'left';
-  ctx.textBaseline = 'middle';
   ctx.fillText('Finglora', curX, centerY);
   curX += titleWidth + gap;
 
-  // 3. Draw Divider Dot '·'
   ctx.fillStyle = 'rgba(255, 255, 255, 0.4)';
   ctx.font = `500 ${domainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.fillText('·', curX, centerY);
   curX += dotWidth + gap;
 
-  // 4. Draw Website Domain 'finglora.com'
   ctx.fillStyle = 'rgba(255, 255, 255, 0.88)';
   ctx.font = `500 ${domainSize}px -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif`;
   ctx.fillText('finglora.com', curX, centerY);
 
   ctx.restore();
 
-  // Convert to high-quality JPEG
   const blob = await new Promise<Blob>((res, rej) => {
     canvas.toBlob(
       (b) => {
@@ -209,14 +260,11 @@ export interface ShareToSocialResult {
 /**
  * Shares to native social media stories/posts (Instagram, Telegram, X, WhatsApp, etc.)
  * via the Web Share API.
- * Never silently downloads file upon share click; if Web Share is unavailable,
- * returns mode 'dialog' so UI can render the direct social share options modal.
  */
 export async function shareToStoryOrSocial(
   imageUrl: string,
   options: EditorialExportOptions & { shareText?: string } = {}
 ): Promise<ShareToSocialResult> {
-  // Use storyAspect true for optimal 9:16 format if intended for stories
   const result = await generateBrandedEditorialImage(imageUrl, {
     storyAspect: options.storyAspect ?? true,
     ...options,
@@ -226,12 +274,9 @@ export async function shareToStoryOrSocial(
     typeof window !== 'undefined' && window.location.origin
       ? window.location.origin
       : 'https://finglora.com';
-  const shareTitle = options.designTitle ? `${options.designTitle} · Finglora` : 'Finglora Manicure Look';
-  const shareText = options.shareText || `Bespoke manicure created with Finglora (finglora.com)`;
+  const shareText = options.shareText || 'Created with Finglora (finglora.com)';
 
-  // Check if native Web Share is supported
   if (typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
-    // 1. Share ONLY the photo file when supported (iOS Safari, Android Chrome)
     if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [result.file] })) {
       try {
         await navigator.share({
@@ -256,13 +301,10 @@ export async function shareToStoryOrSocial(
             shareText,
           };
         }
-        // If file sharing was blocked or unsupported, fallback to modal
       }
     }
   }
 
-  // 2. Fallback: Return dialog mode (modal lets user save/share photo or copy clean link)
-  // NEVER silently trigger a file download when user requested to share!
   return {
     success: true,
     mode: 'dialog',

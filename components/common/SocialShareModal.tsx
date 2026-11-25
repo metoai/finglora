@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Check, Copy, Share2 } from 'lucide-react';
 import { SimpleTechSummary } from '@/lib/services/share-look';
+import { generateBrandedEditorialImage } from '@/lib/services/editorial-export';
 
 export interface SocialShareModalProps {
   isOpen: boolean;
@@ -22,6 +23,7 @@ export function SocialShareModal({
   onDownloadFallback,
 }: SocialShareModalProps) {
   const [copied, setCopied] = useState(false);
+  const [sharingPhoto, setSharingPhoto] = useState(false);
   const [activeActionNote, setActiveActionNote] = useState<string | null>(null);
 
   if (!isOpen) return null;
@@ -71,7 +73,7 @@ export function SocialShareModal({
   const handleShareInstagram = async () => {
     if (onDownloadFallback) {
       onDownloadFallback();
-      setActiveActionNote('Photo saved — upload directly to Instagram.');
+      setActiveActionNote('Branded photo saved — upload directly to Instagram.');
       setTimeout(() => setActiveActionNote(null), 3500);
     } else {
       window.open('https://www.instagram.com/', '_blank', 'noopener,noreferrer');
@@ -80,25 +82,39 @@ export function SocialShareModal({
 
   const handleSharePhotoOnly = async () => {
     if (imageUrl && typeof navigator !== 'undefined' && typeof navigator.share === 'function') {
+      setSharingPhoto(true);
       try {
-        const res = await fetch(imageUrl);
-        const blob = await res.blob();
-        const file = new File([blob], 'finglora-manicure.jpg', {
-          type: blob.type || 'image/jpeg',
-        });
-        if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [file] })) {
-          await navigator.share({ files: [file] });
+        let fileToShare: File;
+        try {
+          const branded = await generateBrandedEditorialImage(imageUrl, {
+            designTitle,
+            filename: 'finglora-manicure.jpg',
+            storyAspect: true,
+          });
+          fileToShare = branded.file;
+        } catch {
+          const res = await fetch(imageUrl);
+          const blob = await res.blob();
+          fileToShare = new File([blob], 'finglora-manicure.jpg', {
+            type: blob.type || 'image/jpeg',
+          });
+        }
+
+        if (typeof navigator.canShare === 'function' && navigator.canShare({ files: [fileToShare] })) {
+          await navigator.share({ files: [fileToShare] });
           onClose();
           return;
         }
       } catch (err: unknown) {
         if ((err as Error)?.name === 'AbortError') return;
+      } finally {
+        setSharingPhoto(false);
       }
     }
 
     if (onDownloadFallback) {
       onDownloadFallback();
-      setActiveActionNote('Photo saved to your device');
+      setActiveActionNote('Branded photo saved to your device');
       setTimeout(() => setActiveActionNote(null), 2200);
     }
   };
@@ -169,10 +185,11 @@ export function SocialShareModal({
           <button
             type="button"
             onClick={handleSharePhotoOnly}
-            className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-xs"
+            disabled={sharingPhoto}
+            className="h-10 rounded-xl bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition cursor-pointer active:scale-95 shadow-xs disabled:opacity-60"
           >
             <Share2 className="w-3.5 h-3.5" />
-            <span>Share Photo</span>
+            <span>{sharingPhoto ? 'Preparing...' : 'Share Photo'}</span>
           </button>
 
           <button

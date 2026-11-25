@@ -1,14 +1,24 @@
 import { NextResponse } from 'next/server';
-import fs from 'fs';
-import path from 'path';
 import { getVerifiedRequestUser } from '@/lib/server/admin-auth';
 import { getSupabaseServerClient } from '@/lib/supabase/server';
 import {
   checkRateLimit,
   getClientIp,
   isAllowedBrowserOrigin,
-  safeFetchRemoteImageBase64,
 } from '@/lib/server/api-guard';
+import {
+  attachGuestTryOnCookie,
+  MAX_GUEST_FREE_TRYONS,
+  readGuestTryOnCount,
+} from '@/lib/server/guest-quota';
+import {
+  coalesceInFlight,
+  executeVertexWithFailover,
+  hashRequestSignature,
+  optimizeGeneratedImageOutput,
+  resolveCachedPublicImageBase64,
+  safeCachedFetchRemoteImageBase64,
+} from '@/lib/server/vertex-pool';
 
 interface GenerateRequestBody {
   prompt?: string;
@@ -20,20 +30,28 @@ interface GenerateRequestBody {
   nailShape?: string;
 }
 
-function resolvePublicImageBase64(relUrl: string): { base64: string; mimeType: string } | null {
-  try {
-    const publicRoot = path.resolve(process.cwd(), 'public');
-    const resolved = path.resolve(publicRoot, relUrl.replace(/^\/+/, ''));
-    if (!resolved.startsWith(publicRoot + path.sep)) return null;
-    if (!fs.existsSync(resolved)) return null;
-    const buf = fs.readFileSync(resolved);
-    return {
-      base64: buf.toString('base64'),
-      mimeType: resolved.endsWith('.png') ? 'image/png' : 'image/jpeg',
-    };
-  } catch {
-    return null;
+async function resolveInputImage(
+  base64Input?: string,
+  urlInput?: string
+): Promise<{ base64?: string; mimeType: string }> {
+  if (base64Input) {
+    const mimeType =
+      base64Input.match(/^data:(image\/[\w.+-]+);base64,/)?.[1] || 'image/jpeg';
+    const base64 = base64Input.replace(/^data:image\/[\w.+-]+;base64,/, '');
+    if (base64) return { base64, mimeType };
   }
+
+  if (urlInput) {
+    if (urlInput.startsWith('/')) {
+      const local = resolveCachedPublicImageBase64(urlInput);
+      if (local) return local;
+    } else if (urlInput.startsWith('https://')) {
+      const remote = await safeCachedFetchRemoteImageBase64(urlInput);
+      if (remote) return remote;
+    }
+  }
+
+  return { base64: undefined, mimeType: 'image/jpeg' };
 }
 
 export async function POST(request: Request) {
@@ -44,24 +62,7 @@ export async function POST(request: Request) {
 
     const user = await getVerifiedRequestUser();
     const clientIp = getClientIp(request);
-
-    // Rate limit per user or per IP for guests
-    const rate = user
-      ? checkRateLimit(`gen:user:${user.id}`, 25, 10 * 60 * 1000)
-      : checkRateLimit(`gen:ip:${clientIp}`, 4, 30 * 60 * 1000);
-
-    if (!rate.allowed) {
-      return NextResponse.json(
-        {
-          error: user
-            ? 'Rate limit reached. Please wait a moment before generating again.'
-            : 'Guest preview limit reached. Create a free account for 10 try-on credits.',
-          paywall: !user,
-          isRateLimit: true,
-        },
-        { status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
-      );
-    }
+    const guestUsed = user ? 0 : readGuestTryOnCount(request);
 
     const body: GenerateRequestBody = await request.json();
     const {
@@ -74,25 +75,263 @@ export async function POST(request: Request) {
       nailShape = 'almond',
     } = body;
 
+    if (!user) {
+      if (guestUsed >= MAX_GUEST_FREE_TRYONS) {
+        return NextResponse.json(
+          {
+            error:
+              'Free guest preview used. Create a free account for 10 complimentary try-on credits.',
+            paywall: true,
+            isGuestFirstTry: true,
+            credits: 0,
+            isPro: false,
+          },
+          { status: 402 }
+        );
+      }
+
+      const guestIpRate = checkRateLimit(
+        `gen:guest:ip:${clientIp}`,
+        2,
+        24 * 60 * 60 * 1000
+      );
+      if (!guestIpRate.allowed) {
+        return NextResponse.json(
+          {
+            error:
+              'Guest preview limit reached. Create a free account for 10 complimentary try-on credits.',
+            paywall: true,
+            isGuestFirstTry: true,
+            credits: 0,
+            isPro: false,
+          },
+          { status: 402, headers: { 'Retry-After': String(guestIpRate.retryAfterSec) } }
+        );
+      }
+    } else {
+      const rate = checkRateLimit(`gen:user:${user.id}`, 25, 10 * 60 * 1000);
+      if (!rate.allowed) {
+        return NextResponse.json(
+          {
+            error: 'Our AI nail studio is momentarily busy. Please wait a few seconds and try again.',
+            paywall: false,
+            isRateLimit: true,
+          },
+          { status: 429, headers: { 'Retry-After': String(rate.retryAfterSec) } }
+        );
+      }
+    }
+
     const key1 = process.env.GEMINI_API_KEY;
     const key2 = process.env.VERTEX_API_KEY_2;
     const candidateKeys = Array.from(new Set([key1, key2].filter(Boolean))) as string[];
 
     if (candidateKeys.length === 0) {
-      return NextResponse.json({ error: 'Vertex API key is not configured' }, { status: 500 });
+      console.error('[Finglora generate-nail-art] Missing Vertex API credentials');
+      return NextResponse.json(
+        { error: 'AI styling service is temporarily unavailable. Please try again later.' },
+        { status: 500 }
+      );
     }
 
-    // Server-side credit enforcement for authenticated users in virtual try-on mode
-    let serverCreditStatus: { credits: number; isPro: boolean } | null = null;
-    if (user && mode === 'hand-tryon') {
+    // Pre-flight credit check for authenticated users (actual deduction waits until image succeeds)
+    const supabase = user ? await getSupabaseServerClient() : null;
+    if (user && supabase && mode === 'hand-tryon') {
       try {
-        const supabase = await getSupabaseServerClient();
-        const { data: creditData, error: creditErr } = await (supabase as any).rpc('consume_tryon_credit');
+        const { data: profileRow } = await supabase
+          .from('profiles')
+          .select('is_pro, credits')
+          .eq('id', user.id)
+          .maybeSingle();
+
+        if (profileRow) {
+          const isPro = Boolean((profileRow as any).is_pro);
+          const credits = Number((profileRow as any).credits ?? 0);
+          if (!isPro && credits <= 0) {
+            return NextResponse.json(
+              {
+                error:
+                  'No try-on credits remaining. Upgrade to Finglora Pro for unlimited try-ons.',
+                paywall: true,
+                credits: 0,
+                isPro: false,
+              },
+              { status: 402 }
+            );
+          }
+        }
+      } catch {
+        // Atomic RPC check below handles final enforcement
+      }
+    }
+
+    // Resolve Hand & Reference inputs concurrently using server memory caches
+    const [handResolved, refResolved] = await Promise.all([
+      resolveInputImage(handImageBase64, handImageUrl),
+      resolveInputImage(referenceImageBase64, referenceImageUrl),
+    ]);
+
+    const finalHandBase64 = handResolved.base64;
+    const handMimeType = handResolved.mimeType;
+    const finalReferenceBase64 = refResolved.base64;
+    const referenceMimeType = refResolved.mimeType;
+
+    const buildGenerationBody = (model: string): Record<string, unknown> => {
+      const isV25 = model.includes('2.5');
+      const modelParts: any[] = [];
+
+      if (finalReferenceBase64 && finalHandBase64) {
+        const detailNote =
+          prompt && prompt !== 'Apply reference manicure to user hand'
+            ? `\nDesign specification: ${prompt}`
+            : '';
+
+        if (isV25) {
+          // Tailored for gemini-2.5-flash-image: treat reference strictly as polish/finish swatch,
+          // put target hand LAST so output preserves the hand's natural aspect ratio, and mandate all 5 nails.
+          modelParts.push({
+            text: `IN-PLACE 5-FINGER VIRTUAL NAIL POLISH EDIT (KEEP EXACT TARGET HAND PROPORTIONS):
+IMAGE 1 is ONLY a polish color, pattern & gloss finish swatch.${detailNote}
+DO NOT copy long artificial acrylic extensions, flat cutout tips, finger thickness, or hand anatomy from IMAGE 1!
+IMAGE 2 is the TARGET USER HAND PHOTO — keep 100% of IMAGE 2's aspect ratio, framing, crop, skin tone, palm/knuckle creases, finger widths, finger angles, and background unchanged.
+
+MANDATORY 5-FINGER COVERAGE (NEVER SKIP ANY FINGER):
+Locate EVERY SINGLE ONE of the 5 fingernails visible in IMAGE 2 and paint ALL FIVE nail plates cleanly from cuticle to tip with IMAGE 1's polish color, finish, and art:
+1. Thumb fingernail
+2. Index fingernail
+3. Middle fingernail
+4. Ring fingernail
+5. Pinky fingernail
+Even when index, middle, or ring fingers are curled inward or seen at a steep foreshortened angle, find each nail bed carefully and coat ALL 5 cleanly! Keep natural-to-neat rounded ${nailShape} salon gel overlays aligned strictly along each finger axis — NEVER attach oversized sideways triangular tips onto only outer nails.`,
+          });
+        } else {
+          // Precision prompt for gemini-3.1-flash-image / gemini-3-pro-image (reference first, target hand last for aspect-ratio lock)
+          modelParts.push({
+            text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT (localized virtual nail try-on).
+
+IMAGE 1 is ONLY the manicure design reference swatch.
+IMAGE 2 is the EXACT target photograph of the user's hand. Treat IMAGE 2 as an immutable base layer where ONLY the 5 fingernail plates are editable.
+
+TASK:
+Apply ONLY the nail polish colors, nail art patterns, finish, and ${nailShape} look from IMAGE 1 onto ALL FIVE fingernails of IMAGE 2, scaled strictly to fit IMAGE 2's natural slim nail bed width.${detailNote}
+
+MANDATORY 5-FINGER COVERAGE & ALIGNMENT (CRITICAL):
+- Paint ALL 5 visible fingernails in IMAGE 2 individually from cuticle to tip: (1) Thumb, (2) Index, (3) Middle, (4) Ring, (5) Pinky — NEVER skip curled or foreshortened middle, index, or ring fingernails.
+- Align every nail naturally straight along its own finger axis and perspective foreshortening; NEVER paste oversized or sideways flat tips onto only 1-2 outer fingers.
+
+ABSOLUTE HAND & SLIMNESS PRESERVATION RULES:
+1. ZERO FINGER WIDENING OR PLUMPING: Every finger shaft, thumb, fingertip, knuckle, palm, and wrist MUST keep the exact same slim pixel width as IMAGE 2. Never flare nail sides wider than the fingertip skin.
+2. LOCK INTER-FINGER GAPS & SILHOUETTE: Preserve exact empty background spaces/gaps between fingers and keep every hand contour pixel-aligned with IMAGE 2.
+3. ZERO CHANGES TO SKIN TEXTURE OR TONE: Retain IMAGE 2's exact skin tone, pores, creases, lighting, framing, and original accessories; do NOT smooth or re-color skin.
+4. ZERO CHANGES TO BACKGROUND, ASPECT RATIO, OR LIGHTING: Keep original framing, crop, aspect ratio, background, and lighting of IMAGE 2 untouched; copy NO hands, rings, jewelry, bottles, or props from IMAGE 1.
+5. CLEAN, DRY SKIN AROUND NAILS: Skin under tips and around cuticles stays natural dry matte skin matching IMAGE 2 (no oil, vaseline, grease, or spillage).`,
+          });
+        }
+
+        // Put reference swatch FIRST and user's target hand LAST so output natively keeps user hand aspect ratio
+        modelParts.push({
+          text: 'IMAGE 1 — MANICURE COLOR & FINISH SWATCH ONLY (DO NOT copy hand, crop, or oversized tip cutouts):',
+        });
+        modelParts.push({ inlineData: { mimeType: referenceMimeType, data: finalReferenceBase64 } });
+        modelParts.push({
+          text: 'IMAGE 2 — TARGET USER HAND PHOTO (Paint ALL 5 visible fingernails cleanly; keep exact framing, skin, fingers & background):',
+        });
+        modelParts.push({ inlineData: { mimeType: handMimeType, data: finalHandBase64 } });
+      } else if (finalHandBase64) {
+        modelParts.push({
+          text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT on IMAGE 1 (user hand). Treat IMAGE 1 as an immutable base layer where ONLY the 5 fingernail plates are editable.
+
+TASK:
+Paint ALL FIVE visible fingernails in IMAGE 1 cleanly to match: "${prompt}".
+- Coat all 5 fingernails consistently: (1) Thumb, (2) Index, (3) Middle, (4) Ring, (5) Pinky — never skip curled or foreshortened center nails.
+- Keep polished gel overlays clearly visible with crisp glossy shine, hugging IMAGE 1's slim nail beds along each finger's natural pointing axis.
+
+STRICT PRESERVATION RULES:
+1. ZERO finger widening/plumping: keep slim finger shafts, fingertips, and inter-finger gaps pixel-identical to IMAGE 1.
+2. ZERO skin/lighting/background/accessory edits: preserve exact skin tone, creases, pores, shadows, aspect ratio, lighting, and scene; add NO rings or jewelry.
+3. CLEAN, DRY skin under nail tips and around cuticles (no oil, vaseline, grease, or polish spillage).`,
+        });
+        modelParts.push({
+          text: 'IMAGE 1 — TARGET BASE PHOTO (User Hand — paint ALL 5 visible fingernails cleanly):',
+        });
+        modelParts.push({ inlineData: { mimeType: handMimeType, data: finalHandBase64 } });
+      } else if (finalReferenceBase64) {
+        modelParts.push({
+          text: `Photorealistic salon macro photo of a natural human hand wearing the exact nail art from this reference ("${prompt}") across all 5 fingernails. Copy ONLY the nail design (no rings, jewelry, props, or clothing from reference). Clean dry cuticle and under-nail skin, natural lighting.`,
+        });
+        modelParts.push({ inlineData: { mimeType: referenceMimeType, data: finalReferenceBase64 } });
+      } else {
+        const promptText =
+          mode === '5-nail-set'
+            ? `Luxury top-down studio photo of 5 isolated acrylic nails lined horizontally (Thumb, Index, Middle, Ring, Pinky), ${nailShape} shape, design: ${prompt}, clean light linen stone background, sharp macro gel finish.`
+            : `Photorealistic salon photo of a real human hand wearing this manicure across all 5 fingers: "${prompt}". Clean dry natural skin around cuticles and under nails, crisp cuticle margins, no jewelry or foreign props.`;
+        modelParts.push({ text: promptText });
+      }
+
+      return {
+        contents: [{ role: 'user', parts: modelParts }],
+        generationConfig: {
+          responseModalities: ['IMAGE'],
+        },
+      };
+    };
+
+    // Coalesce rapid duplicate double-taps from the same caller
+    const dedupKey = hashRequestSignature([
+      user?.id || clientIp,
+      mode,
+      nailShape,
+      prompt,
+      finalHandBase64 ? finalHandBase64.slice(0, 256) : handImageUrl || '',
+      finalReferenceBase64 ? finalReferenceBase64.slice(0, 256) : referenceImageUrl || '',
+    ]);
+
+    const vertexResult = await coalesceInFlight(dedupKey, () =>
+      executeVertexWithFailover({
+        candidateKeys,
+        candidateModels: ['gemini-3.1-flash-image', 'gemini-3-pro-image', 'gemini-2.5-flash-image'],
+        timeoutMs: 24000,
+        bodyForModel: buildGenerationBody,
+      })
+    );
+
+    if (!vertexResult.ok) {
+      console.error('[Finglora generate-nail-art] Vertex image generation failed:', {
+        status: vertexResult.status,
+        model: vertexResult.model,
+        error: vertexResult.error,
+      });
+      const returnStatus = vertexResult.isRateLimited ? 429 : 502;
+      return NextResponse.json(
+        { error: vertexResult.publicError, isRateLimit: vertexResult.isRateLimited },
+        { status: returnStatus }
+      );
+    }
+
+    const imgPart = vertexResult.json?.candidates?.[0]?.content?.parts?.find(
+      (p: any) => p.inlineData?.data
+    );
+
+    if (!imgPart?.inlineData?.data) {
+      return NextResponse.json(
+        { error: 'Unable to complete manicure generation right now. Please try again.' },
+        { status: 502 }
+      );
+    }
+
+    // Atomically deduct authenticated credit ONLY after generation actually succeeded
+    let serverCreditStatus: { credits: number; isPro: boolean } | null = null;
+    if (user && supabase && mode === 'hand-tryon') {
+      try {
+        const { data: creditData, error: creditErr } = await (supabase as any).rpc(
+          'consume_tryon_credit'
+        );
         if (!creditErr && creditData && typeof creditData.allowed === 'boolean') {
           if (!creditData.allowed) {
             return NextResponse.json(
               {
-                error: 'No try-on credits remaining. Upgrade to Finglora Pro for unlimited try-ons.',
+                error:
+                  'No try-on credits remaining. Upgrade to Finglora Pro for unlimited try-ons.',
                 paywall: true,
                 credits: 0,
                 isPro: false,
@@ -106,204 +345,39 @@ export async function POST(request: Request) {
           };
         }
       } catch {
-        // Proceed gracefully if RPC unavailable
+        // Proceed if RPC unavailable
       }
     }
 
-    // Resolve Hand Base64 & Mime
-    let finalHandBase64 = handImageBase64?.replace(/^data:image\/\w+;base64,/, '');
-    let handMimeType = handImageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
+    // Compress bulky PNG -> crisp ~120KB mozjpeg (~10x faster download on mobile)
+    const optimizedImageUrl = await optimizeGeneratedImageOutput(
+      imgPart.inlineData.data,
+      imgPart.inlineData.mimeType || 'image/png'
+    );
 
-    if (!finalHandBase64 && handImageUrl) {
-      if (handImageUrl.startsWith('/')) {
-        const local = resolvePublicImageBase64(handImageUrl);
-        if (local) {
-          finalHandBase64 = local.base64;
-          handMimeType = local.mimeType;
-        }
-      } else if (handImageUrl.startsWith('https://')) {
-        const remote = await safeFetchRemoteImageBase64(handImageUrl);
-        if (remote) {
-          finalHandBase64 = remote.base64;
-          handMimeType = remote.mimeType;
-        }
-      }
+    const response = NextResponse.json({
+      success: true,
+      imageUrl: optimizedImageUrl,
+      modelUsed: vertexResult.model,
+      creditStatus: user
+        ? serverCreditStatus
+        : {
+            credits: Math.max(0, MAX_GUEST_FREE_TRYONS - (guestUsed + 1)),
+            isPro: false,
+            isGuest: true,
+          },
+    });
+
+    if (!user) {
+      attachGuestTryOnCookie(response, guestUsed + 1);
     }
 
-    // Resolve Reference Base64 & Mime
-    let finalReferenceBase64 = referenceImageBase64?.replace(/^data:image\/\w+;base64,/, '');
-    let referenceMimeType = referenceImageBase64?.match(/^data:(image\/\w+);base64,/)?.[1] || 'image/jpeg';
-
-    if (!finalReferenceBase64 && referenceImageUrl) {
-      if (referenceImageUrl.startsWith('/')) {
-        const local = resolvePublicImageBase64(referenceImageUrl);
-        if (local) {
-          finalReferenceBase64 = local.base64;
-          referenceMimeType = local.mimeType;
-        }
-      } else if (referenceImageUrl.startsWith('https://')) {
-        const remote = await safeFetchRemoteImageBase64(referenceImageUrl);
-        if (remote) {
-          finalReferenceBase64 = remote.base64;
-          referenceMimeType = remote.mimeType;
-        }
-      }
-    }
-
-    const parts: any[] = [];
-
-    if (finalReferenceBase64 && finalHandBase64) {
-      // Image-to-Image with User's Real Hand (IMAGE 1 = locked base canvas) + Reference Nail Design (IMAGE 2 = design only)
-      const detailNote =
-        prompt && prompt !== 'Apply reference manicure to user hand'
-          ? `\nAdditional manicure details: ${prompt}`
-          : '';
-
-      parts.push({
-        text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT (localized virtual nail try-on).
-
-IMAGE 1 is the EXACT target photograph of the user's hand. Treat IMAGE 1 as an immutable base layer where ONLY the 5 fingernail regions are editable.
-IMAGE 2 is ONLY the manicure design reference.
-
-TASK:
-Apply ONLY the nail polish colors, nail art patterns, finish, and ${nailShape} tip style from IMAGE 2 onto the fingernails of the hand in IMAGE 1, scaled strictly to fit IMAGE 1's slim finger width.${detailNote}
-
-ABSOLUTE HAND & SLIMNESS PRESERVATION RULES (HIGHEST PRIORITY):
-1. ZERO FINGER WIDENING OR PLUMPING: Every finger shaft, thumb, fingertip, knuckle, palm, and wrist MUST keep the exact same slim pixel width as IMAGE 1. NEVER widen, thicken, plump, swell, puff, or bloat any finger or hand edge.
-2. LOCK INTER-FINGER GAPS & SILHOUETTE: The empty background spaces/gaps between thumb, index, middle, ring, and pinky fingers MUST stay the exact same width and contour as IMAGE 1. Keep every hand and finger outline strictly pixel-aligned with IMAGE 1.
-3. FIT NAILS TO USER'S SLIM NAIL BEDS (DO NOT ENLARGE FINGERS TO FIT NAILS): Shrink and narrow the width of each nail design from IMAGE 2 so the left and right nail sidewalls sit strictly within the user's exact natural nail bed width in IMAGE 1. Never flare the nail sides wider than the fingertip skin, and never expand fingertip flesh to accommodate wider salon nails from IMAGE 2.
-4. ZERO CHANGES TO SKIN TEXTURE OR TONE: Retain the user's exact skin tone, undertones, shadows, highlights, pores, wrinkles, knuckle creases, veins, freckles, fine hairs, and cuticle skin from IMAGE 1. Do NOT airbrush, smooth, soften, brighten, lighten, darken, sharpen, or color-grade the skin.
-5. ZERO CHANGES TO BACKGROUND, LIGHTING, OR FRAMING: Keep the exact original background, camera perspective, zoom, crop, aspect ratio, ambient lighting, and color temperature of IMAGE 1 untouched. Do NOT re-light or re-photograph the hand.
-6. NO FOREIGN ELEMENTS FROM IMAGE 2: Extract strictly the nail design from IMAGE 2. Do NOT transfer IMAGE 2's hand anatomy, finger thickness, skin tone, lighting, background, sleeves, flowers, bottles, props, rings, bracelets, or jewelry. Keep whatever original background or accessories already exist in IMAGE 1.
-7. CLEAN, DRY SKIN AROUND NAILS: The skin under the fingernails (hyponychium), around the cuticles, and on the finger pads must remain clean, natural, dry skin matching IMAGE 1. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO gel residue outside the nail plates.`,
-      });
-      parts.push({
-        text: 'IMAGE 1 — TARGET BASE PHOTO (User Hand — preserve 100% of slim finger widths, inter-finger gaps, anatomy, skin texture, pose, lighting, and background pixel-identically):',
-      });
-      parts.push({
-        inlineData: {
-          mimeType: handMimeType,
-          data: finalHandBase64,
-        },
-      });
-      parts.push({
-        text: 'IMAGE 2 — MANICURE DESIGN REFERENCE ONLY (Copy ONLY the polish art/colors/finish; shrink nail width to fit IMAGE 1 fingers):',
-      });
-      parts.push({
-        inlineData: {
-          mimeType: referenceMimeType,
-          data: finalReferenceBase64,
-        },
-      });
-    } else if (finalHandBase64) {
-      parts.push({
-        text: `You are performing a STRICT PIXEL-LOCKED IN-PLACE PHOTO EDIT (localized virtual nail try-on) on IMAGE 1 (the user's hand photograph).
-
-Treat IMAGE 1 as an immutable base layer where ONLY the 5 fingernail regions are editable. Do NOT generate a new editorial photograph or re-render the scene.
-
-TASK:
-Apply ONLY this manicure design onto the fingernails of the hand in IMAGE 1, sized strictly to fit IMAGE 1's existing nail beds: "${prompt}".
-
-ABSOLUTE HAND & SLIMNESS PRESERVATION RULES (HIGHEST PRIORITY):
-1. ZERO FINGER WIDENING OR PLUMPING: Every finger shaft, thumb, fingertip, knuckle, palm, and wrist MUST keep the exact same slim pixel width as IMAGE 1. NEVER widen, thicken, plump, swell, puff, or bloat any finger or hand edge.
-2. LOCK INTER-FINGER GAPS & SILHOUETTE: Preserve the exact empty background gap widths between every pair of fingers and keep the output strictly pixel-aligned with IMAGE 1.
-3. ZERO CHANGES TO SKIN TEXTURE OR TONE: Retain the user's exact skin tone, undertones, shadows, highlights, pores, wrinkles, knuckle creases, veins, freckles, fine hairs, and cuticle skin from IMAGE 1. Do NOT airbrush, smooth, soften, brighten, sharpen, or color-grade the skin.
-4. ZERO CHANGES TO BACKGROUND, LIGHTING, OR FRAMING: Keep the exact original background, camera perspective, zoom, crop, aspect ratio, ambient lighting, and color temperature of IMAGE 1 untouched.
-5. NAIL PLATE BOUNDARY LOCK & NO FOREIGN OBJECTS: Modify ONLY the fingernail plates (narrowly fitted within IMAGE 1's existing nail bed sidewalls). Do NOT add any rings, jewelry, bracelets, or foreign props.
-6. CLEAN, DRY SKIN AROUND NAILS: The skin under the fingernails (hyponychium) and around the cuticles must remain clean, natural, dry skin matching IMAGE 1. Strictly NO vaseline, NO petroleum jelly, NO greasy shine, NO cuticle oil pooling, and NO gel spillage on skin.`,
-      });
-      parts.push({
-        text: 'IMAGE 1 — TARGET BASE PHOTO (User Hand — preserve 100% of hand anatomy, skin texture, pose, lighting, and background pixel-identically):',
-      });
-      parts.push({
-        inlineData: {
-          mimeType: handMimeType,
-          data: finalHandBase64,
-        },
-      });
-    } else if (finalReferenceBase64) {
-      parts.push({
-        text: `You are an expert salon studio AI. Generate an ultra-photorealistic salon photograph of a real human hand wearing the exact manicure design from this reference image: "${prompt}".
-
-CRITICAL CONSTRAINTS:
-1. NAIL DESIGN ONLY - NO FOREIGN OBJECTS: Copy ONLY the nail design (colors, patterns, finish, shape). If the reference image has rings, jewelry, accessories, bracelets, sleeves, props, or background objects, DO NOT include them. Only render the human hand and the manicured fingernails.
-2. CLEAN, DRY SKIN - NO VASELINE OR GREASE: The skin under the nails and around the cuticles must be completely clean, natural, and dry. Strictly NO vaseline, NO petroleum jelly, NO greasy residue, and NO oil pooling under the nail edges.
-3. Realistic skin texture, crisp cuticle margins, and natural lighting.`
-      });
-      parts.push({
-        inlineData: {
-          mimeType: referenceMimeType,
-          data: finalReferenceBase64,
-        },
-      });
-    } else {
-      let promptText = '';
-      if (mode === '5-nail-set') {
-        promptText = `Luxury studio top-down photograph of a complete 5-finger manicure set. Exactly 5 isolated acrylic fingernails lined up horizontally in a neat row from left to right: Thumb, Index, Middle, Ring, Pinky. Nail silhouette shape: ${nailShape}. Design theme: ${prompt}. Clean light linen stone studio background. Sharp macro product photography, high-gloss gel clearcoat, perfect finish. No vaseline, no petroleum jelly, no foreign objects.`;
-      } else {
-        promptText = `You are an expert salon studio AI. Generate an ultra-photorealistic editorial salon photograph of a real human hand showcasing this exact manicure design: "${prompt}". Clean, natural, dry skin under and around the fingernails with no vaseline, petroleum jelly, or greasy residue. Nail design only, no jewelry, rings, or foreign objects. Natural lighting, crisp cuticle margin, realistic skin texture.`;
-      }
-      parts.push({ text: promptText });
-    }
-
-    const candidateImageModels = ['gemini-3.1-flash-image', 'gemini-3-pro-image'];
-    let generatedImageData: string | null = null;
-    let lastError = 'Image generation failed';
-    let isRateLimited = false;
-
-    keyLoop: for (const apiKey of candidateKeys) {
-      for (const model of candidateImageModels) {
-        try {
-          const res = await fetch(
-            `https://aiplatform.googleapis.com/v1/publishers/google/models/${model}:generateContent?key=${apiKey}`,
-            {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                contents: [{ role: 'user', parts }],
-                generationConfig: {
-                  responseModalities: ['IMAGE'],
-                },
-              }),
-              signal: AbortSignal.timeout(24000),
-            }
-          );
-
-          if (res.ok) {
-            const json = await res.json();
-            const imgPart = json?.candidates?.[0]?.content?.parts?.find(
-              (p: any) => p.inlineData?.data
-            );
-            if (imgPart?.inlineData?.data) {
-              generatedImageData = `data:${imgPart.inlineData.mimeType || 'image/png'};base64,${imgPart.inlineData.data}`;
-              break keyLoop;
-            }
-          } else {
-            const errJson = await res.json().catch(() => ({}));
-            lastError = errJson?.error?.message || `HTTP ${res.status}`;
-            if (res.status === 429 || lastError.includes('RESOURCE_EXHAUSTED') || lastError.includes('Resource exhausted')) {
-              isRateLimited = true;
-            }
-            console.warn(`[Finglora Vertex AI Image] ${model} unavailable (${res.status}: ${lastError}), trying next key...`);
-          }
-        } catch (err: unknown) {
-          lastError = err instanceof Error ? err.message : 'Network timeout';
-        }
-      }
-    }
-
-    if (generatedImageData) {
-      return NextResponse.json({
-        success: true,
-        imageUrl: generatedImageData,
-        creditStatus: serverCreditStatus,
-      });
-    }
-
-    const returnStatus = isRateLimited ? 429 : 502;
-    return NextResponse.json({ error: lastError, isRateLimit: isRateLimited }, { status: returnStatus });
+    return response;
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: 500 });
+    console.error('[Finglora generate-nail-art] Unhandled route error:', err);
+    return NextResponse.json(
+      { error: 'Something went wrong while styling your nails. Please try again.' },
+      { status: 500 }
+    );
   }
 }

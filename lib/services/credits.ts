@@ -2,16 +2,20 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 
 /**
  * Finglora Credit & Subscription Service
- * Free Plan: 10 complimentary try-on credits
+ * Guest Experience: 1 complimentary instant virtual try-on (no signup required)
+ * Free Account: 10 complimentary try-on credits upon free signup
  * Pro Plans: $7/month, $29/6 months ($4.83/mo), $49/year ($4.08/mo)
  */
 
 const CREDITS_STORAGE_KEY = 'finglora_tryon_credits';
 const SIGNUP_BONUS_KEY = 'finglora_signup_bonus_granted';
+const GUEST_CREDITS_USED_KEY = 'finglora_guest_credits_used';
 const PRO_STATUS_KEY = 'finglora_is_pro_subscriber';
 const PRO_PLAN_KEY = 'finglora_pro_plan';
 const USER_EMAIL_KEY = 'finglora_user_email';
+const SESSION_OWNER_KEY = 'finglora_session_owner_id';
 
+export const GUEST_FREE_CREDITS = 1;
 export const FREE_SIGNUP_CREDITS = 10;
 
 export type ProPlanType = 'monthly' | 'biannual' | 'annual';
@@ -73,20 +77,41 @@ export function isVipEmail(email?: string | null): boolean {
 export interface UserCreditStatus {
   credits: number;
   isPro: boolean;
+  isGuest: boolean;
   proPlan?: ProPlanType | null;
   hasUsedGuestCredit: boolean;
   hasReceivedSignupBonus: boolean;
 }
 
+function isAuthenticatedClientSession(): boolean {
+  if (typeof window === 'undefined') return false;
+  const ownerId = localStorage.getItem(SESSION_OWNER_KEY);
+  if (ownerId && ownerId !== 'guest') return true;
+  return localStorage.getItem(SIGNUP_BONUS_KEY) === 'true';
+}
+
 /**
- * Synchronize client cache strictly with the authenticated user's real DB profile row.
+ * Synchronize client cache strictly with the server credit response or authenticated DB profile row.
  */
-export function syncCreditsFromProfile(isPro: boolean, credits?: number | null): void {
+export function syncCreditsFromProfile(
+  isPro: boolean,
+  credits?: number | null,
+  isGuest = false
+): void {
   if (typeof window === 'undefined') return;
   try {
+    if (isGuest) {
+      const remaining = typeof credits === 'number' ? Math.max(0, credits) : 0;
+      localStorage.setItem(GUEST_CREDITS_USED_KEY, remaining <= 0 ? 'true' : 'false');
+      return;
+    }
+
     localStorage.setItem(PRO_STATUS_KEY, isPro ? 'true' : 'false');
     if (isPro) {
-      localStorage.setItem(CREDITS_STORAGE_KEY, String(typeof credits === 'number' ? credits : 999999));
+      localStorage.setItem(
+        CREDITS_STORAGE_KEY,
+        String(typeof credits === 'number' ? credits : 999999)
+      );
     } else if (typeof credits === 'number') {
       localStorage.setItem(CREDITS_STORAGE_KEY, String(Math.max(0, credits)));
     } else {
@@ -98,9 +123,33 @@ export function syncCreditsFromProfile(isPro: boolean, credits?: number | null):
   }
 }
 
-export function getUserCreditStatus(): UserCreditStatus {
+export function getUserCreditStatus(explicitIsAuthenticated?: boolean): UserCreditStatus {
   if (typeof window === 'undefined') {
-    return { credits: FREE_SIGNUP_CREDITS, isPro: false, proPlan: null, hasUsedGuestCredit: false, hasReceivedSignupBonus: false };
+    return {
+      credits: GUEST_FREE_CREDITS,
+      isPro: false,
+      isGuest: true,
+      proPlan: null,
+      hasUsedGuestCredit: false,
+      hasReceivedSignupBonus: false,
+    };
+  }
+
+  const isAuth =
+    typeof explicitIsAuthenticated === 'boolean'
+      ? explicitIsAuthenticated
+      : isAuthenticatedClientSession();
+
+  if (!isAuth) {
+    const guestUsed = localStorage.getItem(GUEST_CREDITS_USED_KEY) === 'true';
+    return {
+      credits: guestUsed ? 0 : GUEST_FREE_CREDITS,
+      isPro: false,
+      isGuest: true,
+      proPlan: null,
+      hasUsedGuestCredit: guestUsed,
+      hasReceivedSignupBonus: false,
+    };
   }
 
   const isPro = localStorage.getItem(PRO_STATUS_KEY) === 'true';
@@ -117,20 +166,19 @@ export function getUserCreditStatus(): UserCreditStatus {
     localStorage.setItem(CREDITS_STORAGE_KEY, FREE_SIGNUP_CREDITS.toString());
   }
 
-  const hasUsedGuestCredit = !isPro && storedCredits !== null && credits < 1 && !hasReceivedSignupBonus;
-
   return {
     credits: isPro ? 999999 : credits,
     isPro,
+    isGuest: false,
     proPlan,
-    hasUsedGuestCredit,
+    hasUsedGuestCredit: false,
     hasReceivedSignupBonus,
   };
 }
 
 /**
- * Deduct 1 credit for a try-on session locally (for instant UI feedback).
- * Prefer consumeAuthenticatedCredit() for authenticated users.
+ * Deduct 1 credit locally (for instant UI feedback for guest or fallback).
+ * Prefer server enforcement via /api/generate-nail-art & consume_tryon_credit RPC.
  */
 export function useTryOnCredit(): boolean {
   if (typeof window === 'undefined') return true;
@@ -142,6 +190,11 @@ export function useTryOnCredit(): boolean {
     return false;
   }
 
+  if (status.isGuest) {
+    localStorage.setItem(GUEST_CREDITS_USED_KEY, 'true');
+    return true;
+  }
+
   const remaining = status.credits - 1;
   localStorage.setItem(CREDITS_STORAGE_KEY, remaining.toString());
   return true;
@@ -150,19 +203,25 @@ export function useTryOnCredit(): boolean {
 /**
  * Atomically deduct 1 credit via Supabase RPC for logged-in users, syncing local state.
  */
-export async function consumeAuthenticatedCredit(): Promise<{ allowed: boolean; credits: number; isPro: boolean }> {
+export async function consumeAuthenticatedCredit(): Promise<{
+  allowed: boolean;
+  credits: number;
+  isPro: boolean;
+}> {
   try {
     const supabase = getSupabaseBrowserClient();
-    const { data: { user } } = await supabase.auth.getUser();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
     if (!user) {
       const ok = useTryOnCredit();
-      const s = getUserCreditStatus();
+      const s = getUserCreditStatus(false);
       return { allowed: ok, credits: s.credits, isPro: s.isPro };
     }
 
     const { data, error } = await (supabase as any).rpc('consume_tryon_credit');
     if (!error && data && typeof data.allowed === 'boolean') {
-      syncCreditsFromProfile(Boolean(data.is_pro), data.credits);
+      syncCreditsFromProfile(Boolean(data.is_pro), data.credits, false);
       return {
         allowed: Boolean(data.allowed),
         credits: typeof data.credits === 'number' ? data.credits : 0,
@@ -186,11 +245,11 @@ export function grantSignupCreditBonus(): number {
 
   const alreadyGranted = localStorage.getItem(SIGNUP_BONUS_KEY) === 'true';
   if (alreadyGranted) {
-    return getUserCreditStatus().credits;
+    return getUserCreditStatus(true).credits;
   }
 
-  const status = getUserCreditStatus();
-  const newBalance = Math.max(status.credits, FREE_SIGNUP_CREDITS);
+  const stored = parseInt(localStorage.getItem(CREDITS_STORAGE_KEY) || '0', 10);
+  const newBalance = Math.max(isNaN(stored) ? 0 : stored, FREE_SIGNUP_CREDITS);
   localStorage.setItem(CREDITS_STORAGE_KEY, newBalance.toString());
   localStorage.setItem(SIGNUP_BONUS_KEY, 'true');
   return newBalance;

@@ -5,6 +5,7 @@ export interface SimpleTechSummary {
   shape: string;
   length: string;
   finish: string;
+  technique: string;
   colors: string[];
   description: string;
 }
@@ -12,17 +13,46 @@ export interface SimpleTechSummary {
 const SUPABASE_TRYON_PREFIX =
   'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/try-on-captures/';
 
+const PATTERN_LABELS: Record<string, string> = {
+  solid: 'Full solid color',
+  'classic-french': 'Classic micro-French tips',
+  'heart-french': 'Blush heart French tips',
+  'ombre-french': 'Soft baby-boomer ombré French',
+  aura: 'Airbrushed aura blend',
+  floral: 'Hand-painted micro botanical art',
+  'chrome-swirl': '3D metallic chrome swirl linework',
+  'glitter-ombre': 'Fine shimmer gradient fade',
+  'minimal-line': 'Clean minimalist linework',
+};
+
+const FINISH_LABELS: Record<string, string> = {
+  glossy: 'High-Gloss Gel',
+  matte: 'Velvet Matte',
+  chrome: 'Pearl Chrome Glaze',
+  glitter: 'Fine Shimmer Gel',
+};
+
+function capFirst(val: string): string {
+  if (!val) return '';
+  return val.charAt(0).toUpperCase() + val.slice(1);
+}
+
 /**
- * Builds a concise, minimal nail technician summary from the active 5-finger set.
+ * Builds a concise, salon-ready 3-bullet technician summary from the active 5-finger set.
  */
 export function buildSimpleTechSummary(
   nails: Record<Finger, NailDesign>,
   designTitle?: string
 ): SimpleTechSummary {
   const refNail = nails.middle || nails.index || nails.thumb;
-  const shape = refNail?.shape || 'almond';
-  const length = refNail?.length || 'medium';
-  const finish = refNail?.finish || 'glossy';
+  const rawShape = refNail?.shape || 'almond';
+  const rawLength = refNail?.length || 'medium';
+  const rawFinish = refNail?.finish || 'glossy';
+  const rawPattern = refNail?.pattern || 'solid';
+
+  const shape = capFirst(rawShape);
+  const length = capFirst(rawLength);
+  const finish = FINISH_LABELS[rawFinish] || capFirst(rawFinish);
 
   const colorList: string[] = [];
   (['thumb', 'index', 'middle', 'ring', 'pinky'] as Finger[]).forEach((f) => {
@@ -35,27 +65,37 @@ export function buildSimpleTechSummary(
     }
   });
 
-  const uniqueTitles = Array.from(
+  const uniquePatterns = Array.from(
     new Set(
       (['thumb', 'index', 'middle', 'ring', 'pinky'] as Finger[])
-        .map((f) => nails[f]?.title)
+        .map((f) => nails[f]?.pattern)
         .filter(Boolean)
     )
   );
 
-  const note =
-    refNail?.clientNote?.trim() ||
-    `${shape} silhouette, ${length} length with a ${finish} top coat${
-      uniqueTitles.length > 0 ? ` (${uniqueTitles.slice(0, 2).join(', ')})` : ''
-    }.`;
+  const patternText =
+    uniquePatterns.length > 1
+      ? `${PATTERN_LABELS[rawPattern] || rawPattern} + mixed accent nail`
+      : PATTERN_LABELS[rawPattern] || capFirst(rawPattern.replace(/-/g, ' '));
+
+  const customNote = refNail?.clientNote?.trim();
+  const isGenericNote =
+    !customNote ||
+    customNote.toLowerCase().includes('ready for ai') ||
+    customNote.toLowerCase().includes('bespoke atelier look');
+
+  const technique = !isGenericNote && customNote ? customNote : `${patternText} (${finish.toLowerCase()})`;
+
+  const description = `${shape} (${length.toLowerCase()}) · ${finish} · ${patternText}`;
 
   return {
     title: designTitle || refNail?.title || 'Custom Manicure',
     shape,
     length,
     finish,
+    technique,
     colors: colorList.slice(0, 4),
-    description: note,
+    description,
   };
 }
 
@@ -79,8 +119,8 @@ export function buildSharedLookUrl(
   if (summary.colors.length > 0) {
     params.set('c', summary.colors.join(','));
   }
-  if (summary.description) {
-    params.set('n', summary.description.slice(0, 220));
+  if (summary.technique) {
+    params.set('n', summary.technique.slice(0, 220));
   }
 
   if (imageUrl && !imageUrl.startsWith('data:')) {

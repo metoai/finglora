@@ -10,12 +10,14 @@ export function ProPaywallModal({
   onSuccess,
   isGuestFirstTry = false,
   onSignUpClick,
+  onSignInClick,
 }: {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
   isGuestFirstTry?: boolean;
   onSignUpClick?: () => void;
+  onSignInClick?: () => void;
 }) {
   const [selectedPlan, setSelectedPlan] = useState<ProPlanType>('biannual');
   const [isUpgrading, setIsUpgrading] = useState(false);
@@ -33,7 +35,7 @@ export function ProPaywallModal({
     }, 350);
   };
 
-  // If user is a guest who ran out of guest tries, offer the "Sign up & get 10 Free Credits"
+  // Guest who used their 1 free instant try-on sees high-conversion signup offer (10 Free Credits)
   if (isGuestFirstTry && onSignUpClick) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md animate-in fade-in duration-200">
@@ -41,7 +43,7 @@ export function ProPaywallModal({
           <button
             type="button"
             onClick={onClose}
-            className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-pink-100 transition-colors"
+            className="absolute top-4 right-4 p-2 rounded-full text-stone-400 hover:text-stone-700 hover:bg-pink-100 transition-colors cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>
@@ -52,17 +54,17 @@ export function ProPaywallModal({
 
           <div className="space-y-2">
             <span className="px-3 py-1 rounded-full bg-[#E0246A]/10 text-[#E0246A] text-xs font-semibold tracking-wide">
-              Free Plan
+              Free Preview Used
             </span>
             <h2 className="font-serif text-2xl font-medium text-stone-900 tracking-tight">
-              Get 10 Free Try-On Credits
+              Save Your Hand &amp; Unlock 10 More Looks
             </h2>
             <p className="text-xs text-stone-600 max-w-xs mx-auto leading-relaxed">
-              Create a free account to instantly unlock 10 complimentary photorealistic virtual try-ons and save your designs.
+              Create a free account in seconds to save your hand photo, keep your try-on history, and unlock 10 complimentary virtual try-ons.
             </p>
           </div>
 
-          <div className="pt-2 space-y-3">
+          <div className="pt-2 space-y-2.5">
             <button
               type="button"
               onClick={() => {
@@ -75,10 +77,23 @@ export function ProPaywallModal({
               <ArrowRight className="w-4 h-4 text-white" />
             </button>
 
+            {onSignInClick && (
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  onSignInClick();
+                }}
+                className="w-full h-10 rounded-xl bg-white hover:bg-stone-50 border border-stone-200 text-stone-700 text-xs font-semibold transition-colors cursor-pointer"
+              >
+                Already have an account? Sign In
+              </button>
+            )}
+
             <button
               type="button"
               onClick={onClose}
-              className="text-xs text-stone-500 hover:text-stone-800 transition-colors"
+              className="text-xs text-stone-500 hover:text-stone-800 transition-colors cursor-pointer pt-1"
             >
               Maybe later
             </button>

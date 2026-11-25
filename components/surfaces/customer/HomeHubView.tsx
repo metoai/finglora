@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { ExploreDesignSet, Finger, NailDesign, NailShape } from '@/types/nail';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
+import { HandPhotoGuidance, validateHandImageFile } from '@/components/common/HandPhotoGuidance';
 
 interface FeaturedLook {
   id: string;
@@ -308,7 +309,12 @@ export function HomeHubView({
     }
   };
 
-  const handleHandPhotoUpload = (file: File) => {
+  const handleHandPhotoUpload = async (file: File) => {
+    const check = await validateHandImageFile(file);
+    if (!check.valid) {
+      showToast(check.reason);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = () => {
       const result = reader.result as string;
@@ -792,6 +798,8 @@ export function HomeHubView({
                   <Camera className="w-4 h-4 text-stone-600" />
                   <span>Option 2: Live Camera</span>
                 </button>
+
+                <HandPhotoGuidance />
               </div>
             )}
           </div>

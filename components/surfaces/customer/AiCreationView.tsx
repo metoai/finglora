@@ -20,8 +20,10 @@ import {
 import { Finger, NailDesign } from '@/types/nail';
 import { useTryOnCredit, getUserCreditStatus, syncCreditsFromProfile } from '@/lib/services/credits';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
-import { downscaleImageForVision } from '@/lib/services/storage';
+import { prepareVisionImagePayload } from '@/lib/services/tryon-cache';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
+import { ShowToTechModal } from '@/components/common/ShowToTechModal';
+import { buildSharedLookUrl, buildSimpleTechSummary } from '@/lib/services/share-look';
 import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 import { BrandLogoIcon } from '@/components/common/BrandLogo';
 
@@ -97,6 +99,7 @@ export function AiCreationView({
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [mobileActiveTab, setMobileActiveTab] = useState<'chat' | 'canvas'>('chat');
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isTechCardOpen, setIsTechCardOpen] = useState(false);
   const [shareModalImg, setShareModalImg] = useState<string | null>(null);
 
   // Persistent Bare Hand Photo: strictly use active user's customTryOnHandUrl when signed in
@@ -111,7 +114,7 @@ export function AiCreationView({
       ? localStorage.getItem('finglora_custom_hand_photo') ||
         localStorage.getItem('finglora_user_hand_photo')
       : null) ||
-    'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg';
+    '/assets/bare_hand.webp';
 
   // Active Displayed AI-Generated Try-On Hand Image
   const [currentTryOnImage, setCurrentTryOnImage] = useState<string>(() => {
@@ -179,7 +182,7 @@ export function AiCreationView({
     // Check credits
     const creditStatus = getUserCreditStatus();
     if (creditStatus.credits <= 0 && !creditStatus.isPro) {
-      setIsGuestFirstTry(creditStatus.hasUsedGuestCredit && !creditStatus.hasReceivedSignupBonus);
+      setIsGuestFirstTry(creditStatus.isGuest || (creditStatus.hasUsedGuestCredit && !creditStatus.hasReceivedSignupBonus));
       setPaywallOpen(true);
       return;
     }
@@ -187,14 +190,9 @@ export function AiCreationView({
     setIsIterating(true);
 
     try {
-      // 1. Downscale hand image for vision model
+      // 1. Prepare hand image payload (passes public/remote URLs directly or memoizes crisp 1024px JPEG)
       const baseSource = isInitialCreation ? originalBareHandPhoto : (currentTryOnImage || originalBareHandPhoto);
-      let handBase64 = '';
-      if (baseSource.startsWith('data:image/')) {
-        handBase64 = baseSource;
-      } else {
-        handBase64 = await downscaleImageForVision(baseSource, 1024, 0.85);
-      }
+      const handPayload = await prepareVisionImagePayload(baseSource, 1024, 0.88);
 
       // 2. Call /api/generate-nail-art in hand-tryon mode
       const promptInstruction = isInitialCreation
@@ -206,17 +204,19 @@ export function AiCreationView({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           mode: 'hand-tryon',
-          handImageBase64: handBase64 || undefined,
+          handImageBase64: handPayload.imageBase64,
+          handImageUrl: handPayload.imageUrl,
           prompt: promptInstruction,
         }),
       });
 
       if (res.status === 402) {
         const errData = await res.json().catch(() => ({}));
+        const isGuestBlocked = Boolean(errData.isGuestFirstTry || creditStatus.isGuest);
         if (typeof errData.credits === 'number') {
-          syncCreditsFromProfile(Boolean(errData.isPro), errData.credits);
+          syncCreditsFromProfile(Boolean(errData.isPro), errData.credits, isGuestBlocked);
         }
-        setIsGuestFirstTry(false);
+        setIsGuestFirstTry(isGuestBlocked);
         setPaywallOpen(true);
         return;
       }
@@ -224,7 +224,11 @@ export function AiCreationView({
       if (res.ok) {
         const data = await res.json();
         if (data?.creditStatus) {
-          syncCreditsFromProfile(Boolean(data.creditStatus.isPro), data.creditStatus.credits);
+          syncCreditsFromProfile(
+            Boolean(data.creditStatus.isPro),
+            data.creditStatus.credits,
+            Boolean(data.creditStatus.isGuest)
+          );
         } else {
           useTryOnCredit();
         }
@@ -441,18 +445,31 @@ export function AiCreationView({
               </button>
             </div>
 
-            {/* Quick Fullscreen Inspector */}
-            <button
-              type="button"
-              onClick={() => {
-                setZoomImageUrl(currentTryOnImage);
-                setIsZoomOpen(true);
-              }}
-              className="w-8 h-8 rounded-full bg-white border border-stone-200 text-stone-700 hover:text-stone-900 shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95"
-              title="Inspect Fullscreen"
-            >
-              <Maximize2 className="w-3.5 h-3.5" />
-            </button>
+            {/* Quick Actions: Show to Tech + Fullscreen */}
+            <div className="flex items-center gap-1.5">
+              {currentTryOnImage !== originalBareHandPhoto && (
+                <button
+                  type="button"
+                  onClick={() => setIsTechCardOpen(true)}
+                  className="h-8 px-2.5 rounded-full bg-white hover:bg-stone-100 border border-stone-200 text-stone-900 shadow-2xs flex items-center gap-1.5 text-[11px] font-semibold cursor-pointer transition active:scale-95"
+                  title="Show to Nail Technician"
+                >
+                  <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                  <span>Show to Tech</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => {
+                  setZoomImageUrl(currentTryOnImage);
+                  setIsZoomOpen(true);
+                }}
+                className="w-8 h-8 rounded-full bg-white border border-stone-200 text-stone-700 hover:text-stone-900 shadow-2xs flex items-center justify-center cursor-pointer transition active:scale-95"
+                title="Inspect Fullscreen"
+              >
+                <Maximize2 className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           {/* Main Hand Viewport */}
@@ -866,41 +883,35 @@ export function AiCreationView({
         onSignUpClick={onSignUpClick}
       />
 
-      {/* Social Share Options Modal */}
+      {/* Show to Tech Modal & Social Share Options Modal */}
       {(() => {
         const shareImg = shareModalImg || currentTryOnImage;
-        const simpleSummary = {
-          title: 'Custom Manicure',
-          shape: 'almond',
-          length: 'medium',
-          finish: 'glossy',
-          colors: [] as string[],
-          description: 'Custom salon manicure preview generated in Finglora Studio.',
-        };
-        const origin =
-          typeof window !== 'undefined' && window.location?.origin
-            ? window.location.origin
-            : 'https://finglora.app';
-        const params = new URLSearchParams({
-          t: simpleSummary.title,
-          s: simpleSummary.shape,
-          l: simpleSummary.length,
-          f: simpleSummary.finish,
-          n: simpleSummary.description,
-        });
-        if (shareImg && shareImg.startsWith('https://')) {
-          params.set('img', shareImg);
-        }
+        const latestAppliedTitle =
+          [...messages].reverse().find((m) => m.sender === 'gemini' && m.appliedDesignTitle)?.appliedDesignTitle ||
+          'Custom Manicure';
+        const simpleSummary = buildSimpleTechSummary(nails, latestAppliedTitle);
         return (
-          <SocialShareModal
-            isOpen={isShareModalOpen}
-            onClose={() => setIsShareModalOpen(false)}
-            imageUrl={shareImg}
-            designTitle={simpleSummary.title}
-            techSummary={simpleSummary}
-            shareUrl={`${origin}/look?${params.toString()}`}
-            onDownloadFallback={() => handleDownloadBrandedLook(shareImg)}
-          />
+          <>
+            <ShowToTechModal
+              isOpen={isTechCardOpen}
+              onClose={() => setIsTechCardOpen(false)}
+              imageUrl={currentTryOnImage}
+              summary={simpleSummary}
+              onShareClick={() => {
+                setIsTechCardOpen(false);
+                handleShareToStory(currentTryOnImage, simpleSummary.title);
+              }}
+            />
+            <SocialShareModal
+              isOpen={isShareModalOpen}
+              onClose={() => setIsShareModalOpen(false)}
+              imageUrl={shareImg}
+              designTitle={simpleSummary.title}
+              techSummary={simpleSummary}
+              shareUrl={buildSharedLookUrl(shareImg, simpleSummary)}
+              onDownloadFallback={() => handleDownloadBrandedLook(shareImg)}
+            />
+          </>
         );
       })()}
     </div>

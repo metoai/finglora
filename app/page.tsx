@@ -42,7 +42,7 @@ import { subscribeToAuthChanges, getCurrentUser, clearUserLocalSessionData, sign
 import { fetchExploreSets, getCachedExploreSets, getSetByPassportCode, saveUserManicureSet } from '@/lib/services/sets';
 import { toggleSetFavorite } from '@/lib/services/favorites';
 import { ensureAndFetchUserProfile, updateUserProfile } from '@/lib/services/profile';
-import { uploadInspoPhoto, uploadTryOnCapture, uploadUserHandPhoto, downscaleImageForVision } from '@/lib/services/storage';
+import { uploadInspoPhoto, uploadTryOnCapture, uploadUserHandPhoto, uploadAppliedTryOnResult, downscaleImageForVision } from '@/lib/services/storage';
 import { grantSignupCreditBonus, syncCreditsFromProfile } from '@/lib/services/credits';
 import { slice5NailSetImage } from '@/lib/services/nail-image-processor';
 
@@ -242,6 +242,7 @@ export default function FingloraApp() {
     const seq = ++authSeqRef.current;
 
     let pendingGuestHand: string | null = null;
+    let pendingGuestResult: string | null = null;
     let pendingGuestNails: any = null;
     if (typeof window !== 'undefined') {
       try {
@@ -257,6 +258,10 @@ export default function FingloraApp() {
         }
 
         if (isGuestOwner) {
+          const guestSynth = window.localStorage.getItem('finglora_synthesized_hand_url');
+          if (guestSynth && guestSynth.startsWith('data:image/')) {
+            pendingGuestResult = guestSynth;
+          }
           const savedGuestSession = window.localStorage.getItem('finglora_session_v1');
           if (savedGuestSession) {
             const parsedGuest = JSON.parse(savedGuestSession);
@@ -424,9 +429,26 @@ export default function FingloraApp() {
           title: pendingGuestNails.activeSetName || 'My Custom Set',
           photoUrl:
             pendingGuestNails.activePhotoUrl ||
-            'https://xwfazcaxniogiyyaovau.supabase.co/storage/v1/object/public/designs/glazed/glazed_pearl_almond_01.jpg',
+            '/assets/designs/glazed_pearl_almond_01.webp',
           nails: pendingGuestNails.nails,
         });
+      } catch {
+        // ignore migration error
+      }
+    }
+
+    // Preserve guest's 1st free try-on image in their new account's history
+    if (pendingGuestResult) {
+      try {
+        const uploadedTryOnUrl = await uploadAppliedTryOnResult({
+          imageDataUrl: pendingGuestResult,
+          userId: authUser.id,
+          skinToneId: profile?.skinToneId || 'warm-ivory',
+          mode: pendingGuestHand ? 'upload' : 'sample',
+        });
+        if (seq === authSeqRef.current && uploadedTryOnUrl) {
+          setSynthesizedHandUrl(uploadedTryOnUrl);
+        }
       } catch {
         // ignore migration error
       }
@@ -893,28 +915,31 @@ export default function FingloraApp() {
         // Step 1: Preprocessing & Palm Alignment
         setAnalysisStep(1);
 
-        // Downscale image to ~50KB for ultra-fast Gemini Vision analysis (under 3s)
+        // Downscale image to compact ~60KB JPEG for fast Gemini Vision analysis
         let imageBase64: string | undefined = undefined;
         try {
-          imageBase64 = (await downscaleImageForVision(customUploadedUrl, 800, 0.75)) || undefined;
+          if (!customUploadedUrl.startsWith('https://')) {
+            imageBase64 = (await downscaleImageForVision(customUploadedUrl, 768, 0.78)) || undefined;
+          }
         } catch {
           // Continue if base64 conversion failed
         }
 
-        // Step 2: Extracting exact nail art designs with Gemini Vision (8s timeout)
+        // Step 2: Extracting exact nail art specs with Gemini Vision
         setAnalysisStep(2);
 
         let aiResponse: any = null;
         try {
           const controller = new AbortController();
-          const timer = setTimeout(() => controller.abort(), 25000);
+          const timer = setTimeout(() => controller.abort(), 14000);
 
           const res = await fetch('/api/extract-nails', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              imageUrl: customUploadedUrl.startsWith('http') && !customUploadedUrl.startsWith('blob:') ? customUploadedUrl : undefined,
+              imageUrl: customUploadedUrl.startsWith('https://') ? customUploadedUrl : undefined,
               imageBase64,
+              generateImages: false,
             }),
             signal: controller.signal,
           });
@@ -923,7 +948,7 @@ export default function FingloraApp() {
             aiResponse = await res.json();
           }
         } catch (fetchErr) {
-          console.warn('[Finglora AI] Gemini extraction timeout/error, applying instant luxury synthesis:', fetchErr);
+          console.warn('[Finglora AI] Gemini extraction timeout/error, applying instant synthesis:', fetchErr);
         }
 
         // Step 3: Decomposing to 5 individual finger designs
@@ -932,7 +957,6 @@ export default function FingloraApp() {
         if (aiResponse?.data?.nails) {
           const apiNails = aiResponse.data.nails;
           
-          // Slice master 5-nail AI image into 5 individual finger image data URLs
           let fingerImages: Record<Finger, string> | null = null;
           if (aiResponse.data.master5NailImageUrl) {
             try {
@@ -958,7 +982,6 @@ export default function FingloraApp() {
             setActiveSetName(newTitle);
           }
         } else {
-          // Graceful fallback: synthesize elegant detected manicure designs
           for (let idx = 0; idx < FINGER_KEYS.length; idx++) {
             const fk = FINGER_KEYS[idx];
             const patterns = ['heart-french', 'classic-french', 'heart-french', 'classic-french', 'heart-french'] as const;
@@ -978,17 +1001,11 @@ export default function FingloraApp() {
           }
         }
 
-        // Live update active nails so the detection screen can display them
         setNails(JSON.parse(JSON.stringify(detectedNails)));
-        await new Promise((r) => setTimeout(r, 450));
-
-        // Step 4: Recipe Specs Formulation
         setAnalysisStep(4);
-        await new Promise((r) => setTimeout(r, 450));
-
-        // Step 5: Synthesis Complete
+        await new Promise((r) => setTimeout(r, 120));
         setAnalysisStep(5);
-        await new Promise((r) => setTimeout(r, 350));
+        await new Promise((r) => setTimeout(r, 120));
       } catch (err) {
         console.warn('[Finglora AI] Extraction completed with graceful fallback:', err);
         FINGER_KEYS.forEach((fk, idx) => {
@@ -1011,11 +1028,7 @@ export default function FingloraApp() {
         setAnalysisStep(5);
       }
     } else {
-      // Curated sample preset quick preview flow
-      for (let s = 1; s <= 5; s++) {
-        setAnalysisStep(s);
-        await new Promise((r) => setTimeout(r, 220));
-      }
+      setAnalysisStep(5);
     }
 
     // Apply detected nails to active atelier state
@@ -1383,9 +1396,9 @@ export default function FingloraApp() {
             }}
             onCopyShareLink={copyShareLink}
             onCustomerSignUpSubmit={() => {
-              setOnboardingStep(1);
-              showToast(`Account created, ${userName}! Quick 2-step vibe check...`);
-              navigateSurface('onboarding');
+              grantSignupCreditBonus();
+              showToast(`Account created, ${userName}! 10 try-on credits unlocked.`);
+              navigateCustomer(customTryOnHandUrl ? 'tryon' : 'home');
             }}
           />
         )}

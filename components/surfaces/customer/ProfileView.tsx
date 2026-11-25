@@ -54,7 +54,9 @@ import { getSupabaseBrowserClient } from '@/lib/supabase/client';
 import { HandCameraCaptureModal } from '@/components/common/HandCameraCaptureModal';
 import { ProPaywallModal } from '@/components/common/ProPaywallModal';
 import { SocialShareModal } from '@/components/common/SocialShareModal';
-import { shareToStoryOrSocial } from '@/lib/services/editorial-export';
+import { ShowToTechModal } from '@/components/common/ShowToTechModal';
+import { HandPhotoGuidance, validateHandImageFile } from '@/components/common/HandPhotoGuidance';
+import { downloadEditorialImage, shareToStoryOrSocial } from '@/lib/services/editorial-export';
 import { buildSharedLookUrl, buildSimpleTechSummary, SimpleTechSummary } from '@/lib/services/share-look';
 
 interface ProfileViewProps {
@@ -255,28 +257,46 @@ export function ProfileView({
   const [loadingHistory, setLoadingHistory] = useState(false);
   const [fullscreenHistoryItem, setFullscreenHistoryItem] = useState<TryOnHistoryRecord | null>(null);
   const [shareHistoryItem, setShareHistoryItem] = useState<TryOnHistoryRecord | null>(null);
+  const [techCardItem, setTechCardItem] = useState<TryOnHistoryRecord | null>(null);
 
-  const getHistoryTechSummary = (item: TryOnHistoryRecord): SimpleTechSummary => {
-    const matchedDesign = item.set_id
+  const getMatchedHistoryDesign = (item: TryOnHistoryRecord) =>
+    item.set_id
       ? exploreDesigns?.find((d) => d.id === item.set_id) ||
         CURATED_EDITORIAL_DESIGNS.find((d) => d.id === item.set_id)
       : undefined;
+
+  const getHistoryTechSummary = (item: TryOnHistoryRecord): SimpleTechSummary => {
+    const matchedDesign = getMatchedHistoryDesign(item);
 
     if (matchedDesign?.nails) {
       return buildSimpleTechSummary(matchedDesign.nails, matchedDesign.title);
     }
 
+    const shapeLabel = (preferredShape || 'almond').charAt(0).toUpperCase() + (preferredShape || 'almond').slice(1);
     return {
       title: matchedDesign?.title || 'Applied Manicure',
-      shape: preferredShape || 'almond',
-      length: 'medium',
-      finish: 'glossy',
+      shape: shapeLabel,
+      length: 'Medium',
+      finish: 'High-Gloss Gel',
+      technique: 'Custom manicure try-on (match photo length & apex)',
       colors: [],
-      description: `${preferredShape || 'almond'} shape manicure try-on created in Finglora.`,
+      description: `${shapeLabel} shape · High-Gloss Gel`,
     };
   };
 
   const downloadHistoryItemPhoto = async (item: TryOnHistoryRecord) => {
+    const summary = getHistoryTechSummary(item);
+    try {
+      await downloadEditorialImage(item.image_url, {
+        designTitle: summary.title,
+        filename: `finglora-tryon-${item.id.slice(0, 6)}.jpg`,
+      });
+      showToast('Photo downloaded with Finglora watermark');
+      return;
+    } catch {
+      // fallback to raw download if canvas export is unavailable
+    }
+
     try {
       const res = await fetch(item.image_url, { mode: 'cors', credentials: 'omit' });
       if (!res.ok) throw new Error('fetch failed');
@@ -419,6 +439,11 @@ export function ProfileView({
 
   // Upload hand photo once
   const handleHandPhotoSelected = async (file: File) => {
+    const check = await validateHandImageFile(file);
+    if (!check.valid) {
+      showToast(check.reason);
+      return;
+    }
     const reader = new FileReader();
     reader.onload = async () => {
       const rawDataUrl = reader.result as string;
@@ -583,8 +608,8 @@ export function ProfileView({
                 {/* Card Details & Actions */}
                 <div className="p-3 space-y-2 flex-1 flex flex-col justify-between bg-white">
                   <div className="space-y-0.5">
-                    <span className="text-[11px] font-medium text-stone-600 block">
-                      Applied Manicure
+                    <span className="text-[11px] font-medium text-stone-700 block truncate">
+                      {getHistoryTechSummary(item).title}
                     </span>
                     <span className="text-[10px] text-stone-400 block font-mono">
                       {new Date(item.created_at).toLocaleDateString(undefined, {
@@ -597,18 +622,29 @@ export function ProfileView({
                     </span>
                   </div>
 
-                  {item.set_id && (
+                  <div className="space-y-1.5">
                     <button
                       type="button"
-                      onClick={() => {
-                        onSelectExploreDesign?.(item.set_id!);
-                      }}
-                      className="w-full h-8 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                      onClick={() => setTechCardItem(item)}
+                      className="w-full h-8 rounded-xl bg-[#FAF7F2] hover:bg-stone-100 border border-stone-200/80 text-stone-900 text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer"
                     >
-                      <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
-                      <span>Re-Apply Look</span>
+                      <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                      <span>Show to Tech</span>
                     </button>
-                  )}
+
+                    {item.set_id && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          onSelectExploreDesign?.(item.set_id!);
+                        }}
+                        className="w-full h-8 rounded-xl bg-stone-900 hover:bg-stone-800 text-white text-xs font-semibold flex items-center justify-center gap-1.5 transition active:scale-95 cursor-pointer shadow-2xs"
+                      >
+                        <RotateCcw className="w-3.5 h-3.5 text-[#E0246A]" />
+                        <span>Re-Apply Look</span>
+                      </button>
+                    )}
+                  </div>
                 </div>
               </div>
             ))}
@@ -656,7 +692,7 @@ export function ProfileView({
             className="relative max-w-lg w-full flex flex-col items-center gap-3"
           >
             <div className="w-full flex items-center justify-between gap-2">
-              <span className="text-xs text-white/75 font-mono">
+              <span className="text-xs text-white/75 font-mono truncate">
                 {new Date(fullscreenHistoryItem.created_at).toLocaleDateString(undefined, {
                   month: 'short',
                   day: 'numeric',
@@ -665,22 +701,34 @@ export function ProfileView({
                   minute: '2-digit',
                 })}
               </span>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1.5 shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const target = fullscreenHistoryItem;
+                    setFullscreenHistoryItem(null);
+                    setTechCardItem(target);
+                  }}
+                  className="h-9 px-3 rounded-full bg-white text-stone-900 hover:bg-stone-100 text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                >
+                  <Hand className="w-3.5 h-3.5 text-[#E0246A]" />
+                  <span>Show to Tech</span>
+                </button>
                 <button
                   type="button"
                   onClick={() => handleShareHistoryItem(fullscreenHistoryItem)}
-                  className="h-9 px-3.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
+                  className="h-9 px-3 rounded-full bg-white/15 hover:bg-white/25 text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer active:scale-95"
                 >
                   <Share2 className="w-3.5 h-3.5" />
-                  <span>Share</span>
+                  <span className="hidden sm:inline">Share</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => downloadHistoryItemPhoto(fullscreenHistoryItem)}
-                  className="h-9 px-3.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
+                  className="h-9 px-3 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm active:scale-95"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
+                  <span className="hidden sm:inline">Download</span>
                 </button>
                 <button
                   type="button"
@@ -702,6 +750,26 @@ export function ProfileView({
           </div>
         </div>
       )}
+
+      {/* Show to Tech 1-Tap Fullscreen Salon Card */}
+      {techCardItem && (() => {
+        const matched = getMatchedHistoryDesign(techCardItem);
+        const techSummary = getHistoryTechSummary(techCardItem);
+        return (
+          <ShowToTechModal
+            isOpen={Boolean(techCardItem)}
+            onClose={() => setTechCardItem(null)}
+            imageUrl={techCardItem.image_url}
+            inspoImageUrl={matched?.photoUrl}
+            summary={techSummary}
+            onShareClick={() => {
+              const target = techCardItem;
+              setTechCardItem(null);
+              handleShareHistoryItem(target);
+            }}
+          />
+        );
+      })()}
 
       {/* History Social Share Modal */}
       {shareHistoryItem && (() => {
@@ -1584,9 +1652,7 @@ export function ProfileView({
                   </button>
                 </div>
 
-                <p className="text-[11px] text-stone-500 text-center leading-relaxed">
-                  Saved securely so every manicure instantly renders onto your own hand.
-                </p>
+                <HandPhotoGuidance />
               </div>
             )}
           </div>
@@ -1824,71 +1890,6 @@ export function ProfileView({
           showToast('Pro Access activated! Enjoy unlimited try-ons.');
         }}
       />
-      {/* In-App Fullscreen Lightbox for Try-On History */}
-      {fullscreenHistoryItem && (
-        <div
-          onClick={() => setFullscreenHistoryItem(null)}
-          className="fixed inset-0 z-[9999] bg-black/90 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-150"
-        >
-          <div
-            onClick={(e) => e.stopPropagation()}
-            className="relative max-w-lg w-full flex flex-col items-center gap-3"
-          >
-            <div className="w-full flex items-center justify-between gap-2">
-              <span className="text-xs text-white/75 font-mono">
-                {new Date(fullscreenHistoryItem.created_at).toLocaleDateString(undefined, {
-                  month: 'short',
-                  day: 'numeric',
-                  year: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-              </span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={async () => {
-                    try {
-                      const res = await fetch(fullscreenHistoryItem.image_url);
-                      const blob = await res.blob();
-                      const blobUrl = URL.createObjectURL(blob);
-                      const link = document.createElement('a');
-                      link.href = blobUrl;
-                      link.download = `finglora-tryon-${fullscreenHistoryItem.id.slice(0, 6)}.jpg`;
-                      document.body.appendChild(link);
-                      link.click();
-                      document.body.removeChild(link);
-                      URL.revokeObjectURL(blobUrl);
-                      showToast('Photo downloaded');
-                    } catch {
-                      window.open(fullscreenHistoryItem.image_url, '_blank');
-                    }
-                  }}
-                  className="h-9 px-3.5 rounded-full bg-[#E0246A] hover:bg-[#BE185D] text-white text-xs font-semibold flex items-center gap-1.5 transition cursor-pointer shadow-sm"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Download</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setFullscreenHistoryItem(null)}
-                  className="w-9 h-9 rounded-full bg-white/15 hover:bg-white/25 text-white flex items-center justify-center transition cursor-pointer"
-                  aria-label="Close fullscreen preview"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
-            </div>
-            <div className="w-full rounded-3xl overflow-hidden bg-stone-950 border border-white/10 shadow-2xl">
-              <img
-                src={fullscreenHistoryItem.image_url}
-                alt="Applied Try-On Fullscreen"
-                className="w-full max-h-[78vh] object-contain mx-auto"
-              />
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 }
